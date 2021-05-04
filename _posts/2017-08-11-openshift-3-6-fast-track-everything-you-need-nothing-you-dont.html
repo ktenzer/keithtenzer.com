@@ -1,0 +1,245 @@
+---
+layout: post
+title: 'OpenShift 3.6 Fast Track: Everything You Need, Nothing You Don''t'
+date: 2017-08-11 13:50:32.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- OpenShift
+tags:
+- Containers
+- DevOps
+- Docker
+- Kubernetes
+- OpenShift
+meta:
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '8163015386'
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6301771608981934080&type=U&a=b4fO
+  _publicize_done_9423386: '1'
+  _wpas_done_9468659: '1'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2017/08/11/openshift-3-6-fast-track-everything-you-need-nothing-you-dont/"
+---
+<h2><img class="alignnone size-full wp-image-11475" src="{{ site.baseurl }}/assets/2017/08/logotype_rh_openshiftcontainerplatform_wlogo_cmyk_black.jpg" alt="Logotype_RH_OpenShiftContainerPlatform_wLogo_CMYK_Black" width="5612" height="1444" /></h2>
+<h2>Overview</h2>
+<p>OpenShift Container Platform 3.6 went GA on August 9, 2017. You can read more about the release and new features <a href="https://blog.openshift.com/announcing-the-openshift-container-platform-3-6-ga/">here</a>. In this article we will setup a standard non-HA environment that is perfect for PoCs or labs. Before we begin, let's explain OpenShift for those that may be starting their OpenShift journey today. OpenShift is a complete container application build + run-time platform built on Kubernetes (Container Orchestration) and Docker (Container Packaging Format). Organizations looking to adopt containerization for their applications need of course a lot more than just technology, (Kubernetes and Docker), they need a real platform. OpenShift provides a service catalog for containerized applications, <a href="https://access.redhat.com/containers/#/product/RedHatOpenshiftContainerPlatform">huge selection of already certified application runtimes + xPaaS services</a>, a method for building containerized applications (source to image), centralized application logging, metrics, autoscaling, application deployments (Blue-Green, A/B, Canary, Rolling), integrated Jenkins CI/CD pipelines, integrated docker registry, load balancing / routes to containerized apps, multi-tenant SDN, security features (SELinux, secrets, security context), management tooling supporting multiple OpenShift environments (CloudForms), persistent storage (built-in Container Native Storage), automated deployment tooling based on Ansible and much, much more. OpenShift is a platform that runs on any infrastructure, from bare-metal to virtualization to public cloud (Amazon, Google, Microsoft), providing portability across cloud infrastructure for containerized applications. All of these things together is what truly enables organizations to move to DevOps, increase application release cycles, speed up innovation cycles, scale efficiently, gain independence from infrastructure providers and deliver new capabilities faster with more reliability to their customers.</p>
+<p><!--more--></p>
+<h2>OpenShift Environment</h2>
+<p>OpenShift has a few different architectures (Single Master, Multiple Master Integrated ETCD or Multiple Master Separate ETCD).</p>
+<p><strong>Single Master - </strong>This is a non-HA configuration. First there is only a single master which also runs ETCD and a single infrastructure node. The infrastructure node also runs OpenShift services such as docker registry, router, metrics and logging. This is only intended for lab or PoC environments.</p>
+<p><strong>Multiple Master Integrated ETCD - </strong>This is an HA configuration with three masters and two or more infrastructure nodes. OpenShift control plane as well as critical services are all in active/active HA configuration. ETCD service is running on the three masters.</p>
+<p><strong>Multiple Master Separate ETCD</strong> - This is an HA configuration with three masters and two or more infrastructure nodes. OpenShift control plane as well as critical services are all in active/active HA configuration. ETCD service is running on three separate servers. Since ETCD maintains state for OpenShift cluster it is critical the service is not only available but provides fast responses and updates. In some environments due to number of objects or size, it is preferred to separate ETCD. This is of course an architectural decision that requires discussion and planning.</p>
+<p>Here we have chosen to go with Single Master. Note: when referring to regions and zones, these are just labels that allow us to isolate nodes to different applications / projects. They are not dependent on public cloud regions.</p>
+<p><img class="alignnone size-full wp-image-11304" src="{{ site.baseurl }}/assets/2017/08/ocp_arch1.png" alt="ocp_arch" width="882" height="628" /></p>
+<p>API and management traffic go to the master server. In a multiple master configuration a load balancer would balance traffic across the masters. Application traffic instead goes directly to the infrastructure node. In case of HA configuration,  multiple infrastructure nodes and of course a load balancer in front would be configured. Application domains are in this case directed toward the single infrastructure node in DNS. In case of multiple infrastructure nodes, DNS should point application domains to load balancer. DNS round-robin is not a good option as it will continue to send traffic to infrastructure nodes, even if unavailable.</p>
+<p>In this configuration we will create two regions and two zones. OpenShift through labeling lets you tailor the architecture to meet your infrastructure and Affinity / Anti-Affinity requirements. Infrastructure and applications are isolated to specific nodes using the region. Within the application region (Primary) we separate applications between zones test and production. Using the multi-tenant SDN included in OpenShift, traffic between applications in test and production will be restricted or not allowed.</p>
+<p>Application persistence is provided by container native storage. Normally we would define special nodes for providing storage, in this case however the application nodes will fill that need. Container Native Storage works by running glusterfs (software-defined scale-out storage system) inside a container on each node. Container Native Storage requires a minimum of three nodes. The glusterfs container consumes local disks, available on node and builds a cluster-wide highly redundant storage system spanning all the nodes. OpenShift provides a storage class for consuming the storage dynamically. Developers can simply ask for storage by size (GB) and is is provided on the fly, dynamically assuming of course quotas aren't overwritten. In this environment storage is also automatically reclaimed based on policies defined by the Developer.</p>
+<h2>Configure OpenShift Nodes</h2>
+<p>In OpenShift there are several types of nodes (master, infra, app, storage and etcd). Each type of node has different CPU, memory and storage requirements. The minimum requirements are 8GB of memory for a node but you can get away with far less (if you disable checking in configuration). Since this is a lab setup we will do just that.</p>
+<p>For storage we will either use 40GB or 30GB root disk, 15GB for Docker and 100GB for Container Native Storage. Everything is being provided by the virtualization layer, in this case Red Hat Virtualization powered by KVM. Again this could be bare-metal, any virtualization platform or any public cloud provider.</p>
+<p><strong>Master Nodes</strong></p>
+<p><img class="alignnone size-full wp-image-11371" src="{{ site.baseurl }}/assets/2017/08/ocp_cpu_master.png" alt="ocp_cpu_master" width="496" height="106" /></p>
+<p><img class="alignnone size-full wp-image-11310" src="{{ site.baseurl }}/assets/2017/08/ocp_disks_master.png" alt="ocp_disks_master" width="997" height="186" /></p>
+<p><strong>Infra Nodes</strong></p>
+<p><img class="alignnone size-full wp-image-11374" src="{{ site.baseurl }}/assets/2017/08/ocp_cpu_infra.png" alt="ocp_cpu_infra" width="502" height="111" /></p>
+<p><img class="alignnone size-full wp-image-11308" src="{{ site.baseurl }}/assets/2017/08/ocp_disks_infra.png" alt="ocp_disks_infra" width="1009" height="191" /></p>
+<p><strong>App Nodes</strong></p>
+<p><img class="alignnone size-full wp-image-11376" src="{{ site.baseurl }}/assets/2017/08/ocp_cpu_app.png" alt="ocp_cpu_app" width="499" height="107" /></p>
+<p><img class="alignnone size-full wp-image-11307" src="{{ site.baseurl }}/assets/2017/08/ocp_disks_app.png" alt="ocp_disks_app" width="1014" height="219" /></p>
+<h2>Prepare OpenShift Nodes</h2>
+<p>Once the infrastructure is complete, a Container Operating System needs to be installed. The Operating System is as important as ever since containers are simply processes that run on Linux. Containers do not provide good isolation like VMs so security features in Operating System like SELinux, Kernel Capabilities, Container Signing, Secured Registries, TLS communications, Secrets and Security Context's are incredibly important. Thankfully you get it all out-of-the-box with OpenShift.</p>
+<p>The choice of Operating Systems comes down to RHEL or Atomic. Atomic is a RHEL kernel but is image based (no RPMs), everything that is installed or runs in Atomic must run as container. RHEL allows more flexibility to install other required software but the recommendation is definitely Atomic for OpenShift, especially if additional software is not required (monitoring, etc).</p>
+<p><strong>[All Nodes]</strong></p>
+<p><strong>Register Repositories</strong></p>
+<pre># subscription-manager register</pre>
+<pre># subscription-manager attach --pool=&lt;pool_id&gt;</pre>
+<pre># subscription-manager repos --disable="*"</pre>
+<pre># subscription-manager repos \
+ --enable="rhel-7-server-rpms" \
+ --enable="rhel-7-server-extras-rpms" \
+ --enable="rhel-7-server-ose-3.6-rpms" \
+ --enable="rhel-7-fast-datapath-rpms"</pre>
+<p><strong>Install Required Packages</strong></p>
+<pre># yum install -y wget git net-tools bind-utils iptables-services \
+bridge-utils bash-completion kexec-tools sos psacct</pre>
+<p><strong>Update Operating System</strong></p>
+<pre># yum update -y</pre>
+<p><strong>Configure Docker</strong></p>
+<pre># yum install -y docker-1.12.6</pre>
+<pre># vi /etc/sysconfig/docker
+OPTIONS='--insecure-registry=172.30.0.0/16 --selinux-enabled --log-driver=journald'</pre>
+<p>Since we are not using Docker Hub (god save you if you are doing that) and the OpenShift Docker registry is internal, we can safely allow insecure registry. Make sure SELinux is enabled, this is a big deal for securing your containers. The log driver should be journald.</p>
+<pre>cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup
+DEVS=/dev/sdb
+VG=docker-vg
+EOF</pre>
+<p>Here we will use the 15GB disk for docker storage. You can use the 'lsblk' command to easily see the device numbers of your disks. Make sure the disk has no partitions.</p>
+<pre># docker-storage-setup</pre>
+<pre># systemctl enable docker</pre>
+<pre> # systemctl start docker</pre>
+<p><strong>Name Resolution</strong></p>
+<p>Here we have two options, either use DNS or hosts file. Obviously for a real environment you are going with DNS but some people are lazy.</p>
+<p>If you are using DNS, create a wildcard pointing from application domain (apps.lab) to the infrastructure node. You can simply create an 'A' record in your named zone (*.apps.lab).</p>
+<pre>vi /etc/resolv.conf
+#search lab cluster.local</pre>
+<p>Ensure any search domain is commented out in /etc/resolv.conf, this will break SkyDNS used in OpenShift for internal service registry and resolution. To keep resolv.conf from being updated you can 'chattr +i' the file or update dnsmasq settings.</p>
+<pre># systemctl reboot</pre>
+<p><strong>[On Laptop]</strong></p>
+<p>In case you are using hosts file, make sure your laptop can resolve the OpenShift master and Hawkular (metrics) as well as Kibana (logging) need to be pointed at infra node. Additionally if you create any applications in OpenShift and expose them via routes, those host names need to go into hosts file and resolve to infra node. Hopefully you see now why a wildcard DNS is recommended.</p>
+<p>Example of my Laptop /etc/hosts.</p>
+<pre># vi /etc/hosts
+192.168.0.30 master1.lab master1
+192.168.0.34 hawkular-metrics.apps.lab
+192.168.0.34 kibana.apps.lab</pre>
+<h2>Configure OpenShift</h2>
+<p>As mentioned, OpenShift uses Ansible as it's life-cyle management and deployment tool. There are playbooks for installing, upgrading and adding or removing various components (Metrics, Logging, Storage, etc). Normally a Bastion host would be deployed for Ansible. In this case we install Ansible on the master.</p>
+<p><strong>[On Master]</strong></p>
+<p><strong>Install Ansible and OpenShift Playbooks</strong></p>
+<pre># yum install -y atomic-openshift-utils</pre>
+<p><strong>Configure SSH Authorization</strong></p>
+<pre># ssh-keygen</pre>
+<pre># for host in master1.lab \
+appnode1.lab \
+appnode2.lab \
+appnode3.lab \
+infranode1.lab; \
+do ssh-copy-id $host; \
+done</pre>
+<p><strong>Configure Deployment Options</strong></p>
+<p>The Ansible playbooks require an inventory file that defines the hosts and also configuration options for OpenShift via group vars.</p>
+<pre># vi /etc/ansible/hosts</pre>
+<pre># Create an OSEv3 group that contains the masters and nodes groups
+[OSEv3:children]
+masters
+etcd
+glusterfs
+nodes
+
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+# SSH user, this user should allow ssh based auth without requiring a password
+ansible_ssh_user=root
+
+# OpenShift Deployment, enterprise of course!
+openshift_deployment_type=openshift-enterprise
+
+#Set Domain for Apps
+openshift_master_default_subdomain=apps.lab
+
+# Enable htpasswd authentication; defaults to DenyAllPasswordIdentityProvider
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+
+# Set networking to multi-tenant
+os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
+
+# Enable CNS (glusterfs) as default storage provider
+openshift_storage_glusterfs_namespace=glusterfs
+openshift_storage_glusterfs_name=storage
+
+# Deploy logging
+openshift_hosted_logging_deploy=true
+openshift_hosted_logging_storage_kind=dynamic
+
+#Deploy Metrics
+openshift_hosted_metrics_deploy=true
+
+#Disable disk and memory checks
+openshift_disable_check=disk_availability,memory_availability
+
+# host group for masters
+[masters]
+master1.lab
+
+# host group for etcd
+[etcd]
+master1.lab
+
+# host group for glusterfs
+[glusterfs]
+appnode1.lab glusterfs_ip=192.168.0.31 glusterfs_devices='[ "/dev/sdb" ]'
+appnode2.lab glusterfs_ip=192.168.0.32 glusterfs_devices='[ "/dev/sdb" ]'
+appnode3.lab glusterfs_ip=192.168.0.33 glusterfs_devices='[ "/dev/sdb" ]'
+
+# host group for nodes, includes region info
+[nodes]
+master1.lab openshift_schedulable=False
+infranode1.lab openshift_schedulable=True openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+appnode1.lab openshift_schedulable=True openshift_node_labels="{'region': 'primary', 'zone': 'prod'}"
+appnode2.lab openshift_schedulable=True openshift_node_labels="{'region': 'primary', 'zone': 'prod'}"
+appnode3.lab openshift_schedulable=True openshift_node_labels="{'region': 'primary', 'zone': 'test'}"</pre>
+<h2>Install OpenShift</h2>
+<p>Once the hosts and configurations options are set in the inventory file, simply run the playbook. There are many playbooks, even ones that integrate directly with infrastructure platforms like (Amazon, Google, Microsoft). These can also setup VMs and infrastructure components, like load balancers that are required. In our case we will go with BYO (bring your own), basically means we have taken care of infrastructure and it is all ready to go. This is typically what you want for on-premise deployments.</p>
+<pre># ansible-playbook -vv /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml</pre>
+<pre>PLAY RECAP *****************************************************************************************************************************************************************************************
+ appnode1.lab : ok=244 changed=12 unreachable=0 failed=0
+ appnode2.lab : ok=244 changed=12 unreachable=0 failed=0
+ appnode3.lab : ok=244 changed=12 unreachable=0 failed=0
+ infranode1.lab : ok=229 changed=12 unreachable=0 failed=0
+ localhost : ok=13 changed=0 unreachable=0 failed=0
+ master1.lab : ok=999 changed=199 unreachable=0 failed=0</pre>
+<p>Success!!! Okay if you are paying attention and know Ansible, the recap shows few tasks actually changed anything. This is because I had an error in my storage configuration due to using wrong disk device, hence my playbook run failed previously. Not a big deal though, I simply fixed the issue in inventory file and re-ran Ansible. This is the beauty, simplicity and power of Ansible. Fail, Fail until you succeed and then you can reproduce it every time successfully.</p>
+<h2>Verifying OpenShift Environment</h2>
+<p>Once installation is complete, check to make sure additional services (Storage, Logging and Metrics) are functioning properly.</p>
+<p><strong>Create Admin User</strong></p>
+<p><strong>[On Master]</strong></p>
+<p>Login to the master and create an admin user for external access through UI or CLI.</p>
+<pre>[root@master1 ~]# oc login -u system:admin -n default</pre>
+<pre>[root@master1 ~]# htpasswd -c /etc/origin/master/htpasswd admin</pre>
+<pre>[root@master1 ~]# oadm policy add-cluster-role-to-user \
+cluster-admin admin</pre>
+<pre>[root@master1 ~]# oc login -u admin -n default</pre>
+<p><strong>GUI</strong></p>
+<p>To access GUI simply point browser from laptop at the master on port 8443 (https://master.lab:8443).</p>
+<p><strong>Storage</strong></p>
+<p>Since we are using Container Native Storage everything is integrated and deployed with installation of OpenShift. Go into the project glusterfs. Under resources select pods. You should see three glusterfs pods (one per app node).</p>
+<p><img class="alignnone size-full wp-image-11312" src="{{ site.baseurl }}/assets/2017/08/ocp_gluster1.png" alt="ocp_gluster1" width="1558" height="502" /></p>
+<p>Select one of the glusterfs pods and select terminal. This opens a session directly, in container. Next you can check it's peer status as well as status of glusterfs volumes. Since we have three disks we will end up with three bricks. Data is then replicated and distributed across all three. No need to worry, adding and removing storage is all done through OpenShift dynamically, you should never need to touch anything in glusterfs level unless troubleshooting.</p>
+<p><img class="alignnone size-full wp-image-11314" src="{{ site.baseurl }}/assets/2017/08/ocp_gluster2.png" alt="ocp_gluster2" width="1573" height="824" /></p>
+<p><strong>Make Storage Class Default</strong></p>
+<pre># oc patch storageclass glusterfs-storage -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'</pre>
+<p><strong>Logging</strong></p>
+<p>Open the logging project. Under Kibana you will see a route or URL (https://kibana.apps.lab). This will change depending on what domain was configured in OpenShift. Connect and you will be prompted to login. OpenShift uses elastic search and automatically populates it with projects and users from OpenShift. Users only see logs for projects and applications where they have access.</p>
+<p><img class="alignnone size-full wp-image-11317" src="{{ site.baseurl }}/assets/2017/08/ocp_logging.png" alt="ocp_logging" width="1745" height="906" /></p>
+<p><strong>Metrics</strong></p>
+<p>In the logging project you will notice CPU, Memory and Network utilization are shown. This is coming from data collected in Hawkular and a 15 minute sample is shown.</p>
+<p><img class="alignnone size-full wp-image-11319" src="{{ site.baseurl }}/assets/2017/08/ocp_metrics.png" alt="ocp_metrics" width="1537" height="552" /></p>
+<p>Under the pods you can view more details and see the performance data historically over much longer period of time.</p>
+<p><img class="alignnone size-full wp-image-11320" src="{{ site.baseurl }}/assets/2017/08/ocp_metrics_2.png" alt="ocp_metrics_2" width="1531" height="632" /></p>
+<p><strong>Miscellaneous</strong></p>
+<p>In OpenShift 3.6 not only OpenShift itself but also additional services are installed with Ansible. Here is an example of how to install and remove logging.</p>
+<p><strong>[On Master]</strong></p>
+<p><strong>Install Logging</strong></p>
+<pre>ansible-playbook -vv /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/openshift-logging.yml</pre>
+<p><strong>Remove Logging</strong></p>
+<pre>ansible-playbook -vv /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/openshift-logging.yml -e openshift_logging_install_logging=False</pre>
+<h2>Coolstore</h2>
+<p>Coolstore is a polygot demo application comprised of many different services that form a shopping car application. It is a great example of the value OpenShift as a platform brings to a microservice orientated architecture. It illustrates how various containerized services can communicate with one another and how services can be independently released.</p>
+<p><strong>Clone Git Repo</strong></p>
+<pre># git clone https://github.com/jbossdemocentral/coolstore-microservice.git</pre>
+<p><strong>Change Dir</strong></p>
+<pre># cd coolstore-microservice/openshift</pre>
+<p><strong>Create Project</strong></p>
+<pre># oc new-project coolstore</pre>
+<p><strong>Deploy Coolstore App</strong></p>
+<pre># oc process -f coolstore-template.yaml | oc create -f -</pre>
+<p><img class="alignnone size-full wp-image-11573" src="{{ site.baseurl }}/assets/2017/08/ocp_coolstore.png" alt="ocp_coolstore.PNG" width="1834" height="786" /></p>
+<p>&nbsp;</p>
+<h2>Summary</h2>
+<p>In this article we introduced OpenShift being a platform for containerized applications and spoke of the value it provides above the underlying technology (Kubernetes / Docker). We discussed various architectures and detailed the design for a lab or PoC configuration. Finally we went through all the steps to configure infrastructure, prepare nodes, configure, install and verify a running OpenShift environment.</p>
+<p>Happy OpenShifting!</p>
+<p>(c) 2017 Keith Tenzer</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

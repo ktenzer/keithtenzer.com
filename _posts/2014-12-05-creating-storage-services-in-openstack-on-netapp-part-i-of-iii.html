@@ -1,0 +1,202 @@
+---
+layout: post
+title: Building Storage Services in OpenStack on NetApp - Part I of III
+date: 2014-12-05 17:35:31.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- Cloud
+- Clustered Data ONTAP
+- NetApp
+- OpenStack
+- Red Hat RDO
+meta:
+  _edit_last: '63054820'
+  geo_public: '0'
+  _publicize_pending: '1'
+  publicize_facebook_url: https://facebook.com/10205299467076043
+  _wpas_done_9533761: '1'
+  _publicize_done_external: a:1:{s:8:"facebook";a:1:{i:1528587438;b:1;}}
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=5946688134208114688&type=U&a=lifF
+  _wpas_done_9468659: '1'
+  _wpas_skip_9542380: '1'
+  _wpas_skip_9468659: '1'
+  _oembed_27f7c30ee9d7c06a2cf4a293816df116: "{{unknown}}"
+  _oembed_3575fcc9385d0796a38dc4f09f3280d5: "{{unknown}}"
+  _oembed_fea0379ad6604633fc4cb26a098e2a4c: "{{unknown}}"
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2014/12/05/creating-storage-services-in-openstack-on-netapp-part-i-of-iii/"
+---
+<p>Welcome to part one of the three-part series on creating storage services in OpenStack on NetApp. In this post we will give a brief overview of OpenStack, discuss distribution options and setup a OpenStack environment using Red Hat RDO. In part two of this series we will look at how to configure NetApp storage for OpenStack environments. In part three we will create storage services in OpenStack built on NetApp storage.<!--more--></p>
+<ul>
+<li><a href="http://keithtenzer.com/2014/12/09/building-storage-services-in-openstack-on-netapp-part-ii-of-iii/">Building Storage Services in OpenStack on NetApp - Part II of III</a></li>
+<li><a href="http://keithtenzer.com/2014/12/10/building-storage-services-in-openstack-on-netapp-part-iii-of-iii/">Building Storage Services in OpenStack on NetApp - Part III of III</a></li>
+</ul>
+<h3>Overview</h3>
+<p>OpenStack is an interrelated set of software components that enable you to build, manage and provision private or public cloud computing platforms. OpenStack pools compute, storage and networking resources together and allows virtual machines or other instances to be deployed using those resources on the fly enabling horizontal scaling.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/openstack-software-diagram-737x305.png"><img class="  wp-image-127 aligncenter" src="{{ site.baseurl }}/assets/2014/12/openstack-software-diagram-737x305.png?w=300" alt="openstack-software-diagram-737x305" width="704" height="291" /></a></p>
+<h3>OpenStack Projects</h3>
+<p>Each OpenStack software component is considered its own project or program. It has its own development team, resources and project schedule.</p>
+<p>There are two important OpenStack project types:</p>
+<ul>
+<li>Core projects - official projects with full access to OpenStack brand and assets</li>
+<li>Incubation projects - projects on an official track to become core projects with partial access to OpenStack branding and assets</li>
+</ul>
+<p>The core projects for OpenStack are as follows:</p>
+<ul>
+<li>Nova (compute)</li>
+<li>Cinder (block storage)</li>
+<li>Swift (object storage)</li>
+<li>Glance (images service)</li>
+<li>Keystone (identity and authentication)</li>
+<li>Horizon (dashboard and UI)</li>
+<li>Neutron (networking)</li>
+<li>Ceilometer (telemetry and stats)</li>
+<li>Heat (orchestration)</li>
+<li>Trove (database services)</li>
+<li>Sahara (data processing)</li>
+<li>Ironic (bare metal)</li>
+<li>Zaqar (queue services)</li>
+<li>Barbican (key management services)</li>
+<li>Designate (DNS services)</li>
+<li>Oslo (common libraries)</li>
+<li>TripleO (deployment)</li>
+</ul>
+<p>Incubation projects such as Manilla which offers shared file services to OpenStack are very interesting to follow, however for deployments we should focus on the official core projects.</p>
+<h3>OpenStack Distributions</h3>
+<p>There is a lot of variation with OpenStack since it is a culmination of interrelated projects that form a cloud computing platform. You can certainly do your own custom deployment and just install the projects you need and define your own distribution however I would not recommend this, especially for production environments. The purpose of a distribution is to leverage the vendors expertise, wrap projects or dependencies together and give you a platform which can be supported. There are of course a plethora of distributions to choose from, even distribution methods. If you are interested in reviewing the distributions and support options visit the <a href="http://www.openstack.org/marketplace/distros/">OpenStack marketplace</a>. I would recommend choosing a distribution which supports the dependencies and someone who has a lot of experience as well as success in providing support for open source software.</p>
+<p>In addition to the supported distributions there is a very interesting option from Red Hat called <a href="https://openstack.redhat.com/Main_Page">RDO</a>. The concept is very similar to what Red Hat does in regards to Fedora actually. RDO allows you to run either Fedora, Red Hat Enterprise Linux (RHEL) or CentOS and combines those platforms with the most current release of OpenStack.</p>
+<h3>Deploying OpenStack using RDO</h3>
+<p>The first step to building a cloud computing platform is a proof of concept. Moving your infrastructure to a cloud computing platform changes everything, including your business processes. It is definitely not something that happens over night. RDO is the perfect thing to use to standup a OpenStack environment using production Linux with production OpenStack software releases. Red Hat does not offer commercial support for RDO so once a decision is made to deploy a production OpenStack environment you will most likely want to use a distribution from the OpenStack marketplace. One can deploy RDO with either a manual or automatic configuration, we will discuss both.</p>
+<h4>Steps for deploying RDO with manual configuration</h4>
+<ul>
+<li>Install Fedora 20 on bare metal
+<ul>
+<li>Note: I have tested Fedora 20 running on ESXi 5.5, just make sure you have virtual machine hardware version 10 (required for nested virtualization support)</li>
+</ul>
+</li>
+<li>Configure networking so that you have outbound access to the Internet</li>
+<li>Update current packages</li>
+<li>
+<pre>sudo yum update -y</pre>
+</li>
+<li>Setup RDO repositories</li>
+<li>
+<pre>sudo yum install -y https://rdo.fedorapeople.org/rdo-release.rpm</pre>
+</li>
+<li>Install packstack installer</li>
+<li>
+<pre>sudo yum install -y openstack-packstack</pre>
+</li>
+<li>Run packstack to install OpenStack</li>
+<li>
+<pre>packstack --allinone</pre>
+</li>
+</ul>
+<p>OpenStack takes a while to install, usually around 30 minutes, once the installation is done you can login into the horizon dashboard <a class="external free" href="http://%24yourip/dashboard" rel="nofollow">http://&lt;IP&gt;/dashboard</a>. If you come across any issues check the <a href="https://openstack.redhat.com/Workarounds">workarounds</a>.</p>
+<h5></h5>
+<h4>Steps for deploying RDO with automatic configuration of NetApp Cinder Backend</h4>
+<p>Automatic configuration allows us to generate an answers file that we can then customize. The advantage is that we are able to do some of the configuration during installation and in case we ever need to repeat the installation we have a blueprint. Using the answers file is the recommended way to install RDO. In this case we will configure Cinder to use NetApp storage backend through RDO packstack installer.</p>
+<pre><code>packstack --gen-answer-file=~/packstack-answer.txt</code></pre>
+<p>[code language="text"]</p>
+<p>CONFIG_CINDER_BACKEND=netapp</p>
+<p>CONFIG_CINDER_NETAPP_STORAGE_FAMILY=ontap_cluster</p>
+<p>CONFIG_CINDER_NETAPP_STORAGE_PROTOCOL=nfs</p>
+<p>CONFIG_CINDER_NETAPP_VSERVER=&lt;storage virtual machine&gt;</p>
+<p>CONFIG_CINDER_NETAPP_HOSTNAME=&lt;cluster mgmt vserver&gt;</p>
+<p>CONFIG_CINDER_NETAPP_SERVER_PORT=80</p>
+<p>CONFIG_CINDER_NETAPP_LOGIN=&lt;username&gt;</p>
+<p>CONFIG_CINDER_NETAPP_PASSWORD=&lt;password&gt;</p>
+<p>CONFIG_CINDER_NETAPP_NFS_SHARES_CONFIG=/etc/cinder/cdotNfs_exports.conf</p>
+<p>CONFIG_CINDER_NETAPP_COPYOFFLOAD_TOOL_PATH=/usr/bin/na_copyoffload_64</p>
+<p>[/code]</p>
+<p>Note: before proceeding with the next step you need to make sure you have defined NFS exports in the /etc/cinder/cdotNfs_exports.conf and configured NetApp storage. These steps are explained in <a href="http://keithtenzer.com/2014/12/09/building-storage-services-in-openstack-on-netapp-part-ii-of-iii/">part II</a> and <a href="http://keithtenzer.com/2014/12/10/building-storage-services-in-openstack-on-netapp-part-iii-of-iii/">part III</a> of this series.</p>
+<pre><code>packstack --answer-file=~/packstack-answer.txt</code></pre>
+<p>For more information check the detailed guide on <a href="http://netapp.github.io/openstack/2014/12/06/packstack-cinder/index.html">using packstack to install Cinder with NetApp storage backends</a>.</p>
+<h4>Authenticating to OpenStack environment</h4>
+<p>After installation completes two tenants are created: admin and demo. Keystone will create two files under /root which provide credentials for both tenants.</p>
+<ul>
+<li>
+<pre>cat /root/keystonerc_admin</pre>
+</li>
+</ul>
+<p>[code language="text"]</p>
+<p>export OS_USERNAME=admin<br />
+export OS_TENANT_NAME=admin<br />
+export OS_PASSWORD=d96c4ad2c6aa55af<br />
+export OS_AUTH_URL=http://&lt;IP&gt;:5000/v2.0/<br />
+export PS1='[\u@\h \W(keystone_admin)]\$ '</p>
+<p>[/code]</p>
+<p>You can use the admin user and password in the keystone source file to authenticate to Horizon or the OpenStack CLI.</p>
+<h4>Create Private Network</h4>
+<p>By default RDO will create a public network but for creating instances we need to use a private network. Since we would eventually like to connect instances to NetApp storage this network should be an internal private network that can reach our NetApp Storage Virtual Machines (SVMs). In my environment I used the same network for instances and SVM.</p>
+<ul>
+<li>Under project-&gt;network-&gt;networks select the "Create Network" option to start the wizard</li>
+<li>Enter a name for network, I suggest private</li>
+<li>Add CIDR for network</li>
+</ul>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/screen-shot-2014-12-04-at-14-27-52.png"><img class="  wp-image-132 aligncenter" src="{{ site.baseurl }}/assets/2014/12/screen-shot-2014-12-04-at-14-27-52.png?w=300" alt="Screen Shot 2014-12-04 at 14.27.52" width="700" height="572" /></a></p>
+<p>&nbsp;</p>
+<ul>
+<li>Add IP pool to be used for DHCP</li>
+</ul>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/screen-shot-2014-12-04-at-14-34-59.png"><img class="  wp-image-134 aligncenter" src="{{ site.baseurl }}/assets/2014/12/screen-shot-2014-12-04-at-14-34-59.png?w=300" alt="Screen Shot 2014-12-04 at 14.34.59" width="706" height="506" /></a></p>
+<p>Once our private network exists we are ready for instance creation</p>
+<h4>Launch Instance</h4>
+<p>At this point RDO has configured KVM as the hypervisor, installed OpenStack and configured OpenStack services. In order to verify things are working the best thing to do is to provision an instance. RDO configures one image called "cirros" and we can use this to test our installation.</p>
+<ul>
+<li>In the Horizon dashboard under project-&gt;compute-&gt;instances select the "Launch Instance" button</li>
+<li>Give instance a name, select "boot from image" as boot source and select the "cirros" image</li>
+</ul>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/screen-shot-2014-12-04-at-14-23-01.png"><img class="  wp-image-135 aligncenter" src="{{ site.baseurl }}/assets/2014/12/screen-shot-2014-12-04-at-14-23-01.png?w=300" alt="Screen Shot 2014-12-04 at 14.23.01" width="704" height="636" /></a></p>
+<ul>
+<li>Select the "networking" tab and add the private network</li>
+</ul>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/screen-shot-2014-12-04-at-14-51-54.png"><img class="  wp-image-137 aligncenter" src="{{ site.baseurl }}/assets/2014/12/screen-shot-2014-12-04-at-14-51-54.png?w=300" alt="Screen Shot 2014-12-04 at 14.51.54" width="697" height="353" /></a></p>
+<p>&nbsp;</p>
+<ul>
+<li>Launch the instance</li>
+</ul>
+<p>The instance should start and be running shortly. This tests that the main core functionality between Nova (compute), Glance (images service) and Cinder (block storage). If things are working we are ready to configure NetApp storage for our OpenStack environment.</p>
+<h3>Troubleshooting</h3>
+<p>There are a few things I have run into and if you are having problems you should check them.</p>
+<ul>
+<li>Disable "SE Linux", I have seen issues with "SE Linux" and OpenStack
+<ul>
+<li>setenforce 0</li>
+<li>To make change permanent edit /etc/selinux/config</li>
+</ul>
+</li>
+<li>Check hostname resolution
+<ul>
+<li>make sure hostname can be resolved</li>
+<li>if dns is not configured check /etc/hosts and /etc/sysconfig/network</li>
+</ul>
+</li>
+<li>Check networking make sure you can ping out to the private networks and management networks</li>
+<li>If you are having network issues, temporarily shutdown firewall and iptables until you have things working and then turn them back on</li>
+<li>Check to make sure your hardware supports virtualization
+<ul>
+<li>Intel: grep --color vmx /proc/cpuinfo</li>
+<li>AMD: grep --color svm /proc/cpuinfo</li>
+</ul>
+</li>
+<li>Check the Nova, Glance and Cinder logs
+<ul>
+<li>/var/log/nova</li>
+<li>/var/log/glance</li>
+<li>/var/log/cinder</li>
+</ul>
+</li>
+</ul>
+<p>The next post in the series will take a look at how to configure the NetApp storage system for OpenStack environments.</p>
+<p>(c) 2014 Keith Tenzer</p>

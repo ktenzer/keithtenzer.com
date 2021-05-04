@@ -1,0 +1,234 @@
+---
+layout: feedback
+title: Cheng Egg - 2016-04-08 08:32:10
+date: 2016-04-08 08:32:10.000000000 -07:00
+type: feedback
+parent_id: '43'
+published: true
+password: ''
+status: publish
+categories: []
+tags: []
+meta:
+  _oembed_cf530a49af2db098e19ed99a94850d3e: "{{unknown}}"
+  _oembed_aa53e7ea5db0502f39a29ad2f856c52d: "{{unknown}}"
+  _oembed_092231869b45aa0d9b22a5a5788ed66d: "{{unknown}}"
+  _feedback_email: "a:2:{s:2:\"to\";a:1:{i:0;s:22:\"keith.tenzer@gmail.com\";}s:7:\"message\";s:7418:\"<b>Name:</b>
+    Cheng Egg<br /><br />\n<b>Email:</b> egg820217@gmail.com<br /><br />\n<b>Comment:</b>
+    I tried my .yaml file like this:<br />\r\n============================<br />\r\nhttps://www.cs.ccu.edu.tw/~cth104m/openstack/cirros.yaml<br
+    />\r\nhttps://www.cs.ccu.edu.tw/~cth104m/openstack/environment.yaml<br />\r\nhttps://www.cs.ccu.edu.tw/~cth104m/openstack/example.yaml<br
+    />\r\n============================<br />\r\nand I create this stack, I found out
+    a error:<br />\r\n============================<br />\r\n2016-04-08 16:25:47.162
+    2693 ERROR heat.engine.resource Traceback (most recent call last):<br />\r\n2016-04-08
+    16:25:47.162 2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/resource.py\",
+    line 620, in _action_recorder<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    yield<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File
+    \"/usr/lib/python2.7/dist-packages/heat/engine/resource.py\", line 690, in _do_action<br
+    />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     yield self.action_handler_task(action,
+    args=handler_args)<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \  File \"/usr/lib/python2.7/dist-packages/heat/engine/scheduler.py\", line 292,
+    in wrapper<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     step
+    = next(subtask)<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \  File \"/usr/lib/python2.7/dist-packages/heat/engine/resource.py\", line 661,
+    in action_handler_task<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    handler_data = handler(*args)<br />\r\n2016-04-08 16:25:47.162 2693 ERROR
+    heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/resources/openstack/ceilometer/alarm.py\",
+    line 335, in handle_create<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    alarm = self.client().alarms.create(**props)<br />\r\n2016-04-08 16:25:47.162
+    2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/resource.py\",
+    line 544, in client<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    return self.stack.clients.client(client_name)<br />\r\n2016-04-08 16:25:47.162
+    2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/clients/__init__.py\",
+    line 70, in client<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    return client_plugin.client()<br />\r\n2016-04-08 16:25:47.162 2693 ERROR
+    heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/clients/client_plugin.py\",
+    line 78, in client<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    self._client = self._create()<br />\r\n2016-04-08 16:25:47.162 2693 ERROR
+    heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/clients/os/ceilometer.py\",
+    line 46, in _create<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    return cc.get_client('2', **args)<br />\r\n2016-04-08 16:25:47.162 2693 ERROR
+    heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/ceilometerclient/client.py\",
+    line 395, in get_client<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    return Client(version, endpoint, **kwargs)<br />\r\n2016-04-08 16:25:47.162
+    2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/ceilometerclient/client.py\",
+    line 359, in Client<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    return client_class(*args, **client_kwargs)<br />\r\n2016-04-08 16:25:47.162
+    2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/ceilometerclient/v2/client.py\",
+    line 68, in __init__<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    self.alarm_client, aodh_enabled = self._get_alarm_client(**kwargs)<br />\r\n2016-04-08
+    16:25:47.162 2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/ceilometerclient/v2/client.py\",
+    line 106, in _get_alarm_client<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    kwargs.get('timeout'))<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \  File \"/usr/lib/python2.7/dist-packages/ceilometerclient/client.py\", line
+    271, in redirect_to_aodh_endpoint<br />\r\n2016-04-08 16:25:47.162 2693 ERROR
+    heat.engine.resource     self.opts['endpoint'] = _get_endpoint(ks_session, **ks_kwargs)<br
+    />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/ceilometerclient/client.py\",
+    line 201, in _get_endpoint<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    region_name=kwargs.get('region_name'))<br />\r\n2016-04-08 16:25:47.162 2693
+    ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/keystoneclient/session.py\",
+    line 660, in get_endpoint<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    return auth.get_endpoint(self, **kwargs)<br />\r\n2016-04-08 16:25:47.162
+    2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/keystoneclient/auth/identity/base.py\",
+    line 315, in get_endpoint<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    service_catalog = self.get_access(session).service_catalog<br />\r\n2016-04-08
+    16:25:47.162 2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/keystoneclient/auth/identity/base.py\",
+    line 240, in get_access<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    self.auth_ref = self.get_auth_ref(session)<br />\r\n2016-04-08 16:25:47.162
+    2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/keystoneclient/auth/identity/v3/base.py\",
+    line 190, in get_auth_ref<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    authenticated=False, log=False, **rkwargs)<br />\r\n2016-04-08 16:25:47.162
+    2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/keystoneclient/session.py\",
+    line 501, in post<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    return self.request(url, 'POST', **kwargs)<br />\r\n2016-04-08 16:25:47.162
+    2693 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/keystoneclient/utils.py\",
+    line 337, in inner<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    return func(*args, **kwargs)<br />\r\n2016-04-08 16:25:47.162 2693 ERROR
+    heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/keystoneclient/session.py\",
+    line 401, in request<br />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource
+    \    raise exceptions.from_response(resp, method, url)<br />\r\n2016-04-08 16:25:47.162
+    2693 ERROR heat.engine.resource Unauthorized: The request you have made requires
+    authentication. (HTTP 401) (Request-ID: req-664a3574-d761-4f1a-8b01-31b2497557a4)<br
+    />\r\n2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource<br />\r\n2016-04-08
+    16:25:48.205 2693 INFO heat.engine.service [-] Stack create failed, status FAILED<br
+    />\r\n2016-04-08 16:25:48.230 2693 INFO heat.engine.stack [-] Stack CREATE FAILED
+    (example): Resource CREATE failed: Unauthorized: resources.cpu_alarm_high: The
+    request you have made requires authentication. (HTTP 401) (Request-ID: req-664a3574-d761-4f1a-8b01-31b2497557a4)<br
+    />\r\n==============================<br />\r\nCould you please help me? I stuck
+    in this problem for many days.<br />\r\nThanks!<br /><br />\n\nTime: April 8,
+    2016 at 8:32 am<br />\nIP Address: 140.123.103.103<br />\nContact Form URL: http://keithtenzer.com/contact/<br
+    />\nSent by an unverified visitor to your site.\";}"
+  _feedback_extra_fields: a:0:{}
+author: 
+permalink: "/"
+---
+<p>I tried my .yaml file like this:<br />
+============================<br />
+https://www.cs.ccu.edu.tw/~cth104m/openstack/cirros.yaml<br />
+https://www.cs.ccu.edu.tw/~cth104m/openstack/environment.yaml<br />
+https://www.cs.ccu.edu.tw/~cth104m/openstack/example.yaml<br />
+============================<br />
+and I create this stack, I found out a error:<br />
+============================<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource Traceback (most recent call last):<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 620, in _action_recorder<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     yield<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 690, in _do_action<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     yield self.action_handler_task(action, args=handler_args)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/scheduler.py", line 292, in wrapper<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     step = next(subtask)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 661, in action_handler_task<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     handler_data = handler(*args)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resources/openstack/ceilometer/alarm.py", line 335, in handle_create<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     alarm = self.client().alarms.create(**props)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 544, in client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return self.stack.clients.client(client_name)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/clients/__init__.py", line 70, in client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return client_plugin.client()<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/clients/client_plugin.py", line 78, in client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     self._client = self._create()<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/clients/os/ceilometer.py", line 46, in _create<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return cc.get_client('2', **args)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/client.py", line 395, in get_client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return Client(version, endpoint, **kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/client.py", line 359, in Client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return client_class(*args, **client_kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/v2/client.py", line 68, in __init__<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     self.alarm_client, aodh_enabled = self._get_alarm_client(**kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/v2/client.py", line 106, in _get_alarm_client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     kwargs.get('timeout'))<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/client.py", line 271, in redirect_to_aodh_endpoint<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     self.opts['endpoint'] = _get_endpoint(ks_session, **ks_kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/client.py", line 201, in _get_endpoint<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     region_name=kwargs.get('region_name'))<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/session.py", line 660, in get_endpoint<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return auth.get_endpoint(self, **kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/auth/identity/base.py", line 315, in get_endpoint<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     service_catalog = self.get_access(session).service_catalog<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/auth/identity/base.py", line 240, in get_access<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     self.auth_ref = self.get_auth_ref(session)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/auth/identity/v3/base.py", line 190, in get_auth_ref<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     authenticated=False, log=False, **rkwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/session.py", line 501, in post<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return self.request(url, 'POST', **kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/utils.py", line 337, in inner<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return func(*args, **kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/session.py", line 401, in request<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     raise exceptions.from_response(resp, method, url)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-664a3574-d761-4f1a-8b01-31b2497557a4)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource<br />
+2016-04-08 16:25:48.205 2693 INFO heat.engine.service [-] Stack create failed, status FAILED<br />
+2016-04-08 16:25:48.230 2693 INFO heat.engine.stack [-] Stack CREATE FAILED (example): Resource CREATE failed: Unauthorized: resources.cpu_alarm_high: The request you have made requires authentication. (HTTP 401) (Request-ID: req-664a3574-d761-4f1a-8b01-31b2497557a4)<br />
+==============================<br />
+Could you please help me? I stuck in this problem for many days.<br />
+Thanks!<br />
+<!--more--><br />
+AUTHOR: Cheng Egg<br />
+AUTHOR EMAIL: egg820217@gmail.com<br />
+AUTHOR URL:<br />
+SUBJECT: Midnight Code Junkie<br />
+IP: 140.123.103.103<br />
+Array<br />
+(<br />
+    [1_Name] =&gt; Cheng Egg<br />
+    [2_Email] =&gt; egg820217@gmail.com<br />
+    [3_Comment] =&gt; I tried my .yaml file like this:<br />
+============================<br />
+https://www.cs.ccu.edu.tw/~cth104m/openstack/cirros.yaml<br />
+https://www.cs.ccu.edu.tw/~cth104m/openstack/environment.yaml<br />
+https://www.cs.ccu.edu.tw/~cth104m/openstack/example.yaml<br />
+============================<br />
+and I create this stack, I found out a error:<br />
+============================<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource Traceback (most recent call last):<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 620, in _action_recorder<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     yield<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 690, in _do_action<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     yield self.action_handler_task(action, args=handler_args)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/scheduler.py", line 292, in wrapper<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     step = next(subtask)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 661, in action_handler_task<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     handler_data = handler(*args)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resources/openstack/ceilometer/alarm.py", line 335, in handle_create<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     alarm = self.client().alarms.create(**props)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 544, in client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return self.stack.clients.client(client_name)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/clients/__init__.py", line 70, in client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return client_plugin.client()<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/clients/client_plugin.py", line 78, in client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     self._client = self._create()<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/clients/os/ceilometer.py", line 46, in _create<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return cc.get_client('2', **args)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/client.py", line 395, in get_client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return Client(version, endpoint, **kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/client.py", line 359, in Client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return client_class(*args, **client_kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/v2/client.py", line 68, in __init__<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     self.alarm_client, aodh_enabled = self._get_alarm_client(**kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/v2/client.py", line 106, in _get_alarm_client<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     kwargs.get('timeout'))<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/client.py", line 271, in redirect_to_aodh_endpoint<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     self.opts['endpoint'] = _get_endpoint(ks_session, **ks_kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/ceilometerclient/client.py", line 201, in _get_endpoint<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     region_name=kwargs.get('region_name'))<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/session.py", line 660, in get_endpoint<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return auth.get_endpoint(self, **kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/auth/identity/base.py", line 315, in get_endpoint<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     service_catalog = self.get_access(session).service_catalog<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/auth/identity/base.py", line 240, in get_access<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     self.auth_ref = self.get_auth_ref(session)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/auth/identity/v3/base.py", line 190, in get_auth_ref<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     authenticated=False, log=False, **rkwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/session.py", line 501, in post<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return self.request(url, 'POST', **kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/utils.py", line 337, in inner<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     return func(*args, **kwargs)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/keystoneclient/session.py", line 401, in request<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource     raise exceptions.from_response(resp, method, url)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-664a3574-d761-4f1a-8b01-31b2497557a4)<br />
+2016-04-08 16:25:47.162 2693 ERROR heat.engine.resource<br />
+2016-04-08 16:25:48.205 2693 INFO heat.engine.service [-] Stack create failed, status FAILED<br />
+2016-04-08 16:25:48.230 2693 INFO heat.engine.stack [-] Stack CREATE FAILED (example): Resource CREATE failed: Unauthorized: resources.cpu_alarm_high: The request you have made requires authentication. (HTTP 401) (Request-ID: req-664a3574-d761-4f1a-8b01-31b2497557a4)<br />
+==============================<br />
+Could you please help me? I stuck in this problem for many days.<br />
+Thanks!<br />
+)</p>

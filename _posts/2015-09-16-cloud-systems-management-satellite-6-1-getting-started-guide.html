@@ -1,0 +1,177 @@
+---
+layout: post
+title: 'Cloud Systems Management: Satellite 6.1 Getting Started Guide'
+date: 2015-09-16 14:45:31.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Satellite
+tags:
+- configuration management
+- Foreman
+- Katello
+- Puppet
+- Satellite 6
+- system management
+meta:
+  _edit_last: '63054820'
+  geo_public: '0'
+  _wpas_skip_9542380: '1'
+  _wpas_skip_9468659: '1'
+  _publicize_job_id: '14846973787'
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6049925886801649665&type=U&a=e2b2
+  _publicize_done_9423386: '1'
+  _wpas_done_9468659: '1'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2015/09/16/cloud-systems-management-satellite-6-1-getting-started-guide/"
+---
+<h3><a href="https://keithtenzer.files.wordpress.com/2015/09/sat_6_components.png"><img class="alignnone wp-image-1246" src="{{ site.baseurl }}/assets/2015/09/sat_6_components.png?w=300" alt="SAT_6_COmponents" width="1194" height="382" /></a></h3>
+<h3>Overview</h3>
+<p>Satellite is responsible for system and configuration management. Satellite 6 offers a new architecture based off best-of-breed opensource projects: Foreman (provisioning), Katello (content management), Pulp (content management), Puppet (configuration management) and Candlepin (subscription management). Satellite 6 provides ITIL equivalent of media library for RPMs, ISOs, Puppet modules and container images. It allows you to build a standard operating environment (SOE) that defines how systems and applications are provisioned as well as maintained. Satellite 6 allows an organization the ability to manage all content through defined life-cycles. Control through RBAC can be defined so that different groups can control various aspects of a SOE. In this article we will focus on how to install and configure Satellite 6.1.<br />
+<!--more--></p>
+<h3>Installing Satellite 6.1</h3>
+<p>Before installing Satellite 6.1 it is recommend to install RHEL 7.1 minimum OS. In this guide we will configure a Satellite 6.1 server and capsule on the same system.</p>
+<pre style="padding-left:30px;">#subscription-manager register
+#subscription-manager list --available
+#subscription-manager attach --pool=8a85f9844b5685ed014b6e02a0c3144e
+#subscription-manager repos --disable=*
+#subscription-manager repos --enable rhel-7-server-rpms --enable rhel-server-rhscl-7-rpms --enable rhel-7-server-satellite-6.1-rpms</pre>
+<p>Update all packages and install Katello.</p>
+<pre style="padding-left:30px;">#yum update -y
+#yum install -y katello</pre>
+<p>Run the Katello installer and provide information about the environment. In this environment the Satellite 6.1 server is located on 192.168.122.0/24 network and has static hostname sat6.lab.com. In order to provision new servers Satellite requires DNS and DHCP. You can use external DNS and DHCP but in this example we are having Satellite configure both locally.</p>
+<pre style="padding-left:30px;">katello-installer -v -d --foreman-admin-password redhat \
+--capsule-dns true --capsule-dns-interface eth0 --capsule-dns-zone lab.com \
+--capsule-dns-forwarders 192.168.122.1 --capsule-dns-reverse 122.168.192.in-addr.arpa \
+--capsule-dhcp true --capsule-dhcp-interface eth0 --capsule-dhcp-range "192.168.122.200 192.168.122.250" \
+--capsule-dhcp-gateway 192.168.122.1 --capsule-dhcp-nameservers 192.168.122.70 \
+--capsule-tftp true --capsule-tftp-servername $(hostname) \
+--capsule-puppet true --capsule-puppetca true</pre>
+<h3>Configuring Satellite 6.1</h3>
+<p>The first step in configuration is to open the necessary firewall ports.</p>
+<pre style="padding-left:30px;">#firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner root -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner root -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 1 -o lo -p tcp -m tcp --dport 9200 -j DROP \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 1 -o lo -p tcp -m tcp --dport 9200 -j DROP</pre>
+<p class="screen">Allow HTTPS access from the web UI.</p>
+<pre class="screen" style="padding-left:30px;">#firewall-cmd --permanent --add-service=https</pre>
+<p class="screen">Reload the firewall rules so they are active.</p>
+<pre class="screen" style="padding-left:30px;"># firewall-cmd --reload</pre>
+<p class="screen">At this point you should be able to reach the web UI using HTTPS. In this environment the url is https://sat6.lab.com. Next we need to setup the hammer CLI. Configure hammer so that we automatically pass authentication credentials.</p>
+<pre class="programlisting" style="padding-left:30px;">mkdir ~/.hammer
+cat &gt; .hammer/cli_config.yml &lt;&lt;EOF
+:foreman:
+    :host: 'https://sat-$GUID.rhpds.opentlc.com/'
+    :username: 'admin'
+    :password: 'redhat'
+
+EOF</pre>
+<p class="screen">Register Satellite Server in Red Hat Network (RHN).</p>
+<p class="screen"><a href="https://keithtenzer.files.wordpress.com/2015/09/sat6_register.png"><img class="alignnone wp-image-1248" src="{{ site.baseurl }}/assets/2015/09/sat6_register.png?w=300" alt="SAT6_REGISTER" width="1189" height="654" /></a></p>
+<p class="screen">Assign subscriptions to the Satellite server and download manifest from RHN.</p>
+<p class="screen"><a href="https://keithtenzer.files.wordpress.com/2015/09/sat_attached_sub.png"><img class="alignnone wp-image-1249" src="{{ site.baseurl }}/assets/2015/09/sat_attached_sub.png?w=300" alt="SAT_ATTACHED_SUB" width="1185" height="731" /></a></p>
+<p class="screen">Upload manifest file to Satellite server.</p>
+<pre class="screen" style="padding-left:30px;">#hammer subscription upload --organization "Default Organization" --file /root/Satellite_Manifest.zip</pre>
+<p class="screen">Note: In the next section we will be using the hammer CLI to configure Satellite. In this environment we are using the organization "Default Organization", you would probably change this to a more specific organization name. If so you need to first create a new organization.</p>
+<p class="screen">Update the domain to lab.com. In this environment Satellite server and hosts are part of same domain.</p>
+<pre class="screen" style="padding-left:30px;">#hammer domain update --name lab.com --organizations "Default Organization" --dns sat6.lab.com --locations 'Default Location</pre>
+<p class="screen">Create a subnet in Satellite 6. In this environment the subnet is 192.168.122.0/24.</p>
+<pre class="screen" style="padding-left:30px;">hammer subnet update --name VLAN_122 --dhcp-id 1 --dns-id 1 --tftp-id 1 --organizations "Default Organization" --domains lab.com --locations 'Default Location'</pre>
+<p class="screen">Enable basic repositories.</p>
+<pre class="screen" style="padding-left:30px;">#hammer repository-set enable --organization "Default Organization" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (RPMs)'
+#hammer repository-set enable --organization "Default Organization" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server - Optional (RPMs)'
+#hammer repository-set enable --organization "Default Organization" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7.1' --name 'Red Hat Enterprise Linux 7 Server (Kickstart)'
+#hammer repository-set enable --organization "Default Organization" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --name 'Red Hat Satellite Tools 6.1 (for RHEL 7 Server) (RPMs)'</pre>
+<p class="screen">Enable EPEL repository for 3rd party packages.</p>
+<pre class="screen" style="padding-left:30px;">#wget -q https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7  -O /root/RPM-GPG-KEY-EPEL-7
+#hammer gpg create --key /root/RPM-GPG-KEY-EPEL-6  --name 'GPG-EPEL-6' --organization "Default Organization"
+#hammer gpg create --key /root/RPM-GPG-KEY-EPEL-7  --name 'GPG-EPEL-7' --organization "Default Organization"</pre>
+<p class="screen">Create a new product for the EPEL repository. In Satellite 6 products are a groupings of external content outside of RHN. Products can contain RPM repositories, Puppet modules or container images.</p>
+<pre class="screen" style="padding-left:30px;">#hammer product create --name='EPEL 3rd Party Packages' --organization "Default Organization" --description 'EPEL 3rd Party Packages'
+#hammer repository create --name='EPEL 7 - x86_64' --organization "Default Organization" --product='EPEL 3rd Party Packages' --content-type='yum' --publish-via-http=true --url=http://dl.fedoraproject.org/pub/epel/7/x86_64/ --checksum-type=sha256 --gpg-key=GPG-EPEL-7</pre>
+<p class="screen"> Synchronize the repositories. This will take a while as all of the RPM packages will be downloaded. Note: you can also use the --async option to run tasks in parallel.</p>
+<pre class="screen" style="padding-left:30px;">#hammer repository synchronize --organization "Default Organization" --product 'Red Hat Enterprise Linux Server'  --name 'Red Hat Enterprise Linux 7 Server Kickstart x86_64 7.1'
+#hammer repository synchronize --organization "Default Organization" --product 'Red Hat Enterprise Linux Server'  --name 'Red Hat Enterprise Linux 7 Server - Optional RPMs x86_64 7Server'
+#hammer repository synchronize --organization "Default Organization" --product 'Red Hat Enterprise Linux Server'  --name 'Red Hat Satellite Tools 6.1 for RHEL 7 Server RPMs x86_64'
+#hammer repository synchronize --organization "Default Organization" --product 'Red Hat Enterprise Linux Server'  --name 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server'
+#hammer repository synchronize --organization "$ORG" --product 'EPEL 3rd Party Packages  --name  'EPEL 7 - x86_64'</pre>
+<p class="screen">Create life cycles for development and production</p>
+<pre class="screen" style="padding-left:30px;">#hammer lifecycle-environment create --organization "Default Organization" --description 'Development' --name 'DEV' --label development --prior Library
+#hammer lifecycle-environment create --organization "Default Organization" --description 'Production' --name 'PROD' --label production --prior 'DEV'</pre>
+<p class="screen">Create content view for RHEL 7 base.</p>
+<pre class="screen" style="padding-left:30px;">#hammer content-view create --organization "Default Organization" --name 'RHEL7_base' --label rhel7_base --description 'Core Build for RHEL 7'
+#hammer content-view add-repository --organization "$ORG" --name 'RHEL7_Base' --product 'Red Hat Enterprise Linux Server' --repository 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server'
+#hammer content-view add-repository --organization "$ORG" --name 'RHEL7_Base' --product 'Red Hat Enterprise Linux Server' --repository 'Red Hat Enterprise Linux 7 Server - Optional RPMs x86_64 7Server'
+#hammer content-view add-repository --organization "$ORG" --name 'RHEL7_Base' --product 'Red Hat Enterprise Linux Server' --repository 'Red Hat Satellite Tools 6.1 for RHEL 7 Server RPMs x86_64'
+#hammer content-view add-repository --organization "$ORG" --name 'RHEL7_Base' --product 'EPEL 3rd Party Packages'  --repository  'EPEL 7 - x86_64'</pre>
+<p class="screen">Publish and promote content view to the environments.</p>
+<pre class="screen" style="padding-left:30px;">#hammer content-view publish --organization "Default Organization" --name RHEL7_Base --description 'Initial Publishing'
+#hammer content-view version promote --organization "Default Organization" --content-view RHEL7_Base --to-lifecycle-environment DEV
+#hammer content-view version promote --organization "Default Organization" --content-view RHEL7_Base --to-lifecycle-environment PROD</pre>
+<p class="screen">Add activation keys.</p>
+<pre class="screen" style="padding-left:30px;">#RHEL_SUB_ID=$(hammer --csv --csv-separator ':' subscription list --organization "Default Organization" | grep 'Red Hat Enterprise Linux Server Entry Level, Self-support' | cut -f 8 -d ':')
+#EPEL_SUB_ID=$(hammer --csv --csv-separator ':' subscription list --organization "Default Organization" | grep 'EPEL 3rd Party Packages' | cut -f 8 -d ':')
+#hammer activation-key create --organization "Default Organization" --description 'RHEL7 Key for DEV' --content-view 'RHEL7_Base' --unlimited-content-hosts yes --name ak-Reg_To_DEV --lifecycle-environment 'DEV'
+#hammer activation-key add-subscription --organization "Default Organization" --name ak-Reg_To_DEV--subscription-id $RHEL_SUB_ID
+#hammer activation-key add-subscription --organization "Default Organization" --name ak-Reg_To_DEV --subscription-id $EPEL_SUB_ID
+#hammer activation-key create --organization "Default Organization" --description 'RHEL7 Key for PROD' --content-view 'RHEL7_Base' --unlimited-content-hosts yes --name ak-Reg_To_PROD --lifecycle-environment 'PROD'
+#hammer activation-key add-subscription --organization "Default Organization" --name ak-Reg_To_PROD--subscription-id $RHEL_SUB_ID
+#hammer activation-key add-subscription --organization "Default Organization" --name ak-Reg_To_PROD --subscription-id $EPEL_SUB_ID</pre>
+<p class="screen">Create a host group. A host group is a foreman construct and is used for automation of provisioning parameters. A host is provisioned based on its host group. The host group contains kickstart/provisioning templates, OS information, network information, activation keys, parameters, puppet environment and if virtual a compute profile. Note: you will need to change the hostname sat6.lab.com.</p>
+<pre class="screen" style="padding-left:30px;">#hammer hostgroup create --architecture x86_64 --content-source-id 1 --content-view RHEL7_Base --domain lab.com --lifecycle-environment DEV --locations 'Default Location' --name RHEL7_DEV_Servers --organizations "Default Organization" --puppet-ca-proxy sat6.lab.com --puppet-proxy sat6.lab.com --subnet VLAN_122 --partition-table 'Kickstart default' --operatingsystem 'RedHat 6.6' --puppet-classes "motd" --medium "$ORG"/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_x86_64_7_1</pre>
+<p class="screen">Add a compute host. Satellite 6 supports provisioning from bare metal or compute hosts. You can provision to VMware, RHEV / KVM, OpenStack or even Amazon EC2. In this environment we have configured KVM. KVM is running on system with IP 192.168.122.1.</p>
+<p class="screen">On KVM host perform following steps.</p>
+<pre class="screen" style="padding-left:30px;">#vi /etc/libvirt/libvirtd.conf
+listen_tls = 0
+listen_tcp = 1
+tcp_port = "16509"
+auth_tcp = "none"</pre>
+<pre class="screen" style="padding-left:30px;">#vi /etc/sysconfig/libvirtd
+LIBVIRTD_ARGS="--listen"</pre>
+<p>Allow libvirtd communications on KVM host.</p>
+<pre style="padding-left:30px;">firewall-cmd --permanent --add-port="16509/tcp"
+firewall-cmd --reload</pre>
+<p class="screen">Add compute host on Satellite server.</p>
+<pre class="screen" style="padding-left:30px;">#hammer compute-resource create --description 'LibVirt Compute Resource' --locations 'Default Location' --name Libvirt_CR --organizations "Default Organization" --url 'qemu+tcp://192.168.122.1/system/' --provider libvirt --set-console-password 0</pre>
+<h3 class="screen">Satellite Upgrades</h3>
+<p>In order to properly upgrade a Satellite environment the following steps should be taken.</p>
+<pre style="padding-left:30px;">#foreman-rake katello:reindex
+#yum update
+#katello-installer --upgrade</pre>
+<h3 class="screen">Adding existing hosts</h3>
+<p>In order to add an existing host or new host without provisioning fun the following commands on a RHEL system.</p>
+<p>Install Katello package from Satellite server.</p>
+<pre style="padding-left:30px;"><code>#rpm -Uvh http://sat6.lab.com/pub/katello-ca-consumer-latest.noarch.rpm
+</code></pre>
+<p>Subscribe using activation key.</p>
+<pre style="padding-left:30px;"><code>#subscription-manager register --org="Default_Organization" --activationkey="DEV_CORE"
+</code></pre>
+<pre class="screen" style="padding-left:30px;">#yum -y install --enablerepo rhel-7-server-satellite-tools-6.1-rpms katello-agent</pre>
+<h3 class="screen">Configure Red Hat Access Insight</h3>
+<p>Red Hat insight will inform not only about security updates but also potential configuration issues according to Red Hat best practices. To configure follow below steps.</p>
+<p>Update python-requests if not present install</p>
+<p class="code-block code-terminal"><code class="language-shell">yum update python-requests<br />
+</code><br />
+Install Red Hat Access Insight</p>
+<pre class="code-block code-terminal" style="padding-left:30px;"><code class="language-shell">yum install redhat-access-insights</code></pre>
+<p class="code-block code-terminal">Register System</p>
+<pre class="code-block code-terminal" style="padding-left:30px;"><code class="language-shell">redhat-access-insights --register</code></pre>
+<h3 class="screen">HTTPS 404 Errors</h3>
+<p>Sometimes the yum cache gets out-of-sync. If this happens you will need to delete the cache and then try installing package again.</p>
+<pre style="padding-left:30px;"><code>rm -fr /var/cache/yum/*</code></pre>
+<h3 class="screen">Summary</h3>
+<p>Satellite 6.1 is a system and configuration management tool built on best-of-breed opensource technologies. There are huge advantages in regards to Standard Operating Environments (SOE) in bringing systems and configuration management capabilities together. In this article we focused on installing and configuring Satellite 6.1. We created a basic environment but this is just scratching the surface. Satellite is a tool for implementing a SOE and ITIL processes. For more information about building an SOE with Satellite 6.1, read the <a href="https://access.redhat.com/articles/1585273">10 Steps to build an SOE</a>. I hope you found this article informative and useful. Please feel free to share your feedback.</p>
+<p>Happy Satelliting!</p>
+<p>(c) 2015 Keith Tenzer</p>

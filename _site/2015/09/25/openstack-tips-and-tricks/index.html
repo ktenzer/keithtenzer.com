@@ -1,0 +1,162 @@
+<h3><a href="https://keithtenzer.files.wordpress.com/2015/09/tipsandtricks.jpg"><img class="alignnone size-medium wp-image-1272" src="/assets/2015/09/tipsandtricks.jpg?w=300" alt="tipsandtricks" width="300" height="136" /></a></h3>
+<h3>Overview</h3>
+<p>In this article we will look at some common OpenStack Kilo configuration optimizations and other tricks. This is by no means a comprehensive guide, just things I have stumbled across that if documented would have saved me time. I continue to update this blog with things I learned. If you have some valuable tips or tricks then let me know so I can add those?<br />
+<!--more--></p>
+<h3>Nested Virtualization</h3>
+<p>Many run OpenStack on KVM for testing, learning, training or even demos. In order to get acceptable performance, the Hypervisor and guest must be configured to support Nested Virtualization.</p>
+<p>Ensure KVM is enabled</p>
+<pre style="padding-left:30px;">#lsmod | grep -i kvm
+kvm_intel 148081 6 
+kvm 461126 1 kvm_intel</pre>
+<pre style="padding-left:30px;">#modinfo kvm_intel | grep -i nested
+parm: nested:bool
+
+</pre>
+<p>Unload KVM kernel module</p>
+<pre style="padding-left:30px;">#modprobe -r kvm_intel</pre>
+<p>Enable nested virtualization in KVM hypervisor</p>
+<pre style="padding-left:30px;">#modprobe kvm_intel nested=Yes</pre>
+<p>Create a guest for running OpenStack and edit the configuration to enable VMX.</p>
+<pre style="padding-left:30px;">#virsh edit osp7.lab.com</pre>
+<pre style="padding-left:30px;"> &lt;cpu mode='custom' match='exact'&gt;
+ &lt;model fallback='allow'&gt;SandyBridge&lt;/model&gt;
+ &lt;feature policy='require' name='vmx'/&gt;
+ &lt;/cpu&gt;</pre>
+<p>Start guest and verify that nested virtualization support is enabled.</p>
+<pre style="padding-left:30px;">#ps -ef |grep qemu-kvm |grep vmx
+qemu 8557 1 29 09:04 ? 00:03:52 /usr/libexec/qemu-kvm -name osp7.lab.com -S -machine pc-i440fx-rhel7.0.0,accel=kvm,usb=off -cpu SandyBridge,+vmx</pre>
+<p>Change Libvirt type to KVM in Nova.</p>
+<pre style="padding-left:30px;">#vi /etc/nova/nova.conf</pre>
+<pre style="padding-left:30px;">virt_type=kvm</pre>
+<h3>Fixing OpenStack Inconsistencies</h3>
+<p>Sometimes things just don't work as expected, that is life and software. In OpenStack sometimes objects in the database and the actual resource can be inconsistent. This means the resource exists in the database but not anywhere else. I have seen this happen with Cinder volumes when deleting Heat stacks for example. If this occurs, your last resort if the *force* delete commands fail is to go into database and remove resource. It goes with out saying that you need to use extreme caution, as you can cause data loss or even corruption within OpenStack.</p>
+<h4>Delete Cinder Volume</h4>
+<p>Sometimes it can take a really long time to delete cinder volumes. The default behavior is to zero blocks. You can change this by setting volume_clear=none in /etc/cinder/cinder.conf. If you want to determine why delete is taking so long you should see what processes are using the volume. For LVM backends you can follow these steps. First check lvdisplay to see if logical volume exists.</p>
+<pre style="padding-left:30px;"># lvdisplay</pre>
+<pre style="padding-left:30px;">Get the major and minor number for volume.
+# dmsetup info -c
+Name Maj Min Stat Open Targ Event UUID
+rhel-swap <strong>253 0</strong> L--w 2 1 0 LVM-I057BifDXT5pFxJ69IQuaLXouyIN6DDbltQCdDpuXeoSi3tFgBpYFQiETsCKO3CG
+rhel-root <strong>253 1</strong> L--w 1 1 0 LVM-I057BifDXT5pFxJ69IQuaLXouyIN6DDbSP3WbTBmapCefb1mQLbdSzqw8drUculQ
+cinder--volumes-volume--a052879b--9bbd--4285--8557--7c16337560c5 <strong>253 2</strong> L--w 1 1 0 LVM-nnajQLl8dA7KqOsFJgYajjFVQrkM0wjfcB9fNeV0PL1R9TuuJIX3dNHqYbfmBvL7
+
+</pre>
+<p>Using lsof check processes running on volumes</p>
+<pre style="padding-left:30px;"># lsof | grep "<strong>253,2</strong>"
+dd 5526 root 1w BLK 253,2 0x35f600000 15042 /dev/dm-2</pre>
+<p>If processes are running (in this case dd), kill them and remove volume using lvremove. Once this is complete set volume status to available in cinder.</p>
+<pre style="padding-left:30px;"> cinder reset-state --state available &lt;volume id&gt;</pre>
+<p>Finally try deleting the volume. If all else fails you can go into database as last resort and delete things there.</p>
+<pre style="padding-left:30px;"><code>#mysql cinder
+</code><code>&gt; update volumes set deleted=1,status='deleted',deleted_at=now(),updated_at=now() where deleted=0 and id='$volume_uuid';</code></pre>
+<h4>Detach a Volume from Cinder</h4>
+<pre style="padding-left:30px;"><code>#mysql nova
+&gt; delete from block_device_mapping where not deleted and volume_id='$volume_uuid' and project_id='$project_uuid';</code></pre>
+<h4>Delete an Instance</h4>
+<pre style="padding-left:30px;"><code>#mysql nova_db
+&gt; update instances set deleted='1', vm_state='deleted', deleted_at='now()'' where uuid='$vm_uuid' and project_id='$project_uuid';</code></pre>
+<h4>Change provision state of Ironic nodes</h4>
+<pre style="padding-left:30px;"># mysql ironic</pre>
+<pre style="padding-left:30px;">&gt; UPDATE nodes SET provision_state="available", target_provision_state=NULL, reservation=NULL WHERE uuid=&lt;uuid&gt;;</pre>
+<h4>Delete Ironic nodes</h4>
+<pre style="padding-left:30px;"># mysql ironic</pre>
+<pre style="padding-left:30px;">&gt; delete from ports where uuid="0867df16-82c9-4358-9bc9-a36933c361e1";</pre>
+<pre style="padding-left:30px;">&gt; delete from nodes where uuid="92b6477c-d556-4958-9950-5c11ca57e459";</pre>
+<h3>Fixing Horizon Re-login issue</h3>
+<p>There is an issue in OpenStack Kilo with re-login because of bad cookie session. Here is how to fix the issue.</p>
+<pre style="padding-left:30px;">#vi /etc/openstack-dashboard/local_settings</pre>
+<pre class="prettyprint" style="padding-left:30px;"><code><span class="pln">AUTH_USER_MODEL </span><span class="pun">=</span> <span class="str">'openstack_auth.User'</span></code></pre>
+<h3>Heat Topology Images Broken</h3>
+<pre class="highlight plaintext"><code>service openstack-cinder-volume restart</code></pre>
+<p>There is an issue in OpenStack Kilo with the Heat topology images being broken. Here is how to fix it.</p>
+<pre style="padding-left:30px;">#vi /etc/httpd/conf.d/openstack-dashboard.conf</pre>
+<pre style="padding-left:30px;">Alias /static/dashboard /usr/share/openstack-dashboard/static/dashboard</pre>
+<pre style="padding-left:30px;">systemctl restart httpd</pre>
+<h3>Adding Cinder Volume for LVM backend</h3>
+<p>By default RDO will use a loopback device for the Cinder LVM backend. In order to change this you can follow the procedure below assuming disk is called /dev/vdb1.</p>
+<pre style="padding-left:30px;">#<code>openstack-config --set /etc/cinder/cinder.conf DEFAULT lvm_type thin</code></pre>
+<pre style="padding-left:30px;">#systemctl restart <code>openstack-cinder-volume</code></pre>
+<pre style="padding-left:30px;">#fdisk /dev/vdb1</pre>
+<pre style="padding-left:30px;">#fdisk /dev/vdb1</pre>
+<pre style="padding-left:30px;">#pvcreate /dev/vdb1</pre>
+<pre style="padding-left:30px;">#vgcreate cinder_storage /dev/vdb1</pre>
+<pre style="padding-left:30px;">#vgcreate cinder_storage /dev/vdb1</pre>
+<pre style="padding-left:30px;">#vi /etc/cinder/cinder.conf</pre>
+<pre style="padding-left:30px;">[lvm]
+volume_group=my_new_cinder_storage
+volume_driver=cinder.volume.drivers.lvm.LVMVolumeDriver</pre>
+<h3>Force Deleting Keystone Endpoints</h3>
+<pre># mysql keystone</pre>
+<pre>MariaDB [keystone]&gt; delete from endpoint where id="07d77cefad0049b1ae5e1eb6692ebfa1";</pre>
+<h3>Adding NFS as Cinder Backend</h3>
+<p>Cinder can use many different backends and using an NFS backend provides a lot of flexibility in addition to removing compülexity with ISCSI/LVM.</p>
+<p>If SELinux is enabled allow NFS access</p>
+<pre class="screen" style="padding-left:30px;"><code>setsebool -P virt_use_nfs on</code></pre>
+<p>Create map file to make Cinder aware of NFS shares</p>
+<pre style="padding-left:30px;">#vi /etc/cinder/nfs_share
+192.168.0.22:/usr/share/openstack</pre>
+<pre class="screen" style="padding-left:30px;"><code>chown root:cinder /etc/cinder/nfs_share</code></pre>
+<pre class="screen" style="padding-left:30px;"><code>chmod 0640 /etc/cinder/nfs_share</code></pre>
+<p>Configure NFS backend in Cinder</p>
+<pre class="screen" style="padding-left:30px;"><code>openstack-config --set /etc/cinder/cinder.conf nfs nfs_shares_config /etc/cinder/nfs_share</code></pre>
+<pre class="screen" style="padding-left:30px;"><code>openstack-config --set /etc/cinder/cinder.conf nfs volume_driver cinder.volume.drivers.nfs.NfsDriver</code></pre>
+<pre class="screen" style="padding-left:30px;"><code>openstack-config --set /etc/cinder/cinder.conf nfs volume_backend_name nfsbackend</code></pre>
+<p>Optionally you can add any required mount options</p>
+<pre class="screen" style="padding-left:30px;"><code>openstack-config --set /etc/cinder/cinder.conf nfs nfs_mount_options <em class="replaceable">MOUNTOPTIONS</em></code></pre>
+<pre style="padding-left:30px;"># vi /etc/cinder/cinder.conf
+enabled_backends = lvm, nfs</pre>
+<p>Restart Cinder volume service</p>
+<pre class="screen" style="padding-left:30px;"><code>openstack-service restart cinder-volume</code></pre>
+<p>Configure NFS volume type so that is uses the correct backend in Cinder</p>
+<pre class="screen" style="padding-left:30px;"><code>cinder type-create nfstype </code></pre>
+<pre class="screen" style="padding-left:30px;"><code>cinder type-key nfstype set volume_backend_name=nfsbackend</code></pre>
+<h3>Configuring RHEV for OpenStack</h3>
+<p>If you are using RHEV or any virtualization platform under OpenStack then you need to enable nested virtualization and ensure MAC Address Spoofing filters are disabled. Otherwise since OpenStack instance MAC address differs from that of the virtual machine packets will be dropped.</p>
+<p>On RHEV-M</p>
+<pre style="padding-left:30px;">#engine-config -s "UserDefinedVMProperties=macspoof=(true|false)"<code>
+#service ovirt-engine restart</code></pre>
+<p>Edit VM and enable macspoof by setting parameter to 'true'</p>
+<p><img class="alignnone size-full wp-image-1869" src="/assets/2015/09/screenshot-from-2016-04-08-132234.png" alt="Screenshot from 2016-04-08 13:22:34" width="751" height="568" /></p>
+<p>On Hypervisor Hosts</p>
+<pre style="padding-left:30px;">#yum install -y vdsm-hook-macspoof</pre>
+<pre style="padding-left:30px;">#wget http://mirrors.ibiblio.org/ovirt/pub/ovirt-3.5/rpm/el7/noarch/vdsm-hook-nestedvt-4.16.30-0.el7.centos.noarch.rpm</pre>
+<pre style="padding-left:30px;">#rpm -Uvh vdsm-hook-nestedvt-4.16.30-0.el7.centos.noarch.rpm</pre>
+<pre style="padding-left:30px;">#systemctl reboot</pre>
+<p>On OpenStack Instance check to ensure nested virtualization active</p>
+<pre style="padding-left:30px;">#egrep 'svm|vmx' /proc/pcuinfo</pre>
+<h3>Remove Packstack (RDO)</h3>
+<p>If you want to upgrade or change OpenStack deployment and you are using RDO it may be necessary to remove the installation to start cleanly. The below process can be used to accomplish that.</p>
+<p>Delete any VMs that may be running or configured</p>
+<pre class="programlisting language-bash hljs" style="padding-left:30px;"><span class="hljs-keyword">for</span> x <span class="hljs-keyword">in</span> $(virsh list --all | grep instance- | awk <span class="hljs-string">'{print $2}'</span>) ; <span class="hljs-keyword">do</span>
+    virsh destroy <span class="hljs-variable">$x</span> ;
+    virsh undefine <span class="hljs-variable">$x</span> ;
+<span class="hljs-keyword">done</span> ;</pre>
+<p>Reconfigure network interfaces</p>
+<p>Hopefully you saved your original network configuration. You need to replace /etc/sysconfig/network-scripts/ifcfg-* with your original configs or just set IP addresses on those interfaces.</p>
+<pre style="padding-left:30px;">#cp /root/ifcfg-eth0 /etc/sysconfig/network-scripts</pre>
+<pre style="padding-left:30px;">#rm /etc/sysconfig/network-scripts/ifcfg-br-ex</pre>
+<p>Remove packages</p>
+<pre class="programlisting language-bash hljs" style="padding-left:30px;">yum remove -y nrpe openvswitch <span class="hljs-string">"*nagios*"</span> puppet ntp ntp-perl ntpdate <span class="hljs-string">"*openstack*"</span> \
+<span class="hljs-string">"*nova*"</span> <span class="hljs-string">"*keystone*"</span> <span class="hljs-string">"*glance*"</span> <span class="hljs-string">"*cinder*"</span> <span class="hljs-string">"*swift*"</span> \
+mysql mysql-server httpd <span class="hljs-string">"*memcache*"</span> scsi-target-utils \
+iscsi-initiator-utils perl-DBI perl-DBD-MySQL ;</pre>
+<p>Ensure swift processes arent running</p>
+<pre class="programlisting language-bash hljs" style="padding-left:30px;">ps -ef | grep -i repli | grep swift | awk <span class="hljs-string">'{print $2}'</span> | xargs <span class="hljs-built_in">kill</span> ;</pre>
+<p>Remove configuration data. Note if you are using NFS backend you need to unmount it.</p>
+<pre class="programlisting language-bash hljs" style="padding-left:30px;">rm -rf /etc/nagios /etc/yum.repos.d/packstack_* /root/.my.cnf \
+/var/lib/mysql/ /var/lib/glance /var/lib/nova /etc/nova /etc/swift \
+/srv/node/device*/* /var/lib/cinder/ /etc/rsync.d/frag* \
+/var/cache/swift /var/<span class="hljs-built_in">log</span>/keystone ;</pre>
+<p>Remove LVM volume</p>
+<pre class="programlisting language-bash hljs" style="padding-left:30px;">vgremove <span class="hljs-_">-f</span> cinder-volumes ;</pre>
+<p>Delete SSL certs</p>
+<pre class="programlisting language-bash hljs" style="padding-left:30px;">find /etc/pki/tls -name <span class="hljs-string">"ssl_ps*"</span> | xargs rm -rf ;</pre>
+<p>Unmount any leftover mounts</p>
+<pre class="programlisting language-bash hljs" style="padding-left:30px;"><span class="hljs-keyword">for</span> x <span class="hljs-keyword">in</span> $(df | grep <span class="hljs-string">"/lib/"</span> | sed <span class="hljs-_">-e</span> <span class="hljs-string">'s/.* //g'</span>) ; <span class="hljs-keyword">do</span>
+    umount <span class="hljs-variable">$x</span> ;
+<span class="hljs-keyword">done</span></pre>
+<pre style="padding-left:30px;">#systemctl reboot</pre>
+<h3>Summary</h3>
+<p>This was a quick article focused on tips and tricks around OpenStack Kilo. I will continue to update this article with new tips and tricks. If you have anything you came across in OpenStack Kilo, please share.</p>
+<p>Happy OpenStacking!</p>
+<p>(c) 2015 Keith Tenzer</p>

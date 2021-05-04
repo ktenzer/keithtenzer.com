@@ -1,0 +1,63 @@
+---
+layout: post
+title: CloudForms 4.1
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta: {}
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<h3>OpenStack</h3>
+<p>yum install python-redis</p>
+<ol class="orderedlist" type="1">
+<li class="listitem">
+<p class="simpara">Edit <span class="emphasis"><em>/etc/ceilometer/ceilometer.conf</em></span>, and specify the following option:</p>
+<pre class="screen">store_events = True</pre>
+</li>
+<li class="listitem">
+<p class="simpara">Edit <span class="emphasis"><em>/etc/heat/heat.conf</em></span>, and specify the following options:</p>
+<pre class="screen">notification_driver=glance.openstack.common.notifier.rpc_notifier
+notification_topics=notifications</pre>
+</li>
+<li class="listitem">
+<p class="simpara">Edit <span class="emphasis"><em>/etc/nova/nova.conf</em></span>, and specify the following options:</p>
+<pre class="screen">notification_driver=messaging
+notification_topics=notifications</pre>
+</li>
+<li class="listitem">
+<p class="simpara">Restart the Compute service and Orchestration services:</p>
+<pre class="screen"># systemctl restart openstack-heat-api.service \
+  openstack-heat-api-cfn.service \
+  openstack-heat-engine.service \
+  openstack-heat-api-cloudwatch.service
+# systemctl restart openstack-nova-compute.service</pre>
+</li>
+</ol>
+<p>Perform s</p>
+<h3>Ansible</h3>
+<p>&nbsp;</p>
+<h3>Heat</h3>
+<p>&nbsp;</p>
+<h3>OpenShift</h3>
+<p>&nbsp;</p>
+<p>CloudForms Increate /tmp</p>
+<p>18 fdisk /dev/vdc<br />
+19 pvcreate /dev/vdc1<br />
+20 vgdisplay<br />
+21 df -k<br />
+22 vgdisplay<br />
+23 vgextend VG-CFME /dev/vdc1<br />
+24 lvdisplay<br />
+25 lvextend /dev/VG-CFME/lv_tmp /dev/vdc1<br />
+26 xfs_growfs /dev/VG-CFME/lv_tmp</p>

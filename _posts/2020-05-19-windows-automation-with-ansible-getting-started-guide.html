@@ -1,0 +1,221 @@
+---
+layout: post
+title: 'Windows Automation with Ansible: Getting Started Guide'
+date: 2020-05-19 21:15:45.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Ansible
+tags:
+- Automation
+- Windows
+meta:
+  publicize_linkedin_url: ''
+  _publicize_done_22634452: '1'
+  _wpas_done_23861140: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '44449545008'
+  timeline_notification: '1589922946'
+  _rest_api_published: '1'
+  _oembed_5298e9eff679faaa163f4c5996dbb2f6: "{{unknown}}"
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2020/05/19/windows-automation-with-ansible-getting-started-guide/"
+---
+<h2><img class="alignnone  wp-image-2609" style="color:var(--color-text);font-size:16px;font-weight:400;" src="{{ site.baseurl }}/assets/2020/05/ansible_2.png" alt="ansible_2" width="185" height="185" /><img class="alignnone size-full wp-image-12472" style="color:var(--color-text);font-size:16px;font-weight:400;" src="{{ site.baseurl }}/assets/2020/05/plus_sign.gif" alt="plus_sign" width="161" height="161" /><img class="alignnone  wp-image-14629" src="{{ site.baseurl }}/assets/2020/05/cropped-windows-logo1.png" alt="cropped-Windows-logo1" width="179" height="179" /></h2>
+<h2>Overview</h2>
+<p>In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party software and OS updates. Automation is the basis for cloud-computing or cloud-native patterns and breeds a culture of innovation. Let's face it, we cannot innovate, if we are stuck doing mundane tasks and manual labor. Ansible has revolutionized automation because until Ansible, automating was rather complicated and required lots of domain knowledge. Ansible provides an automation language that the entire organization can use because it is so easy and so flexible. The best thing about Ansible though it it brings teams together and fosters a devops culture. It brings the Linux and Windows world together!</p>
+<p><!--more--></p>
+<h2>How Ansible Works</h2>
+<p>Ansible provides a runtime for executing playbooks. A playbook is simply a group of plays which are essentially steps executed in order. A play is one or more tasks. A task is simply the execution of an Ansible module. An Ansible module is python code that does something, like install a software package, update the system, change a configuration file, check if something is set correctly, etc. There are 1000s of Ansible modules and a huge community around it.</p>
+<p>In order to run a playbook against hosts you need an inventory which is simply a grouping of hosts and host vars (parameters). That is about it for the basics. Below is a diagram showing the Ansible automation engine architecture.</p>
+<p><img class="alignnone  wp-image-14622" src="{{ site.baseurl }}/assets/2020/05/ansible_arch.png" alt="ansible_arch" width="1059" height="740" /></p>
+<p>This guide assumes you know some Ansible or are familar with the basics. If not I created an Ansible getting started guide <a href="https://keithtenzer.com/2017/11/09/ansible-getting-started-guide/">here</a>. I highly recommend giving it a look before proceeding.</p>
+<h2>Prerequisites</h2>
+<p>In order for a windows host to be managed by Ansible there are a few prerequisites</p>
+<ul>
+<li>Powershell version 3.0 or higher (Should be fine with Windows 2012 or higher)</li>
+<li>.NET Framework 4.0 or higher (should be fine with Windows 2012 or higher)</li>
+<li>Windows Remote Management Listener or SSH (cygwin)</li>
+<li>Windows 7, 8.1, and 10, and server OSs including Windows Server 2008, 2008 R2, 2012, 2012 R2, 2016, and 2019</li>
+<li>Chocolatey for installing 3rd party software</li>
+<li>WSUS for updating OS packages and patching</li>
+</ul>
+<h2>Install Chocalatey and WSUS</h2>
+<p>There are various tools that can be used. I recommend using Chocolatey for installing packages and WSUS for OS updates/patching.</p>
+<p><strong>Install Chocalately</strong></p>
+<p>Using powershell we can install chocalately.</p>
+<pre>PS C:\windows\system32&gt; Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))</pre>
+<p><strong>Install WSUS</strong></p>
+<p>Open server manager. In the top right under manage you can add or change roles.</p>
+<p><img class="alignnone  wp-image-14632" src="{{ site.baseurl }}/assets/2020/05/server_manager.png" alt="server_manager" width="814" height="429" /></p>
+<p>Under server roles select Windows Service Update Services. This will install WSUS. Once installed there will be a WSUS option in server manager. You can select it and configure what packages should be updated, etc.</p>
+<p><img class="alignnone  wp-image-14633" src="{{ site.baseurl }}/assets/2020/05/wsus.png" alt="wsus" width="844" height="409" /></p>
+<p>Open WSUS and check that the computer is showing up under 'All Computers'. If not and you are running outside of domain you may need the following fix.</p>
+<pre>c:\&gt; net stop wuauserv
+c:\&gt; regsvr32 /s wuapi.dll
+c:\&gt; regsvr32 /s wups.dll
+c:\&gt; regsvr32 /s wuaueng.dll
+c:\&gt; regsvr32 /s wucltui.dll
+c:\&gt; regsvr32 /s msxml3.dll
+c:\&gt; cd %windir%\SoftwareDistribution
+c:\&gt; rd /s/q DataStore
+c:\&gt; mkdir DataStore
+c:\&gt; rd /s/q Download
+c:\&gt; mkdir Download
+c:\&gt; net start wuauserv
+c:\&gt; reg delete HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate /v AccountDomainSid /f
+c:\&gt; reg delete HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate /v PingID /f
+c:\&gt; reg delete HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate /v SusClientId /f
+c:\&gt; wuauclt /resetauthorization
+c:\&gt; wuauclt /detectnow
+c:\&gt; wuauclt /reportnow</pre>
+<h2>Configuring Windows Remote Management for Ansible</h2>
+<p>Ansible requires no agents. It uses what the OS provides for communication. In Windows you can use SSH or Windows Remote Management (WinRM). Since SSH is more or less bolted on, WinRM is usually the preferred choice.</p>
+<p><strong>Test to ensure WinRM is working</strong></p>
+<p>First install WinRM if it isn't installed. Execute the hostname command through WinRM.</p>
+<pre>PS C:\windows\system32&gt; winrs -r:http://:5985/wsman -u: -p: hostname
+win2012</pre>
+<p>Optionally you can also test WinRM by making a remote desktop connection from another windows host.</p>
+<p>Note: you may run into an issue where you get an authentication error and a CredSSL issue if you have an older windows version. This can also happen if you don't have a valid SSL certificate. If you run into this issue, update your registry.</p>
+<pre>c:\&gt;reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System\CredSSP\Parameters" /f /v AllowEncryptionOracle /t REG_DWORD /d 2</pre>
+<p><strong>Enable basic auth</strong></p>
+<p>There are several authentication methods. In this example we will use basic authentication which is username/password. This is of course the least secure method.</p>
+<pre><span class="l l-Scalar l-Scalar-Plain">PS C:\&gt; Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true</span></pre>
+<p><strong>Update WinRM </strong></p>
+<p>A script is provided by Ansible community to check WinRM and make necessary changes to allow Ansible to connect. In this case we are using basic authentication but likely you will want to use something more secure. The script can be found <a href="https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1">here</a> and other authentication options are documented in the script header.</p>
+<p>Open a powershell command prompt.</p>
+<p>Store URL path to script.</p>
+<pre>PS C:\&gt; $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"</pre>
+<p>Store location for the script</p>
+<pre>PS C:\&gt; $file = "$env:temp\ConfigureRemotingForAnsible.ps1"</pre>
+<p>Download script and output to file locally.</p>
+<pre>PS C:\&gt; (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)</pre>
+<p>Execute the script.</p>
+<pre>PS C:\&gt; powershell.exe -ExecutionPolicy ByPass -File $file
+Ok.</pre>
+<p><strong>Check WinRM connection</strong></p>
+<pre>PS C:\windows\system32&gt; winrm enumerate winrm/config/Listener
+Listener
+Address = *
+Transport = HTTP
+Port = 5985
+Hostname
+Enabled = true
+URLPrefix = wsman
+CertificateThumbprint
+ListeningOn = 10.10.1.139, 127.0.0.1, ::1, fe80::5efe:10.10.1.139%22, fe80::8155:327a:aeaf:365a%12
+
+Listener
+Address = *
+Transport = HTTPS
+Port = 5986
+Hostname
+Enabled = true
+URLPrefix = wsman
+CertificateThumbprint = 7a38de2c212764a54de106dc756f7cbc275156a3
+ListeningOn = 10.10.1.139, 127.0.0.1, ::1, fe80::5efe:10.10.1.139%22, fe80::8155:327a:aeaf:365a%12</pre>
+<p>Ensure the HTTP/HTTPS ports are open.</p>
+<p>More details about WinRM setup and how to setup a listener manually are documented <a href="https://docs.ansible.com/ansible/latest/user_guide/windows_setup.html#winrm-setup">here</a>. In this case I used the default listener configured by WinRM.</p>
+<h2>Create Inventory File</h2>
+<p>We will create an inventory file with just a single host in a group called windows. From here on out we will be working on a Linux server where we have Ansible installed.</p>
+<p><strong>Create Ansible inventory file</strong></p>
+<pre>$ vi inventory
+[windows]
+138.204.12.111</pre>
+<p><strong>Test ansible connection</strong></p>
+<p>Using the inventory file we can test if Ansible can communicate with our windows server.</p>
+<pre>$ ansible -i ../inventory windows -m win_ping -e ansible_connection=winrm \
+-e ansible_user=Admin -e ansible_password=&lt;password&gt; \
+-e ansible_winrm_transport=basic \
+-e ansible_winrm_server_cert_validation=ignore
+
+138.201.147.202 | SUCCESS =&gt; {
+"changed": false,
+"ping": "pong"
+}</pre>
+<h2>Windows Patch Management</h2>
+<p>Now that Ansible is working with WinRM we can automate. In this case we will automate software package installation and updates.</p>
+<p>Playbook and roles are available <a href="https://github.com/ktenzer/ansible-windows">here</a>.</p>
+<p><strong>Create Playbook</strong></p>
+<p>We haven't talked about roles. In Ansible roles are how we make playbooks reusable. It is always good practice to create roles. A role essentially allows you to organize Ansible plays and their dependencies together allowing them to be consumed easily. In order to use roles you need to create a certain directory structure and hierarchy. Create a playbook that imports our roles.</p>
+<pre>$ vi windows_baseline.yaml
+---
+- name: Windows Baseline
+  hosts: "{{ target }}"
+  connection: winrm
+  gather_facts: true
+  vars:
+    ansible_user: "{{ user }}"
+    ansible_password: "{{ password }}"
+    ansible_connection: winrm 
+    ansible_winrm_transport: basic 
+    ansible_winrm_server_cert_validation: ignore
+
+  tasks:
+    - name: Install Baseline Packages
+      include_role:
+        name: install
+
+    - name: Perform Updates
+      include_role:
+        name: updates
+</pre>
+<p>Here we are setting hosts, ansible user and password as variables. These inputs must be provided when executing the playbook. Hosts should be the name of our host group from our inventory file. This playbook has two tasks, a role to install packages and a role to do an OS update.</p>
+<p><strong>Create Ansible install role</strong></p>
+<p>At a minimum your role will need a tasks directory</p>
+<pre>$ mkdir -p roles/install/tasks</pre>
+<p>Create a task to install git using the chocalatey module.</p>
+<pre>$ vi roles/install/tasks/main.yaml
+---
+- name: Install Git
+  win_chocolatey:
+    name: git
+    state: present
+</pre>
+<p><strong>Create Ansible patch update role</strong></p>
+<p>At a minimum your role will need a tasks directory</p>
+<pre>$ mkdir -p roles/updates/tasks</pre>
+<p>Create a task to perform an OS update.</p>
+<pre>vi roles/updates/tasks/main.yaml
+---
+- name: Update windows packages
+  win_updates:
+    category_names:
+      - CriticalUpdates
+      - SecurityUpdates
+    reboot: yes
+    reboot_timeout: 500
+</pre>
+<p><strong>Run playbook using inventory</strong></p>
+<p>The '-vvvvv' allows the playbook to run in debug mode for maximum verbosity.</p>
+<pre>$ ansible-playbook -i ./inventory -e target=windows -e user=Admin -e password= windows_baseline.yaml
+PLAY [Windows Baseline] ****************************************************************************
+
+TASK [Gathering Facts] *****************************************************************************
+ok: [138.201.147.202]
+
+TASK [Install Baseline Packages] *******************************************************************
+
+TASK [install : Install Git] ***********************************************************************
+ok: [138.201.147.202]
+
+TASK [Perform Updates] *****************************************************************************
+
+TASK [updates : Update windows packages] ***********************************************************
+changed: [138.201.147.202]
+
+PLAY RECAP *****************************************************************************************
+138.201.147.202            : ok=3    changed=1    unreachable=0    failed=0    skipped=0    rescued=
+</pre>
+<p><a href="https://github.com/ansible/ansible-examples/tree/master/windows">Here</a> are some additional examples of windows playbooks that may be of interest on your journey.</p>
+<h2>Summary</h2>
+<p>In this article we discussed the value of automation and why it is just a game changer. We provided a step-by-step on preparing a windows host for Ansible. Finally using the Ansible automation language, showed how to use native windows tooling to install and update OS patches. Hopefully this will provide a good starting point for a journey into windows automation with Ansible.</p>
+<p>(c) 2020 Keith Tenzer</p>

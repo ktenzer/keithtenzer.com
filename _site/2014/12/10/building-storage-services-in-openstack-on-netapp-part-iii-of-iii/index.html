@@ -1,0 +1,182 @@
+<p>Welcome to part three of the three-part series on creating storage services in OpenStack on NetApp. In this post we will look at how to configure storage services within OpenStack utilising NetApp storage.  In part one of the series we looked at how to install and configure OpenStack. In part two we looked at how to configure underlying NetApp storage to support OpenStack storage services.<!--more--></p>
+<ul>
+<li><a href="http://keithtenzer.com/2014/12/05/creating-storage-services-in-openstack-on-netapp-part-i-of-iii/">Building Storage Services in OpenStack on NetApp - Part I of III</a></li>
+<li><a href="http://keithtenzer.com/2014/12/09/building-storage-services-in-openstack-on-netapp-part-ii-of-iii/">Building Storage Services in OpenStack on NetApp - Part II of III</a></li>
+</ul>
+<h3>Overview</h3>
+<p>OpenStack of course consists of many decoupled services that run independently but at the same time integrate with one another. NetApp has integrations in the following OpenStack services: Cinder (block storage), Glance (image services), Swift (object storage) and Manilla (shared file services).</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/openstack_ntap_integration_overview.jpg"><img class="  wp-image-105 aligncenter" src="/assets/2014/12/openstack_ntap_integration_overview.jpg?w=300" alt="openstack_ntap_integration_overview" width="704" height="277" /></a></p>
+<h3>Cinder Configuration</h3>
+<p>Cinder provides block storage services in OpenStack. One very important thing to keep in mind is that while Cinder presents block devices to compute resources, underlying storage such as NetApp can expose either ISCSI or NFS storage to Cinder. In my example below I am going to show you how to set up two NFS storage backends: one for primary storage and the other DR. A storage backend maps to a NetApp Clustered Data ONTAP storage virtual machine (SVM), so for each SVM you will create a storage backend in Cinder.</p>
+<h4>Edit the cinder.conf (/etc/cinder/cinder.conf)</h4>
+<p>Note: if we chose to do the RDO installation using answers file then we already configured the first storage backend cdotNfs and just need to add the backend for cdotNfsDr.</p>
+<p>[code language="text"]</p>
+<p>enabled_backends=cdotNfs,cdotNfsDr</p>
+<p>[cdotNfs]<br />
+volume_backend_name=cdotNfs<br />
+volume_driver=cinder.volume.drivers.netapp.common.NetAppDriver<br />
+netapp_server_hostname=&lt;cluster mgmt vserver&gt;<br />
+netapp_server_port=80<br />
+netapp_storage_protocol=nfs<br />
+netapp_storage_family=ontap_cluster<br />
+netapp_login=&lt;username&gt;<br />
+netapp_password=&lt;password&gt;<br />
+netapp_vserver=&lt;storage virtual machine&gt;<br />
+nfs_shares_config=/etc/cinder/cdotNfs_exports.conf<br />
+netapp_copyoffload_tool_path=/usr/bin/na_copyoffload_64</p>
+<p>[cdotNfsDr]<br />
+volume_backend_name=cdotNfsDr<br />
+volume_driver=cinder.volume.drivers.netapp.common.NetAppDriver<br />
+netapp_server_hostname=&lt;cluster mgmt vserver&gt;<br />
+netapp_server_port=80<br />
+netapp_storage_protocol=nfs<br />
+netapp_storage_family=ontap_cluster<br />
+netapp_login=&lt;username&gt;<br />
+netapp_password=&lt;password&gt;<br />
+netapp_vserver=&lt;storage virtual machine&gt;<br />
+[/code]</p>
+<h4>Edit the cdotNfs_exports.conf (/etc/cinder/cdotNfs_exports.conf)</h4>
+<p>Make the three NetApp volumes on our storage virtual machine available to Cinder backend [cdotNfs]:</p>
+<p>[code language="text"]<br />
+192.168.160.100:/openstack_gold<br />
+192.168.160.100:/openstack_silver<br />
+192.168.160.100:/openstack_bronze<br />
+[/code]</p>
+<p>Note: make sure you use a data LIF on the storage virtual machine</p>
+<h4>Verify Configuration</h4>
+<p>Once we have configured our storage backends we can verify them following the below steps:</p>
+<ul>
+<li>. /root/keystonerc_admin</li>
+<li>service openstack-cinder-api restart</li>
+<li>service openstack-cinder-volume restart</li>
+<li>cinder service-list</li>
+</ul>
+<p>The "cinder service-list" command will show us the two new storage backends:</p>
+<ul>
+<li>&lt;hostname&gt;@cdotNfs</li>
+<li>&lt;hostname&gt;@cdotNfsDr</li>
+</ul>
+<h3>Glance</h3>
+<p>Glance is the images service in OpenStack. It stores and provides images as well as templates to the Nova compute service. NetApp storage provides two key benefits for Glance:</p>
+<ul>
+<li>Save network bandwidth by efficiently cloning images via copy offload driver</li>
+<li>Reduce storage requirements by enabling dedup</li>
+</ul>
+<h4>Edit the glance-api.conf (/etc/glance/glance-api.conf)</h4>
+<p>Mount a NetApp volume (openstack_glance) on the OpenStack host or the host running the glance service. The volume must be mounted at boot so make sure you add it to the /etc/fstab.</p>
+<p>[code language="text"]</p>
+<p>filesystem_store_datadir=/glance</p>
+<p>filesystem_store_metadata_file=/etc/glance/metadata.conf</p>
+<p>[/code]</p>
+<h4>Edit the metadat.conf (/etc/glance/metadata.conf)</h4>
+<p>The purpose of this file is to enable glance to store images and templates on NetApp storage.</p>
+<p>[code language="text"]</p>
+<p>{<br />
+&quot;share_location&quot;: &quot;nfs://192.168.160.100:/openstack_glance&quot;,<br />
+&quot;mount_point&quot;: &quot;/glance&quot;,<br />
+&quot;type&quot;: &quot;nfs&quot;<br />
+}</p>
+<p>[/code]</p>
+<h3>Enable copy offload driver</h3>
+<p>The copy offload driver allows Glance to use NetApp file cloning capabilities providing near instant image copies to the Nova compute service. Without copy offload images must be copied over the network between Glance and Nova.</p>
+<p>Copy offload requirements:</p>
+<ul class="itemizedlist" type="disc">
+<li class="listitem">The storage system must have Data ONTAP v8.2 or greater installed</li>
+<li class="listitem">To configure the <span class="highlight">copy</span> <span class="highlight">offload</span> workflow, enable NFS v4.0 or greater and export it from the SVM</li>
+<li class="listitem">The vStorage feature must be enabled on each storage virtual machine (SVM, also known as a Vserver) that is permitted to interact with the <span class="highlight">copy</span> <span class="highlight">offload</span> client. To set this feature, you can use the <code class="literal">vserver nfs modify - -vstorage enabled –v4.0 enabled</code> CLI command</li>
+</ul>
+<p>To install the copy offload driver following the following steps:</p>
+<ul>
+<li><a href="http://mysupport.netapp.com/NOW/download/tools/ntap_openstack_nfs/">Download copy offload tool</a></li>
+<li>Copy the binary to /usr/bin/na_copyoffload_64</li>
+<li>Ensure the permissions are 755</li>
+</ul>
+<h3>Create Storage Services</h3>
+<p>One of the major features of cinder is the ability to configure storage services. Below is an example of how we can create a service: gold, silver and bronze from our NetApp storage volumes. The NetApp driver for OpenStack exposes capabilities which we can use to define services.</p>
+<p>Below is a table of all the NetApp storage capabilities we can use to define services in OpenStack:</p>
+<table id="cinder.netapp.extra_specs" style="height:740px;" width="634" rules="all">
+<thead>
+<tr>
+<td style="text-align:center;">Extra spec</td>
+<td style="text-align:center;">DataType</td>
+<td style="text-align:center;">Description</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="option">netapp:raid_type</code></td>
+<td>String</td>
+<td>Limit the candidate volume list based on one of the following raid types: <code class="option">raid4</code>, <code class="option">raid_dp</code>.</td>
+</tr>
+<tr>
+<td><code class="option">netapp:disk_type</code></td>
+<td>String</td>
+<td>Limit the candidate volume list based on one of the following disk types: <code class="option">ATA</code>, <code class="option">BSAS</code>, <code class="option">EATA</code>, <code class="option">FCAL</code>,<code class="option">FSAS</code>, <code class="option">LUN</code>, <code class="option">MSATA</code>, <code class="option">SAS</code>, <code class="option">SATA</code>, <code class="option">SCSI</code>, <code class="option">XATA</code>, <code class="option">XSAS</code>, or <code class="option">SSD</code>.</td>
+</tr>
+<tr>
+<td><code class="option">netapp:qos_policy_group</code></td>
+<td>String</td>
+<td>Specify the name of a QoS policy group, which defines measurable Service Level Objectives, that should be applied to the Cinder volume at the time of volume creation. Ensure that the QoS policy group object within Data ONTAP should be defined before a Cinder volume is created, and that the QoS policy group is not associated with the destination FlexVol volume.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_mirrored</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that are mirrored on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_unmirrored</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that are not mirrored on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_dedup</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that have deduplication enabled on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_nodedup</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that have deduplication disabled on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_compression</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that have compression enabled on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_nocompression</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that have compression disabled on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_thin_provisioned</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that support thin  provisioning on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_thick_provisioned </code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that support thick   provisioning on the storage controller.</td>
+</tr>
+</tbody>
+</table>
+<h4>Gold Service</h4>
+<p>Gold - Highest performance storage (SSD) and Disaster Recovery</p>
+<ul>
+<li>cinder type-key gold set netapp_mirrored=true</li>
+</ul>
+<h4>Silver Service</h4>
+<p>Silver - Highest performance storage with compression</p>
+<ul>
+<li>cinder type-key silver set netapp_compression=true</li>
+</ul>
+<h4>Bronze Service</h4>
+<p>Bronze Lower performance storage with dedup</p>
+<ul>
+<li>cinder type-key bronze setnetapp_dedup=true</li>
+</ul>
+<p>Note: you can add more than one capability to a storage service.</p>
+<h3> Create Instance using Storage Services</h3>
+<p>Finally we can use the storage services to create a cinder volume and spawn an instance based on the new cinder volume. Log into the OpenStack UI horizon. Under project-&gt;volumes select "create volume". You can now select a storage service (gold, silver or bronze), create a cinder volume and attach it to an OS image. Below is an example:</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/screen-shot-2014-12-02-at-18-25-18.png"><img class="  wp-image-65 aligncenter" src="/assets/2014/12/screen-shot-2014-12-02-at-18-25-18.png?w=300" alt="Screen Shot 2014-12-02 at 18.25.18" width="617" height="555" /></a></p>
+<p>(c) 2014 Keith Tenzer</p>

@@ -1,0 +1,235 @@
+<h3>Overview</h3>
+<p>Pacemaker is a <a href="http://clusterlabs.org/.">Open Source</a>, High Availability cluster. Pacemaker and in general Linux clustering have been around for a very long time. Both matured greatly over the past 10 to 15 years.Today Pacemaker is a very simple streamlined bundle that includes the Pacemker clustering, fencing agents, resource agents and the heartbeat (corrosync). Pacemaker is available in Red Hat Enterprise Linux 7 as the High Availability option. In this article I will provide an overview of Pacemaker and a tutorial on how to setup a two-node pacemaker cluster for Apache using shared storage.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/06/fence-example-fc.png"><img class="alignnone  wp-image-1018" src="/assets/2015/06/fence-example-fc.png?w=300" alt="fence-example-fc" width="1190" height="956" /></a><br />
+<!--more--></p>
+<h3>Pacemaker Basics</h3>
+<p>As mentioned Pacemaker has a few components: clustering, fence agents, resource agents and corrosync.</p>
+<h4>Clustering</h4>
+<p>Pacemaker provides all the packages to configure and manage a high availability cluster using the CLI or GUI.</p>
+<h4>Fence Agents</h4>
+<p>Fencing is about shutting off a node that has become unstable or unresponsive so that it cannot damage the cluster or any cluster resources. The main reason we have fencing is to illiminate the possibility of a split-brain where multiple nodes access resources at same time. A split-brain can lead to data corruption and general cluster malfunction. There are two types of fencing agents in Pacemaker: power and storage. The most commonly used fencing agent is power. These agents connect to hardware such as UPS, blade chasis, iLO cards, etc and are responsible for fencing a node in the event that it becomes unresponsive. The other type of fencing is storage based. Typically storage-based fencing uses SCSI-3 PR (Persistent Reservation) that ensures only one node can ever write or access storage at time. This requires of course that the shared storage is used and that it supports SCSI-3 PR. The daemon or service responsible for fencing in Pacemaker is stonith (shoot the other node in the head).</p>
+<p>Open source clustering in regards to fencing design differs slightly from commercial clustering. Open source has always taken a very conservative approach and IMHO that is a good thing. The last thing you want it data corruption. If fencing does not work Pacemaker will make the entire cluster unavailable. This means manual intervention will be required to bring resources online but your data is safe. Commercial solutions have very elaborate and complex fencing proceadures and try to always ensure failover is automated even if a problem occurs. I am not saying commercial software isn't bullet-proof, just that there is a design difference in this regard.</p>
+<h4>Resource Agents</h4>
+<p>Pacemaker resource agents are packages that integrate applications. Resource agents understand a specific application and it's dependencies. As such using resource agent (if one exists) makes configuration of applications much simpler. It also ensures that best practice around clustering for given application are enforced.</p>
+<h4>Corrosync</h4>
+<p>Pacemaker requires a heartbeat for internal communications . The corrosync daemon provides inter-cluster communications between cluster nodes. It is also responsible for quorum if a quorum is used.</p>
+<h3>Pacemaker Tutortial</h3>
+<p>Now that we have a high-level understanding of Pacemaker it is time to get our hands a bit dirty and configure a cluster. For this tutorial we will use a simple example of a two-node cluster for Apache. We will configure the cluster, setup storage-based fencing and configure a resource group for Apache.</p>
+<h4>Install Pacemaker</h4>
+<p>Perform following steps on both cluster nodes</p>
+<ul>
+<li>Install RHEL / CentOS 7.1 (minimal)</li>
+<li>Configure subscription and repos (RHEL 7)</li>
+</ul>
+<pre style="padding-left:30px;">#subscription-manager register</pre>
+<pre style="padding-left:30px;">#subscription-manager list --available</pre>
+<pre style="padding-left:30px;">#subscription-manager attach --pool=&lt;pool id&gt;</pre>
+<pre style="padding-left:30px;">#subscription-manager repos --enable=rhel-ha-for-rhel-7-server-rpms</pre>
+<ul>
+<li>Install Pacemaker packages</li>
+</ul>
+<pre style="padding-left:30px;">#yum update -y</pre>
+<pre style="padding-left:30px;">#yum install -y pcs fence-agents-all</pre>
+<ul>
+<li>Open firewall ports</li>
+</ul>
+<pre style="padding-left:30px;">#firewall-cmd --permanent --add-service=high-availability</pre>
+<pre style="padding-left:30px;">#firewall-cmd --reload</pre>
+<ul>
+<li>Set hacluster password</li>
+</ul>
+<pre style="padding-left:30px;">#echo CHANGEME | passwd --stdin hacluster</pre>
+<ul>
+<li>Enable services</li>
+</ul>
+<pre style="padding-left:30px;">#systemctl start pcsd.service</pre>
+<pre style="padding-left:30px;">#systemctl enable pcsd.service</pre>
+<ul>
+<li>Configure ISCSI client</li>
+</ul>
+<pre style="padding-left:30px;">#yum install -y iscsi-initiator-utils</pre>
+<pre style="padding-left:30px;">#vi /etc/iscsi/initiatorname.iscsi</pre>
+<pre style="padding-left:30px;">InitiatorName=iqn.2015-06.com.lab:&lt;hostname&gt;</pre>
+<h4>Setup Shared ISCSI Storage</h4>
+<p>These steps are optional if you have ISCSI storage already configured. In these steps we will configure a third RHEL / CentOS system to provide shared storage using ISCSI.</p>
+<ul>
+<li>Install RHEL / CentOS 7.1 (minimal)</li>
+<li>Install ISCSI packages</li>
+</ul>
+<pre style="padding-left:30px;">#yum install -y targetcli</pre>
+<ul>
+<li>Enable ISCSI service</li>
+</ul>
+<pre style="padding-left:30px;">#systemctl enable target</pre>
+<ul>
+<li>Create LVM disk (this will be the shared storage device)</li>
+</ul>
+<pre style="padding-left:30px;">#fdisk /dev/vdb (create new partition of type LVM)</pre>
+<pre style="padding-left:30px;">#pvcreate /dev/vdb1</pre>
+<pre style="padding-left:30px;">#vgcreate cluster_vg /dev/vdb1</pre>
+<pre style="padding-left:30px;">#lvcreate -L 1G cluster_vg -n cluster_disk1</pre>
+<pre style="padding-left:30px;">#lvcreate -L 990M cluster_vg -n cluster_disk1</pre>
+<pre style="padding-left:30px;">#mkfs -t ext4 /dev/cluster_vg/cluster_disk1</pre>
+<ul>
+<li>Configure ISCSI target</li>
+</ul>
+<pre style="padding-left:30px;"># targetcli
+/&gt; backstores/block create disk1 /dev/cluster_vg/cluster_disk1
+/&gt; iscsi/ create iqn.2015-06.com.lab:rhel7
+/&gt; /iscsi/iqn.2015-06.com.lab:rhel7/tpg1/portals/ create
+/&gt; iscsi/iqn.2015-06.com.lab:rhel7/tpg1/luns create /backstores/block/disk1
+/&gt; iscsi/iqn.2015-06.com.lab:rhel7/tpg1/acls create iqn.2015-06.com.lab:pm-node1
+/&gt; iscsi/iqn.2015-06.com.lab:rhel7/tpg1/acls create iqn.2015-06.com.lab:pm-node2
+/&gt; exit</pre>
+<ul>
+<li>Open firewall ports</li>
+</ul>
+<pre style="padding-left:30px;">#firewall-cmd --permanent --add-port=3260/tcp</pre>
+<pre style="padding-left:30px;">#firewall-cmd --reload</pre>
+<p>Create Cluster</p>
+<p>At this point both cluster nodes have all the cluster packages and have access to shared ISCSI storage. In this section we will configure the cluster on one of the nodes.</p>
+<ul>
+<li>Authorize cluster nodes</li>
+</ul>
+<pre style="padding-left:30px;">#pcs cluster auth pm-node1.lab.com pm-node2.lab.com
+Username: hacluster
+Password:
+pm-node1.lab.com: Authorized
+pm-node2.lab.com: Authorized</pre>
+<ul>
+<li>Setup the cluster</li>
+</ul>
+<pre style="padding-left:30px;">#pcs cluster setup --start --name mycluster pm-node1.lab.com pm-node2.lab.com</pre>
+<ul>
+<li>Enable services</li>
+</ul>
+<pre style="padding-left:30px;">#pcs cluster enable --all</pre>
+<ul>
+<li>Check cluster status</li>
+</ul>
+<pre style="padding-left:30px;"># pcs cluster status
+Cluster Status:
+Last updated: Fri Jun 19 14:10:24 2015
+Last change: Fri Jun 19 14:09:15 2015
+Stack: corosync
+Current DC: pm-node1.lab.com (1) - partition with quorum
+Version: 1.1.12-a14efad
+2 Nodes configured
+0 Resources configured
+PCSD Status:
+pm-node1.lab.com: Online
+pm-node2.lab.com: Online</pre>
+<h4>Storage Fencing</h4>
+<p>Before creating resource groups fencing needs to be configured. In this example we will use storage fencing and fence_scsi. Fencing is to be configured on one of the nodes.</p>
+<ul>
+<li>Configure stonith</li>
+</ul>
+<pre style="padding-left:30px;">#pcs stonith create scsi fence_scsi pcmk_host_list="pm-node1.lab.com pm-node2.lab.com" pcmk_monitor_action="metadata" pcmk_reboot_action="off"devices="/dev/mapper/cluster_vg-disk1" meta provides="unfencing"</pre>
+<ul>
+<li>Check status of fencing</li>
+</ul>
+<pre style="padding-left:30px;">#pcs stonith show
+ scsi (stonith:fence_scsi): Started</pre>
+<h4>Resource Group</h4>
+<p>Now that the cluster is running and fencing has been configured we can setup the resource group. A resource group defines application dependencies and ensures application is started correctly in the event of a failover. A resource group is to be configured on one of the nodes.</p>
+<ul>
+<li>Install application packages (Apache)</li>
+</ul>
+<pre style="padding-left:30px;">#yum install -y httpd wget</pre>
+<ul>
+<li>Open firewall ports</li>
+</ul>
+<pre style="padding-left:30px;">#firewall-cmd --permanent --add-service=http</pre>
+<pre style="padding-left:30px;">#fireall-cmd --reload</pre>
+<ul>
+<li>Configure Apache</li>
+</ul>
+<pre style="padding-left:30px;">#vi /etc/httpd/conf/httpd.conf
+&lt;Location /server-status&gt;
+SetHandler server-status
+Order deny,allow
+Deny from all
+Allow from 127.0.0.1
+&lt;/Location&gt;</pre>
+<ul>
+<li>Mount shared storage</li>
+</ul>
+<pre style="padding-left:30px;"># mount /dev/cluster_vg /disk1 /var/www/
+# mkdir /var/www/html
+# mkdir /var/www/cgi-bin
+# mkdir /var/www/error
+# restorecon -R /var/www
+# cat &lt;&lt;-END&gt;/var/www/html /index.html
+&lt;html&gt;
+&lt;body&gt;Hello&lt;/body&gt;
+&lt;/html&gt;
+END
+#umount /var/www</pre>
+<ul>
+<li>Configure LVM so it only starts volumes not owned by the cluster</li>
+</ul>
+<p>Note: it is important to not allow LVM to start the cluster owned volume group, in this case cluster_vg.</p>
+<pre style="padding-left:30px;">#vi /etc/lvm/lvm.conf</pre>
+<pre style="padding-left:30px;">volume_list = [ "rhel" ]
+use_lvmetad=0</pre>
+<ul>
+<li>Ensure boot image does not try and control cluster volume</li>
+</ul>
+<pre style="padding-left:30px;">#dracut -H -f /boot/initramfs-$(uname -r).img $(uname -r)</pre>
+<ul>
+<li>Create resource for LVM disk</li>
+</ul>
+<pre style="padding-left:30px;">#pcs resource create disk1 LVM volgrpname= cluster_vg exclusive= true --group apachegroup</pre>
+<ul>
+<li>Create resource for filesystem</li>
+</ul>
+<pre style="padding-left:30px;">#pcs resource create apache_fs Filesystem device="/dev/cluster_vg/disk1" directory="/var/www" fstype="ext4 " --group apachegroup</pre>
+<ul>
+<li>Create resource for virtual IP address</li>
+</ul>
+<pre style="padding-left:30px;">#pcs resource create VirtualIP IPaddr2 ip=192.168.122.52 cidr_netmask=24 --group apachegroup</pre>
+<ul>
+<li>Create resource for website</li>
+</ul>
+<pre style="padding-left:30px;">#pcs resource create Website apache configfile="/etc/httpd/conf/httpd.conf" statusurl="http://127.0.0.1/server-status" --group apachegroup</pre>
+<p>At this point the cluster should be configured and look somthing similar to our example.</p>
+<pre style="padding-left:30px;">#pcs status
+Cluster name: mycluster
+Last updated: Mon Jun 22 14:47:49 2015
+Last change: Mon Jun 22 12:25:14 2015
+Stack: corosync
+Current DC: pm-node2.lab.com (2) - partition with quorum
+Version: 1.1.12-a14efad
+2 Nodes configured
+5 Resources configured
+Online: [ pm-node1.lab.com pm-node2.lab.com ]
+Full list of resources:
+Resource Group: apachegroup
+ disk1 (ocf::heartbeat:LVM): Started pm-node1.lab.com 
+ VirtualIP (ocf::heartbeat:IPaddr2): Started pm-node1.lab.com 
+ apache_fs (ocf::heartbeat:Filesystem): Started pm-node1.lab.com 
+ Website (ocf::heartbeat:apache): Started pm-node1.lab.com 
+ scsi (stonith:fence_scsi): Started pm-node2.lab.com
+PCSD Status:
+ pm-node1.lab.com: Online
+ pm-node2.lab.com: Online
+Daemon Status:
+ corosync: active/enabled
+ pacemaker: active/enabled
+ pcsd: active/enabled</pre>
+<p>In the event that there are problems the "pcs resource debug-start &lt;resource&gt;" command can be used for troubleshooting.</p>
+<pre style="padding-left:30px;">#pcs resource debug-start disk1</pre>
+<h3>Pacemaker GUI</h3>
+<p>I was pleasantly surprised with the new Pacemaker GUI. The upstream community has done a terrific job. The GUI can even be used to manage multiple clusters. Below are some screenshots to give you a better idea.</p>
+<p>To access GUI use the following URL and login as hacluster.</p>
+<pre style="padding-left:30px;">https://pm-node1:2224</pre>
+<p>Below screenshot shows the interface for managing clusters.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/06/pacemake_gui_0.png"><img class="alignnone  wp-image-1008" src="/assets/2015/06/pacemake_gui_0.png?w=300" alt="Pacemake_GUI_0" width="1160" height="437" /></a></p>
+<p>Below screenshot shows the interface for managing nodes.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/06/pacemake_gui_1.png"><img class="alignnone  wp-image-1009" src="/assets/2015/06/pacemake_gui_1.png?w=300" alt="Pacemake_GUI_1" width="1141" height="1012" /></a></p>
+<p>Below screenshot shows the interface for managing resources.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/06/pacemake_gui_2.png"><img class="alignnone  wp-image-1010" src="/assets/2015/06/pacemake_gui_2.png?w=300" alt="Pacemake_GUI_2" width="1122" height="965" /></a></p>
+<h3>Summary</h3>
+<p>Pacemaker is the result of open source innovation and long maturity. We have learned about Pacemaker basics and even configured a cluster for Apache using shared storage fencing. There is no doubt that Pacemaker is a viable alternative to commercial clustering from HP, IBM, Oracle and Microsoft. If you interested in traditional clustering I highly recommend giving Pacemaker a chance, you won't be disappointed.</p>
+<p>Happy Clustering!</p>
+<p>(c) 2015 Keith Tenzer</p>

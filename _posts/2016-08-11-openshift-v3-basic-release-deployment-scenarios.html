@@ -1,0 +1,577 @@
+---
+layout: post
+title: 'OpenShift v3: Basic Release Deployment Scenarios'
+date: 2016-08-11 12:57:52.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- OpenShift
+tags:
+- Cloud
+- DevOps
+- Docker
+- Kubernetes
+- OpenShift
+meta:
+  _oembed_dd4387d7496e2ae7669906f4aa79db1b: "{{unknown}}"
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '25683979297'
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6169486787078008832&type=U&a=J0QO
+  _publicize_done_9423386: '1'
+  _wpas_done_9468659: '1'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2016/08/11/openshift-v3-basic-release-deployment-scenarios/"
+---
+<h3><img class="alignnone size-full wp-image-4020" src="{{ site.baseurl }}/assets/2016/08/release-management.jpg" alt="3d small people - Males with four puzzle together" width="757" height="634" /></h3>
+<p>source: <a href="http://snsoftwarelabs.com/">http://snsoftwarelabs.com/</a></p>
+<h3>Overview</h3>
+<p>One of the hardest things companies struggle with today is release management. Of course many methodologies and even more tools or technologies exist, but how do we bring everything together and work across functional boundaries of an organization? A product release involves everyone in the company not just a single team. Many companies struggle with this and the result is a much slower innovation cycle. In the past this used to be something that at least wasn't a deal breaker. Unfortunately that is no longer the case. Today companies live and die by their ability to not only innovate but release innovation. I would say innovating is the easy part, the ability to provide those innovations in a controlled fashion through products and services is the real challenge.<br />
+<!--more--><br />
+Moving to micro-services architectures and container based technologies such as Docker have simplified or streamlined many technological aspects. Certainly at least providing light at the end of the tunnel, but until OpenShift there wasn't a platform to bring it all together, allowing development and operations teams to work together while still maintaining their areas of focus or control. In this article we will look at three scenarios for handling application deployments within OpenShift that involve both operations and development. Each scenario builds on the other and should give you a good idea of the new possibilities with OpenShift. Also keep in mind, these are basic scenarios and we are just scratching the surface so this should be viewed as a starting point for doing application deployments or release management in the new containerized world.</p>
+<h3>Scenario 1: Development leveraging customized image from Operations</h3>
+<p>Typically operations teams will want to control application runtime environment. Ensure that the application runtime environment meets all security policies, provides needed capabilities and is updated on regular basis.</p>
+<p>Development teams want to focus on innovation through application functionality, stability and capabilities.</p>
+<p>OpenShift allows both teams to focus on their core responsibility while also providing a means to integrate inputs/outputs of various teams into a end-to-end release.</p>
+<p>There are many ways to integrate DevOps teams in OpenShift. One simple way is by separating development and operations into different projects and allowing development to their application runtime environment from operations. In this scenario we will see how to do that using a basic ruby hello-world application as example.</p>
+<h4>Create Projects</h4>
+<p>Create operations and development projects for our ruby application.</p>
+<pre># oc login -u admin
+# oc new-project ruby-ops
+# oc new-project ruby-dev</pre>
+<h4>Setup Users</h4>
+<p>Create a user for development and operations.</p>
+<pre># htpasswd /etc/origin/master/htpasswd dev
+# htpasswd /etc/origin/master/htpasswd ops</pre>
+<p>Create ops and dev users</p>
+<pre># htpasswd /etc/origin/master/htpasswd dev
+# htpasswd /etc/origin/master/htpasswd ops</pre>
+<p>Enable permissions.</p>
+<p>Create three groups that allow operations to edit the ruby-ops project, allow development to view the ruby-ops project and also edit the ruby-dev project. In addition the ruby-dev project needs permission to pull images from the ruby-ops project.</p>
+<p>Create groups and add users to correct groups.</p>
+<pre># oadm groups new ops-edit &amp;&amp; oadm groups new dev-view &amp;&amp; oadm groups new dev-edit
+# oadm groups add-users ops-edit ops &amp;&amp; oadm groups add-users dev-view dev &amp;&amp; \
+oadm groups add-users dev-edit dev</pre>
+<p>Associate groups to projects and setup pull permissions to allow ruby-dev to pull images from ruby-ops.</p>
+<pre># oadm policy add-role-to-group edit ops-edit -n ruby-ops &amp;&amp; \
+# oadm policy add-role-to-group view dev-view -n ruby-ops &amp;&amp; \
+# oadm policy add-role-to-group edit dev-edit -n ruby-dev &amp;&amp; \
+# oadm policy add-role-to-group system:image-puller system:serviceaccounts:ruby-dev -n ruby-ops</pre>
+<p><strong>Operations Ruby Environment</strong></p>
+<p>As ops user create a ruby runtime image using application test code.</p>
+<pre># oc login -u ops
+# oc project ruby-ops
+# oc new-app centos/ruby-22-centos7~https://github.com/openshift/ruby-hello-world.git</pre>
+<p>Application requires database and service name called database.</p>
+<pre># oc new-app mysql-ephemeral -p DATABASE_SERVICE_NAME=database
+# oc env dc database --list | oc env dc ruby-hello-world -e -</pre>
+<p><strong>Development Ruby Environment</strong></p>
+<p>As dev user pull the operations ruby runtime image and build using latest code from different Github branch or project.</p>
+<pre># oc login -u dev
+# oc project ruby-dev
+# oc new-app ruby-ops/ruby-22-centos7:latest~https://github.com/ktenzer/ruby-hello-world.git</pre>
+<p>Application requires database and service name called database.</p>
+<pre># oc new-app mysql-ephemeral -p DATABASE_SERVICE_NAME=database
+# oc env dc database --list | oc env dc ruby-hello-world -e -</pre>
+<h3>Scenario 2: Development to Production Promotion</h3>
+<p>Once development has an application version with required functionality and having passed all tests it can be promoted to other environments. Typically that would be qa, test, integration and eventually production. In this simple example using the ticket-monster application we will promote directly from development to production.</p>
+<p>Using similar concepts as describe in scenario 1 this technique relies on production pulling appropriate images from development. In this scenario however we will create deployment configs and within setup a trigger that when an image with particular name/tag is updated in development, promotion to production will occur automatically. Scenario 1 shows how to do this manually, here we do it automatically and in scenario 3 we will see how to do promotion using jenkins that enables building complex pipelines with approval processes.</p>
+<p><strong>Create projects and setup pull permissions</strong></p>
+<pre># oc new-project ticket-monster-dev
+# oc new-project ticket-monster-prod
+# oc policy add-role-to-group system:image-puller system:serviceaccounts:ticket-monster-prod -n ticket-monster-dev</pre>
+<p><strong>Create ticket monster template for development</strong></p>
+<pre># vi monster.yaml
+kind: Template
+apiVersion: v1
+metadata:
+ name: monster
+ annotations:
+ tags: instant-app,javaee
+ iconClass: icon-jboss
+ description: |
+ Ticket Monster is a moderately complex application that demonstrates how
+ to build modern applications using JBoss web technologies
+
+parameters:
+- name: GIT_URI
+ value: git://github.com/kenthua/ticket-monster-ose
+- name: MYSQL_DATABASE
+ value: monster
+- name: MYSQL_USER
+ value: monster
+- name: MYSQL_PASSWORD
+ from: '[a-zA-Z0-9]{8}'
+ generate: expression
+
+
+objects:
+- kind: ImageStream
+ apiVersion: v1
+ metadata:
+ name: monster
+
+- kind: BuildConfig
+ apiVersion: v1
+ metadata:
+ name: monster
+ spec:
+ triggers:
+ - type: Generic
+ generic:
+ secret: secret
+ - type: ImageChange
+ - type: ConfigChange
+ strategy:
+ type: Source
+ sourceStrategy:
+ from:
+ kind: ImageStreamTag
+ name: jboss-eap64-openshift:latest
+ namespace: openshift
+ source:
+ type: Git
+ git:
+ uri: ${GIT_URI}
+ ref: master
+ output:
+ to:
+ kind: ImageStreamTag
+ name: monster:latest
+
+- kind: DeploymentConfig
+ apiVersion: v1
+ metadata:
+ name: monster
+ spec:
+ replicas: 1
+ selector:
+ deploymentConfig: monster
+ template:
+ metadata:
+ labels:
+ deploymentConfig: monster
+ name: monster
+ spec:
+ containers:
+ - name: monster
+ image: monster
+ ports:
+ - name: http
+ containerPort: 8080
+ - name: jolokia
+ containerPort: 8778
+ - name: debug
+ containerPort: 8787
+ readinessProbe:
+ exec:
+ command:
+ - /bin/bash
+ - -c
+ - /opt/eap/bin/readinessProbe.sh
+ env:
+ - name: DB_SERVICE_PREFIX_MAPPING
+ value: monster-mysql=DB
+ - name: TX_DATABASE_PREFIX_MAPPING
+ value: monster-mysql=DB
+ - name: DB_JNDI
+ value: java:jboss/datasources/MySQLDS
+ - name: DB_DATABASE
+ value: ${MYSQL_DATABASE}
+ - name: DB_USERNAME
+ value: ${MYSQL_USER}
+ - name: DB_PASSWORD
+ value: ${MYSQL_PASSWORD}
+ - name: JAVA_OPTS
+ value: "-Xmx512m -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=org.jboss.logmanager -Djava.awt.headless=true -Djboss.modules.policy-permissions=true"
+ - name: DEBUG
+ value: "true"
+ triggers:
+ - type: ImageChange
+ imageChangeParams:
+ automatic: true
+ containerNames:
+ - monster
+ from:
+ kind: ImageStream
+ name: monster
+
+- kind: DeploymentConfig
+ apiVersion: v1
+ metadata:
+ name: monster-mysql
+ spec:
+ triggers:
+ - type: ImageChange
+ imageChangeParams:
+ automatic: true
+ containerNames:
+ - monster-mysql
+ from:
+ kind: ImageStreamTag
+ name: mysql:latest
+ namespace: openshift
+ replicas: 1
+ selector:
+ deploymentConfig: monster-mysql
+ template:
+ metadata:
+ labels:
+ deploymentConfig: monster-mysql
+ name: monster-mysql
+ spec:
+ containers:
+ - name: monster-mysql
+ image: mysql
+ ports:
+ - containerPort: 3306
+ env:
+ - name: MYSQL_USER
+ value: ${MYSQL_USER}
+ - name: MYSQL_PASSWORD
+ value: ${MYSQL_PASSWORD}
+ - name: MYSQL_DATABASE
+ value: ${MYSQL_DATABASE}
+
+- kind: Service
+ apiVersion: v1
+ metadata:
+ name: monster
+ spec:
+ ports:
+ - name: http
+ port: 8080
+ selector:
+ deploymentConfig: monster
+
+- kind: Service
+ apiVersion: v1
+ metadata:
+ name: monster-mysql
+ spec:
+ ports:
+ - port: 3306
+ selector:
+ deploymentConfig: monster-mysql
+
+- kind: Route
+ apiVersion: v1
+ metadata:
+ name: monster
+ spec:
+ to:
+ name: monster</pre>
+<pre># oc create -n openshift -f monster.yaml</pre>
+<p><strong>Create template for ticket monster production environment</strong></p>
+<p>Below trigger will only deploy production environment when the image stream in development is tagged with monster:prod.</p>
+<pre># vi monster-prod.yaml
+kind: Template
+apiVersion: v1
+metadata:
+ name: monster-prod
+ annotations:
+ tags: instant-app,javaee
+ iconClass: icon-jboss
+ description: |
+ Ticket Monster is a moderately complex application that demonstrates how
+ to build modern applications using JBoss web technologies. This template
+ is for "production deployments" of Ticket Monster.
+
+parameters:
+- name: MYSQL_DATABASE
+ value: monster
+- name: MYSQL_USER
+ value: monster
+- name: MYSQL_PASSWORD
+ from: '[a-zA-Z0-9]{8}'
+ generate: expression
+
+objects:
+- kind: DeploymentConfig
+ apiVersion: v1
+ metadata:
+ name: monster
+ spec:
+ replicas: 3
+ selector:
+ deploymentConfig: monster
+ template:
+ metadata:
+ labels:
+ deploymentConfig: monster
+ name: monster
+ spec:
+ containers:
+ - name: monster
+ image: monster
+ ports:
+ - name: http
+ containerPort: 8080
+ - name: jolokia
+ containerPort: 8778
+ readinessProbe:
+ exec:
+ command:
+ - /bin/bash
+ - -c
+ - /opt/eap/bin/readinessProbe.sh
+ env:
+ - name: DB_SERVICE_PREFIX_MAPPING
+ value: monster-mysql=DB
+ - name: TX_DATABASE_PREFIX_MAPPING
+ value: monster-mysql=DB
+ - name: DB_JNDI
+ value: java:jboss/datasources/MySQLDS
+ - name: DB_DATABASE
+ value: ${MYSQL_DATABASE}
+ - name: DB_USERNAME
+ value: ${MYSQL_USER}
+ - name: DB_PASSWORD
+ value: ${MYSQL_PASSWORD}
+ - name: JAVA_OPTS
+ value: "-Xmx512m -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=org.jboss.logmanager -Djava.awt.headless=true -Djboss.modules.policy-permissions=true"
+<strong> triggers:
+ - type: ImageChange
+ imageChangeParams:
+ automatic: true
+ containerNames:
+ - monster
+ from:
+ kind: ImageStreamTag
+ name: monster:prod
+ namespace: ticket-monster-dev</strong>
+
+- kind: DeploymentConfig
+ apiVersion: v1
+ metadata:
+ name: monster-mysql
+ spec:
+ triggers:
+ - type: ImageChange
+ imageChangeParams:
+ automatic: true
+ containerNames:
+ - monster-mysql
+ from:
+ kind: ImageStreamTag
+ name: mysql:latest
+ namespace: openshift
+ replicas: 1
+ selector:
+ deploymentConfig: monster-mysql
+ template:
+ metadata:
+ labels:
+ deploymentConfig: monster-mysql
+ name: monster-mysql
+ spec:
+ containers:
+ - name: monster-mysql
+ image: mysql
+ ports:
+ - containerPort: 3306
+ env:
+ - name: MYSQL_USER
+ value: ${MYSQL_USER}
+ - name: MYSQL_PASSWORD
+ value: ${MYSQL_PASSWORD}
+ - name: MYSQL_DATABASE
+ value: ${MYSQL_DATABASE}
+
+- kind: Service
+ apiVersion: v1
+ metadata:
+ name: monster
+ spec:
+ ports:
+ - name: http
+ port: 8080
+ selector:
+ deploymentConfig: monster
+
+- kind: Service
+ apiVersion: v1
+ metadata:
+ name: monster-mysql
+ spec:
+ ports:
+ - port: 3306
+ selector:
+ deploymentConfig: monster-mysql
+
+- kind: Route
+ apiVersion: v1
+ metadata:
+ name: monster
+ spec:
+ to:
+ name: monster</pre>
+<pre># oc create -n openshift -f monster-prod.yaml</pre>
+<p><strong>Deploy ticket-monster development environment</strong></p>
+<p>Using the UI you can now choose template monster (monster).</p>
+<p><img class="alignnone size-full wp-image-3698" src="{{ site.baseurl }}/assets/2016/08/monster.jpg" alt="monster" width="1520" height="946" /></p>
+<p><strong>Deploy ticket-monster production environment</strong></p>
+<p>Deploy ticket-monster production template (monster-prod).</p>
+<p><img class="alignnone size-full wp-image-3701" src="{{ site.baseurl }}/assets/2016/08/monster-prod.jpg" alt="monster-prod" width="1499" height="912" /></p>
+<p>You will notice in development the environment is built and you can access the application using the service URL: <a href="http://monster-ticket-monster-dev.apps.lab/">http://monster-ticket-monster-dev.apps.lab</a></p>
+<p><img class="alignnone size-full wp-image-3704" src="{{ site.baseurl }}/assets/2016/08/app.jpg" alt="app" width="1253" height="973" /></p>
+<p>If you look at production environment, the database is running and a service endpoint exists however ticket monster application is not running. The production template is as mentioned setup to pull images from development automatically that have a certain name/tag. The production environment also runs scale of 4 for application where development only has scale of 1.</p>
+<p><strong>Promote development application version to production</strong></p>
+<p>Get the image stream pull spec.</p>
+<pre># oc get is monster -o yaml
+apiVersion: v1
+kind: ImageStream
+metadata:
+ annotations:
+ openshift.io/image.dockerRepositoryCheck: 2016-08-09T13:37:47Z
+ creationTimestamp: 2016-08-09T13:14:53Z
+ generation: 7
+ name: monster
+ namespace: ticket-monster-dev
+ resourceVersion: "107170"
+ selfLink: /oapi/v1/namespaces/ticket-monster-dev/imagestreams/monster
+ uid: 42740a3d-5e33-11e6-aa8d-001a4ae42e01
+spec:
+ tags:
+ - annotations: null
+ from:
+ kind: ImageStreamImage
+ name: <strong>monster@sha256:3a48a056a58f50764953ba856d90eba73dd0dfdee10b8cb6837b0fd9461da7f9</strong>
+ generation: 7
+ importPolicy: {}
+ name: prod
+status:
+ dockerImageRepository: 172.30.139.50:5000/ticket-monster-dev/monster
+ tags:
+ - items:
+ - created: 2016-08-09T13:26:04Z
+ dockerImageReference: 172.30.139.50:5000/ticket-monster-dev/monster@sha256:3a48a056a58f50764953ba856d90eba73dd0dfdee10b8cb6837b0fd9461da7f9
+ generation: 1
+ image: sha256:3a48a056a58f50764953ba856d90eba73dd0dfdee10b8cb6837b0fd9461da7f9
+ tag: latest</pre>
+<p>Once you have the image stream pull specification (above in bold), tag the image stream monster:prod.</p>
+<pre># oc tag monster@sha256:3a48a056a58f50764953ba856d90eba73dd0dfdee10b8cb6837b0fd9461da7f9 monster:prod</pre>
+<p>You can verify that the image stream in fact has a tag prod.</p>
+<pre># oc get is
+NAME DOCKER REPO TAGS UPDATED
+monster 172.30.139.50:5000/ticket-monster-dev/monster prod,latest 2 minutes ago</pre>
+<p>As soon as the image stream in ticket-monster-dev is tagged with monster:prod it will be deployed to production. As mentioned above the scale in production is 4 instead of 1.</p>
+<p><img class="alignnone size-full wp-image-3737" src="{{ site.baseurl }}/assets/2016/08/ticket-monster-prod.jpg" alt="ticket-monster-prod" width="1413" height="835" /></p>
+<h3>Scenario 3: AB Deployment using Jenkins</h3>
+<p>In this scenario we will look at how to do a simple AB deployment using Jenkins. This scenario builds off what we learned in scenario 1 and 2. In this scenario we will create a slightly more complex environment with three environments: development, integration and production. We will also build two version of our application, v1 and v2 in dev environment. Using Jenkins we will show how to promote v2 of application from development to integration to production. Finally we will show how to rollback production from v2 to v1 of application. I want to thank a colleague, <a href="https://github.com/j1cken/openshift-demo">Torben Jaeger</a> who created a lot of the below content.</p>
+<p><strong>Create projects</strong></p>
+<pre># oc new-project dev &amp;&amp; \
+oc new-project int &amp;&amp; \
+oc new-project prod</pre>
+<p><strong>Setup pull permissions</strong></p>
+<p>Allow int environment to pull images from dev environment and prod to pull images from both dev and int environments.</p>
+<pre><code># oc policy add-role-to-group system:image-puller system:serviceaccounts:int -n dev
+</code></pre>
+<pre><code># oc policy add-role-to-group system:image-puller system:serviceaccounts:prod -n int
+</code></pre>
+<pre><code># oc policy add-role-to-group system:image-puller system:serviceaccounts:prod -n dev</code></pre>
+<p><strong>Setup jenkins in development environment</strong></p>
+<p>Using the UI go to the dev project, select add to project and choose jenkins-ephemeral.</p>
+<p><img class="alignnone size-full wp-image-3759" src="{{ site.baseurl }}/assets/2016/08/jenkins.jpg" alt="jenkins" width="1474" height="908" /></p>
+<p><strong>Clone Github repository</strong></p>
+<pre># git clone https://github.com/ktenzer/openshift-demo.git</pre>
+<p><strong>Update auth tokens for Jenkins</strong></p>
+<p>Get Auth token for OpenShift API. This is needed to allow Jenkins to access OpenShift environment. You need to update the auth tokens.</p>
+<pre># oc login -u admin
+# oc whoami -t
+DMzhKyEN87DZiDYV6i1d8L8NL2e6gFVFPpT5FnozKtU</pre>
+<p>Update the below jenkins jobs and replace authToken and destinationAuthToken using your token from above.</p>
+<pre># ls jenkins-jobs/
+promote-int.xml promote-prod.xml rel-v2.xml rollback-prod.xml</pre>
+<p><strong>Setup all three environements</strong></p>
+<p>Using templates you updated above with your auth token create all environments.</p>
+<pre># cd openshift-demo</pre>
+<pre># <code>oc create -f template.json -n dev</code></pre>
+<pre><code># oc create -f acceptance.template.json -n int
+</code></pre>
+<pre><code># oc create -f production.template.json -n prod</code></pre>
+<p><strong>Deploy nodejs hello-world application in dev environment</strong></p>
+<p>Integration is setup to pull from development and production is setup to pull from integration.</p>
+<pre><code># oc new-app -f template.json -n dev</code></pre>
+<p>This template creates two versions of the application: v1-ab and v2-ab.</p>
+<p><img class="alignnone size-full wp-image-3762" src="{{ site.baseurl }}/assets/2016/08/dev.jpg" alt="dev" width="1428" height="985" /></p>
+<p><strong>Test applications in development</strong></p>
+<p>Connecting to v1-ab via http or curl should print "Hello World!". Connecting to v2-ab via http or curl should print "Hello World, welcome to Frankfurt!".</p>
+<p><strong>Deploy v1 from development to integration</strong></p>
+<p>Deploy v1 to int using tags. A trigger is set on int (acceptance) template to deploy when the image acceptance:latest is updated. You should see that a pod is started and running version v1 of application.</p>
+<pre><code>oc tag v1:latest v1:1.0 -n dev
+oc tag dev/v1:1.0 acceptance:v1 -n int
+oc tag acceptance:v1 acceptance:latest -n int</code></pre>
+<p><strong>Deploy v1 from integration to production</strong></p>
+<p>Deploy v1 to prod using tags. A trigger is set on prod template to deploy when the image production:latest is updated.</p>
+<pre><code>oc tag int/acceptance:v1 production:v1 -n prod
+oc tag production:v1 production:latest -n prod</code></pre>
+<p>Notice the application scale is 4 and the version of code running in prod is v1. Again this is all defined in the template we provided.</p>
+<p><img class="alignnone size-full wp-image-3786" src="{{ site.baseurl }}/assets/2016/08/prod-dep.jpg" alt="prod-dep" width="1404" height="529" /></p>
+<p><strong>Configure Jenkins</strong></p>
+<p>You have seen how to promote application versions manually using image tags and triggers in the templates. Next lets get a bit more sophisticated and orchestrate the same things through jenkins using the OpenShift plugin. This time we will promote the version v2 through int and prod environments.</p>
+<p>There are jenkins jobs to promote a release from development to integration and also from integration to production. There is a job to build a new version of the v2 application and finally perform a rollback in production.</p>
+<pre># curl -k -u admin:password -XPOST -d @jenkins-jobs/rel-v2.xml 'https://jenkins-dev.apps.lab/createItem?name=rel-v2' -H "Content-Type: application/xml"
+# curl -k -u admin:password -XPOST -d @jenkins-jobs/promote-int.xml 'https://jenkins-dev.apps.lab/createItem?name=promote-int' -H "Content-Type: application/xml"
+# curl -k -u admin:password -XPOST -d @jenkins-jobs/promote-prod.xml 'https://jenkins-dev.apps.lab/createItem?name=promote-prod' -H "Content-Type: application/xml"
+# curl -k -u admin:password -XPOST -d @jenkins-jobs/rollback-prod.xml 'https://jenkins-dev.apps.lab/createItem?name=rollback-prod' -H "Content-Type: application/xml"</pre>
+<p>Once you create the jobs you can login to jenkins using the url with user: admin password: password.</p>
+<p><img class="alignnone size-full wp-image-3772" src="{{ site.baseurl }}/assets/2016/08/jenkins_ippes.jpg" alt="jenkins_ippes" width="1214" height="528" /></p>
+<p><strong>Optional Step: make change in v2 code and start build</strong></p>
+<p>In order for this to work you need to fork below nodejs-ex Github repository and update the template.json with your github URL. You would then need to redeploy the dev environment using new template.</p>
+<pre> "source": {
+ "type": "Git",
+ "git": {
+ "uri": "https://github.com/ktenzer/nodejs-ex.git",
+ "ref": "master"
+ },</pre>
+<pre># git clone https://github.com/ktenzer/nodejs-ex</pre>
+<pre># cd nodejs-ex</pre>
+<p>Checkout v2 branch and make commit.</p>
+<pre># git checkout v2
+# vi index.html
+Hello World, welcome to Munich!</pre>
+<p>Commit changes.</p>
+<pre># git commit -a -m "updated to munich"
+# git push origin v2</pre>
+<p>Run rhel-v2 build from Jenkins</p>
+<p><img class="alignnone size-full wp-image-3826" src="{{ site.baseurl }}/assets/2016/08/rhel-v2-ex.jpg" alt="rhel-v2-ex" width="1524" height="38" /></p>
+<p>If you cloned the nodejs-ex repository then you should see your changes in v2 by clicking the URL or using curl.</p>
+<p><strong>Promote v2 from development to integration</strong></p>
+<p>Run promote-int build from Jenkins. You will see a new pod is started with v2 code next to v1 pod.</p>
+<p><img class="alignnone size-full wp-image-3830" src="{{ site.baseurl }}/assets/2016/08/promote-int-ex.jpg" alt="promote-int-ex" width="1513" height="34" /></p>
+<p><strong>Promote v2 from integration to production</strong></p>
+<p>Here we will take a deeper look into what is actually happening under the hood.</p>
+<p>Using curl you can see how the application is switched from v1 to v2.</p>
+<pre># for i in {1..10000};do curl prod-ab.apps.lab; sleep 1;done</pre>
+<p>Run promote-prod build from Jenkins.</p>
+<p><img class="alignnone size-full wp-image-3833" src="{{ site.baseurl }}/assets/2016/08/promote-prod-ex.jpg" alt="promote-prod-ex" width="1505" height="31" /></p>
+<p>&nbsp;</p>
+<p>The deployment is started and a v2 pods are started next to v1 pods. At this point application service still is set to v1.</p>
+<p><img class="alignnone size-full wp-image-3842" src="{{ site.baseurl }}/assets/2016/08/prod1.jpg" alt="prod1" width="1222" height="687" /></p>
+<p>Two v2 pods are running and readiness checks are done to ensure v2 application is responding. The v1 application pods are set to scale down.</p>
+<p><img class="alignnone size-full wp-image-3845" src="{{ site.baseurl }}/assets/2016/08/prod2.jpg" alt="prod2" width="1228" height="699" /></p>
+<p>All four v2 pods are running and the v1 pods are scaling to 0. We can see that both v1 and v2 are responding to requests while we are in transition.</p>
+<p><img class="alignnone size-full wp-image-3849" src="{{ site.baseurl }}/assets/2016/08/prod3.jpg" alt="prod3" width="1225" height="709" /></p>
+<p>Only v2 pods are running and the AB deployment of v2 is complete.</p>
+<p><img class="alignnone size-full wp-image-3853" src="{{ site.baseurl }}/assets/2016/08/prod4.jpg" alt="prod4" width="1226" height="732" /></p>
+<p><strong>Rollback</strong></p>
+<p>Now lets assume we aren't satisfied with v2 and want to do a rollback of v1.</p>
+<p>Run rollback-prod build from Jenkins.</p>
+<p><img class="alignnone size-full wp-image-3836" src="{{ site.baseurl }}/assets/2016/08/rollback-ex.jpg" alt="rollback-ex" width="1490" height="35" /></p>
+<p>Here we observe the same thing as in our previous step, only we are switching from v2 to v1.</p>
+<p><img class="alignnone size-full wp-image-3858" src="{{ site.baseurl }}/assets/2016/08/prod7.jpg" alt="prod7" width="1227" height="746" /></p>
+<p>To rollback the integration environment to v1 run below command.</p>
+<pre># oc tag dev/v1:latest acceptance:latest -n int</pre>
+<h3>Summary</h3>
+<p>In this article we have seen how OpenShift simplifies application deployments and integrates with tools such as Jenkins that enable release management. You have many options using OpenShift and we have only really begun to scratched the surface. With Jenkins you can create very complex build pipelines that allow you to not only control but also visualize your application deployment processes. We have looked at one type of common deployment, the AB deployment but there are also other deployment types such as blue-green or canary. In a future article I will take a look at additional deployment models in OpenShift. If you have feedback or experience then please share your thoughts. I hope you have found this article useful and informative.</p>
+<p>Happy OpenShifting!</p>
+<p>(c) 2016 Keith Tenzer</p>

@@ -1,0 +1,380 @@
+<h3>Overview</h3>
+<p>Containers are a burning hot topic right now. Several open source technologies have come together to allow containers to be operated at scale and in the enterprise. In this article I will talk about these technologies and explain how to build container infrastructure at scale with OpenStack. There are three main components that come together to create container-based infrastructure: Red Hat Enterprise Linux Atomic Host (RHEL Atomic), Docker and Google's Kubernetes. RHEL Atomic provides an optimized operating system for running containers. Docker delivers container portability and a packaging standard. Kubernetes adds orchestration and management of Docker containers across a massively scalable cluster of RHEL Atomic hosts.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/04/red_hat_container_architecture.png"><img class="  wp-image-816 aligncenter" src="/assets/2015/04/red_hat_container_architecture.png?w=300" alt="red_hat_container_architecture" width="1270" height="639" /></a><br />
+<!--more--></p>
+<h3>RHEL Atomic</h3>
+<p><a href="http://www.projectatomic.io/">RHEL Atomic</a> is an optimized container operating system based on Red Hat Enterprise Linux 7 (RHEL 7). The name atomic refers to how updates are managed. RHEL Atomic does not use yum but rather OSTree for managing updates. Software updates are handled atomically across the entire system. Not only this but you can rollback to the systems previous state if the new upgraded state is for some reason not desired. The intention is to reduce risk during upgrades and make the entire process seamless. When we consider the density of containers vs virtual machines to be around 10X, upgrades and maintenance become that much more critical.</p>
+<p>RHEL Atomic provides both Docker and Kubernetes. Underneath the hood it leverages SELinux (security), Cgroups (process isolation) and Namespaces (network isolation). It is an Operating System that is optimized to run containers. In addition RHEL Atomic provides enterprise features such as security, isolation, performance and management to the containerized world.</p>
+<h3>Docker</h3>
+<p><a href="https://www.docker.com/">Docker</a> is often a misused term when referring to containers. Docker is not a container, instead it is a platform for running containers. Docker provides a packaging format, tool-set and all the plumbing needed for running containers within a single host. Docker also provides a hub for sharing Docker images.</p>
+<p>Docker images consist of a Base-OS and various layers that allow one to build an application stack (application and its dependencies). Docker images are immutable, you don't update them. Instead you create a new image by adding or making changes to the various layers. This is the future of application deployment and is not only more efficient but magnitudes faster than the traditional approach with virtual machines.</p>
+<p>Red Hat is providing a docker repository for certified, tested, secure and supported Docker images similar to how RPMs are currently provided.</p>
+<p>All Docker images run in a container and all the containers share the same Linux kernel, RHEL Atomic.</p>
+<h3>Kubernetes</h3>
+<p><a href="http://kubernetes.io/">Kubernetes</a> is an orchestration engine built around Docker. It allows administrators to manage Docker containers at scale across many physical or virtual hosts. Kubernetes has three main components: master, node or minion and pod.</p>
+<h4>Master</h4>
+<p>The Kubernetes master is the control plane and provides several services. The scheduler handles placement of pods. It also provides a replication controller that ensures pods are replicated according to policy. The master also maintains the state of the cluster and relies on ETCD which is a distributed key/value store for those capabilities. Finally Restful APIs for performing operations on nodes, pods, replication controllers and services are provided by the Kubernetes master.</p>
+<h4> Node</h4>
+<p>The Kubernetes node or minion as it is often referred to runs pods. Placement of pod on a Kubernetes node is as mentioned determined by the scheduler on the Kubernetes master. The Kubernetes node runs several important services: kubelet and kube-proxy. The kubelet is responsible for node level pod management. In addition Kubernetes allows for the creation of services that expose applications to the outside world. The kube-proxy is responsible for managing Kubernetes services within a node. Since pods are meant to be mortal, the idea behind services is providing an abstraction that lives independently of a pod.</p>
+<h4>Pod</h4>
+<p>The Kubernetes pod is one or more tightly coupled containers that are scheduled onto the same host. Containers within pods share some resources such as storage and networking. A pod provides a single unit of horizontal scaling and replication across the Kubernetes cluster.</p>
+<p>Now that we have a good feel for the components involved it is time to sink our teeth into Kubernetes. First I would like to recognize two colleagues <a href="https://github.com/shetze/RHEL-Atomic-Demo-Kit">Sebastian Hetze</a> and <a href="https://github.com/scollier/SATraining">Scott Collier</a>. I have used their initial work around Kubernetes configurations in this article as my basis.</p>
+<h3>Configure Kubernetes Nodes in OpenStack</h3>
+<p>Kubernetes nodes or minions can be deployed and configured automatically on OpenStack. If more compute power is required for our container infrastructure we simply need to deploy additional Kubernetes nodes. OpenStack is the perfect infrastructure for running containers at scale. Below are the steps required to deploy Kubernetes nodes on OpenStack.</p>
+<ul>
+<li>Download the <a href="https://access.redhat.com/downloads/content/271/ver=/rhel---7/7.1.0/x86_64/product-downloads">RHEL Atomic</a> cloud image (QCOW2)</li>
+<li>Add RHEL Atomic Cloud Image to Glance in OpenStack</li>
+<li>Create atomic security group</li>
+</ul>
+<pre style="padding-left:30px;">#neutron security-group-create atomic --description "RHEL Atomic security group"</pre>
+<pre style="padding-left:30px;">#neutron security-group-rule-create atomic --protocol tcp --port-range-min 10250 --port-range-max 10250 --direction ingress --remote-ip-prefix 0.0.0.0/0</pre>
+<pre style="padding-left:30px;">#neutron security-group-rule-create atomic --protocol tcp --port-range-min 4001 --port-range-max 4001 --direction egress --remote-ip-prefix 0.0.0.0/0</pre>
+<pre style="padding-left:30px;">#neutron security-group-rule-create atomic --protocol tcp --port-range-min 5000 --port-range-max 5000 --direction egress --remote-ip-prefix 0.0.0.0/0</pre>
+<pre style="padding-left:30px;">#neutron security-group-rule-create --protocol icmp --direction ingress default</pre>
+<ul>
+<li>Create user-data to automate deployment using cloud-init</li>
+</ul>
+<pre style="padding-left:30px;">#cloud-config
+hostname: atomic01.lab.com
+password: redhat
+ssh_pwauth: True
+chpasswd: { expire: False }
+
+ssh_authorized_keys:
+- ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCfxcho9SipUCokS29C+AJNNLcrfpT4xsu9aErax3XSNThWbiJehUDufe86ZO4lqib4dekDEL6d7vBa3WlalzJaq/p/sy1xjYdRNE0vHQCxuWgG+NaL8KcxXDhrUa0UHMW8k8hw9xzOGaRx35LRP9+B0fq/W572XPWwEPRJo8WtSKFiqJZEBkai1IcF0CErj30d0/va9c3EYqkCEWbxuIRL+qoysH+MgFbs1jjjrvfJCLiZZo95MWp4nDrmxYNlmwMIvYrsRZfygeyYPiqVzO51gmGxcVRTbqgG0fSRVRHjUE3E4VfW9wm1qn8+rEc0iQB6ER0f6U/wtEAUmvd/g4Ef ktenzer@ktenzer.muc.csb
+
+write_files:
+- content: |
+127.0.0.1 localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1 localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+192.168.2.15 atomic01.lab.com atomic01
+192.168.2.16 atomic02.lab.com atomic02
+192.168.2.17 atomic03.lab.com atomic03
+192.168.2.14 kubernetes.lab.com kubernetes
+path: /etc/hosts
+permissions: '0644'
+owner: root:root
+- content: |
+###
+# kubernetes system config
+#
+# The following values are used to configure various aspects of all
+# kubernetes services, including
+#
+# kube-apiserver.service
+# kube-controller-manager.service
+# kube-scheduler.service
+# kubelet.service
+# kube-proxy.service
+
+# Comma seperated list of nodes in the etcd cluster
+KUBE_ETCD_SERVERS="--etcd_servers=http://kubernetes.lab.com:4001"
+
+# logging to stderr means we get it in the systemd journal
+KUBE_LOGTOSTDERR="--logtostderr=true"
+
+# journal message level, 0 is debug
+KUBE_LOG_LEVEL="--v=0"
+
+# Should this cluster be allowed to run privleged docker containers
+KUBE_ALLOW_PRIV="--allow_privileged=false"
+path: /etc/kubernetes/config
+permissions: '0644'
+owner: root:root
+- content: |
+###
+# kubernetes kubelet (minion) config
+
+# The address for the info server to serve on (set to 0.0.0.0 or "" for all interfaces)
+KUBELET_ADDRESS="--address=0.0.0.0"
+
+# The port for the info server to serve on
+KUBELET_PORT="--port=10250"
+
+# You may leave this blank to use the actual hostname
+KUBELET_HOSTNAME=""
+
+# Add your own!
+KUBELET_ARGS=--cluster_domain=kubernetes.local --cluster_dns=10.254.0.10
+path: /etc/kubernetes/kubelet
+permissions: '0644'
+owner: root:root
+- content: |
+# /etc/sysconfig/docker
+OPTIONS='--selinux-enabled'
+DOCKER_CERT_PATH=/etc/docker
+ADD_REGISTRY='--add-registry registry.access.redhat.com'
+ADD_REGISTRY='--add-registry kubernetes.lab.com:5000'
+# BLOCK_REGISTRY='--block-registry '
+# INSECURE_REGISTRY='--insecure-registry'
+# DOCKER_TMPDIR=/var/tmp
+# LOGROTATE=false
+path: /etc/sysconfig/docker
+permissions: '0644'
+owner: root:root
+- content: |
+# Flanneld configuration options
+
+# etcd url location. Point this to the server where etcd runs
+FLANNEL_ETCD="http://kubernetes.lab.com:4001"
+
+# etcd config key. This is the configuration key that flannel queries
+# For address range assignment
+FLANNEL_ETCD_KEY="/flannel/network"
+
+# Any additional options that you want to pass
+FLANNEL_OPTIONS="eth0"
+path: /etc/sysconfig/flanneld
+permissions: '0644'
+owner: root:root
+- content: |
+{}
+path: /var/lib/kubelet/auth
+permissions: '0644'
+owner: root:root
+
+bootcmd:
+- systemctl enable kube-proxy
+- systemctl enable kubelet
+- systemctl enable flanneld
+
+runcmd:
+- hostname -f &gt;/etc/hostname
+- hostname -i &gt;&gt;/etc/issue
+- echo '' &gt;&gt;/etc/issue
+
+final_message: "Cloud-init completed and the system is up, after $UPTIME seconds"</pre>
+<ul>
+<li>Boot RHEL Atomic instances using the 'nova boot' CLI command</li>
+</ul>
+<pre style="padding-left:30px;">#nova boot --flavor m1.small --poll --image Atomic_7_1 --key-name atomic-key --security-groups prod-base,atomic --user_data user-data-openstack --nic net-id=e3f370ab-b6ac-4788-a739-7f8de8631518 Atomic1</pre>
+<ul>
+<li>Associate floating-ip to the RHEL Atomic instance</li>
+</ul>
+<pre style="padding-left:30px;">#nova floating-ip-associate Atomic1 192.168.2.15</pre>
+<p>Of course you will want to update the cloud-init user-data as well as the CLI commands according to your environment. In this example I did not have DNS so I updated the /etc/hosts file directly but this step is not required. I also did not attach a Red Hat subscription something you would probably want to do using the 'runcmd' option in cloud-init.</p>
+<h3>Configure Kubernetes Master</h3>
+<p>Once Kubernetes nodes have been deployed we can configure the Kubernetes master. The Kubernetes master runs Kubernetes, Docker and ETCD services. In addition an overlay network is required. There are many options to create an overlay network, in this case we have chosen to use flannel to provide those capabilities. Finally for the base OS, a minimum install of a current RHEL-7 release is required.</p>
+<ul>
+<li>Register host with subscription-manager</li>
+</ul>
+<pre style="padding-left:30px;">#subscription-manager register attach --pool=&lt;pool id&gt;
+#subscription-manager repos --disable=*
+#subscription-manager repos --enable=rhel-7-server-rpms
+#subscription-manager repos --enable=rhel-7-server-extras-rpms
+#subscription-manager repos --enable=rhel-7-server-optional-rpms
+#yum -y update</pre>
+<ul>
+<li>Install required packages</li>
+</ul>
+<pre style="padding-left:30px;">#yum -y install docker docker-registry kubernetes flannel</pre>
+<ul>
+<li>Disable firewall</li>
+</ul>
+<pre style="padding-left:30px;">#systemctl stop firewalld
+#systemctl disable firewalld</pre>
+<ul>
+<li>Enable required services</li>
+</ul>
+<pre style="padding-left:30px;">#for SERVICES in docker.service docker-registry etcd kube-apiserver kube-controller-manager kube-scheduler flanneld; do
+ systemctl enable $SERVICES
+done</pre>
+<ul>
+<li>Configure Docker</li>
+</ul>
+<pre style="padding-left:30px;">#vi /etc/sysconfig/docker
+INSECURE_REGISTRY='--insecure-registry kubernetes.lab.com:5000'</pre>
+<ul>
+<li> Configure Kubernetes</li>
+</ul>
+<pre style="padding-left:30px;">#vi /etc/kubernetes/apiserver and set
+KUBE_API_ADDRESS="--address=0.0.0.0"
+KUBE_MASTER="--master=http://kubernetes.lab.com:8080"</pre>
+<pre style="padding-left:30px;">#vi /etc/kubernetes/config and set
+KUBE_ETCD_SERVERS="--etcd_servers=http://kubernetes.lab.com:4001"</pre>
+<pre style="padding-left:30px;">#vi /etc/kubernets/controller-manager and set
+KUBELET_ADDRESSES="--machines=atomic01.lab.com,atomic02.lab.com,atomic03.lab.com"</pre>
+<ul>
+<li>Configure Flannel</li>
+</ul>
+<pre style="padding-left:30px;">#vi /etc/sysconfig/flanneld and set
+FLANNEL_ETCD="http://kubernetes.lab.com:4001"
+FLANNEL_ETCD_KEY="/flannel/network"
+FLANNEL_OPTIONS="eth0"</pre>
+<ul>
+<li>Start ETCD</li>
+</ul>
+<pre style="padding-left:30px;">#systemctl start etcd</pre>
+<ul>
+<li>Configure Flannel overlay network</li>
+</ul>
+<pre style="padding-left:30px;">#vi /root/flannel-config.json
+{
+ "Network": "10.100.0.0/16",
+ "SubnetLen": 24,
+ "SubnetMin": "10.100.50.0",
+ "SubnetMax": "10.100.199.0",
+ "Backend": {
+ "Type": "vxlan",
+ "VNI": 1
+ }
+}</pre>
+<pre style="padding-left:30px;">curl -L http://kubernetes.lab.com:4001/v2/keys/flannel/network/config -XPUT --data-urlencode value@/root/flannel-config.json</pre>
+<ul>
+<li>Load Docker Images</li>
+</ul>
+<pre style="padding-left:30px;">#systemctl start docker
+#systemctl start docker-registry
+#for IMAGES in rhel6 rhel7 fedora/apache; do
+ docker pull $IMAGES
+ docker tag $IMAGES kubernetes.lab.com:5000/$IMAGES
+ docker push kubernetes.lab.com:5000/$IMAGES
+done</pre>
+<ul>
+<li>Reboot host</li>
+</ul>
+<pre style="padding-left:30px;">systemctl reboot</pre>
+<h3>Container Administration using Kubernetes</h3>
+<p>Kubernetes provides a CLI and a Restful API for management. Currently there is no GUI. In a future article I will go into detail about using the API in order to build your own UI or integrate Kubernetes in existing dashboards. For the purpose of this article we will focus on kubectl, the Kubernetes CLI.</p>
+<h4>Deploy an Application</h4>
+<p>In this example we will deploy an Apache web server pod. Before deploying a pod we must ensure that Kubernetes nodes (minions) are ready.</p>
+<pre style="padding-left:30px;">[root@kubernete ~]# kubectl get minions
+NAME             LABELS STATUS
+atomic01.lab.com &lt;none&gt; Ready
+atomic02.lab.com &lt;none&gt; Ready
+atomic03.lab.com &lt;none&gt; Ready</pre>
+<p>Next we need to create a JSON file for deploying a pod. The kubectl command uses JSON as input to make configuration updates and changes.</p>
+<pre style="padding-left:30px;">[root@kube-master ~]# vi apache-pod.json</pre>
+<p>[code language="java"]<br />
+{<br />
+ &quot;apiVersion&quot;: &quot;v1beta1&quot;,<br />
+ &quot;desiredState&quot;: {<br />
+    &quot;manifest&quot;: {<br />
+       &quot;containers&quot;: [<br />
+       {<br />
+          &quot;image&quot;: &quot;fedora/apache&quot;,<br />
+          &quot;name&quot;: &quot;my-fedora-apache&quot;,<br />
+          &quot;ports&quot;: [<br />
+          {<br />
+             &quot;containerPort&quot;: 80,<br />
+             &quot;hostPort&quot;:80,<br />
+             &quot;protocol&quot;: &quot;TCP&quot;<br />
+          }<br />
+       ]<br />
+    }<br />
+    ],<br />
+       &quot;id&quot;: &quot;apache&quot;,<br />
+       &quot;restartPolicy&quot;: {<br />
+       &quot;always&quot;: {}<br />
+    },<br />
+       &quot;version&quot;: &quot;v1beta1&quot;,<br />
+       &quot;volumes&quot;: null<br />
+    }<br />
+ },<br />
+ &quot;id&quot;: &quot;apache&quot;,<br />
+ &quot;kind&quot;: &quot;Pod&quot;,<br />
+ &quot;labels&quot;: {<br />
+    &quot;name&quot;: &quot;apache&quot;<br />
+ },<br />
+ &quot;namespace&quot;: &quot;default&quot;<br />
+}</p>
+<p>[/code]</p>
+<p>&nbsp;</p>
+<pre style="padding-left:30px;">[root@kube-master ~]# kubectl create -f apache-pod.json</pre>
+<p>We can now get the status of our newly created Apache pod.</p>
+<pre style="padding-left:30px;">[root@kubernetes ~]# kubectl get pods
+POD    IP           CONTAINER(S)     IMAGE(S)      HOST              LABELS      STATUS
+apache 10.100.119.6 my-fedora-apache fedora/apache atomic02.lab.com/ name=apache Running</pre>
+<p>Notice that the pod is running on atomic02.lab.com. The Kubernetes scheduler takes care of scheduling the pod on a node.</p>
+<h4> Create Services</h4>
+<p>In Kubernetes services are used to provide external access to an application running in a pod. The idea is that since pods are mortal and transient in nature a service should provide abstraction so applications do not need to understand underlying pod or containers infrastructure. Services use the kube-proxy to access applications from any Kubernetes node configured as public IPs in the service itself. In the example below we are creating a service that will be available from all three of the Kubernetes nodes atomic01.lab.com, atomic02.lab.com and atomic03.lab.com. The pod is running on atomic02.lab.com. Similar to pods, services also requirec a JSON file as input to kubectl.</p>
+<pre style="padding-left:30px;">[root@kubernetes ~]# vi apache-service.json</pre>
+<p>[code language="java"]</p>
+<p>{<br />
+   &quot;apiVersion&quot;: &quot;v1beta1&quot;,<br />
+   &quot;containerPort&quot;: 80,<br />
+   &quot;id&quot;: &quot;frontend&quot;,<br />
+   &quot;kind&quot;: &quot;Service&quot;,<br />
+   &quot;labels&quot;: {<br />
+      &quot;name&quot;: &quot;frontend&quot;<br />
+   },<br />
+   &quot;port&quot;: 80,<br />
+   &quot;publicIPs&quot;: [<br />
+   &quot;192.168.2.15&quot;,&quot;192.168.2.16&quot;,&quot;192.168.2.17&quot;<br />
+   ],<br />
+   &quot;selector&quot;: {<br />
+      &quot;name&quot;: &quot;apache&quot;<br />
+   }<br />
+}</p>
+<p>[/code]</p>
+<pre style="padding-left:30px;">[root@kube-master ~]# kubectl create -f apache-service.json</pre>
+<p>We can now get the status of our newly created apache-frontend service.</p>
+<pre style="padding-left:30px;">[root@kubernetes ~]# kubectl get services
+NAME            LABELS               SELECTOR    IP            PORT
+apache-frontend name=apache-frontend name=apache 10.254.94.252 80</pre>
+<p>As one would expect, we can access our Apache pod externally through any of our three Kubernetes nodes.</p>
+<pre style="padding-left:30px;">[root@kubernetes ~]# curl http://atomic01.bigred.com
+Apache</pre>
+<h4>Creating Replication Controllers</h4>
+<p>So far we have seen how to create a pod containing one or more containers and build a service to expose the application externally. If we want to scale our application horizontally however we need to create a replication controller. In Kubernetes replication controllers are pods that have a replication policy. Kubernetes will create multiple pods across the cluster and a pod is our base unit of scaling. In the example below we will create a replication controller for our Apache web server that will ensure three replicas. The same service we already created can be used but this time an Apache pod will be running on each Kubernetes node. In our previous example we only had one Apache web server on atomic02.lab.com and though we could access it through any node it was done through the kube-proxy.</p>
+<pre style="padding-left:30px;">[root@kubernetes ~]# vi apache-replication-controller.json</pre>
+<p>[code language="java"]</p>
+<p>{<br />
+   &quot;apiVersion&quot;: &quot;v1beta1&quot;,<br />
+   &quot;desiredState&quot;: {<br />
+      &quot;podTemplate&quot;: {<br />
+         &quot;desiredState&quot;: {<br />
+            &quot;manifest&quot;: {<br />
+            &quot;containers&quot;: [<br />
+            {<br />
+               &quot;image&quot;: &quot;fedora/apache&quot;,<br />
+               &quot;name&quot;: &quot;my-fedora-apache&quot;,<br />
+               &quot;ports&quot;: [<br />
+               {<br />
+                  &quot;containerPort&quot;: 80,<br />
+                  &quot;hostPort&quot;: 80,<br />
+                  &quot;protocol&quot;: &quot;TCP&quot;<br />
+               }<br />
+               ]<br />
+            }<br />
+            ],<br />
+            &quot;id&quot;: &quot;apache&quot;,<br />
+            &quot;restartPolicy&quot;: {<br />
+               &quot;always&quot;: {}<br />
+            },<br />
+            &quot;version&quot;: &quot;v1beta1&quot;,<br />
+            &quot;volumes&quot;: null<br />
+            }<br />
+         },<br />
+         &quot;labels&quot;: {<br />
+            &quot;name&quot;: &quot;apache&quot;<br />
+         }<br />
+      },<br />
+      &quot;replicaSelector&quot;: {<br />
+         &quot;name&quot;: &quot;apache&quot;<br />
+   },<br />
+   &quot;replicas&quot;: 3<br />
+   },<br />
+   &quot;id&quot;: &quot;apache-controller&quot;,<br />
+   &quot;kind&quot;: &quot;ReplicationController&quot;,<br />
+   &quot;labels&quot;: {<br />
+   &quot;name&quot;: &quot;apache&quot;<br />
+   }<br />
+}</p>
+<p>[/code]</p>
+<pre style="padding-left:30px;">[root@kube-master ~]# kubectl create -f apache-replication-controller.json</pre>
+<p>We can now get the status of our newly created Apache replication controller.</p>
+<pre style="padding-left:30px;">[root@kubernetes ~]# kubectl get replicationcontrollers
+CONTROLLER        CONTAINER(S)     IMAGE(S)      SELECTOR    REPLICAS
+apache-controller my-fedora-apache fedora/apache name=apache 3</pre>
+<p>We can also see that the replication controller created three pods as expected.</p>
+<pre style="padding-left:30px;">[root@kubernetes ~]# kubectl get pods
+POD                                  IP           CONTAINER(S)     IMAGE(S)      HOST                 LABELS      STATUS
+fb9936f3-e21d-11e4-ad6e-000c295b1de9 10.100.119.6 my-fedora-apache fedora/apache atomic03.bigred.com/ name=apache Running
+fb9acf1a-e21d-11e4-ad6e-000c295b1de9 10.100.65.6  my-fedora-apache fedora/apache atomic02.bigred.com/ name=apache Running
+fb97a111-e21d-11e4-ad6e-000c295b1de9 10.100.147.6 my-fedora-apache fedora/apache atomic01.bigred.com/ name=apache Running</pre>
+<h3>Summary</h3>
+<p>In this article we discussed the different components required to run application containers at scale: RHEL Atomic, Docker and Kubernetes. We also saw how to deploy Kubernetes RHEL Atomic nodes on OpenStack. Having scalable application containers means little if your infrastructure underneath cannot scale and that is why OpenStack should be key to any enterprise container strategy. Finally we went into a lot of detail on how to configure Kubernetes pods, services and replication controllers. Running application containers at scale in the enterprise is a lot more than just Docker. It has only been until very recently that these best-of-breed open source technologies have come together and allowed such wonderful possibilities. This is a very exciting time, containers will change everything about how we deploy, run and manage our applications. Hopefully you found this article interesting and useful. If you have any feedback I would really like to hear it, please share.</p>
+<p>Happy Containerizing!</p>
+<p>(c) 2015 Keith Tenzer</p>

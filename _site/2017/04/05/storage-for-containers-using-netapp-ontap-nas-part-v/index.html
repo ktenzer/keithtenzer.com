@@ -1,0 +1,93 @@
+<h3><img class="alignnone size-full wp-image-8150" src="/assets/2017/04/storage_article_008.jpg" alt="Shipping containers" width="1200" height="400" /></h3>
+<h3>Overview</h3>
+<p>In this article we will look at how you can configure and dynamically provision ONTAP NAS Storage for containerized applications in a Kubernetes/OpenShift environment.</p>
+<p>This article is a work from Kapil Arora (Cloud Platform Architect @NetApp).</p>
+<ul>
+<li><a href="https://keithtenzer.com/2017/03/07/storage-for-containers-overview-part-i/">Storage for Containers Overview – Part I</a></li>
+<li><a href="https://keithtenzer.com/2017/03/24/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a></li>
+<li><a href="https://keithtenzer.com/2017/03/29/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a></li>
+<li><a href="https://keithtenzer.com/2017/04/07/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers using Ceph – Part IV</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire – Part VI</a></li>
+</ul>
+<p>NetApp recently released an open source project known as <a href="https://github.com/netapp/trident">Trident</a>, the first external storage provisioner for <a href="https://kubernetes.io/">Kubernetes</a> leveraging on-premises storage.</p>
+<p>Trident enables the use of the new <em>storage class</em> concept in Kubernetes, acting as a provisioning controller that watches for PVCs (persistent volume requests) and creates them on-demand.</p>
+<p>This means that when a pod requests storage from a storage class that Trident is responsible for, it will provision a volume that meets those requirements and make it available to the pod in real-time.</p>
+<p>To learn more  check-out these  <a href="https://www.youtube.com/playlist?list=PLZdTVI9ql2pFNCfk1UuSeBIV7mxlkfz4J">Trident videos</a>.</p>
+<p><!--more--></p>
+<p>This is how it works:</p>
+<ol>
+<li>The OpenShift/Kubernetes Administrator deploys and configures Trident with NetApp ONTAP NAS and defines StorageClasses and Quotas.</li>
+<li>The developer creates a PVC  with the respective StorageClass.</li>
+<li>Trident dynamically provisions storage for the developer.</li>
+</ol>
+<h3>Installation and Configuration Instructions</h3>
+<p>Following are the steps to install and configure NetApp ONTAP NAS backend with Trident in your OpenShift environment:</p>
+<p>1) Ensure OpenShift 3.4+, or OpenShift Origin 1.4+</p>
+<p>Create a service account for trident.</p>
+<pre>oc create serviceaccount trident
+oc adm policy add-cluster-role-to-user storage-admin system:serviceaccount:myproject:trident
+oc adm policy add-scc-to-user anyuid system:serviceaccount:myproject:trident
+oc adm policy add-role-to-user edit system:serviceaccount:myproject:trident</pre>
+<p>You can find detailed  instructions <a href="https://github.com/NetApp/trident#deploying-in-openshift">here</a>.</p>
+<p>2) Install 'kubectl' client for Trident install script</p>
+<pre><code>curl -LO <a href="https://storage.googleapis.com/kubernetes-release/release/">https://storage.googleapis.com/kubernetes-release/release/</a>$(curl -s <a href="https://storage.googleapis.com/kubernetes-release/release/stable.txt">https://storage.googleapis.com/kubernetes-release/release/stable.txt</a>)/bin/linux/amd64/kubectl</code>
+<code>chmod +x ./kubectl </code>
+<code>sudo mv ./kubectl /usr/local/bin/kubectl </code></pre>
+<p>You can find detailed instructions <a href="https://kubernetes.io/docs/user-guide/prereqs/">here</a>.</p>
+<p>3) Download and untar the <a href="https://github.com/NetApp/trident/releases/download/v1.0/trident-installer-1.0.tar.gz">Trident installer bundle</a>.</p>
+<p>4) Install nfs utils on all your OpenShift nodes if not already installed.</p>
+<pre>$ sudo yum install -y nfs-utils</pre>
+<p>5) Configure the ONTAP backend. A sample is provided here sample-input/backend-ontap-nas.json. Copy the edited file to <strong>setup/backed.json </strong></p>
+<p>https://gist.github.com/kapilarora/ce450bf8840f57ce5f152a45689785aa</p>
+<p>6) Execute Trident installer script.</p>
+<pre>$ ./install_trident.sh --namespace myproject --serviceaccount trident</pre>
+<p>7) Wait until the deployment is complte. You should see Trident deployment when you execute '<em>oc </em><code><em>get deployment</em>'</code> and trident pod when you execute '<em>oc</em><code><em> get pods</em>'</code></p>
+<p>8) If you face issues, check this <a href="https://github.com/NetApp/trident#troubleshooting">troubleshooting</a> session.</p>
+<p>9) Register you backend with Trident</p>
+<pre><code>$ cat setup/backend.json | kubectl exec -i -- post.sh backend</code></pre>
+<p>10) Edit storage-class-nfs-gold.yaml to configure your storage class.</p>
+<p>https://gist.github.com/kapilarora/f7c921fca4c4a42c59ac5df89162fdba</p>
+<p>11) Create storage class in openshift:</p>
+<pre>$ oc create -f  storage-class-nfs-gold.yaml</pre>
+<p>12) Trident is now installed and we have also defined a storage class for ONTAP NAS.</p>
+<p>13) Now Storage is dynamically provisioned when we create a PVC. e.g.</p>
+<p>Make sure you provide the right ONTAP NFS export policy as per your environment.</p>
+<p>https://gist.github.com/kapilarora/565ed2647a4368dd863948dd417e5a65</p>
+<h3>Application use-case</h3>
+<p>Let us look at how we can deploy a Wordpress application backed by a MySQL database.</p>
+<p>In the below example we use Trident to dynamically provision ONTAP NAS storage for our Wordpress (+ MySQL) application using PVCs and nfs-gold StorageClass.</p>
+<p><img class="  wp-image-8623 aligncenter" src="/assets/2017/04/mysql-wordpress-ontap-openshift.png" alt="mysql-wordpress-ontap-openshift" width="729" height="549" /></p>
+<p>https://gist.github.com/kapilarora/93eb209182c027db2588a1898e869cc2</p>
+<h3>NetApp ONTAP</h3>
+<p>NetApp ONTAP is a unified enterprise storage system which supports both File and Block storage  and comes in many flavours like AFF (All Flash version), FAS (Fabric Attached Storage), ONTAP Select (Virtualized) and ONTAP Cloud (in Public cloud AWS/Azure).</p>
+<div class="page" title="Page 4">
+<div class="layoutArea">
+<div class="column">
+<h3>Why NetApp ONTAP?</h3>
+<p>NetApp ONTAP offers following key benefits for the most demanding applications:</p>
+</div>
+</div>
+</div>
+<ul>
+<li>Predictable high performance</li>
+<li>Consistent low latency and excellent response time</li>
+<li>Inline efficiency, achieved by inline deduplication and compression</li>
+<li>Instant, efficient and efficient database clones for QA and dev-test environments</li>
+<li>Backup and recovery using Snapshot technology</li>
+<li>Disaster recovery solutions using SnapMirror(enterprise replication technology)</li>
+<li>Scalability, reliability and non-disruptive operations</li>
+</ul>
+<h3>Summary</h3>
+<p>With NetApp Trident dynamic provisioner ONTAP NAS storage can be provisioned on-demand for your containerized applications.</p>
+<p>Trident can help you deploy Stateful containerized applications  e.g.  Databases with NetApp ONTAP enterprise storage</p>
+<h3>References</h3>
+<ol>
+<li><a href="https://github.com/NetApp/trident">NetApp Trident GitHub project</a></li>
+<li><a href="http://netapp.io/">NetApp thePub website</a></li>
+<li><a href="http://netapp.io/slack/">Join NetApp on Slack</a></li>
+<li><a href="http://netapp.io/2017/02/17/using-persistent-storage-openshift-applications-trident/">NetApp Trident and OpenShift</a></li>
+<li><a href="https://www.youtube.com/playlist?list=PLZdTVI9ql2pFNCfk1UuSeBIV7mxlkfz4J">Trident Videos</a></li>
+</ol>
+<p>Happy ONTAPing!</p>
+<p>(c) 2017 Keith Tenzer</p>

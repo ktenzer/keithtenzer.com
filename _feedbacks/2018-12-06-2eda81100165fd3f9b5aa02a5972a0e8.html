@@ -1,0 +1,394 @@
+---
+layout: feedback
+title: Dennis Appelon Nielsen - 2018-12-06 12:14:57
+date: 2018-12-06 12:14:57.000000000 -08:00
+type: feedback
+parent_id: '43'
+published: true
+password: ''
+status: publish
+categories: []
+tags: []
+meta:
+  _feedback_extra_fields: a:0:{}
+  _feedback_email: "a:2:{s:2:\"to\";a:1:{i:0;s:39:\"\"keith.tenzer\" <keith.tenzer@gmail.com>\";}s:7:\"message\";s:10940:\"<!doctype
+    html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<body>\n\n<b>Name:</b> Dennis
+    Appelon Nielsen<br /><br /><b>Email:</b> da@aperta.dk<br /><br /><b>Comment:</b>
+    Hi Keith<br />\r\nFirst of all thanks for making the openshift-on-openstack-123
+    I would have send this mail in a nice composed mail, but I need your e-mail to
+    send it, so I have tried to paste it in to your homepage in the contact tab.<br
+    />\r\n<br />\r\nI have tried for days now to deploy using your playbooks, on my
+    own installed openstack 13 server, but somehow I keep getting this output when
+    I try to deploy the bastion.<br />\r\n<br />\r\n<br />\r\nTASK [osp-stack-create
+    : Validate OpenShift HA] ******************************************************************************************************************************************<br
+    />\r\nskipping: [localhost]<br />\r\n<br />\r\nTASK [osp-stack-create : Check
+    if openshift stack exists] ********************************************************************************************************************************<br
+    />\r\nfatal: [localhost]: FAILED! =&gt; {\"changed\": true, \"cmd\": [\"openstack\",
+    \"stack\", \"show\", \"openshift\"], \"delta\": \"0:00:01.296456\", \"end\": \"2018-12-06
+    12:32:24.077547\", \"failed\": true, \"msg\": \"non-zero return code\", \"rc\":
+    1, \"start\": \"2018-12-06 12:32:22.781091\", \"stderr\": \"public endpoint for
+    orchestration service not found\", \"stderr_lines\": [\"public endpoint for orchestration
+    service not found\"], \"stdout\": \"\", \"stdout_lines\": []}<br />\r\n...ignoring<br
+    />\r\n<br />\r\nTASK [osp-stack-create : Create heat stack openshift] ************************************************************************************************************************************<br
+    />\r\nfatal: [localhost]: FAILED! =&gt; {\"changed\": false, \"failed\": true,
+    \"msg\": \"Stack 'openshift' failed.\", \"rc\": 1, \"stderr\": \"public endpoint
+    for orchestration service not found\\n\", \"stderr_lines\": [\"public endpoint
+    for orchestration service not found\"], \"stdout\": \"\", \"stdout_lines\": []}<br
+    />\r\n\tto retry, use: --limit @/root/workspace/openshift-on-openstack-123/deploy-openstack-infra.retry<br
+    />\r\n<br />\r\nPLAY RECAP *******************************************************************************************************************************************************************************<br
+    />\r\nlocalhost                  : ok=5    changed=1    unreachable=0    failed=1
+    <br />\r\n​<br />\r\n<br />\r\n<br />\r\nI have really tried to mess around with
+    it, but without luck, I keep thinking that my version of openstack and openshift
+    is not supported by your playbooks.... ?<br />\r\n<br />\r\n[root@powerhouse openshift-on-openstack-123]#
+    yum repolist<br />\r\nLoaded plugins: product-id, search-disabled-repos, subscription-manager<br
+    />\r\nrepo id                                                                           repo
+    name                                                                                         status<br
+    />\r\n!rhel-7-server-extras-rpms/x86_64                                                 Red
+    Hat Enterprise Linux 7 Server - Extras (RPMs)                                                  1.014<br
+    />\r\n!rhel-7-server-openstack-13-devtools-rpms/x86_64                                  Red
+    Hat OpenStack Platform 13 Developer Tools for RHEL 7 (RPMs)                                       12<br
+    />\r\n!rhel-7-server-openstack-13-rpms/x86_64                                           Red
+    Hat OpenStack Platform 13 for RHEL 7 (RPMs)                                                    1.321<br
+    />\r\n!rhel-7-server-rh-common-rpms/7Server/x86_64                                      Red
+    Hat Enterprise Linux 7 Server - RH Common (RPMs)                                                 235<br
+    />\r\n!rhel-7-server-rpms/7Server/x86_64                                                Red
+    Hat Enterprise Linux 7 Server (RPMs)                                                          23.339<br
+    />\r\nrepolist: 25.921<br />\r\n<br />\r\n<br />\r\nThis is my vars.yml file,
+    (I have striped it for passwords and pool id) :<br />\r\n<br />\r\n---<br />\r\n###
+    OpenStack Setting ###<br />\r\nopenstack_user: admin<br />\r\nopenstack_passwd:
+    *********<br />\r\nopenstack_auth_url: http://192.168.8.60:5000/v3<br />\r\nopenstack_project:
+    admin<br />\r\ndomain_name: ocp3.lab<br />\r\nexternal_network: public<br />\r\nservice_network:
+    mgmt<br />\r\nservice_subnet_id: 718f3675-55b9-498a-8c7b-e4eb2e41dde4<br />\r\nimage:
+    rhel76-image<br />\r\nssh_user: cloud-user<br />\r\nssh_key_path: /home/da/.ssh/id_rsa<br
+    />\r\nssh_key_name: Dennis<br />\r\nstack_name: openshift<br />\r\nopenstack_release:
+    queens<br />\r\nopenstack_version: \"13\"<br />\r\ncontact: admin@ocp3.lab<br
+    />\r\nheat_template_path: /root/openshift-on-openstack-123/heat/openshift_single_lbaas.yaml<br
+    />\r\n<br />\r\n### OpenShift Settings ###<br />\r\n### Deployment can be openshift
+    enterprise or origin for OKD ###<br />\r\nopenshift_deployment: openshift-enterprise<br
+    />\r\nopenshift_version: \"3.11\"<br />\r\ndocker_version: \"1.13.1\"<br />\r\nopenshift_ha:
+    false<br />\r\nregistry_replicas: 1<br />\r\nopenshift_user: admin<br />\r\nopenshift_passwd:
+    ********<br />\r\n<br />\r\n### Red Hat Subscription ###<br />\r\n### This is
+    only needed for openshift-enterprise ###<br />\r\nsubscription_use_username: True<br
+    />\r\nrhn_username_or_org_id: da.aperta<br />\r\nrhn_password_or_activation_key:
+    ***************<br />\r\nrhn_pool: ***************************<br />\r\n<br />\r\n###
+    OpenStack Instance Count ###<br />\r\nmaster_count: 1<br />\r\ninfra_count: 1<br
+    />\r\nnode_count: 3<br />\r\n<br />\r\n### OpenStack Instance Group Policies ###<br
+    />\r\n### Set to 'anti-affinity' if running on multiple compute node ###<br />\r\nmaster_server_group_policies:
+    \"['soft-anti-affinity']\"<br />\r\ninfra_server_group_policies: \"['soft-anti-affinity']\"<br
+    />\r\nnode_server_group_policies: \"['soft-anti-affinity']\"<br />\r\n<br />\r\n###
+    OpenStack Instance Flavors ###<br />\r\n### These flavors need to exist in OpenStack
+    ###<br />\r\nbastion_flavor: ocp.bastion<br />\r\nmaster_flavor: ocp.master<br
+    />\r\ninfra_flavor: ocp.infra<br />\r\nnode_flavor: ocp.node<br />\r\n<br />\r\nAs
+    you can see my flavor's are created <br />\r\n<br />\r\n[root@powerhouse ~(keystone_admin)]#
+    openstack flavor list<br />\r\n+--------------------------------------+-------------+-------+------+-----------+-------+-----------+<br
+    />\r\n| ID                                   | Name        |   RAM | Disk | Ephemeral
+    | VCPUs | Is Public |<br />\r\n+--------------------------------------+-------------+-------+------+-----------+-------+-----------+<br
+    />\r\n| 0e662295-1283-4c67-9389-2d340dfd78a4 | ocp.node    |  4096 |   30 |         0
+    |     2 | True      |<br />\r\n| 1                                    | m1.tiny
+    \    |   512 |    1 |         0 |     1 | True      |<br />\r\n| 2                                    |
+    m1.small    |  2048 |   20 |         0 |     1 | True      |<br />\r\n| 26088637-9b4d-4747-96d3-aa111eb5c9a2
+    | ocp.bastion |  4096 |   30 |         0 |     1 | True      |<br />\r\n| 3                                    |
+    m1.medium   |  4096 |   40 |         0 |     2 | True      |<br />\r\n| 4                                    |
+    m1.large    |  8192 |   80 |         0 |     4 | True      |<br />\r\n| 5                                    |
+    m1.xlarge   | 16384 |  160 |         0 |     8 | True      |<br />\r\n| a021fd81-bfae-4885-886e-ed948cdc307b
+    | ocp.infra   | 16384 |   30 |         0 |     4 | True      |<br />\r\n| e6b214c7-1630-4e02-95e8-289d9d6e7710
+    | ocp.master  |  4096 |   30 |         0 |     2 | True      |<br />\r\n+--------------------------------------+-------------+-------+------+-----------+-------+-----------+<br
+    />\r\n<br />\r\nAnd I have a working image called rhel76-image<br />\r\n<br />\r\n[root@powerhouse
+    ~(keystone_admin)]# openstack image list<br />\r\n+--------------------------------------+--------------+--------+<br
+    />\r\n| ID                                   | Name         | Status |<br />\r\n+--------------------------------------+--------------+--------+<br
+    />\r\n| 9d4011eb-1071-4430-8517-017c2ed5fc8e | RHEL8        | active |<br />\r\n|
+    4a73527a-8a38-441f-919c-fdbe7ef2f952 | centos7      | active |<br />\r\n| ca0223ae-702b-4b5d-a56c-b66aa4c5886c
+    | cirros image | active |<br />\r\n| b9d2861f-76f1-4a7f-af56-eca311d1f181 | rhel76-image
+    | active |<br />\r\n+--------------------------------------+--------------+--------+<br
+    />\r\n<br />\r\nI have also tested the network, and there is plenty of working
+    floating IP addresses, that I can reach from my home network <br />\r\n<br />\r\n+--------------------------------------+------------------+--------------------------------------+<br
+    />\r\n| ID                                   | Name             | Subnets                              |<br
+    />\r\n+--------------------------------------+------------------+--------------------------------------+<br
+    />\r\n| 19a002d0-ad60-4636-8bde-3ed8d4bd3989 | external_network | 213615bf-b03f-4dde-923c-528d68e13dea
+    |<br />\r\n| 8ab26026-51cc-46dd-b4e9-bb586cff00de | private_network  | a7bbf4fc-21c6-415d-88d7-ffb2d46f9482
+    |<br />\r\n+--------------------------------------+------------------+--------------------------------------+<br
+    />\r\n<br />\r\n+--------------------------------------+----------------+--------------------------------------+------------------+<br
+    />\r\n| ID                                   | Name           | Network                              |
+    Subnet           |<br />\r\n+--------------------------------------+----------------+--------------------------------------+------------------+<br
+    />\r\n| 213615bf-b03f-4dde-923c-528d68e13dea | public_subnet  | 19a002d0-ad60-4636-8bde-3ed8d4bd3989
+    | 192.168.8.0/24   |<br />\r\n| a7bbf4fc-21c6-415d-88d7-ffb2d46f9482 | private_subnet
+    | 8ab26026-51cc-46dd-b4e9-bb586cff00de | 192.168.100.0/24 |<br />\r\n+--------------------------------------+----------------+--------------------------------------+------------------+<br
+    />\r\n<br />\r\n+--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+<br
+    />\r\n| ID                                   | Name    | Status | State | Distributed
+    | HA    | Project                          |<br />\r\n+--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+<br
+    />\r\n| 8507ac5b-e755-4cde-8305-96223850b536 | router1 | ACTIVE | UP    | False
+    \      | False | 9dc2c89f3bb347ebbca35aeb628a4ed1 |<br />\r\n+--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+<br
+    />\r\n<br />\r\nI really hope you can point me in some direction, to where it
+    goes wrong..<br />\r\n<br />\r\nBest regards<br />\r\n<br />\r\n-- <br />\r\nDennis
+    Appelon Nielsen<br />\r\nGNU/Linux Konsulent<br />\r\nAperta<br />\r\nm:\t+45
+    2948 1118<br />\r\nw:\taperta.dk  e: da@aperta.dk<br /><br /><br /><hr />Time:
+    December 6, 2018 at 12:14 pm<br />IP Address: 87.49.146.171<br />Contact Form
+    URL: https://keithtenzer.com/contact/<br /><p>Sent by a verified WordPress.com
+    user.</p>\n\n</body>\n</html>\";}"
+author: 
+permalink: "/"
+---
+<p>Hi Keith<br />
+First of all thanks for making the openshift-on-openstack-123 I would have send this mail in a nice composed mail, but I need your e-mail to send it, so I have tried to paste it in to your homepage in the contact tab.</p>
+<p>I have tried for days now to deploy using your playbooks, on my own installed openstack 13 server, but somehow I keep getting this output when I try to deploy the bastion.</p>
+<p>TASK [osp-stack-create : Validate OpenShift HA] ******************************************************************************************************************************************<br />
+skipping: [localhost]</p>
+<p>TASK [osp-stack-create : Check if openshift stack exists] ********************************************************************************************************************************<br />
+fatal: [localhost]: FAILED! =&gt; {"changed": true, "cmd": ["openstack", "stack", "show", "openshift"], "delta": "0:00:01.296456", "end": "2018-12-06 12:32:24.077547", "failed": true, "msg": "non-zero return code", "rc": 1, "start": "2018-12-06 12:32:22.781091", "stderr": "public endpoint for orchestration service not found", "stderr_lines": ["public endpoint for orchestration service not found"], "stdout": "", "stdout_lines": []}<br />
+...ignoring</p>
+<p>TASK [osp-stack-create : Create heat stack openshift] ************************************************************************************************************************************<br />
+fatal: [localhost]: FAILED! =&gt; {"changed": false, "failed": true, "msg": "Stack 'openshift' failed.", "rc": 1, "stderr": "public endpoint for orchestration service not found\n", "stderr_lines": ["public endpoint for orchestration service not found"], "stdout": "", "stdout_lines": []}<br />
+	to retry, use: --limit @/root/workspace/openshift-on-openstack-123/deploy-openstack-infra.retry</p>
+<p>PLAY RECAP *******************************************************************************************************************************************************************************<br />
+localhost                  : ok=5    changed=1    unreachable=0    failed=1<br />
+​</p>
+<p>I have really tried to mess around with it, but without luck, I keep thinking that my version of openstack and openshift is not supported by your playbooks.... ?</p>
+<p>[root@powerhouse openshift-on-openstack-123]# yum repolist<br />
+Loaded plugins: product-id, search-disabled-repos, subscription-manager<br />
+repo id                                                                           repo name                                                                                         status<br />
+!rhel-7-server-extras-rpms/x86_64                                                 Red Hat Enterprise Linux 7 Server - Extras (RPMs)                                                  1.014<br />
+!rhel-7-server-openstack-13-devtools-rpms/x86_64                                  Red Hat OpenStack Platform 13 Developer Tools for RHEL 7 (RPMs)                                       12<br />
+!rhel-7-server-openstack-13-rpms/x86_64                                           Red Hat OpenStack Platform 13 for RHEL 7 (RPMs)                                                    1.321<br />
+!rhel-7-server-rh-common-rpms/7Server/x86_64                                      Red Hat Enterprise Linux 7 Server - RH Common (RPMs)                                                 235<br />
+!rhel-7-server-rpms/7Server/x86_64                                                Red Hat Enterprise Linux 7 Server (RPMs)                                                          23.339<br />
+repolist: 25.921</p>
+<p>This is my vars.yml file, (I have striped it for passwords and pool id) :</p>
+<p>---<br />
+### OpenStack Setting ###<br />
+openstack_user: admin<br />
+openstack_passwd: *********<br />
+openstack_auth_url: http://192.168.8.60:5000/v3<br />
+openstack_project: admin<br />
+domain_name: ocp3.lab<br />
+external_network: public<br />
+service_network: mgmt<br />
+service_subnet_id: 718f3675-55b9-498a-8c7b-e4eb2e41dde4<br />
+image: rhel76-image<br />
+ssh_user: cloud-user<br />
+ssh_key_path: /home/da/.ssh/id_rsa<br />
+ssh_key_name: Dennis<br />
+stack_name: openshift<br />
+openstack_release: queens<br />
+openstack_version: "13"<br />
+contact: admin@ocp3.lab<br />
+heat_template_path: /root/openshift-on-openstack-123/heat/openshift_single_lbaas.yaml</p>
+<p>### OpenShift Settings ###<br />
+### Deployment can be openshift enterprise or origin for OKD ###<br />
+openshift_deployment: openshift-enterprise<br />
+openshift_version: "3.11"<br />
+docker_version: "1.13.1"<br />
+openshift_ha: false<br />
+registry_replicas: 1<br />
+openshift_user: admin<br />
+openshift_passwd: ********</p>
+<p>### Red Hat Subscription ###<br />
+### This is only needed for openshift-enterprise ###<br />
+subscription_use_username: True<br />
+rhn_username_or_org_id: da.aperta<br />
+rhn_password_or_activation_key: ***************<br />
+rhn_pool: ***************************</p>
+<p>### OpenStack Instance Count ###<br />
+master_count: 1<br />
+infra_count: 1<br />
+node_count: 3</p>
+<p>### OpenStack Instance Group Policies ###<br />
+### Set to 'anti-affinity' if running on multiple compute node ###<br />
+master_server_group_policies: "['soft-anti-affinity']"<br />
+infra_server_group_policies: "['soft-anti-affinity']"<br />
+node_server_group_policies: "['soft-anti-affinity']"</p>
+<p>### OpenStack Instance Flavors ###<br />
+### These flavors need to exist in OpenStack ###<br />
+bastion_flavor: ocp.bastion<br />
+master_flavor: ocp.master<br />
+infra_flavor: ocp.infra<br />
+node_flavor: ocp.node</p>
+<p>As you can see my flavor's are created </p>
+<p>[root@powerhouse ~(keystone_admin)]# openstack flavor list<br />
++--------------------------------------+-------------+-------+------+-----------+-------+-----------+<br />
+| ID                                   | Name        |   RAM | Disk | Ephemeral | VCPUs | Is Public |<br />
++--------------------------------------+-------------+-------+------+-----------+-------+-----------+<br />
+| 0e662295-1283-4c67-9389-2d340dfd78a4 | ocp.node    |  4096 |   30 |         0 |     2 | True      |<br />
+| 1                                    | m1.tiny     |   512 |    1 |         0 |     1 | True      |<br />
+| 2                                    | m1.small    |  2048 |   20 |         0 |     1 | True      |<br />
+| 26088637-9b4d-4747-96d3-aa111eb5c9a2 | ocp.bastion |  4096 |   30 |         0 |     1 | True      |<br />
+| 3                                    | m1.medium   |  4096 |   40 |         0 |     2 | True      |<br />
+| 4                                    | m1.large    |  8192 |   80 |         0 |     4 | True      |<br />
+| 5                                    | m1.xlarge   | 16384 |  160 |         0 |     8 | True      |<br />
+| a021fd81-bfae-4885-886e-ed948cdc307b | ocp.infra   | 16384 |   30 |         0 |     4 | True      |<br />
+| e6b214c7-1630-4e02-95e8-289d9d6e7710 | ocp.master  |  4096 |   30 |         0 |     2 | True      |<br />
++--------------------------------------+-------------+-------+------+-----------+-------+-----------+</p>
+<p>And I have a working image called rhel76-image</p>
+<p>[root@powerhouse ~(keystone_admin)]# openstack image list<br />
++--------------------------------------+--------------+--------+<br />
+| ID                                   | Name         | Status |<br />
++--------------------------------------+--------------+--------+<br />
+| 9d4011eb-1071-4430-8517-017c2ed5fc8e | RHEL8        | active |<br />
+| 4a73527a-8a38-441f-919c-fdbe7ef2f952 | centos7      | active |<br />
+| ca0223ae-702b-4b5d-a56c-b66aa4c5886c | cirros image | active |<br />
+| b9d2861f-76f1-4a7f-af56-eca311d1f181 | rhel76-image | active |<br />
++--------------------------------------+--------------+--------+</p>
+<p>I have also tested the network, and there is plenty of working floating IP addresses, that I can reach from my home network </p>
+<p>+--------------------------------------+------------------+--------------------------------------+<br />
+| ID                                   | Name             | Subnets                              |<br />
++--------------------------------------+------------------+--------------------------------------+<br />
+| 19a002d0-ad60-4636-8bde-3ed8d4bd3989 | external_network | 213615bf-b03f-4dde-923c-528d68e13dea |<br />
+| 8ab26026-51cc-46dd-b4e9-bb586cff00de | private_network  | a7bbf4fc-21c6-415d-88d7-ffb2d46f9482 |<br />
++--------------------------------------+------------------+--------------------------------------+</p>
+<p>+--------------------------------------+----------------+--------------------------------------+------------------+<br />
+| ID                                   | Name           | Network                              | Subnet           |<br />
++--------------------------------------+----------------+--------------------------------------+------------------+<br />
+| 213615bf-b03f-4dde-923c-528d68e13dea | public_subnet  | 19a002d0-ad60-4636-8bde-3ed8d4bd3989 | 192.168.8.0/24   |<br />
+| a7bbf4fc-21c6-415d-88d7-ffb2d46f9482 | private_subnet | 8ab26026-51cc-46dd-b4e9-bb586cff00de | 192.168.100.0/24 |<br />
++--------------------------------------+----------------+--------------------------------------+------------------+</p>
+<p>+--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+<br />
+| ID                                   | Name    | Status | State | Distributed | HA    | Project                          |<br />
++--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+<br />
+| 8507ac5b-e755-4cde-8305-96223850b536 | router1 | ACTIVE | UP    | False       | False | 9dc2c89f3bb347ebbca35aeb628a4ed1 |<br />
++--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+</p>
+<p>I really hope you can point me in some direction, to where it goes wrong..</p>
+<p>Best regards</p>
+<p>--<br />
+Dennis Appelon Nielsen<br />
+GNU/Linux Konsulent<br />
+Aperta<br />
+m:	+45 2948 1118<br />
+w:	aperta.dk  e: da@aperta.dk<br />
+<!--more--><br />
+AUTHOR: Dennis Appelon Nielsen<br />
+AUTHOR EMAIL: da@aperta.dk<br />
+AUTHOR URL:<br />
+SUBJECT: Midnight Code Junkie<br />
+IP: 87.49.146.171<br />
+Array<br />
+(<br />
+    [1_Name] =&gt; Dennis Appelon Nielsen<br />
+    [2_Email] =&gt; da@aperta.dk<br />
+    [3_Comment] =&gt; Hi Keith<br />
+First of all thanks for making the openshift-on-openstack-123 I would have send this mail in a nice composed mail, but I need your e-mail to send it, so I have tried to paste it in to your homepage in the contact tab.</p>
+<p>I have tried for days now to deploy using your playbooks, on my own installed openstack 13 server, but somehow I keep getting this output when I try to deploy the bastion.</p>
+<p>TASK [osp-stack-create : Validate OpenShift HA] ******************************************************************************************************************************************<br />
+skipping: [localhost]</p>
+<p>TASK [osp-stack-create : Check if openshift stack exists] ********************************************************************************************************************************<br />
+fatal: [localhost]: FAILED! =&gt; {"changed": true, "cmd": ["openstack", "stack", "show", "openshift"], "delta": "0:00:01.296456", "end": "2018-12-06 12:32:24.077547", "failed": true, "msg": "non-zero return code", "rc": 1, "start": "2018-12-06 12:32:22.781091", "stderr": "public endpoint for orchestration service not found", "stderr_lines": ["public endpoint for orchestration service not found"], "stdout": "", "stdout_lines": []}<br />
+...ignoring</p>
+<p>TASK [osp-stack-create : Create heat stack openshift] ************************************************************************************************************************************<br />
+fatal: [localhost]: FAILED! =&gt; {"changed": false, "failed": true, "msg": "Stack 'openshift' failed.", "rc": 1, "stderr": "public endpoint for orchestration service not found\n", "stderr_lines": ["public endpoint for orchestration service not found"], "stdout": "", "stdout_lines": []}<br />
+	to retry, use: --limit @/root/workspace/openshift-on-openstack-123/deploy-openstack-infra.retry</p>
+<p>PLAY RECAP *******************************************************************************************************************************************************************************<br />
+localhost                  : ok=5    changed=1    unreachable=0    failed=1<br />
+​</p>
+<p>I have really tried to mess around with it, but without luck, I keep thinking that my version of openstack and openshift is not supported by your playbooks.... ?</p>
+<p>[root@powerhouse openshift-on-openstack-123]# yum repolist<br />
+Loaded plugins: product-id, search-disabled-repos, subscription-manager<br />
+repo id                                                                           repo name                                                                                         status<br />
+!rhel-7-server-extras-rpms/x86_64                                                 Red Hat Enterprise Linux 7 Server - Extras (RPMs)                                                  1.014<br />
+!rhel-7-server-openstack-13-devtools-rpms/x86_64                                  Red Hat OpenStack Platform 13 Developer Tools for RHEL 7 (RPMs)                                       12<br />
+!rhel-7-server-openstack-13-rpms/x86_64                                           Red Hat OpenStack Platform 13 for RHEL 7 (RPMs)                                                    1.321<br />
+!rhel-7-server-rh-common-rpms/7Server/x86_64                                      Red Hat Enterprise Linux 7 Server - RH Common (RPMs)                                                 235<br />
+!rhel-7-server-rpms/7Server/x86_64                                                Red Hat Enterprise Linux 7 Server (RPMs)                                                          23.339<br />
+repolist: 25.921</p>
+<p>This is my vars.yml file, (I have striped it for passwords and pool id) :</p>
+<p>---<br />
+### OpenStack Setting ###<br />
+openstack_user: admin<br />
+openstack_passwd: *********<br />
+openstack_auth_url: http://192.168.8.60:5000/v3<br />
+openstack_project: admin<br />
+domain_name: ocp3.lab<br />
+external_network: public<br />
+service_network: mgmt<br />
+service_subnet_id: 718f3675-55b9-498a-8c7b-e4eb2e41dde4<br />
+image: rhel76-image<br />
+ssh_user: cloud-user<br />
+ssh_key_path: /home/da/.ssh/id_rsa<br />
+ssh_key_name: Dennis<br />
+stack_name: openshift<br />
+openstack_release: queens<br />
+openstack_version: "13"<br />
+contact: admin@ocp3.lab<br />
+heat_template_path: /root/openshift-on-openstack-123/heat/openshift_single_lbaas.yaml</p>
+<p>### OpenShift Settings ###<br />
+### Deployment can be openshift enterprise or origin for OKD ###<br />
+openshift_deployment: openshift-enterprise<br />
+openshift_version: "3.11"<br />
+docker_version: "1.13.1"<br />
+openshift_ha: false<br />
+registry_replicas: 1<br />
+openshift_user: admin<br />
+openshift_passwd: ********</p>
+<p>### Red Hat Subscription ###<br />
+### This is only needed for openshift-enterprise ###<br />
+subscription_use_username: True<br />
+rhn_username_or_org_id: da.aperta<br />
+rhn_password_or_activation_key: ***************<br />
+rhn_pool: ***************************</p>
+<p>### OpenStack Instance Count ###<br />
+master_count: 1<br />
+infra_count: 1<br />
+node_count: 3</p>
+<p>### OpenStack Instance Group Policies ###<br />
+### Set to 'anti-affinity' if running on multiple compute node ###<br />
+master_server_group_policies: "['soft-anti-affinity']"<br />
+infra_server_group_policies: "['soft-anti-affinity']"<br />
+node_server_group_policies: "['soft-anti-affinity']"</p>
+<p>### OpenStack Instance Flavors ###<br />
+### These flavors need to exist in OpenStack ###<br />
+bastion_flavor: ocp.bastion<br />
+master_flavor: ocp.master<br />
+infra_flavor: ocp.infra<br />
+node_flavor: ocp.node</p>
+<p>As you can see my flavor's are created </p>
+<p>[root@powerhouse ~(keystone_admin)]# openstack flavor list<br />
++--------------------------------------+-------------+-------+------+-----------+-------+-----------+<br />
+| ID                                   | Name        |   RAM | Disk | Ephemeral | VCPUs | Is Public |<br />
++--------------------------------------+-------------+-------+------+-----------+-------+-----------+<br />
+| 0e662295-1283-4c67-9389-2d340dfd78a4 | ocp.node    |  4096 |   30 |         0 |     2 | True      |<br />
+| 1                                    | m1.tiny     |   512 |    1 |         0 |     1 | True      |<br />
+| 2                                    | m1.small    |  2048 |   20 |         0 |     1 | True      |<br />
+| 26088637-9b4d-4747-96d3-aa111eb5c9a2 | ocp.bastion |  4096 |   30 |         0 |     1 | True      |<br />
+| 3                                    | m1.medium   |  4096 |   40 |         0 |     2 | True      |<br />
+| 4                                    | m1.large    |  8192 |   80 |         0 |     4 | True      |<br />
+| 5                                    | m1.xlarge   | 16384 |  160 |         0 |     8 | True      |<br />
+| a021fd81-bfae-4885-886e-ed948cdc307b | ocp.infra   | 16384 |   30 |         0 |     4 | True      |<br />
+| e6b214c7-1630-4e02-95e8-289d9d6e7710 | ocp.master  |  4096 |   30 |         0 |     2 | True      |<br />
++--------------------------------------+-------------+-------+------+-----------+-------+-----------+</p>
+<p>And I have a working image called rhel76-image</p>
+<p>[root@powerhouse ~(keystone_admin)]# openstack image list<br />
++--------------------------------------+--------------+--------+<br />
+| ID                                   | Name         | Status |<br />
++--------------------------------------+--------------+--------+<br />
+| 9d4011eb-1071-4430-8517-017c2ed5fc8e | RHEL8        | active |<br />
+| 4a73527a-8a38-441f-919c-fdbe7ef2f952 | centos7      | active |<br />
+| ca0223ae-702b-4b5d-a56c-b66aa4c5886c | cirros image | active |<br />
+| b9d2861f-76f1-4a7f-af56-eca311d1f181 | rhel76-image | active |<br />
++--------------------------------------+--------------+--------+</p>
+<p>I have also tested the network, and there is plenty of working floating IP addresses, that I can reach from my home network </p>
+<p>+--------------------------------------+------------------+--------------------------------------+<br />
+| ID                                   | Name             | Subnets                              |<br />
++--------------------------------------+------------------+--------------------------------------+<br />
+| 19a002d0-ad60-4636-8bde-3ed8d4bd3989 | external_network | 213615bf-b03f-4dde-923c-528d68e13dea |<br />
+| 8ab26026-51cc-46dd-b4e9-bb586cff00de | private_network  | a7bbf4fc-21c6-415d-88d7-ffb2d46f9482 |<br />
++--------------------------------------+------------------+--------------------------------------+</p>
+<p>+--------------------------------------+----------------+--------------------------------------+------------------+<br />
+| ID                                   | Name           | Network                              | Subnet           |<br />
++--------------------------------------+----------------+--------------------------------------+------------------+<br />
+| 213615bf-b03f-4dde-923c-528d68e13dea | public_subnet  | 19a002d0-ad60-4636-8bde-3ed8d4bd3989 | 192.168.8.0/24   |<br />
+| a7bbf4fc-21c6-415d-88d7-ffb2d46f9482 | private_subnet | 8ab26026-51cc-46dd-b4e9-bb586cff00de | 192.168.100.0/24 |<br />
++--------------------------------------+----------------+--------------------------------------+------------------+</p>
+<p>+--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+<br />
+| ID                                   | Name    | Status | State | Distributed | HA    | Project                          |<br />
++--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+<br />
+| 8507ac5b-e755-4cde-8305-96223850b536 | router1 | ACTIVE | UP    | False       | False | 9dc2c89f3bb347ebbca35aeb628a4ed1 |<br />
++--------------------------------------+---------+--------+-------+-------------+-------+----------------------------------+</p>
+<p>I really hope you can point me in some direction, to where it goes wrong..</p>
+<p>Best regards</p>
+<p>--<br />
+Dennis Appelon Nielsen<br />
+GNU/Linux Konsulent<br />
+Aperta<br />
+m:	+45 2948 1118<br />
+w:	aperta.dk  e: da@aperta.dk</p>
+<p>    [entry_title] =&gt; Contact<br />
+    [entry_permalink] =&gt; https://keithtenzer.com/contact/<br />
+    [feedback_id] =&gt; 2eda81100165fd3f9b5aa02a5972a0e8<br />
+)</p>

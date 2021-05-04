@@ -1,0 +1,438 @@
+<h2><img class="alignnone size-full wp-image-1215" src="/assets/2018/02/rdo.jpg" alt="rdo" width="355" height="142" /></h2>
+<h2 class="entry-content">Overview</h2>
+<div class="entry-content">
+<p>In this article we will focus on installing and configuring OpenStack Pike using RDO and the packstack installer. RDO is a community platform around Red Hat’s Enterprise OpenStack Distribution. It allows you to test the latest OpenStack capabilities on a stable platform such as Red Hat Enterprise Linux (RHEL) or CentOS. This guide will take you through setting up Hetzner root server, preparing environment for OpenStack, installing the OpenStack Pike release, adding a floating ip subnet through OVS, configuring networking, security groups, flavors, images and are other OpenStack related services. The outcome is a working OpenStack environment based on the Pike release that you can use as a baseline for testing your applications using OpenStack capabilities. The installation will create an all-in-one deployment however you can use this guide to create a multi-node deployment as well.<br />
+<!--more--></p>
+<h2>Root Server Specs</h2>
+<pre>CPU: Intel(R) Core(TM) i7-3930K CPU @ 3.20GHz (12 Cores)
+Memory: 64GB RAM
+Disk: 2 x 3TB SATA
+Network: 1Gbit
+IPV4 Adresses: 1 x IPV4 + /29 Subnet (6 IPs)</pre>
+<p>Hetzner is a hosting providing and auctions off used hardware for very competitive prices on a per/month basis (<a href="https://www.hetzner.de/sb">https://www.hetzner.de/sb</a>). Hetzner provides one IP for each root server that is accessible via internet. It is a /32 so if you want additional IPs, like you would for OpenStack to use as floating ips you need to order additional subnet. You can order an additional subnet as I have done. Hetzner will route that subnet through the host IP of the /32. This requires creating an additional OVS bridge in OpenStack and this guide will go through that configuration.</p>
+<h2>Configure Root Server</h2>
+<p>As mentioned, Hetzner will give you access to your root server via IP and provide ability to manage the root server. Basic things like put root server in rescue mode or reboot. You can provide public ssh key or use password to access system. Please don't use password, this is the internet, bad things can and will happen.</p>
+<p><strong>Enter Rescue Mode</strong></p>
+<p>In order to install OS or repair it you need to get into rescue mode.</p>
+<p><img class="alignnone size-full wp-image-12310" src="/assets/2018/02/hetzner_1.png" alt="hetzner_1" width="772" height="262" /></p>
+<p><img class="alignnone size-full wp-image-12311" src="/assets/2018/02/hetzner_2.png" alt="hetzner_2" width="772" height="262" /></p>
+<p><img class="alignnone size-full wp-image-12312" src="/assets/2018/02/hetzner_3.png" alt="hetzner_3" width="790" height="363" /></p>
+<p><strong>Configure Hetzner Firewall.</strong></p>
+<p>While server is rebootting you can modify your servers firewall rules for incoming traffic. By default firewall allows port 22 for SSH and nothing else. Firewall settings can be modified under your server's settings in Hetzner's web UI <a href="https://robot.your-server.de/server" rel="nofollow">https://robot.your-server.de/server</a>. For OpenStack I would recommend 80, 443, 22 and ICMP.</p>
+<p><img class="alignnone size-full wp-image-12321" src="/assets/2018/02/hetzner_firewall_osp.png" alt="hetzner_firewall_osp" width="1718" height="678" /></p>
+<p>If you plan on running OpenShift on OpenStack you need to add some additional rules.</p>
+<p><img class="alignnone size-full wp-image-12320" src="/assets/2018/02/hetzner_firewalld1.png" alt="hetzner_firewalld" width="1665" height="537" /></p>
+<p><strong>Connect to root server via ssh and private key.</strong></p>
+<pre># ssh -i .ssh/id_rsa.pub</pre>
+<p><strong>Create Root Server Configuration.</strong></p>
+<p>The root server in this case has two disks. They are being configured in non-redundant RAID 1 (stripping) configuration. OpenStack requires decent disk performance, I found when using mirroring it was not enough. If you want redundant configuration you need to pay extra for SSDs. Since we will setup LVM partitions, creating one for Cinder (cinder-volumes) is a good idea. You don't want to use loop back driver for Cinder. Finally you can provide your own image (if you want to use RHEL, you must do so). In this case we will just use provided CentOS image.</p>
+<pre>[Hetzner Setup]
+# vi config.txt
+
+DRIVE1 /dev/sda
+DRIVE2 /dev/sdb
+SWRAID 1
+SWRAIDLEVEL 0
+BOOTLOADER grub
+HOSTNAME myrootserver.lab
+PART /boot ext3 512M
+PART lvm vg0 500G
+PART lvm cinder-volumes all
+
+LV vg0 root / ext4 100G
+LV vg0 swap swap swap 5G
+LV vg0 var /var ext4 10G
+LV vg0 tmp /tmp ext4 10G
+LV vg0 home /home ext4 40G
+
+IMAGE /root/.oldroot/nfs/install/../images/CentOS-74-64-minimal.tar.gz</pre>
+<p><strong>Install image and create partitions.</strong></p>
+<pre># installimage -a -c config.txt</pre>
+<div><strong>Reboot.</strong></div>
+<pre># reboot now</pre>
+</div>
+<p>&nbsp;</p>
+<div>
+<div><strong>Disable password authentication.</strong></div>
+<div>Remember this system is accessible from the internet. Unless you want people to constantly try and login, disable password authentication.</div>
+<pre># vi /etc/ssh/sshd_config
+PasswordAuthentication no</pre>
+<div><strong> Restart sshd.</strong></div>
+<pre># systemctl restart sshd</pre>
+</div>
+<p><strong>Verify LVM Volume Groups</strong></p>
+<p>Make sure a volume group cinder-volumes exists. This will be used for OpenStack storage as mentioned.</p>
+<pre># vgs
+ VG #PV #LV #SN Attr VSize VFree
+ cinder-volumes 1 0 0 wz--n- &lt;4.97t &lt;4.97t
+ vg0 1 5 0 wz--n- &lt;499.75g &lt;334.75g</pre>
+<h2>Install OpenStack</h2>
+<p><strong>Ensure local name resolution is working.</strong></p>
+<pre># vi /etc/hosts
+144.76.52.111 myrootserver.lab myrootserverF</pre>
+<p><strong>Set hostname.</strong></p>
+<pre># hostnamectl set-hostname myrootserver.lab</pre>
+<p><strong>Enable RPMs.</strong></p>
+<p>[RHEL]</p>
+<pre># subscription-manager register
+# subscription-manager list --available
+# subscription-manager attach --pool=
+# subscription-manager repos --disable=*
+# subscription-manager repos --enable=rhel-7-server-rpms
+# subscription-manager repos --enable=rhel-7-server-rh-common-rpms
+# subscription-manager repos --enable=rhel-7-server-extras-rpms
+# subscription-manager repos --enable=rhel-7-server-openstack-12-rpms
+# subscription-manager repos --enable=rhel-7-server-openstack-12-devtools-rpms</pre>
+<p>[CentOS]</p>
+<pre># yum install -y centos-release-openstack-pike</pre>
+<p><strong>Disable firewalld, OpenStack uses iptables.</strong></p>
+<pre># systemctl disable firewalld
+# systemctl stop firewalld</pre>
+<p><strong>Disable NetworkManager.</strong></p>
+<pre># systemctl stop NetworkManager
+# systemctl disable NetworkManager</pre>
+<p><strong>Install packstack packages.</strong></p>
+<pre># yum install -y openstack-packstack</pre>
+<p><strong>Install yum-utils and update the system.</strong></p>
+<pre># yum install -y yum-utils
+# yum update -y</pre>
+<p><strong>Configure Intel Virtualization for Directed I/O.</strong></p>
+<pre># vi /etc/default/grub
+---
+GRUB_CMDLINE_LINUX="biosdevname=0 crashkernel=auto nomodeset rd.auto=1 consoleblank=0 intel_iommu=on"
+---</pre>
+<pre># grub2-mkconfig -o /boot/grub2/grub.cfg</pre>
+<p><strong>Reboot.</strong></p>
+<pre># systemctl reboot</pre>
+<p><strong>Create packstack answers file for customizing the installer.</strong></p>
+<pre># packstack --gen-answer-file /root/answers.txt</pre>
+<p><strong>Update the packstack answers file and enable other OpenStack services.</strong></p>
+<pre># vi /root/answers.txt
+---
+CONFIG_NTP_SERVERS=0.pool.ntp.org,1.pool.ntp.org,2.pool.ntp.org
+CONFIG_CONTROLLER_HOST=192.168.0.40 
+CONFIG_COMPUTE_HOSTS=192.168.0.41,192.168.0.42
+CONFIG_NETWORK_HOSTS=192.168.0.40
+CONFIG_STORAGE_HOST=192.168.0.40
+CONFIG_KEYSTONE_ADMIN_PW=redhat
+CONFIG_PROVISION_DEMO=n
+CONFIG_HEAT_INSTALL=y
+CONFIG_HEAT_CFN_INSTALL=y
+CONFIG_HEAT_CLOUDWATCH_INSTALL=y
+CONFIG_CEILOMETER_INSTALL=y
+CONFIG_LBAAS_INSTALL=y
+CONFIG_CINDER_VOLUMES_CREATE=n
+CONFIG_NOVA_SCHED_RAM_ALLOC_RATIO=3.0
+CONFIG_NOVA_LIBVIRT_VIRT_TYPE=kvm
+CONFIG_HORIZON_SSL=n
+---</pre>
+<p>Note: Regarding HORIZON_SSL. If you enable SSL it won't work with chrome unless you create a self-signed cert with subjectAltNames, chrome now blocks common self-signed certs.</p>
+<p><strong>Install OpenStack using packstack.</strong></p>
+<pre># packstack --answer-file /root/answers.txt --timeout=600
+
+**** Installation completed successfully ******
+Additional information:
+ * File /root/keystonerc_admin has been created on OpenStack client host 144.76.52.111. To use the command line tools you need to source the file.
+ * To access the OpenStack Dashboard browse to http://144.76.52.111/dashboard .
+Please, find your login credentials stored in the keystonerc_admin in your home directory.
+ * The installation log file is available at: /var/tmp/packstack/20180111-182033-bm7yZM/openstack-setup.log
+ * The generated manifests are available at: /var/tmp/packstack/20180111-182033-bm7yZM/manifests</pre>
+<h2>Configure Physical Network</h2>
+<p><strong>Source the keystone admin profile.</strong></p>
+<pre># . /root/keystonerc_admin</pre>
+<p><strong>Backup the ifcfg-etho script.</strong></p>
+<pre># cp /etc/sysconfig/network-scripts/ifcfg-eno1 /root/</pre>
+<p><strong>Configure external bridge br-ex.</strong></p>
+<pre># vi /etc/sysconfig/network-scripts/ifcfg-eno1
+DEVICE=eno1
+ONBOOT=yes
+TYPE=OVSPort
+DEVICETYPE=ovs
+OVS_BRIDGE=br-ex</pre>
+<pre># vi /etc/sysconfig/network-scripts/ifcfg-br-ex
+DEVICE=br-ex
+BOOTPROTO=none
+ONBOOT=yes
+TYPE=OVSBridge
+DEVICETYPE=ovs
+USERCTL=yes
+PEERDNS=yes
+IPV6INIT=no
+IPADDR=144.76.52.111
+NETMASK=255.255.255.255
+SCOPE="peer 144.76.56.97"</pre>
+<p><strong>Switch static route to br-ex.</strong></p>
+<p>Note: this is specific to Hetzner environment as the physical host will get a /32.</p>
+<pre># mv /etc/sysconfig/network-scripts/route-eno1 /etc/sysconfig/network-scripts/route-br-ex</pre>
+<div class="entry-content">
+<p><strong>Add the eno1 physical interface to the br-ex bridge in openVswitch.</strong>Note: normally you use br-ex as your floating ip network. However at Heztner this is a /32 (one ipv4 IP). As such since additional IPs are needed for instances a second subnet is needed.</p>
+<pre># ovs-vsctl add-port br-ex eno1; systemctl restart network.service</pre>
+</div>
+<div class="entry-content">
+<h2>Configure Additional Floating IP Subnet</h2>
+<p>Since hetzner root server only has one ip (/32), another subnet is needed to add additional floating ips. In this case hetzner will route traffic from additional subnet through to /32 ip of root server. Here we need to create a new OVS bridge (br-ex2) for additional subnet and patch it to existing bridge (br-ex).</p>
+<p><strong>Create Openvswitch Bridge.</strong></p>
+</div>
+<pre># ovs-vsctl add-br br-ex2</pre>
+<p><strong>Patch bridge br-ex2 to br-ex.</strong></p>
+<pre># ovs-vsctl add-port br-ex2 patch2-0</pre>
+<p>Note: ignore error about missing interface, that is expected since we creating patch.</p>
+<pre># ovs-vsctl set interface patch2-0 type=patch</pre>
+<pre># ovs-vsctl set interface patch2-0 options:peer="patch0-2"</pre>
+<pre># ovs-vsctl add-port br-ex patch0-2</pre>
+<p>Note: ignore error about missing interface, that is expected since we creating patch.</p>
+<pre># ovs-vsctl set interface patch0-2 type=patch</pre>
+<pre># ovs-vsctl set interface patch0-2 options:peer="patch2-0"</pre>
+<p><strong>Update l3_agent config.</strong></p>
+<pre>vi /etc/neutron/l3_agent.ini
+---
+gateway_external_network_id = ''
+external_network_bridge = ''
+---</pre>
+<p><strong>Update neutron bridge mappings.</strong></p>
+<p>We are adding a second subnet, as such a mapping is required to physical interface.</p>
+<pre># vi /etc/neutron/plugins/ml2/openvswitch_agent.ini 
+bridge_mappings=extnet:br-ex,extnet2:br-ex2</pre>
+<p><strong>Configure ifcfg script for br-ex2.</strong></p>
+<div class="entry-content">
+<pre># vi /etc/sysconfig/network-scripts/ifcfg-br-ex2
+DEVICE=br-ex2
+BOOTPROTO=none
+ONBOOT=yes
+TYPE=OVSBridge
+DEVICETYPE=ovs
+USERCTL=yes
+PEERDNS=yes
+IPADDR=144.76.132.225
+NETMASK=255.255.255.248
+SCOPE="peer 144.76.56.97"
+IPV6INIT=no
+
+</pre>
+<p><strong>Comment out default iptables REJECT rules.</strong></p>
+<p>By default iptables won't allow traffic from br-ex2 to br-ex.</p>
+<pre># vi /etc/sysconfig/iptables
+---
+#-A INPUT -j REJECT --reject-with icmp-host-prohibited
+#-A FORWARD -j REJECT --reject-with icmp-host-prohibited
+---</pre>
+<p><strong>Restart iptables and networking.</strong></p>
+<pre># systemctl restart iptables; systemctl restart network</pre>
+<div class="entry-content">
+<h2>Configure OpenStack Environment</h2>
+<h3>Nova Configuration</h3>
+<p>Nova uses filtering rules to find appropriate host when scheduling instances. In order for nova to recognize lvm storage the images type needs to be lvm and the volume group needs to be correct lvm volume. In addition, unless you want to wait really long when deleting nova volumes, set volume_clear to none.</p>
+<pre># vi /etc/nova/nova.conf
+
+[libvirt]
+---
+images_type = lvm 
+volume_clear = none
+images_volume_group = cinder-volumes
+---</pre>
+<p><strong>Restart Nova services.</strong></p>
+<pre># systemctl restart openstack-nova-compute
+# systemctl restart openstack-nova-api
+# systemctl restart openstack-nova-scheduler</pre>
+<h3>Cinder Configuration</h3>
+<p>By default the openstack install will configure an lvm volume group using loop. This is not ideal and why we created a volume group vg1. We will use the same setting volume_clear to none to ensure cinder volumes are deleted quickly.</p>
+<p><strong>Update cinder configuration.</strong></p>
+<pre># vi /etc/cinder/cinder.conf
+---
+enabled_backends=lvm
+volume_clear = none
+
+[lvm]
+volume_backend_name=lvm
+volume_driver=cinder.volume.drivers.lvm.LVMVolumeDriver
+iscsi_ip_address=144.76.52.111
+iscsi_helper=lioadm
+volume_group=cinder-volumes
+volumes_dir=/var/lib/cinder/volumes
+---</pre>
+<p><strong>Restart cinder services.</strong></p>
+<pre># systemctl restart openstack-cinder-volume
+# systemctl restart openstack-cinder-api</pre>
+<h3>Ceilometer Configuration</h3>
+<p>Aodh is the database for alarms that are triggered based on things such as autoscaling policies. The database needs to be initialized after installing OpenStack.</p>
+<pre># aodh-dbsync</pre>
+<h3>Neutron Configuration</h3>
+<p><strong>Create private network.</strong></p>
+<pre># openstack network create private</pre>
+<pre># openstack subnet create --network private --allocation-pool \
+start=10.10.1.100,end=10.10.1.200 --dns-nameserver 213.133.98.98 \
+--subnet-range 10.10.1.0/24 private_subnet</pre>
+<p><strong>Create public network. </strong></p>
+<p>Note: these steps assume the physical network connected to br-ex2 is 144.76.132.224/29.</p>
+<pre># openstack network create --provider-network-type flat \
+--provider-physical-network extnet2 --external public</pre>
+<pre># openstack subnet create --network public --allocation-pool \
+start=144.76.132.226,end=144.76.132.230 --no-dhcp \
+--subnet-range 144.76.132.224/29 public_subnet</pre>
+<p><strong>Add a new router and configure router interfaces.</strong></p>
+<pre># openstack router create --no-ha router1</pre>
+<pre># openstack router set --external-gateway public router1</pre>
+<pre># openstack router add subnet router1 private_subnet</pre>
+<p><strong>Check to ensure network connectivity is working.</strong></p>
+<p>This is done by checking the network namespace of the qrouter (openstack router).</p>
+<pre># ip netns show
+qrouter-88dde0ef-22a2-44b1-baa9-304273653bb1
+qdhcp-f1582f71-b531-43af-99c1-299b603232fc</pre>
+<pre># ip netns exec qrouter-88dde0ef-22a2-44b1-baa9-304273653bb1 ping www.redhat.com</pre>
+<h3>Glance Configuration</h3>
+<p><strong>Upload a glance image. </strong></p>
+<p>In this case we will use a Cirros image because it is small and thus good for testing OpenStack.</p>
+<pre># curl -O http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img</pre>
+<pre># openstack image create --disk-format qcow2 \
+--container-format bare --public \
+--file /root/cirros-0.3.4-x86_64-disk.img "Cirros 0.3.4"</pre>
+<p><strong>Create a new m1.nano flavor for running Cirros image.</strong></p>
+<pre># openstack flavor create --ram 64 --disk 0 --ephemeral 0 --vcpus 1 --public m1.nano</pre>
+<h3>Configure Security Groups</h3>
+<p><strong>Create Security Group for all access.</strong></p>
+<pre># openstack security group create all \
+--description "Allow all ports"</pre>
+<pre># openstack security group rule create --protocol TCP \
+--dst-port 1:65535 --remote-ip 0.0.0.0/0 all</pre>
+<pre># openstack security group rule create --protocol ICMP \
+--remote-ip 0.0.0.0/0 all</pre>
+<p><strong>Create Security Group for base access.</strong></p>
+<pre># openstack security group create base \
+--description "Allow base ports"</pre>
+<pre># openstack security group rule create --protocol TCP \
+--dst-port 22 --remote-ip 0.0.0.0/0 base</pre>
+<pre># openstack security group rule create --protocol TCP \
+--dst-port 80 --remote-ip 0.0.0.0/0 base</pre>
+</div>
+</div>
+<pre># openstack security group rule create --protocol TCP \
+--dst-port 443 --remote-ip 0.0.0.0/0 base</pre>
+<pre># openstack security group rule create --protocol ICMP \
+--remote-ip 0.0.0.0/0 base</pre>
+<div class="entry-content">
+<div class="entry-content">
+<p><strong>Create Private Key.</strong></p>
+<pre># openstack keypair create admin</pre>
+<p><strong>Save Private Key to file.</strong></p>
+<pre># vi /root/admin.pem
+-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAwTrb+xdbpgY8hVOmftBIShqYUgXXDC/1gggakq8bkEdNnSku
+IaNGeJykzksjdksjd9383iejkjsu92wiwsajFLuE2lkh5dvk9s6hpfE/3UvSGk6m
+HWIMCf3nJUv8gGCM/XElgwNXS02c8pHWUywBiaQZpOsvjCqFLGW0cNZLAQ+yzrh1
+dIWddx/E1Ppto394ejfksjdksjdksdhgu4t39393eodNlVQxWzmK4vrLWNrfioOK
+uRxjxY6jnE3q/956ie69BXbbvrZYcs75YeSY7GjwyC5yjWw9qkiBcV1+P1Uqs1jG
+1yV0Zvl5xlI1M4b97qw0bgpjTETL5+iuidFPVwIDAQABAoIBAF7rC95m1fVTQO15
+buMCa1BDiilYhw+Mi3wJgQwnClIwRHb8IJYTf22F/QptrrBd0LZk/UHJhekINXot
+z0jJ+WvtxVAA0038jskdjskdjksjksjkiH9Mh39tAtt2XR2uz/M7XmLiBEKQaJVb
+gD2w8zxqqNIz3438783787387s8s787s8sIAkP3ZMAra1k7+rY1HfCYsRDWxhqTx
+R5FFwYueMIldlfPdGxwd8hLrqJnDY7SO85iFWv5Kf1ykyi3PRA6r2Vr/0PMkVsKV
+XfxhYPkAOb2hNKRDhkvZPmmxXu5wy8WkGeq+uTWRY3DoyciuC4xMS0NMd6Y20pfp
+x50AhJkCgYEA8M2OfUan1ghV3V8WsQ94vguHqe8jzLcV+1PV2iTwWFBZDZEQPokY
+JkMCAtHFvUlcJ49yAjrRH6O+EGT+niW8xIhZBiu6whOd4H0xDoQvaAAZyIFoSmbX
+2WpS74Ms5YSzVip70hbcXb4goDhdW9YxvTVqJlFrsGNCEa3L4kr2qFMCgYEAzWy0
+5cSHkCWaygeYhFc79xoTnPxKZH+QI32dAeud7oyZtZeZDRyjnm2fEtDCEn6RtFTH
+NlI3W6xFkXcp1u0wbmYJJVZdn1u9aRsLzVmfGwEWGHYEfZ+ZtQH+H9XHXsi1nPpr
+Uy7Msd,sl,.swdko393j495u4efdjkfjdkjfhflCgYEA7VO6Xo/XdKPMdJx2EdXM
+y4kzkPFHGElN2eE7gskjdksjdksjkasnw33a23433434wk0P8VCksQlBlojjRVyu
+GgjDrMhGjWamEA1y3vq6eka3Ip0f+0w26mnXCYYAJslNstu2I04yrBVptF846/1E
+ElXlo5RVjYeWIzRmIEZ/qU8CgYB91kOSJKuuX3rMm46QMyfmnLC7D8k6evH+66nM
+238493ijsfkjalsdjcws9fheoihg80eWDSAFDOASDF=OIA=FSLoiidsiisiisNDo
+ACh40FeKsHDby3LK8OeM9NXmeCjYeoZYNGimHForiCCT+rIniiu2vy0Z/q+/t3cM
+BgmAmQKBgCwCTX5kbLEUcX5IE6Nzh+1n/lkvIqlblOG7v0Y9sxKVxx4R9uXi3dNK
+6pbclskdksdjdk22k2jkj2kalksx2koUeLzwHuRUpMavRhoTLP0YsdbQrjgHIA+p
+kDNrgFz+JYKF2K08oe72x1083RtiEr8n71kjSA+5Ua1eNwGI6AVl
+-----END RSA PRIVATE KEY-----</pre>
+<pre># chmod 400 /root/admin.pem</pre>
+<h3>Start an Instance</h3>
+<p><strong>Get Private Network Id.</strong></p>
+<pre># openstack network list
++--------------------------------------+---------+--------------------------------------+
+| ID | Name | Subnets |
++--------------------------------------+---------+--------------------------------------+
+| 72494c88-6d93-4eb7-929f-383cbedfa3e7 | public | a57856be-a22b-4a48-b3c3-75be46a4c477 |
+| <strong>781e062d-5ab6-4ae8-a54e-8e72291df37e</strong> | private | b00316a1-812f-423a-8aca-bd6547692ad3 |
++--------------------------------------+---------+--------------------------------------+</pre>
+<p><strong>Create a mycirros Instance.</strong></p>
+<pre># openstack server create --flavor m1.nano --image "Cirros 0.3.4" \
+--nic net-id=<strong>781e062d-5ab6-4ae8-a54e-8e72291df37e</strong> --key-name admin \
+--security-group all mycirros</pre>
+<pre># # openstack server list
++--------------------------------------+----------+--------+---------------------+--------------+---------+
+| ID | Name | Status | Networks | Image | Flavor |
++--------------------------------------+----------+--------+---------------------+--------------+---------+
+| 6f2719bb-f393-49ab-a409-1c4a0f992b2d | mycirros | ACTIVE | <strong>private=10.10.1.105</strong> | Cirros 0.3.4 | m1.nano |
++--------------------------------------+----------+--------+---------------------+--------------+---------+</pre>
+<p><strong>Create Floating IP.</strong></p>
+<pre># openstack floating ip create public
++---------------------+--------------------------------------+
+| Field | Value |
++---------------------+--------------------------------------+
+| created_at | 2018-01-12T09:52:40Z |
+| description | |
+| fixed_ip_address | None |
+| floating_ip_address | 144.76.132.230 |
+| floating_network_id | 72494c88-6d93-4eb7-929f-383cbedfa3e7 |
+| id | 7a7ac84f-57ee-4982-b2f5-35ebb9656b34 |
+| name | <strong>144.76.132.230</strong> |
+| port_id | None |
+| project_id | 92d3bc57ca504eaab4c29d3509064004 |
+| revision_number | 0 |
+| router_id | None |
+| status | DOWN |
+| updated_at | 2018-01-12T09:52:40Z |
++---------------------+--------------------------------------+</pre>
+</div>
+<p><strong>Get Port Id of Instance.</strong></p>
+<pre># openstack port list
++--------------------------------------+------+-------------------+-------------------------------------------------------------------------------+--------+
+| ID | Name | MAC Address | Fixed IP Addresses | Status |
++--------------------------------------+------+-------------------+-------------------------------------------------------------------------------+--------+
+| 60407eee-c9b2-4e9c-81a6-5c38bb536c9b | | fa:16:3e:37:ac:2f | ip_address='144.76.132.227', subnet_id='a57856be-a22b-4a48-b3c3-75be46a4c477' | ACTIVE |
+| <strong>717660b6-b9b0-4f76-8c63-f9fae5c9bd9b</strong> | | fa:16:3e:0c:14:30 | ip_address='<strong>10.10.1.105</strong>', subnet_id='b00316a1-812f-423a-8aca-bd6547692ad3' | ACTIVE |
+| 878ee68a-1b88-48d1-9bf7-057f59b833bb | | fa:16:3e:2a:1f:50 | ip_address='144.76.132.230', subnet_id='a57856be-a22b-4a48-b3c3-75be46a4c477' | N/A |
+| 8a7b6b21-1eb2-4750-b854-707462d8b38f | | fa:16:3e:53:c9:ef | ip_address='10.10.1.1', subnet_id='b00316a1-812f-423a-8aca-bd6547692ad3' | ACTIVE |
+| b40af80e-2794-4ca5-8141-9d8ad4e9c9f2 | | fa:16:3e:51:d9:cb | ip_address='10.10.1.100', subnet_id='b00316a1-812f-423a-8aca-bd6547692ad3' | ACTIVE |
++--------------------------------------+------+-------------------+-------------------------------------------------------------------------------+--------+</pre>
+<p><strong>Assign Floating IP to Instance Port.</strong></p>
+<pre># openstack floating ip set --port <strong>717660b6-b9b0-4f76-8c63-f9fae5c9bd9b</strong> 144.76.132.230</pre>
+<div class="entry-content">
+<p><strong>Verify Floating IP in OpenStack Router.</strong></p>
+<pre># ip netns show
+qdhcp-dcfbabbd-c5d2-444c-ab60-546216550118
+<strong>router-0f00050f-6590-42df-9136-32d22fea4ece</strong></pre>
+<pre># ip netns exec <strong>qrouter-0f00050f-6590-42df-9136-32d22fea4ece</strong> ip a
+---
+9: qg-60407eee-c9: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UNKNOWN qlen 1000
+ link/ether fa:16:3e:37:ac:2f brd ff:ff:ff:ff:ff:ff
+ inet 144.76.132.227/29 brd 144.76.132.231 scope global qg-60407eee-c9
+ valid_lft forever preferred_lft forever
+ inet <strong>144.76.132.230/32</strong> brd 144.76.132.230 scope global qg-60407eee-c9
+ valid_lft forever preferred_lft forever
+ inet6 fe80::f816:3eff:fe37:ac2f/64 scope link
+ valid_lft forever preferred_lft forever
+---</pre>
+<p><strong>Test Instance.</strong></p>
+<p>Connect to mycirros instance using the private ssh key stored in the admin.pem file.</p>
+<pre># ssh -i admin.pem cirros@144.76.132.230</pre>
+<pre>$ ping www.redhat.com
+PING www.redhat.com (172.217.21.14): 56 data bytes
+64 bytes from 172.217.21.14: seq=0 ttl=54 time=37.692 ms
+64 bytes from 172.217.21.14: seq=1 ttl=54 time=27.758 ms
+64 bytes from 172.217.21.14: seq=2 ttl=54 time=25.640 ms</pre>
+<h2>Install OpenStack Client</h2>
+<p>To administer OpenStack remotely the CLI tools are important. Below are steps to install OpenStack CLI tools for Pike.</p>
+<p>[RHEL]</p>
+<pre># subscription-manager repos --enable=rhel-7-server-openstack-12-tools-rpms
+# yum install -y python-openstackclient
+# yum install -y python-heatclient</pre>
+<p>[CentOs]</p>
+<pre># yum install -y https://rdoproject.org/repos/openstack-pike/rdo-release-pike-1.noarch.rpm
+# yum upgrade -y
+# yum install -y python-openstackclient
+# yum install -y python-heatclient</pre>
+<h2>Summary</h2>
+<p>This article was intended as a hands on guide for standing up an OpenStack Pike lab environment using RDO. In this guide we also tailored the environment to the Hetzner root server. Things can of course vary depending on your hardware platform and provider. Certainly the aim of this guide was to provide a more realistic deployment scenario for OpenStack. As mentioned RDO is a stable community platform built around Red Hat’s OpenStack Platform. It provides the ability to test the latest OpenStack features against either an enterprise platform (RHEL) or community platform (CentOS). Hopefully you found the information in this article useful. If you have anything to add or feedback, feel free to leave your comments.</p>
+<p>Happy OpenStacking!</p>
+<p>(c) 2018 Keith Tenzer</p>
+</div>
+</div>

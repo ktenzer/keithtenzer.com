@@ -1,0 +1,582 @@
+---
+layout: post
+title: Storage for Containers using Container Native Storage – Part III
+date: 2017-03-29 15:38:58.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- OpenShift
+tags:
+- Container Native Storage
+- Docker
+- Gluster
+- Kubernetes
+- OpenShift
+- Storage
+meta:
+  _publicize_job_id: '3408567858'
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6252876571447824384&type=U&a=WJij
+  _publicize_done_9423386: '1'
+  _wpas_done_9468659: '1'
+  _wp_old_slug: storage-for-containers-using-container-native-storage-part-iv
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2017/03/29/storage-for-containers-using-container-native-storage-part-iii/"
+---
+<h3><img class="alignnone size-full wp-image-8150" src="{{ site.baseurl }}/assets/2017/03/storage_article_008.jpg" alt="Shipping containers" width="1200" height="400" /></h3>
+<h3>Overview</h3>
+<p>In this article we will focus on a new area of storage for containers called Container Native Storage. This article is a collaboration between Daniel Messer (Technical Marketing Manager Storage @RedHat) and Keith Tenzer (Sr. Solutions Architect @RedHat).</p>
+<ul>
+<li><a href="https://keithtenzer.com/2017/03/07/storage-for-containers-overview-part-i/">Storage for Containers Overview – Part I</a></li>
+<li><a href="https://keithtenzer.com/2017/03/24/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a></li>
+<li><a href="https://keithtenzer.com/2017/03/29/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a></li>
+<li><a href="https://keithtenzer.com/2017/04/07/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers using Ceph – Part IV</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire – Part VI</a></li>
+</ul>
+<p>So What is Container Native Storage?</p>
+<p>Essentially container native storage or CNS is a hyper-converged approach to storage and compute in the context of containers. Each container host or node supplies both compute and storage allowing storage to be completely integrated or absorbed by the platform itself. A software-defined storage system running in containers on the platform, consumes disks provided by nodes and provides a cluster-wide storage abstraction layer. The software-defined storage system then provides capabilities such as high-availability, dynamic provisioning and general storage management. This enables DevOps from a storage perspective, allows storage to grow with the container platform and delivers a high level of efficiency.</p>
+<p><!--more--></p>
+<h3>Container Native Storage Overview</h3>
+<p>CNS is realized by containerizing GlusterFS in a Docker container. This is deployed on a running OpenShift or Kubernetes cluster using native container orchestration provided by the platform. To provide integration with the storage provisioning framework an additional management component is added to GlusterFS called heketi. It serves as an API and CLI front-end for storage lifecyle operations. In addition it supports multiple deployment scenarios. Heketi runs containerized along side the GlusterFS pods on OpenShift or Kubernetes cluster. The entire deployment of this infrastructure is automated using a utility called cns-deploy.</p>
+<h3>Container Native Storage Pre-requisites</h3>
+<p>There are several container orchestration technologies such as Docker Swarm, Marathon (Mesos), Diego (CloudFoundry) and Kubernetes (OpenShift). Container Native Storage applies to Kubernetes and OpenShift as Kubernetes supports both stateless and stateful applications. In order to use CNS you need an OpenShift cluster. To setup OpenShift you can follow this <a href="https://keithtenzer.com/2017/03/13/openshift-enterprise-3-4-all-in-one-lab-environment/">article</a>. As the article focuses on an all-in-one setup, meaning a single VM you will need to make a few minor changes.</p>
+<p><strong>Create minimum of three VMs</strong></p>
+<p>Each VM should have following spec:</p>
+<ul>
+<li>RHEL 7.2 or 7.3</li>
+<li>2 vCPUs</li>
+<li>4GB RAM</li>
+<li>30 GB Root Disk</li>
+<li>25 GB Docker Disk</li>
+<li>3 x 20GB CNS Disks</li>
+</ul>
+<p><strong>Update OpenShift Ansible Inventory</strong></p>
+<p>Since the article only deploys a single VM we need to change the inventory to reflect 3 nodes.</p>
+<pre>...
+# host group for masters
+[masters]
+ose3-master.lab.com
+
+# host group for nodes, includes region info
+[nodes]
+<a href="http://ose3-master.lab.com/" target="_blank">ose3-master.lab.com</a> openshift_schedulable=True
+ose3-node1.lab.com
+ose3-node2.lab.com
+...</pre>
+<p>Once OpenShift deployment is complete you should see three nodes that are ready.</p>
+<pre># oc get nodes
+NAME STATUS AGE
+ose3-master.lab.com Ready 5m
+ose3-node1.lab.com Ready 5m
+ose3-node2.lab.com Ready 5m</pre>
+<h3>Install and Configure Container Native Storage</h3>
+<p>These steps should be done on OpenShift master node(s).</p>
+<p><strong>Enable repository for CNS</strong></p>
+<pre class="screen">subscription-manager repos --enable=rh-gluster-3-for-rhel-7-server-rpms</pre>
+<p><strong>Install CNS Tools</strong></p>
+<pre class="screen">yum install cns-deploy heketi-client</pre>
+<p><strong>Update Firewall Rules</strong></p>
+<p>On all OpenShift nodes the firewall rules need to be updated.</p>
+<pre># vi /etc/sysconfig/iptables
+...
+-A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 24007 -j ACCEPT
+-A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 24008 -j ACCEPT
+-A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 2222 -j ACCEPT
+-A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m multiport --dports 49152:49664 -j ACCEPT
+...</pre>
+<pre># systemctl reload iptables</pre>
+<p><strong>Create Project in OpenShift for CNS</strong></p>
+<pre class="screen">oc new-project storage-project</pre>
+<p><strong>Enable deployment of priviledged containers</strong></p>
+<pre class="screen"># oadm policy add-scc-to-user privileged -z default</pre>
+<pre class="screen"># oadm policy add-scc-to-user privileged -z router</pre>
+<pre class="screen"># oadm policy add-scc-to-user privileged -z default</pre>
+<p><strong>Update dnsmasq for Router</strong></p>
+<p>On OpenShift master we need to setup external resolution to the CNS nodes. If you have a real DNS server this should be done there.</p>
+<pre># vi /etc/dnsmasq.conf
+...
+address=/.apps.lab.com/192.168.122.61
+...</pre>
+<pre># systectl restart dnsmasq</pre>
+<p><strong>Add localhost as nameserver</strong></p>
+<pre># vi /etc/resolv.conf
+...
+nameserver 127.0.0.1
+...</pre>
+<p><strong>Create Configuration Template for CNS</strong></p>
+<p>The template identifies all nodes in the CNS cluster. It also identifies which devices should be used. CNS requires at a minimum three nodes. Data will be by default replicated three times hence why three nodes are required.</p>
+<pre># cp /usr/share/heketi/topology-sample.json vi /usr/share/heketi/topology.json</pre>
+<pre># vi /usr/share/heketi/topology.json
+{
+    "clusters": [
+        {
+            "nodes": [
+                {
+                    "node": {
+                        "hostnames": {
+                            "manage": [
+                                "ose3-master.lab.com"
+                            ],
+                            "storage": [
+                                "192.168.122.61"
+                            ]
+                        },
+                        "zone": 1
+                    },
+                    "devices": [
+                        "/dev/vdc",
+                        "/dev/vdd",
+                        "/dev/vde"
+                    ]
+                },
+                {
+                    "node": {
+                        "hostnames": {
+                            "manage": [
+                                "ose3-node1.lab.com"
+                            ],
+                            "storage": [
+                                "192.168.122.62"
+                            ]
+                        },
+                        "zone": 2
+                    },
+                    "devices": [
+                        "/dev/vdc",
+                        "/dev/vdd",
+                        "/dev/vde"
+                    ]
+                },
+                {
+                    "node": {
+                        "hostnames": {
+                            "manage": [
+                                "ose3-node2.lab.com"
+                            ],
+                            "storage": [
+                                "192.168.122.63"
+                            ]
+                        },
+                        "zone": 2
+                    },
+                    "devices": [
+                        "/dev/vdc",
+                        "/dev/vdd",
+                        "/dev/vde"
+                    ]
+                }
+            ]
+        }
+    ]
+}
+</pre>
+<p><strong>Deploy Container Native Storage</strong></p>
+<pre># cns-deploy -n storage-project -g /usr/share/heketi/topology.json
+ Welcome to the deployment tool for GlusterFS on Kubernetes and OpenShift.
+
+Before getting started, this script has some requirements of the execution
+ environment and of the container platform that you should verify.
+
+The client machine that will run this script must have:
+ * Administrative access to an existing Kubernetes or OpenShift cluster
+ * Access to a python interpreter 'python'
+ * Access to the heketi client 'heketi-cli'
+
+Each of the nodes that will host GlusterFS must also have appropriate firewall
+ rules for the required GlusterFS ports:
+ * 2222 - sshd (if running GlusterFS in a pod)
+ * 24007 - GlusterFS Daemon
+ * 24008 - GlusterFS Management
+ * 49152 to 49251 - Each brick for every volume on the host requires its own
+ port. For every new brick, one new port will be used starting at 49152. We
+ recommend a default range of 49152-49251 on each host, though you can adjust
+ this to fit your needs.
+
+In addition, for an OpenShift deployment you must:
+ * Have 'cluster_admin' role on the administrative account doing the deployment
+ * Add the 'default' and 'router' Service Accounts to the 'privileged' SCC
+ * Have a router deployed that is configured to allow apps to access services
+ running in the cluster
+
+Do you wish to proceed with deployment?
+
+[Y]es, [N]o? [Default: Y]: Y
+ Multiple CLI options detected. Please select a deployment option.
+ [O]penShift, [K]ubernetes? [O/o/K/k]: O
+ Using OpenShift CLI.
+ NAME STATUS AGE
+ storage-project Active 4m
+ Using namespace "storage-project".
+ template "deploy-heketi" created
+ serviceaccount "heketi-service-account" created
+ template "heketi" created
+ template "glusterfs" created
+ node "ose3-master.lab.com" labeled
+ node "ose3-node1.lab.com" labeled
+ node "ose3-node2.lab.com" labeled
+ daemonset "glusterfs" created
+ Waiting for GlusterFS pods to start ... OK
+ service "deploy-heketi" created
+ route "deploy-heketi" created
+ deploymentconfig "deploy-heketi" created
+ Waiting for deploy-heketi pod to start ... OK
+ % Total % Received % Xferd Average Speed Time Time Time Current
+ Dload Upload Total Spent Left Speed
+ 100 17 100 17 0 0 864 0 --:--:-- --:--:-- --:--:-- 894
+ Creating cluster ... ID: 4bfec05e6fa80e5178c4314bec238786
+ Creating node ose3-master.lab.com ... ID: f95eabc360cddd6f5c6419094c1ae085
+ Adding device /dev/vdc ... OK
+ Adding device /dev/vdd ... OK
+ Adding device /dev/vde ... OK
+ Creating node ose3-node1.lab.com ... ID: 82fa6bf3a37dffa4376c77935f37d44a
+ Adding device /dev/vdc ... OK
+ Adding device /dev/vdd ... OK
+ Adding device /dev/vde ... OK
+ Creating node ose3-node2.lab.com ... ID: c26872fc64f2408f2ddea664698e3964
+ Adding device /dev/vdc ... OK
+ Adding device /dev/vdd ... OK
+ Adding device /dev/vde ... OK
+ Saving heketi-storage.json
+ secret "heketi-storage-secret" created
+ endpoints "heketi-storage-endpoints" created
+ service "heketi-storage-endpoints" created
+ job "heketi-storage-copy-job" created
+ deploymentconfig "deploy-heketi" deleted
+ route "deploy-heketi" deleted
+ service "deploy-heketi" deleted
+ pod "deploy-heketi-1-z8ite" deleted
+ job "heketi-storage-copy-job" deleted
+ secret "heketi-storage-secret" deleted
+ service "heketi" created
+ route "heketi" created
+ deploymentconfig "heketi" created
+ Waiting for heketi pod to start ... OK
+ % Total % Received % Xferd Average Speed Time Time Time Current
+ Dload Upload Total Spent Left Speed
+ 100 17 100 17 0 0 2766 0 --:--:-- --:--:-- --:--:-- 2833
+ heketi is now running.</pre>
+<p>List Pods in Storage Project</p>
+<p>Once deployment is complete you should see three GlusterFS pods, the heketi pod (CNS management) and a router.</p>
+<pre># oc get pods -o wide
+ NAME READY STATUS RESTARTS AGE IP NODE
+ glusterfs-eedk4 1/1 Running 0 4m 192.168.122.63 ose3-node2.lab.com
+ glusterfs-kyrz1 1/1 Running 0 4m 192.168.122.62 ose3-node1.lab.com
+ glusterfs-y6w8n 1/1 Running 0 4m 192.168.122.61 ose3-master.lab.com
+ heketi-1-zq0ie 1/1 Running 0 2m 10.129.0.10 ose3-master.lab.com
+ storage-project-router-1-nnobe 1/1 Running 0 8m 192.168.122.61 ose3-master.lab.com</pre>
+<p><strong>Setup Heketi CLI</strong></p>
+<p>Heketi is a management tool for CNS. We need to export the path to the server in order to use the CLI.</p>
+<pre># export HEKETI_CLI_SERVER=$(oc describe svc/heketi | grep "Endpoints:" | awk '{print "http://"$2}')</pre>
+<pre># echo $HEKETI_CLI_SERVER
+<strong>http://10.129.0.10:8080</strong></pre>
+<p><strong>Show CNS Topology</strong></p>
+<pre># heketi-cli topology info
+
+Cluster Id: 4bfec05e6fa80e5178c4314bec238786
+
+Volumes:
+
+Name: heketidbstorage
+ Size: 2
+ Id: e64a8b64f58bf5248afdb1db34ba420f
+ Cluster Id: 4bfec05e6fa80e5178c4314bec238786
+ Mount: 192.168.122.61:heketidbstorage
+ Mount Options: backup-volfile-servers=192.168.122.62,192.168.122.63
+ Durability Type: replicate
+ Replica: 3
+ Snapshot: Disabled
+
+Bricks:
+ Id: 2504dbb5b0b9fd38c3c8eaa25c19e6e0
+ Path: /var/lib/heketi/mounts/vg_4b315e3d01f3398ea371cc3ec44a46ab/brick_2504dbb5b0b9fd38c3c8eaa25c19e6e0/brick
+ Size (GiB): 2
+ Node: f95eabc360cddd6f5c6419094c1ae085
+ Device: 4b315e3d01f3398ea371cc3ec44a46ab
+
+Id: 30fea25c05c3c7b252590b81c3f38369
+ Path: /var/lib/heketi/mounts/vg_001e9e13cf06727862b157283b22051d/brick_30fea25c05c3c7b252590b81c3f38369/brick
+ Size (GiB): 2
+ Node: c26872fc64f2408f2ddea664698e3964
+ Device: 001e9e13cf06727862b157283b22051d
+
+Id: d7c2b9e7b80ed2726309ad516dd253cf
+ Path: /var/lib/heketi/mounts/vg_4f8745833e2577ff9a1eb302d9811551/brick_d7c2b9e7b80ed2726309ad516dd253cf/brick
+ Size (GiB): 2
+ Node: 82fa6bf3a37dffa4376c77935f37d44a
+ Device: 4f8745833e2577ff9a1eb302d9811551
+ Nodes:
+
+Node Id: 82fa6bf3a37dffa4376c77935f37d44a
+ State: online
+ Cluster Id: 4bfec05e6fa80e5178c4314bec238786
+ Zone: 2
+ Management Hostname: ose3-node1.lab.com
+ Storage Hostname: 192.168.122.62
+ Devices:
+ Id:26333a53457037df86243d164d280f07 Name:/dev/vdc State:online Size (GiB):29 Used (GiB):0 Free (GiB):29
+ Bricks:
+ Id:4f8745833e2577ff9a1eb302d9811551 Name:/dev/vde State:online Size (GiB):29 Used (GiB):2 Free (GiB):27
+ Bricks:
+ Id:d7c2b9e7b80ed2726309ad516dd253cf Size (GiB):2 Path: /var/lib/heketi/mounts/vg_4f8745833e2577ff9a1eb302d9811551/brick_d7c2b9e7b80ed2726309ad516dd253cf/brick
+ Id:c1520ae2b0adbf0fec0b0ffd5fd5a0f7 Name:/dev/vdd State:online Size (GiB):29 Used (GiB):0 Free (GiB):29
+ Bricks:
+
+Node Id: c26872fc64f2408f2ddea664698e3964
+ State: online
+ Cluster Id: 4bfec05e6fa80e5178c4314bec238786
+ Zone: 2
+ Management Hostname: ose3-node2.lab.com
+ Storage Hostname: 192.168.122.63
+ Devices:
+ Id:001e9e13cf06727862b157283b22051d Name:/dev/vde State:online Size (GiB):29 Used (GiB):2 Free (GiB):27
+ Bricks:
+ Id:30fea25c05c3c7b252590b81c3f38369 Size (GiB):2 Path: /var/lib/heketi/mounts/vg_001e9e13cf06727862b157283b22051d/brick_30fea25c05c3c7b252590b81c3f38369/brick
+ Id:705d793971aeb2c3315ea674af0aace1 Name:/dev/vdd State:online Size (GiB):29 Used (GiB):0 Free (GiB):29
+ Bricks:
+ Id:cc542ecd46d872a8db41819f2f9f69fe Name:/dev/vdc State:online Size (GiB):29 Used (GiB):0 Free (GiB):29
+ Bricks:
+
+Node Id: f95eabc360cddd6f5c6419094c1ae085
+ State: online
+ Cluster Id: 4bfec05e6fa80e5178c4314bec238786
+ Zone: 1
+ Management Hostname: ose3-master.lab.com
+ Storage Hostname: 192.168.122.61
+ Devices:
+ Id:4b315e3d01f3398ea371cc3ec44a46ab Name:/dev/vdd State:online Size (GiB):29 Used (GiB):2 Free (GiB):27
+ Bricks:
+ Id:2504dbb5b0b9fd38c3c8eaa25c19e6e0 Size (GiB):2 Path: /var/lib/heketi/mounts/vg_4b315e3d01f3398ea371cc3ec44a46ab/brick_2504dbb5b0b9fd38c3c8eaa25c19e6e0/brick
+ Id:dc37c4b891c0268f159f1b0b4b21be1e Name:/dev/vde State:online Size (GiB):29 Used (GiB):0 Free (GiB):29
+ Bricks:
+ Id:fab4c9f1f82010164a26ba162411211a Name:/dev/vdc State:online Size (GiB):29 Used (GiB):0 Free (GiB):29
+ Bricks:</pre>
+<h3>Using CNS in OpenShift</h3>
+<p>In order to create persistent volumes using dynamic provisioning a storage class must be created. Storage classes in Kubernetes provide Kubernetes (OpenShift) with access and permissions to the storage system. A plugin exists for the storage provider (in this case GlusterFS) that knows how to provision and reclaim storage.</p>
+<p><strong>Create Storage Class</strong></p>
+<p>A storage class just like anything in Kubernetes is an object defined by YAML or JSON.</p>
+<pre># vi /root/glusterfs-storage-class.yaml
+
+apiVersion: storage.k8s.io/v1beta1
+ kind: StorageClass
+ metadata:
+ name: glusterfs-container
+ provisioner: kubernetes.io/glusterfs
+ parameters:
+ resturl: "<strong>http://10.129.0.10:8080</strong>"
+ restuser: "admin"
+ secretNamespace: "default"
+ secretName: "heketi-secret"</pre>
+<p>Create storage class from YAML using oc command</p>
+<pre># oc create -f /root/glusterfs-storage-class.yaml</pre>
+<p><strong>Setup Secret</strong></p>
+<p>Secrets are used in OpenShift to grant access to services, in this case CNS.</p>
+<p>Create password.</p>
+<pre># echo -n "mypassword" | base64
+bXlwYXNzd29yZA==</pre>
+<p>Create a secret object for CNS</p>
+<pre># vi /root/glusterfs-secret.yaml
+
+apiVersion: v1
+ kind: Secret
+ metadata:
+ name: heketi-secret
+ namespace: default
+ data:
+ key: bXlwYXNzd29yZA==
+ type: kubernetes.io/glusterfs</pre>
+<p>Create secret using YAML file.</p>
+<pre># oc create -f glusterfs-secret.yaml</pre>
+<p><strong>Create Persistent Volume Claim Using CLI</strong></p>
+<p>Persistent volume claim is what developers issue when they need storage. It binds a persistent volume to a Pod in OpenShift. In our case since CNS supports dynamic provisioning creating a claim will also create the volume and as such provision storage.</p>
+<pre class="screen">#vi /root/glusterfs-pvc-1.yaml
+{
+  "kind": "PersistentVolumeClaim",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "claim1",
+    "annotations": {
+        "volume.beta.kubernetes.io/storage-class": "glusterfs-container"
+    }
+  },
+  "spec": {
+    "accessModes": [
+      "ReadWriteOnce"
+    ],
+    "resources": {
+      "requests": {
+        "storage": "4Gi"
+      }
+    }
+  }
+}</pre>
+<p>Show Persistent Volume Claim</p>
+<pre># oc get pvc
+NAME STATUS VOLUME CAPACITY ACCESSMODES AGE
+claim1 Bound pvc-6b4599fa-0813-11e7-a395-525400c9c97e 4Gi RWO 13s</pre>
+<p>Show Persistent Volume</p>
+<pre># oc get pv
+NAME CAPACITY ACCESSMODES RECLAIMPOLICY STATUS CLAIM REASON AGE
+pvc-6b4599fa-0813-11e7-a395-525400c9c97e 4Gi RWO Delete Bound storage-project/claim1 2m</pre>
+<p>Using Persistent Volume Claim</p>
+<p>Once a developer has a claim they simply need to add the ClaimName to their Pod YAML file. This can also be done easily via the GUI as we will see shortly. Below is an example using CLI.</p>
+<pre class="screen">apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox
+spec:
+  containers:
+    - image: busybox
+      command:
+        - sleep
+        - "3600"
+      name: busybox
+      volumeMounts:
+        - mountPath: /usr/share/busybox
+          name: mypvc
+  volumes:
+    - name: mypvc
+      persistentVolumeClaim:
+        claimName: <strong>claim1</strong></pre>
+<p><strong>Create Persistent Volume Claim Using GUI</strong></p>
+<p>Under the project in OpenShift choose 'Storage' and 'create storage' button on far right. Specify name, access mode and size. Click 'create' and OpenShift will create the persistent volume and persistent volume claim.</p>
+<p><img class="alignnone size-full wp-image-8047" src="{{ site.baseurl }}/assets/2017/03/ose_prov_storage.png" alt="ose_prov_storage" width="969" height="752" /></p>
+<p>Once the persistent volume claim is created it will show up under storage tab of OpenShift project.</p>
+<p><img class="alignnone size-full wp-image-8049" src="{{ site.baseurl }}/assets/2017/03/ose_storage.png" alt="ose_storage" width="1683" height="280" /></p>
+<p>At this point you can use the persistent volume claim for any Pods.</p>
+<p>Another way to do things is to deploy application from pre-defined template. Such templates exist out-of-the-box in OpenShift. Here we will deploy mariadb using the 'mariadb-persistent' template.</p>
+<p>Create new project 'mariadb'.</p>
+<p><img class="alignnone size-full wp-image-8091" src="{{ site.baseurl }}/assets/2017/03/mariadb_project.png" alt="mariadb_project" width="1152" height="376" /></p>
+<p>Type in 'mariadb' in search field of catalog to narrow down choices. Select 'MariadDB (Persistent'.</p>
+<p><img class="alignnone size-full wp-image-8094" src="{{ site.baseurl }}/assets/2017/03/mariadb_1.png" alt="mariadb_1" width="1166" height="594" /></p>
+<p>Select defaults to launch mariadb Pod on next screen. The Pod will stay in pending state because it's persistent volume is not mapped to a storage class. This can be of course updated in the storage class itself. To specify a default cluster-wide storage class update the annotations section of the storage class.</p>
+<pre>...
+annotations:
+  storageclass.beta.kubernetes.io/is-default-class: true
+...</pre>
+<p><img class="alignnone size-full wp-image-8098" src="{{ site.baseurl }}/assets/2017/03/mariadb_2.png" alt="mariadb_2" width="841" height="426" /></p>
+<p>Under storage select the persistent volume claim 'mariadb'. On the right under actions select 'edit yaml'. Add following to persistent volume claim yaml.</p>
+<pre>...
+annotations:
+ volume.beta.kubernetes.io/storage-class: glusterfs-container
+...</pre>
+<p><img class="alignnone size-full wp-image-8100" src="{{ site.baseurl }}/assets/2017/03/mariadb_4.png" alt="mariadb_4" width="1187" height="832" /></p>
+<p>Once we click save on next screen we should see our volume is bound after a few moments. This means that OpenShift provisioned a volume from CNS.</p>
+<p><img class="alignnone size-full wp-image-8113" src="{{ site.baseurl }}/assets/2017/03/mariadb_51.png" alt="mariadb_5" width="1668" height="235" /></p>
+<p>Finally our mariadb Pod should now be able to start.</p>
+<p><img class="alignnone size-full wp-image-8110" src="{{ site.baseurl }}/assets/2017/03/mariadb_6.png" alt="mariadb_6" width="832" height="387" /></p>
+<h3>CNS Deep Dive</h3>
+<p>Now that we have seen how to use CNS in context of OpenShift let us take a closer look into the storage itself and understand how persistent volumes are mapped to GlusterFS volumes.</p>
+<p><strong>Get Glusterfs Volume</strong></p>
+<p>If we look at the YAML for the persistent volume (pv) we can get the GlusterFS volume.</p>
+<pre># oc get pv pvc-acbade81-0818-11e7-a395-525400c9c97e -o yaml
+ apiVersion: v1
+ kind: PersistentVolume
+ metadata:
+ annotations:
+ pv.beta.kubernetes.io/gid: "2001"
+ pv.kubernetes.io/bound-by-controller: "yes"
+ pv.kubernetes.io/provisioned-by: kubernetes.io/glusterfs
+ volume.beta.kubernetes.io/storage-class: glusterfs-container
+ creationTimestamp: 2017-03-13T18:12:59Z
+ name: pvc-acbade81-0818-11e7-a395-525400c9c97e
+ resourceVersion: "10271"
+ selfLink: /api/v1/persistentvolumes/pvc-acbade81-0818-11e7-a395-525400c9c97e
+ uid: b10085a3-0818-11e7-a395-525400c9c97e
+ spec:
+ accessModes:
+ - ReadWriteOnce
+ capacity:
+ storage: 1Gi
+ claimRef:
+ apiVersion: v1
+ kind: PersistentVolumeClaim
+ name: mariadb
+ namespace: my-ruby
+ resourceVersion: "10262"
+ uid: acbade81-0818-11e7-a395-525400c9c97e
+ glusterfs:
+ endpoints: gluster-dynamic-mariadb
+ path: <strong>vol_094f7fc95d623fdc88c72aa5cb303b24</strong>
+ persistentVolumeReclaimPolicy: Delete
+ status:
+ phase: Bound</pre>
+<p><strong>Connect to Glusterfs Node</strong></p>
+<p>Under the project 'storage-project' get list of the GlusterFS pods. These are the pods the cns-deploy stood up as part of the initial install. They are part of a Kubernetes DaemonSet with a node selector. All nodes with the label storagenode=glusterfs will be part of this DaemonSet and hence run a GlusterFS pod. This allows for easy expansion of additional pods later.</p>
+<pre># oc project storage-project
+ Already on project "storage-project" on server "https://ose3-master2.lab.com:8443".</pre>
+<pre># oc get pods
+NAME READY STATUS RESTARTS AGE
+glusterfs-eedk4 1/1 Running 0 1h
+glusterfs-kyrz1 1/1 Running 0 1h
+glusterfs-y6w8n 1/1 Running 0 1h
+heketi-1-zq0ie 1/1 Running 0 1h
+storage-project-router-1-nnobe 1/1 Running 0 1h</pre>
+<p>Choose one of the glusterfs nodes and connect to Pod using 'oc' command.</p>
+<pre># oc exec -ti glusterfs-eedk4 /bin/sh</pre>
+<p><strong>List Gluster Volumes</strong></p>
+<p>From a GlusterFS node we can list volumes. We can see the volume name and mountpoint highlighted in bold below.</p>
+<pre>sh-4.2# gluster volume info all
+
+Volume Name: heketidbstorage
+ Type: Replicate
+ Volume ID: 17779abc-870d-4f4f-9e29-60eea6d5e01e
+ Status: Started
+ Number of Bricks: 1 x 3 = 3
+ Transport-type: tcp
+ Bricks:
+ Brick1: 192.168.122.63:/var/lib/heketi/mounts/vg_001e9e13cf06727862b157283b22051d/brick_30fea25c05c3c7b252590b81c3f38369/brick
+ Brick2: 192.168.122.61:/var/lib/heketi/mounts/vg_4b315e3d01f3398ea371cc3ec44a46ab/brick_2504dbb5b0b9fd38c3c8eaa25c19e6e0/brick
+ Brick3: 192.168.122.62:/var/lib/heketi/mounts/vg_4f8745833e2577ff9a1eb302d9811551/brick_d7c2b9e7b80ed2726309ad516dd253cf/brick
+ Options Reconfigured:
+ performance.readdir-ahead: on
+
+Volume Name: <strong>vol_094f7fc95d623fdc88c72aa5cb303b24</strong>
+ Type: Replicate
+ Volume ID: e29be8b3-b733-4c2e-a536-70807d948fd6
+ Status: Started
+ Number of Bricks: 1 x 3 = 3
+ Transport-type: tcp
+ Bricks:
+ Brick1: 192.168.122.63:/var/lib/heketi/mounts/vg_cc542ecd46d872a8db41819f2f9f69fe/brick_818bd64213310df8f7fa6b05734d882d/brick
+ Brick2: 192.168.122.62:/var/lib/heketi/mounts/vg_c1520ae2b0adbf0fec0b0ffd5fd5a0f7/brick_be228a22ac79112b7474876211e0686f/brick
+ Brick3: 192.168.122.61:/var/lib/heketi/mounts/vg_fab4c9f1f82010164a26ba162411211a/brick_635253e7ef1e8299b993a273fa808cf6/brick
+ Options Reconfigured:
+ performance.readdir-ahead: on
+
+Volume Name: vol_e462bd9fa459d0ba088198892625e00d
+ Type: Replicate
+ Volume ID: 9272b326-bf9c-4a6a-b570-d43c6e2cba83
+ Status: Started
+ Number of Bricks: 1 x 3 = 3
+ Transport-type: tcp
+ Bricks:
+ Brick1: 192.168.122.63:/var/lib/heketi/mounts/vg_705d793971aeb2c3315ea674af0aace1/brick_165ecbfd4e8923a8efcb8d733a601971/brick
+ Brick2: 192.168.122.62:/var/lib/heketi/mounts/vg_c1520ae2b0adbf0fec0b0ffd5fd5a0f7/brick_4008026414bf63a9a7c26ac7cd09cf16/brick
+ Brick3: 192.168.122.61:/var/lib/heketi/mounts/vg_fab4c9f1f82010164a26ba162411211a/brick_003626574ffc4c9c96f22f7cda5ea8af/brick
+ Options Reconfigured:
+ performance.readdir-ahead: on
+
+Look for local mount usi
+ sh-4.2# mount | grep heketi
+ /dev/mapper/rhel-root on /var/lib/heketi type xfs (rw,relatime,seclabel,attr2,inode64,noquota)
+ /dev/mapper/vg_001e9e13cf06727862b157283b22051d-brick_30fea25c05c3c7b252590b81c3f38369 on /var/lib/heketi/mounts/vg_001e9e13cf06727862b157283b22051d/brick_30fea25c05c3c7b252590b81c3f38369 type xfs (rw,noatime,seclabel,nouuid,attr2,inode64,logbsize=256k,sunit=512,swidth=512,noquota)
+ /dev/mapper/vg_705d793971aeb2c3315ea674af0aace1-brick_165ecbfd4e8923a8efcb8d733a601971 on /var/lib/heketi/mounts/vg_705d793971aeb2c3315ea674af0aace1/brick_165ecbfd4e8923a8efcb8d733a601971 type xfs (rw,noatime,seclabel,nouuid,attr2,inode64,logbsize=256k,sunit=512,swidth=512,noquota)
+ /dev/mapper/vg_cc542ecd46d872a8db41819f2f9f69fe-brick_818bd64213310df8f7fa6b05734d882d on <strong>/var/lib/heketi/mounts/vg_cc542ecd46d872a8db41819f2f9f69fe/brick_818bd64213310df8f7fa6b05734d882d</strong> type xfs (rw,noatime,seclabel,nouuid,attr2,inode64,logbsize=256k,sunit=512,swidth=512,noquota)</pre>
+<p><strong>List Contents of Mountpoint</strong></p>
+<p>Once we have mountpoint we can do an 'ls' to list the contents. Here we can see mariadb files since this is the volume owned by our mariadb Pod.</p>
+<pre>sh-4.2# ls /var/lib/heketi/mounts/vg_cc542ecd46d872a8db41819f2f9f69fe/brick_818bd64213310df8f7fa6b05734d882d/brick/
+aria_log.00000001 aria_log_control ib_logfile0 ib_logfile1 ibdata1 mariadb-1-wwuu4.pid multi-master.info mysql performance_schema sampledb tc.log test</pre>
+<h3>Sunmmary</h3>
+<p>In this article we focused on Container Native Storage (CNS).  We discussed the need for CNS in order to make storage completely integrated into DevOps. This is a very exciting time for storage and CNS is an approach to do storage differently, making storage a first-class DevOps citizen instead of taking traditional storage and bolting it on somehow. We explored OpenShift pre-requisites for CNS as well as installed and configured CNS on OpenShift. Using the CLI and GUI we saw how developers can manage storage enabled by CNS from within OpenShift. Finally we took a bit of a deep-dive to examine how CNS maps to persistent volume claims in OpenShift. Hopefully you found this article interesting and useful. Looking forward to any and all feedback!</p>
+<p>Happy Container Native Storaging!</p>
+<p>(c) 2017 Keith Tenzer</p>

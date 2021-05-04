@@ -1,0 +1,97 @@
+---
+layout: post
+title: Rename network interfaces in RHEL 7
+date: 2014-12-12 15:51:46.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- Linux
+- Red Hat
+meta:
+  _edit_last: '63054820'
+  geo_public: '0'
+  _publicize_pending: '1'
+  publicize_facebook_url: https://facebook.com/10205347949568075
+  _wpas_done_9542380: '1'
+  _publicize_done_external: a:1:{s:8:"facebook";a:1:{i:1528587438;b:1;}}
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=5949198760318943232&type=U&a=Kfut
+  _wpas_done_9468659: '1'
+  _wpas_skip_9542380: '1'
+  _wpas_skip_9468659: '1'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2014/12/12/rename-network-interfaces-in-rhel-7/"
+---
+<h3>Overview</h3>
+<p>RHEL 7 has a new feature called "<a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/appe-Consistent_Network_Device_Naming.html">consistent network device naming</a>". The idea is to regardless of NIC hardware have consistent interface names and not names which can be change based on underlying hardware. <!--more-->Traditionally interface names were enumerated as eth[0,1,2...]. In many environments administrators would like to use names that refer to the purpose of the network interface especially when a host bridges into various networks e.g. mgmt[0,1,2...], storage[0,1,2...] or client[0,1,2...]. This post we show how to change interface names in RHEL 7 and CentOS 7.</p>
+<h3>Change Interface Names</h3>
+<p>The below procedure disables "consistent network device naming" and renames interfaces.</p>
+<ul>
+<li>
+<pre>vi /etc/default/grub</pre>
+</li>
+</ul>
+<p>[code language="text"]</p>
+<p>GRUB_TIMEOUT=5<br />
+GRUB_DISTRIBUTOR=”$(sed ‘s, release .*$,,g’ /etc/system-release)”<br />
+GRUB_DEFAULT=saved<br />
+GRUB_DISABLE_SUBMENU=true<br />
+GRUB_TERMINAL_OUTPUT=”console”<br />
+GRUB_CMDLINE_LINUX=”rd.lvm.lv=rootvg/usrlv rd.lvm.lv=rootvg/swaplv crashkernel=auto vconsole.keymap=us rd.lvm.lv=rootvg/rootlv vconsole.font=latarcyrheb-sun16 rhgb quiet”<br />
+GRUB_DISABLE_RECOVERY=”true”</p>
+<p>[/code]</p>
+<p>Change the GRUB_CMDLINE_LINUX and regenerate grub.cfg:</p>
+<ul>
+<li>
+<pre>GRUB_CMDLINE_LINUX=”rd.lvm.lv=rootvg/usrlv rd.lvm.lv=rootvg/swaplv crashkernel=auto vconsole.keymap=us rd.lvm.lv=rootvg/rootlv vconsole.font=latarcyrheb-sun16 rhgb quiet <strong>net.ifnames=0 biosdevname=0</strong>“</pre>
+</li>
+</ul>
+<ul>
+<li>
+<pre>grub2-mkconfig -o /boot/grub2/grub.cfg</pre>
+</li>
+</ul>
+<p>Update the names of the network scripts</p>
+<ul>
+<li>
+<pre>mv /etc/sysconfig/network-scripts/ifcfg-eno00012224 /etc/sysconfig/network-scripts/ifcfg-mgmt0</pre>
+</li>
+</ul>
+<p>[code language="text"]</p>
+<p>TYPE=Ethernet<br />
+BOOTPROTO=none<br />
+DEFROUTE=yes<br />
+IPV4_FAILURE_FATAL=no<br />
+IPV6INIT=yes<br />
+IPV6_AUTOCONF=yes<br />
+IPV6_DEFROUTE=yes<br />
+IPV6_FAILURE_FATAL=no<br />
+NAME=mgmt0<br />
+UUID=ecfe9674-774e-4c5a-a3a6-a84336306b62<br />
+ONBOOT=yes<br />
+IPADDR0=10.10.10.90<br />
+PREFIX0=24<br />
+GATEWAY0=10.10.10.1<br />
+DNS1=10.10.10.5<br />
+DNS2=10.10.10.6<br />
+DOMAIN=mydomain.com<br />
+HWADDR=00:50:56:B4:6D:57<br />
+IPV6_PEERDNS=yes<br />
+IPV6_PEERROUTES=yes<br />
+DEVICE=mgmt0</p>
+<p>[/code]</p>
+<p>Reboot system with reconfiguration</p>
+<ul>
+<li>
+<pre>shutdown -r now</pre>
+</li>
+</ul>
+<p>(c) 2014 Keith Tenzer</p>

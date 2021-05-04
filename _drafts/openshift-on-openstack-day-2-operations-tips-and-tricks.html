@@ -1,0 +1,104 @@
+---
+layout: post
+title: 'Openshift on OpenStack: Day 2 Operations Tips and Tricks'
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta: {}
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p>[root@keithcloud ~(keystone_openshift_3_11)]# openstack server list<br />
++--------------------------------------+---------+--------+--------------------------------------------+--------+--------------+<br />
+| ID | Name | Status | Networks | Image | Flavor |<br />
++--------------------------------------+---------+--------+--------------------------------------------+--------+--------------+<br />
+| e31c19b2-02e9-4c73-aa2f-52b1ed5d7757 | infra0 | ACTIVE | openshift_3_11=192.168.2.128 | rhel76 | ocp.infra |<br />
+| 5b4e5851-3cd6-49cd-bc8b-1fdb29f99148 | infra1 | ACTIVE | openshift_3_11=192.168.2.127 | rhel76 | ocp.infra |<br />
+| d6717cc7-ce00-4419-8aa6-1fed64b884ea | node0 | ACTIVE | openshift_3_11=192.168.2.110 | rhel76 | ocp.node |<br />
+| 2e2bde2b-3eec-4d80-b36f-ae421d3a7de6 | master2 | ACTIVE | openshift_3_11=192.168.2.102 | rhel76 | ocp.master.2 |<br />
+| 70202852-5d5d-47f2-9923-1fb98bf22176 | master1 | ACTIVE | openshift_3_11=192.168.2.106 | rhel76 | ocp.master.2 |<br />
+| 7a98f04b-5549-4d5a-b645-526129fec841 | master0 | ACTIVE | openshift_3_11=192.168.2.117 | rhel76 | ocp.master.2 |<br />
+| 1131a46b-f75b-415a-92c0-c39e3642d0d1 | node1 | ACTIVE | openshift_3_11=192.168.2.116 | rhel76 | ocp.node |<br />
+| df793ad3-11d0-4bd9-9368-5ac1829c1e60 | node2 | ACTIVE | openshift_3_11=192.168.2.108 | rhel76 | ocp.node |<br />
+| ec8cb487-f46c-419a-9153-2bf4504f3833 | bastion | ACTIVE | openshift_3_11=192.168.2.121, 46.4.207.242 | rhel76 | ocp.bastion |<br />
++--------------------------------------+---------+--------+--------------------------------------------+--------+--------------+<br />
+[root@keithcloud ~(keystone_openshift_3_11)]# openstack server resize --flavor ocp.node.2 node0<br />
+[root@keithcloud ~(keystone_openshift_3_11)]# openstack server list<br />
++--------------------------------------+---------+--------+--------------------------------------------+--------+--------------+<br />
+| ID | Name | Status | Networks | Image | Flavor |<br />
++--------------------------------------+---------+--------+--------------------------------------------+--------+--------------+<br />
+| e31c19b2-02e9-4c73-aa2f-52b1ed5d7757 | infra0 | ACTIVE | openshift_3_11=192.168.2.128 | rhel76 | ocp.infra |<br />
+| 5b4e5851-3cd6-49cd-bc8b-1fdb29f99148 | infra1 | ACTIVE | openshift_3_11=192.168.2.127 | rhel76 | ocp.infra |<br />
+| d6717cc7-ce00-4419-8aa6-1fed64b884ea | node0 | RESIZE | openshift_3_11=192.168.2.110 | rhel76 | ocp.node |<br />
+| 2e2bde2b-3eec-4d80-b36f-ae421d3a7de6 | master2 | ACTIVE | openshift_3_11=192.168.2.102 | rhel76 | ocp.master.2 |<br />
+| 70202852-5d5d-47f2-9923-1fb98bf22176 | master1 | ACTIVE | openshift_3_11=192.168.2.106 | rhel76 | ocp.master.2 |<br />
+| 7a98f04b-5549-4d5a-b645-526129fec841 | master0 | ACTIVE | openshift_3_11=192.168.2.117 | rhel76 | ocp.master.2 |<br />
+| 1131a46b-f75b-415a-92c0-c39e3642d0d1 | node1 | ACTIVE | openshift_3_11=192.168.2.116 | rhel76 | ocp.node |<br />
+| df793ad3-11d0-4bd9-9368-5ac1829c1e60 | node2 | ACTIVE | openshift_3_11=192.168.2.108 | rhel76 | ocp.node |<br />
+| ec8cb487-f46c-419a-9153-2bf4504f3833 | bastion | ACTIVE | openshift_3_11=192.168.2.121, 46.4.207.242 | rhel76 | ocp.bastion |<br />
++--------------------------------------+---------+--------+--------------------------------------------+--------+--------------+<br />
+[root@keithcloud ~(keystone_openshift_3_11)]# openstack server list<br />
++--------------------------------------+---------+---------------+--------------------------------------------+--------+--------------+<br />
+| ID | Name | Status | Networks | Image | Flavor |<br />
++--------------------------------------+---------+---------------+--------------------------------------------+--------+--------------+<br />
+| e31c19b2-02e9-4c73-aa2f-52b1ed5d7757 | infra0 | ACTIVE | openshift_3_11=192.168.2.128 | rhel76 | ocp.infra |<br />
+| 5b4e5851-3cd6-49cd-bc8b-1fdb29f99148 | infra1 | ACTIVE | openshift_3_11=192.168.2.127 | rhel76 | ocp.infra |<br />
+| d6717cc7-ce00-4419-8aa6-1fed64b884ea | node0 | VERIFY_RESIZE | openshift_3_11=192.168.2.110 | rhel76 | ocp.node.2 |<br />
+| 2e2bde2b-3eec-4d80-b36f-ae421d3a7de6 | master2 | ACTIVE | openshift_3_11=192.168.2.102 | rhel76 | ocp.master.2 |<br />
+| 70202852-5d5d-47f2-9923-1fb98bf22176 | master1 | ACTIVE | openshift_3_11=192.168.2.106 | rhel76 | ocp.master.2 |<br />
+| 7a98f04b-5549-4d5a-b645-526129fec841 | master0 | ACTIVE | openshift_3_11=192.168.2.117 | rhel76 | ocp.master.2 |<br />
+| 1131a46b-f75b-415a-92c0-c39e3642d0d1 | node1 | ACTIVE | openshift_3_11=192.168.2.116 | rhel76 | ocp.node |<br />
+| df793ad3-11d0-4bd9-9368-5ac1829c1e60 | node2 | ACTIVE | openshift_3_11=192.168.2.108 | rhel76 | ocp.node |<br />
+| ec8cb487-f46c-419a-9153-2bf4504f3833 | bastion | ACTIVE | openshift_3_11=192.168.2.121, 46.4.207.242 | rhel76 | ocp.bastion |<br />
++--------------------------------------+---------+---------------+--------------------------------------------+--------+--------------+</p>
+<p>[cloud-user@bastion ~]$ oc get nodes<br />
+NAME STATUS ROLES AGE VERSION<br />
+infra0 Ready infra 10d v1.11.0+d4cacc0<br />
+infra1 Ready infra 10d v1.11.0+d4cacc0<br />
+master0 Ready master 10d v1.11.0+d4cacc0<br />
+master1 Ready master 10d v1.11.0+d4cacc0<br />
+master2 Ready master 10d v1.11.0+d4cacc0<br />
+node0 NotReady compute 10d v1.11.0+d4cacc0<br />
+node1 Ready compute 10d v1.11.0+d4cacc0<br />
+node2 Ready compute 10d v1.11.0+d4cacc0</p>
+<p>[root@keithcloud ~(keystone_openshift_3_11)]# openstack server resize --confirm node0<br />
+[root@keithcloud ~(keystone_openshift_3_11)]#<br />
+[root@keithcloud ~(keystone_openshift_3_11)]# openstack server list<br />
++--------------------------------------+---------+--------+--------------------------------------------+--------+--------------+<br />
+| ID | Name | Status | Networks | Image | Flavor |<br />
++--------------------------------------+---------+--------+--------------------------------------------+--------+--------------+<br />
+| e31c19b2-02e9-4c73-aa2f-52b1ed5d7757 | infra0 | ACTIVE | openshift_3_11=192.168.2.128 | rhel76 | ocp.infra |<br />
+| 5b4e5851-3cd6-49cd-bc8b-1fdb29f99148 | infra1 | ACTIVE | openshift_3_11=192.168.2.127 | rhel76 | ocp.infra |<br />
+| d6717cc7-ce00-4419-8aa6-1fed64b884ea | node0 | ACTIVE | openshift_3_11=192.168.2.110 | rhel76 | ocp.node.2 |<br />
+| 2e2bde2b-3eec-4d80-b36f-ae421d3a7de6 | master2 | ACTIVE | openshift_3_11=192.168.2.102 | rhel76 | ocp.master.2 |<br />
+| 70202852-5d5d-47f2-9923-1fb98bf22176 | master1 | ACTIVE | openshift_3_11=192.168.2.106 | rhel76 | ocp.master.2 |<br />
+| 7a98f04b-5549-4d5a-b645-526129fec841 | master0 | ACTIVE | openshift_3_11=192.168.2.117 | rhel76 | ocp.master.2 |<br />
+| 1131a46b-f75b-415a-92c0-c39e3642d0d1 | node1 | ACTIVE | openshift_3_11=192.168.2.116 | rhel76 | ocp.node |<br />
+| df793ad3-11d0-4bd9-9368-5ac1829c1e60 | node2 | ACTIVE | openshift_3_11=192.168.2.108 | rhel76 | ocp.node |<br />
+| ec8cb487-f46c-419a-9153-2bf4504f3833 | bastion | ACTIVE | openshift_3_11=192.168.2.121, 46.4.207.242 | rhel76 | ocp.bastion |<br />
++--------------------------------------+---------+--------+--------------------------------------------+--------+--------------+</p>
+<p>[cloud-user@bastion ~]$ oc get nodes<br />
+NAME STATUS ROLES AGE VERSION<br />
+infra0 Ready infra 10d v1.11.0+d4cacc0<br />
+infra1 Ready infra 10d v1.11.0+d4cacc0<br />
+master0 Ready master 10d v1.11.0+d4cacc0<br />
+master1 Ready master 10d v1.11.0+d4cacc0<br />
+master2 Ready master 10d v1.11.0+d4cacc0<br />
+node0 Ready compute 10d v1.11.0+d4cacc0<br />
+node1 Ready compute 10d v1.11.0+d4cacc0<br />
+node2 Ready compute 10d v1.11.0+d4cacc0</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

@@ -1,0 +1,188 @@
+<h2><img class="alignnone  wp-image-14443" src="/assets/2020/01/38202270.png" alt="38202270" width="173" height="173" /></h2>
+<h2>Overview</h2>
+<p>In this article we will provide a hands-on guide to building your very first operator in Go. Using the Operator SDK we will learn how to create boilerplate code, build and deploy an operator.</p>
+<p>This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2020/04/23/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a></li>
+<li><a href="https://keithtenzer.com/2020/01/27/openshift-operator-sdk-go-getting-started-guide-part-ii/">OpenShift Operator SDK: Go Getting Started Guide Part II</a></li>
+<li><a href="https://keithtenzer.com/2020/04/23/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">OpenShift Operator SDK: Ansible Getting Started Guide Part III</a></li>
+<li><a href="https://keithtenzer.com/2020/04/23/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</a></li>
+</ul>
+<p><!--more--></p>
+<h2>Setup Development Environment</h2>
+<p>There are some prerequisites needed to build the operator-sdk and eventually your own operators. In this case I am using Fedora Linux.</p>
+<p><strong>Install Docker 17.03+</strong></p>
+<p>Add the docker ce repositories. Note: you can also use podman and buildah instead of Docker for those that want a complete and clean divorce.</p>
+<p><code><span class="nb">$ sudo </span>dnf <span class="nt">-y</span> install dnf-plugins-core</code></p>
+<pre class="highlight">$ <code><span class="nb">sudo </span>dnf config-manager <span class="se">\</span>
+    <span class="nt">--add-repo</span> <span class="se">\</span>
+    https://download.docker.com/linux/fedora/docker-ce.repo</code></pre>
+<p>Install docker-ce</p>
+<pre>$ sudo dnf -y install docker-ce docker-ce-cli</pre>
+<pre>$ sudo systemctl start docker
+$ sudo systemctl enable docker</pre>
+<p><strong>Install Go 1.13+</strong></p>
+<p>Download Go and extract it to /usr/local</p>
+<pre>$ curl -O https://dl.google.com/go/go1.13.6.linux-amd64.tar.gz</pre>
+<pre>$ sudo tar -C /usr/local -xzf go1.13.6.linux-amd64.tar.gz</pre>
+<p>Update bash profile and set GOPATH/GOBIN</p>
+<pre>$ vi ~/.bash_profile
+
+---
+# User specific environment and startup programs
+
+PATH=$PATH:$HOME/.local/bin:$HOME/bin:/usr/local/go/bin
+export GOPATH=/home/ktenzer/go
+export GOBIN=/home/ktenzer
+export PATH
+---</pre>
+<pre>$ source ~/.bash_profile</pre>
+<p>Check Go version</p>
+<pre>$ go version
+go version go1.13.6 linux/amd64</pre>
+<p><strong>Install Mercurial 3.9+</strong></p>
+<pre>$ sudo dnf -y install mercurial</pre>
+<p><strong>Install Bazaar 2.7.0+</strong></p>
+<pre>$ sudo dnf -y install -y bzr</pre>
+<p><strong>Build Operator SDK</strong></p>
+<p>Now that the prerequisites are installed we will build the operator sdk from source.</p>
+<pre>$ go get -d github.com/operator-framework/operator-sdk</pre>
+<pre>$ cd $GOPATH/src/github.com/operator-framework/operator-sdk</pre>
+<pre>$ git checkout master</pre>
+<pre>$ make tidy</pre>
+<pre>$ make install</pre>
+<p>The Makefile will deploy the operator-sdk CLI into the home directory. Move it to /usr/local/bin.</p>
+<pre>$ sudo mv ~/operator-sdk /usr/local/bin</pre>
+<p>Check the operator-sdk version</p>
+<pre>$ operator-sdk version
+operator-sdk version: "v0.15.0-5-g6b4e1370", commit: "6b4e1370f18e5d028b283375b740026d2efb0a44", go version: "go1.13.6 linux/amd64"</pre>
+<h2>Building Your First Operator</h2>
+<p>The SDK is able to generate not only boilerplate code but also the CRDs, controller and API endpoints. In this example we will create a cars operator. It will simply provide an endpoint allowing us to do CRUD on car objects. Each car object will spawn a pod with a base image.</p>
+<p>Change directory to the github.com source directory.</p>
+<pre>$ cd $GOPATH/src/github.com</pre>
+<p>Note: create directory if it doesn't exist</p>
+<p>Using operatore-sdk cli create boilerplate code.</p>
+<pre>$ operator-sdk new cars-operator --repo github.com/cars-operator</pre>
+<pre>cd cars-operator</pre>
+<p>Add new API CRD for our car operator</p>
+<pre>$ operator-sdk add api --api-version=cars.example.com/v1alpha1 \
+--kind=Car</pre>
+<p>Add controller API that watches our cars</p>
+<pre>$ operator-sdk add controller --api-version=cars.example.com/v1alpha1 \
+ --kind=Car</pre>
+<p><strong>Create User on Quay.io</strong></p>
+<p>We will be using quay to store operator images. Authenticate using Github or Gmail to <a href="https://quay.io">https://quay.io</a>. Once authenticated go to account settings and set a password.</p>
+<p><strong>Test Quay.io Credentials</strong></p>
+<pre>$ sudo docker login quay.io</pre>
+<p><strong>Build Operator</strong></p>
+<p>Using operator-sdk cli build the operator which will push the image to your local Docker registry.</p>
+<pre>$ sudo PATH=$PATH:/usr/local/go/bin operator-sdk build \
+quay.io/ktenzer/cars-operator</pre>
+<p>Note: Substitute ktenzer for your username.</p>
+<p><strong>Push Operator to your Quay.io Account</strong></p>
+<pre>$ sudo docker push quay.io/ktenzer/cars-operator:latest</pre>
+<p><strong>Make Quay Repository Public</strong></p>
+<p>By default your Quay repository will be private. If we want to access it from OpenShift we need to make it public. Login to quay.io with your username/password</p>
+<p>Select the cars-operator repository</p>
+<p><img class="alignnone  wp-image-14432" src="/assets/2020/01/screenshot-from-2020-01-25-13-04-42.png" alt="Screenshot from 2020-01-25 13-04-42" width="1296" height="347" /></p>
+<p>Under Repository Settings enable visibility to be public</p>
+<p><img class="alignnone  wp-image-14433" src="/assets/2020/01/screenshot-from-2020-01-25-13-05-07.png" alt="Screenshot from 2020-01-25 13-05-07" width="1649" height="405" /></p>
+<p><strong>Update Image in operator.yaml</strong></p>
+<p>We need to point the image to the location in our Quay repository.</p>
+<pre>vi deploy/operator.yaml
+---
+# Replace this with the built image name
+image: <strong>quay.io/ktenzer/cars-operator</strong>
+command:
+---</pre>
+<h2>Deploy Cars Operator on OpenShift</h2>
+<p>Now that the operator is built and pushed to our Quay repository we can deploy it on an OpenShift cluster.</p>
+<p>Authenticate to OpenShift Cluster</p>
+<pre>$oc login https://api.ocp4.keithtenzer.com:6443</pre>
+<p>Create new project for our operator</p>
+<pre>$ oc new-project cars-operator</pre>
+<p>Setup service accounts and role bindings</p>
+<pre>$ oc create -f deploy/service_account.yaml</pre>
+<pre>$ oc create -f deploy/role.yaml</pre>
+<pre>$ oc create -f deploy/role_binding.yaml</pre>
+<p>Create the CRD for our operator</p>
+<pre>$ oc create -f deploy/crds/cars.example.com_cars_crd.yaml</pre>
+<p>Deploy our operator</p>
+<pre>$ oc create -f deploy/operator.yaml</pre>
+<p>Create the CR for our operator</p>
+<pre>$ oc create -f deploy/crds/cars.example.com_v1alpha1_car_cr.yaml</pre>
+<h2>Using Cars Operator</h2>
+<p>The cars operator will automatically deploy an example-car. Whe can query our car object just like any other Kubernetes object. This is the beauty of CR/CRDs and operators. We can easily extend the Kubernetes API without needing to understand it's complexity.</p>
+<pre>$ oc get car
+NAME AGE
+example-car 31m</pre>
+<p>Next we can get information about our example-car.</p>
+<pre>$ oc get car example-car -o yaml
+apiVersion: cars.example.com/v1alpha1
+kind: Car
+metadata:
+  creationTimestamp: "2020-01-25T12:15:45Z"
+  generation: 1
+  name: example-car
+  namespace: cars-operator
+  resourceVersion: "2635723"
+  selfLink: /apis/cars.example.com/v1alpha1/namespaces/cars-operator/cars/example-car
+  uid: 6a424ef9-3f6c-11ea-a391-fa163e9f184b
+spec:
+  size: 3
+
+</pre>
+<p>Looking at the running pods in our cars-operator project we see the operator and our example-car.</p>
+<pre>$ oc get pods -n cars-operator
+NAME                            READY   STATUS    RESTARTS   AGE
+cars-operator-b98bff54d-t2465   1/1     Running   0          5m
+example-car-pod                 1/1     Running   0          5m</pre>
+<p><strong>Create a new Car</strong></p>
+<p>Lets now create a BMW car.</p>
+<pre>$ vi bmw.yaml
+kind: Car
+metadata:
+  name: bmw
+spec:
+  size: 1</pre>
+<pre>$ oc create -f bmw.yaml</pre>
+<p>Here we can see we now have a BMW car.</p>
+<pre>$ oc get car
+NAME          AGE
+bmw           11m
+example-car   31m</pre>
+<p>Of course we can get information about our BMW car.</p>
+<pre>$ oc get car bmw -o yaml
+apiVersion: cars.example.com/v1alpha1
+kind: Car
+metadata:
+  creationTimestamp: "2020-01-25T12:35:25Z"
+  generation: 1
+  name: bmw
+  namespace: cars-operator
+  resourceVersion: "2644044"
+  selfLink: /apis/cars.example.com/v1alpha1/namespaces/cars-operator/cars/bmw
+  uid: 294bc47f-3f6f-11ea-b32c-fa163e3e8e24
+spec:
+  size: 1</pre>
+<p>Finally as with the example-car, the operator will start a new pod when the BMW car is created.</p>
+<pre>$ oc get pods -n cars-operator
+NAME                            READY   STATUS    RESTARTS   AGE
+bmw-pod                         1/1     Running   0          10m
+cars-operator-b98bff54d-t2465   1/1     Running   0          14m
+example-car-pod                 1/1     Running   0          14m</pre>
+<h2>Cleanup</h2>
+<p>Follow these steps to remove the operator cleanly.</p>
+<pre>$ oc delete -f deploy/crds/cars.example.com_v1alpha1_car_cr.yaml</pre>
+<pre>$ oc delete -f deploy/operator.yaml</pre>
+<pre>$ oc delete -f deploy/role.yaml</pre>
+<pre>$ oc delete -f deploy/role_binding.yaml</pre>
+<pre>$ oc delete -f deploy/service_account.yaml</pre>
+<pre>$ oc delete -f deploy/crds/cars.example.com_cars_crd.yaml</pre>
+<pre>$ oc delete project cars-operator</pre>
+<h2>Summary</h2>
+<p>In this article a step-by-step guide was provided to setup a development environment, generate boilerplate code and deploy our custom cars operator using Go on OpenShift using the Operator Framework.</p>
+<p>Happy Operatoring!</p>
+<p>(c) 2020 Keith Tenzer</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

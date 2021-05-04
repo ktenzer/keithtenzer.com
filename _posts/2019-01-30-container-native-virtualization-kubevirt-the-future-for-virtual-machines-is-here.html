@@ -1,0 +1,186 @@
+---
+layout: post
+title: 'Container Native Virtualization (Kubevirt): The Future for Virtual Machines
+  is Here!'
+date: 2019-01-30 16:45:29.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- OpenShift
+tags:
+- cnv
+- Container Native Virtualization
+- Kubernetes
+- Kubevirt
+- Linux
+- OpenShift
+- opensource
+- Virtual Machines
+- Vitualization
+meta:
+  _wpas_done_9468659: '1'
+  _rest_api_published: '1'
+  timeline_notification: '1548866742'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '27098382391'
+  publicize_linkedin_url: www.linkedin.com/updates?topic=6496417978865709056
+  _publicize_done_9423386: '1'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2019/01/30/container-native-virtualization-kubevirt-the-future-for-virtual-machines-is-here/"
+---
+<h2><img class="alignnone  wp-image-13188" src="{{ site.baseurl }}/assets/2019/01/kubevirt_logo.png" alt="kubevirt_logo" width="202" height="202" /></h2>
+<h2>Overview</h2>
+<p>Immediately after Solomon Hykes first showed Docker to the public at PyCon in 2013, in his now famous <a href="https://www.youtube.com/watch?v=wW9CAH9nSLs">"docker run demo"</a>, IT folk started asking, what does this mean for virtualization? We only spent the previous 10-15 years virtualizing, seemingly everything, so understandably people were slightly apprehensive. Industries had been built and careers established, clearly virtualization would be an important part of the future and not simply replaced, right?</p>
+<p>In this article we will aim to understand the value of virtualization in a container-driven world, explore the current virtualization capabilities in Kubernetes and get started with Container Native Virtualization (Kubevirt) using Red Hat's Kubernetes enterprise distribution, OpenShift.</p>
+<p><!--more--></p>
+<h2>The Value of Virtualization in a Container-Driven World</h2>
+<p>If we think about the real value of virtualization as a game changer, it is the ability to abstract hardware from the operating system. Everything else such as isolation, manageability, efficiency, etc are all features. Basically a virtualization platform is a hardware agnostic scheduler for operating systems. Looking at the value containers provide, it is as an abstraction between applications and operating system. Everything else such as multi-cloud, portability, speed, agility, deployment strategies, etc are all features.</p>
+<p>In the end both Virtualization and Containerization are doing basically one thing and that is providing an abstraction layer. The only difference is where the abstraction occurs. For Virtualization it is the operating system, while for containers it is the application. Clearly without a doubt we need both. That is not the question. The question is do we need both in separate platforms, or can it all be collapsed and if so what are the advantages?</p>
+<p>I think ultimately a single platform will emerge that provides both virtualization as well as containers and that platform already exists today, Kubernetes. There is a huge amount of overlap with what a virtualization platform is doings vs that of a container platform like Kubernetes. Scheduling, monitoring, quotas, RBAC, integration with compute, network, storage, HA and so on. In addition you need separate teams and operations processes to run various platforms so there is a lot of running costs that can be avoided. It makes zero sense to continue down the path of multiple platforms.</p>
+<h2>Bringing Virtualization to Kubernetes</h2>
+<p>The upstream project working on bringing virtualization to Kubernetes is called <a href="http://kubevirt.io/">Kubevirt</a>. Kubernetes is a perfect platform for virtual machines. Kubernetes already has a lot more intelligence that any virtualization platform ever had or will. It has built-in a framework called the <a href="https://developers.redhat.com/blog/2018/12/18/introduction-to-the-kubernetes-operator-framework/">Operator Framework</a>. An operator is essentially a way to package, manage and most importantly operate Kubernetes native applications. The operate part is what allows us to build intelligence into how processes or even events should be automatically handled for a specific application. Taking a step back, what is an application? Basically a program that runs on the operating system. Virtualization is by definition an application. The operator framework is used to provide an operator for running virtualization on Kubernetes because in fact, a virtual machine is just an application.</p>
+<p>Today you are already able to run virtual machines on Kubernetes and it is even technology preview in Red Hat's enterprise Kubernetes platform, OpenShift. Kubevirt works essentially by running libvirt (KVM) in a container. Libvirt is the process running virtual machines and supports the qcow2 image format. The only real difference is now, Libvirt runs in a container and can be controlled, scheduled as well as managed via Kubernetes. This truly brings both worlds together.</p>
+<p><img class="alignnone  wp-image-13181" src="{{ site.baseurl }}/assets/2019/01/kubevirt-components.png" alt="kubevirt-components" width="938" height="549" /></p>
+<p>Kubevirt has come a long way in a relatively short period of time. Still some gaps do exists and there is more work to be done in area of HA, live migration and dynamic resource sharing. Kubernetes and specifically cloud-native, where Kubernetes started has a different view on HA. Getting the virtualization primitives complete will take some time but it is happening and the operator framework is a key piece.</p>
+<h2>Getting Started with Kubevirt</h2>
+<p>In this example I am using OpenShift but this will work the same on Kubernetes. OpenShift is enterprise-grade Kubernetes plus a lot of additional things. Instead of "oc" cli command you would substitute that with the "kubectl" command. Keep in mind that for OpenShift Kubevirt is still technology preview.</p>
+<p><strong>Setup permissions</strong></p>
+<p>The Virtualization control plane needs additional permissions in it's namespace. By default OpenShift is very restrictive and SELinux prevents such access rights.</p>
+<pre>$ oc adm policy add-scc-to-user privileged -n kube-system \
+-z kubevirt-privileged
+$ oc adm policy add-scc-to-user privileged -n kube-system \
+-z kubevirt-controller
+$ oc adm policy add-scc-to-user privileged -n kube-system \
+-z kubevirt-apiserver</pre>
+<p><strong>Deploy Kubevirt components</strong></p>
+<p>These components are part of the control plane and facilitate communications to virtual machines as well as enable their primitives.</p>
+<pre>$ RELEASE=v0.11.0
+$ oc apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt.yam
+$ oc apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt.yam
+$ oc apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt.yaml
+$ curl -O -L https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/virtctl-${RELEASE}-linux-amd64</pre>
+<p><strong>Install Virtctl Client</strong></p>
+<p>Virtctl provides a CLI utility to interact with virtualk machines.</p>
+<pre>$ sudo mv virtctl-${RELEASE}-linux-amd64 /usr/local/bin/virtctl
+$ sudo chmod +x /usr/local/bin/virtctl</pre>
+<p><strong>Configure Container Data Importer</strong></p>
+<p>The cdi services allows for importing virtual machines. This is also optional.</p>
+<pre>$ oc adm policy add-scc-to-user privileged -z cdi-sa
+$ VERSION=v1.4.1
+$ oc create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-controller.yaml
+$ oc apply create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-controller.yaml
+$ oc create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-controller.yaml</pre>
+<p><strong>Verify Kubevirt Deployment</strong></p>
+<p>The Kubevirt pods are marked in bold.</p>
+<pre>$ oc get pods -n kube-system
+NAME READY STATUS RESTARTS AGE
+<strong>cdi-api-5c69fdb6db-6bknl 1/1 Running 0 6d</strong>
+<strong>cdi-api-5c69fdb6db-dl95k 0/1 Evicted 0 6d</strong>
+<strong>cdi-api-5c69fdb6db-gp5mv 0/1 Evicted 0 16d</strong>
+<strong>cdi-api-5c69fdb6db-mwwxs 0/1 Evicted 0 6d</strong>
+<strong>cdi-deployment-5fddc58c4d-mxpsn 1/1 Running 9 28d</strong>
+<strong>cdi-uploadproxy-85b8ff4884-x4kp2 1/1 Running 2 28d</strong>
+master-api-master0 1/1 Running 241 36d
+master-api-master1 1/1 Running 237 36d
+master-api-master2 1/1 Running 243 36d
+master-controllers-master0 1/1 Running 233 36d
+master-controllers-master1 1/1 Running 231 36d
+master-controllers-master2 1/1 Running 221 36d
+master-etcd-master0 1/1 Running 2495 36d
+master-etcd-master1 1/1 Running 2482 36d
+master-etcd-master2 1/1 Running 2489 36d
+<strong>virt-api-5cf4576cc8-br65d 1/1 Running 0 2h</strong>
+<strong>virt-api-5cf4576cc8-mpzrl 1/1 Unknown 1 28d</strong>
+<strong>virt-api-5cf4576cc8-qq5k6 1/1 Running 0 15d</strong>
+<strong>virt-api-5cf4576cc8-w7wk6 0/1 Evicted 0 26d</strong>
+<strong>virt-controller-5cdd99564c-9x2mr 1/1 Running 25 28d</strong>
+<strong>virt-controller-5cdd99564c-hsp6k 1/1 Running 0 26d</strong>
+<strong>virt-handler-67xjk 1/1 NodeLost 1 28d</strong>
+<strong>virt-handler-hhd2s 1/1 Running 1 28d</strong>
+<strong>virt-handler-rhvpp 1/1 Running 2 28d</strong></pre>
+<p>Check Services, Kubevirt services are marked in bold.</p>
+<pre>$ oc get service -n kube-system
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
+<strong>cdi-api ClusterIP 172.30.219.181 &lt;none&gt; 443/TCP 28d</strong>
+<strong>cdi-uploadproxy ClusterIP 172.30.136.133 &lt;none&gt; 443/TCP 28d</strong>
+kube-controllers ClusterIP None &lt;none&gt; 8444/TCP 36d
+kubelet ClusterIP None &lt;none&gt; 10250/TCP 36d
+kubevirt-prometheus-metrics ClusterIP 172.30.69.165 &lt;none&gt; 443/TCP 28d
+<strong>virt-api ClusterIP 172.30.76.176 &lt;none&gt; 443/TCP 28d</strong></pre>
+<p><strong>Configure Kubevirt UI</strong></p>
+<p>This is optional but I personally find the UI very nice from user experience point-of-view.</p>
+<pre>$ oc new-project kubevirt-web-ui
+$ git clone https://github.com/kubevirt/web-ui-operator.git
+$ cd web-ui-operator/
+$ oc apply -f deploy/service_account.yaml
+$ oc adm policy add-scc-to-user anyuid -z kubevirt-web-ui-operator
+$ oc apply -f deploy/service_account.yaml -n kubevirt-web-ui
+$ oc adm policy add-scc-to-user anyuid -z kubevirt-web-ui-operator
+$ oc apply -f deploy/role.yaml
+$ oc apply -f deploy/role_extra_for_console.yaml
+$ oc apply -f deploy/role_binding.yaml
+$ oc apply -f deploy/role_binding_extra_for_console.yaml
+$ oc apply -f deploy/crds/kubevirt_v1alpha1_kwebui_crd.yaml
+$ oc apply -f deploy/operator.yaml
+$ oc apply -f deploy/crds/kubevirt_v1alpha1_kwebui_cr.yaml</pre>
+<p><strong>Verify Kubevirt UI Deployment</strong></p>
+<p>Verify pods.</p>
+<pre>$ oc get pods -n kubevirt-web-ui
+NAME READY STATUS RESTARTS AGE
+console-6b66b66dd7-9gdvn 1/1 Unknown 1 28d
+console-6b66b66dd7-wwxm8 1/1 Running 0 15d
+kubevirt-web-ui-operator-6dd9547864-f5t49 0/1 Running 0 15d
+kubevirt-web-ui-operator-6dd9547864-n8fxd 1/1 Unknown 1 26d</pre>
+<p>Verify services.</p>
+<pre>$ oc get services -n kubevirt-web-ui
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
+console ClusterIP 172.30.124.253 &lt;none&gt; 443/TCP 28d</pre>
+<p>Verify routes.</p>
+<pre>$ oc get routes -n kubevirt-web-ui
+NAME HOST/PORT PATH SERVICES PORT TERMINATION WILDCARD
+console <strong>kubevirt-web-ui.apps.46.4.207.246.xip.io</strong> console https reencrypt/Redirect None</pre>
+<p>Connect to Kubevirt UI</p>
+<p>Using web browser enter the route, in this case https://kubevirt-web-ui.apps.46.4.207.246.xip.io. You will be prompted to login using OpenShift credentials.</p>
+<h2>Deploying a Virtual Machine</h2>
+<p>In this example we will be using a template to deploy a virtual machine.</p>
+<p><strong>Create Project (namespace) for Virtual Machines</strong></p>
+<p><img class="alignnone  wp-image-13182" src="{{ site.baseurl }}/assets/2019/01/kubevirt_5.png" alt="kubevirt_5" width="1003" height="466" /></p>
+<p>Using CLI to create new project</p>
+<pre>$ oc create project vms</pre>
+<p><strong>Deploy Virtual Machine Template</strong></p>
+<p>First login to the Kubevirt UI. You can either list routes as we did above for the project or look in OpenShift UI as is shown below.</p>
+<p><img class="alignnone  wp-image-13183" src="{{ site.baseurl }}/assets/2019/01/kubevirt_6.png" alt="kubevirt_6" width="1027" height="447" /></p>
+<p>The Kubevirt UI also shows overall status of the cluster. This is to provide an admin single-pane-of-glass regardless of containers or virtual machines.</p>
+<p><img class="alignnone  wp-image-13184" src="{{ site.baseurl }}/assets/2019/01/kubevirt_1.png" alt="kubevirt_1" width="1033" height="500" /></p>
+<p>Select virtual machines and create virtual machine from template.</p>
+<p><img class="alignnone  wp-image-13185" src="{{ site.baseurl }}/assets/2019/01/kubevirt_2.png" alt="kubevirt_2" width="1057" height="426" /></p>
+<p>Enter the yaml which is available in <a href="https://raw.githubusercontent.com/kubevirt/demo/master/manifests/vm.yaml">github</a>.</p>
+<p><img class="alignnone  wp-image-13186" src="{{ site.baseurl }}/assets/2019/01/kubevirt_3.png" alt="kubevirt_3" width="972" height="473" /></p>
+<p>Select create to deploy virtual machine template.</p>
+<p>Using CLI to deploy virtual machine template.</p>
+<pre>$ oc create -f https://raw.githubusercontent.com/kubevirt/demo/master/manifests/vm.yaml</pre>
+<p>Note: this template will deploy virtual machine in default project. You can change that by setting "namespace" to something else in the metadata section of template.</p>
+<p><strong>Start Virtual Machine</strong></p>
+<p>Once template is deployed you should be able to start the virtual machine.</p>
+<p><img class="alignnone  wp-image-13187" src="{{ site.baseurl }}/assets/2019/01/kubevirt_4.png" alt="kubevirt_4" width="1258" height="494" /></p>
+<p>That is it, pretty easy and amazing how well virtual machines are already integrated into Kubernetes and OpenShift. The best is yet to come!</p>
+<h2>Summary</h2>
+<p>In this article we discussed the value of virtualization and containers, together is better and clearly the way forward. We examined the value of collapsing platforms to have a single platform to drive both container and virtual machine workloads. We looked at where Container Native Virtualization (Kubevirt) is at today and explained some of the gaps versus traditional virtualization. Finally we walked through a hands-on guide to get Container Native Virtualization (Kubevirt) up and running on Kubernetes or OpenShift.</p>
+<p>Happy Containers and Virtual Machines Existing Together!</p>
+<p>(c) 2018 Keith Tenzer</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

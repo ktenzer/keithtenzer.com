@@ -1,0 +1,441 @@
+---
+layout: post
+title: 'Cloud Systems Management: Satellite 6.2 Getting Started Guide'
+date: 2016-08-23 12:41:11.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Satellite
+tags:
+- Foreman
+- Katello
+- Puppet
+- Satellite 6
+meta:
+  _oembed_82a1adfc305ae47c5cb127bbd1ca5755: "{{unknown}}"
+  _oembed_bb3f9101c58dbc37b760a83dbf841356: "{{unknown}}"
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '26066360211'
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6173831244980183040&type=U&a=msTM
+  _publicize_done_9423386: '1'
+  _wpas_done_9468659: '1'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2016/08/23/cloud-systems-management-satellite-6-2-getting-started-guide/"
+---
+<h3 class="screen"><img class="alignnone size-full wp-image-4161" src="{{ site.baseurl }}/assets/2016/08/sat_6_components.png" alt="sat_6_components" width="493" height="157" /></h3>
+<h3 class="screen">Overview</h3>
+<p>In this article we will look at how to install Satellite 6.2 and configure a base environment. This article builds on a similar <a href="https://keithtenzer.com/2015/09/16/cloud-systems-management-satellite-6-1-getting-started-guide/">article</a> I published for Satellite 6.1. In addition to installing and configuring Satellite we will also look at one of the long awaited new features remote-cmd execution.<br />
+<!--more--><br />
+If you are coming from Satellite 5 world then you will want to familiarize yourself with the concepts and how they apply in Satellite 6. The biggest change is around how you manage content through stages (life-cycle enviornments) but there is also a lot more.</p>
+<p><img class="alignnone size-full wp-image-4156" src="{{ site.baseurl }}/assets/2016/08/red_hat_satellite_6_life_cycle.png" alt="Red_Hat_Satellite_6_Life_Cycle" width="1344" height="827" /></p>
+<p><em>source: https://www.windowspro.de/sites/windowspro.de/files/imagepicker/6/Red_Hat_Satellite_6_Life_Cycle.png</em></p>
+<h3 class="screen">Features</h3>
+<p dir="ltr">Satellite 6.2 continues to build on that release and provides the following features:</p>
+<ul>
+<li>
+<p dir="ltr">Automated Workflows -- This includes remote execution, scheduling for remote execution jobs and expanded bootstrap and provisioning options.</p>
+</li>
+<li>
+<p dir="ltr">Air-gapped security and federation -- Inter-Satellite sync is now available to export RPM content from one Satellite to import into another</p>
+</li>
+<li>
+<p dir="ltr">Software Management Improvements -- Simplified Smart Variable management is now available.</p>
+</li>
+<li>
+<p dir="ltr">Capsule improvements -- Users now have deeper insight into Capsule health and overall performance; Capsules are lighter-weight and can be configured to store only the content that has been requested by its clients; and a new Reference Architecture including deploying a Highly Available Satellite Capsule is now available.</p>
+</li>
+<li>
+<p dir="ltr">Atomic OSTree and containers -- Mirror, provision and manage RHEL Atomic hosts and content with Satellite; mirror container repositories such as Red Hat Registry, DockerHub™ and other 3rd-party sources; and Satellite provides a secure, curated point of entry for container content</p>
+</li>
+<li>
+<p dir="ltr">Enhanced documentation -- Both new and improved documentation is available. (<a href="https://access.redhat.com/documentation/red-hat-satellite/" target="_blank">https://access.redhat.com/documentation/red-hat-satellite/</a>)</p>
+<ul>
+<li>
+<p dir="ltr">New Guides</p>
+<ul>
+<li>
+<p dir="ltr">Virtual Instance Guide (How to configure virt-who)</p>
+</li>
+<li>
+<p dir="ltr">Hammer CLI Guide (How to use Satellite’s CLI)</p>
+</li>
+<li>
+<p dir="ltr">Content Management Guide (How to easily manage Satellite’s content )</p>
+</li>
+<li>
+<p dir="ltr">Quickstart Guide (How to get up and running quickly)</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<ul>
+<li>
+<p dir="ltr">Improved/more user-friendly documentation</p>
+</li>
+</ul>
+</ul>
+<ul>
+<li>
+<p dir="ltr">User Guide split to make more topical and easier to follow:</p>
+<ul>
+<li>
+<p dir="ltr">Server Administration Guide</p>
+</li>
+<li>
+<p dir="ltr">Host Configuration Guide</p>
+</li>
+<li>
+<p dir="ltr">“Cheat Sheets” available for specific topics (Hammer)</p>
+</li>
+<li>
+<p dir="ltr">Updated Feature Overviews</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 class="screen">Prerequisites</h3>
+<p>In order to install Satellite we need a subscription and of course RHEL 6 or 7.</p>
+<pre class="screen">subscription-manager register</pre>
+<pre class="screen">subscription-manager list --available</pre>
+<pre class="screen">subscription-manager attach --pool=934893843989289</pre>
+<pre class="screen">subscription-manager repos --disable "*"</pre>
+<p><strong>RHEL 6</strong></p>
+<pre class="screen">subscription-manager repos --enable=rhel-6-server-rpms \
+--enable=rhel-server-rhscl-6-rpms \
+--enable=rhel-6-server-satellite-6.2-rpms</pre>
+<p><strong>RHEL 7</strong></p>
+<pre class="screen">subscription-manager repos --enable=rhel-7-server-rpms \
+--enable=rhel-server-rhscl-7-rpms \
+--enable=rhel-7-server-satellite-6.2-rpms</pre>
+<p>Update all packages.</p>
+<pre># yum update -y</pre>
+<p>Add Firewall rules.</p>
+<p><strong>RHEL 6</strong></p>
+<pre class="screen"># iptables -A INPUT -m state --state NEW -p udp --dport 53 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 53 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p udp --dport 67 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p udp --dport 69 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 80 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 443 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 5647 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 8140 -j ACCEPT \
+&amp;&amp; iptables-save &gt; /etc/sysconfig/iptables</pre>
+<p><strong>RHEL 7</strong></p>
+<pre># firewall-cmd --add-service=RH-Satellite-6
+# firewall-cmd --permanent --add-service=RH-Satellite-6</pre>
+<p><strong>NTP</strong></p>
+<pre># yum install chrony
+
+# systemctl start chronyd
+
+# systemctl enable chronyd</pre>
+<p><strong>SOS</strong></p>
+<p>Setting up SOS is a good idea to get faster responses from Red Hat support.</p>
+<pre class="screen">#yum install -y sos</pre>
+<h3>DNS Configuration</h3>
+<p>This is only required if you want to setup an external DNS server. If you use the integrated DNS provided by Satellite you can skip this step.</p>
+<pre>[root@ipa ]# vi /etc/named.conf
+ //
+ // named.conf
+ //
+ // Provided by Red Hat bind package to configure the ISC BIND named(8) DNS
+ // server as a caching only nameserver (as a localhost DNS resolver only).
+ //
+ // See /usr/share/doc/bind*/sample/ for example named configuration files.
+ //
+
+include "/etc/rndc.key";
+
+controls {
+ inet 192.168.0.26 port 953 allow { 192.168.38.27; 192.168.38.26; } keys { "capsule"; };
+ };
+
+options {
+ listen-on port 53 { 192.168.0.26; };
+ listen-on-v6 port 53 { ::1; };
+ directory "/var/named";
+ dump-file "/var/named/data/cache_dump.db";
+ statistics-file "/var/named/data/named_stats.txt";
+ memstatistics-file "/var/named/data/named_mem_stats.txt";
+ //allow-query { localhost; };
+ //forwarders {
+ //8.8.8.8;
+ //};
+ forwarders { 8.8.8.8; 8.8.4.4; };
+
+/*
+ - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+ - If you are building a RECURSIVE (caching) DNS server, you need to enable
+ recursion.
+ - If your recursive DNS server has a public IP address, you MUST enable access
+ control to limit queries to your legitimate users. Failing to do so will
+ cause your server to become part of large scale DNS amplification
+ attacks. Implementing BCP38 within your network would greatly
+ reduce such attack surface
+ */
+ recursion yes;
+
+dnssec-enable yes;
+ dnssec-validation yes;
+
+/* Path to ISC DLV key */
+ bindkeys-file "/etc/named.iscdlv.key";
+
+managed-keys-directory "/var/named/dynamic";
+
+pid-file "/run/named/named.pid";
+ session-keyfile "/run/named/session.key";
+ };
+
+logging {
+ channel default_debug {
+ file "data/named.run";
+ severity dynamic;
+ };
+ };
+
+zone "0.168.192.in-addr.arpa" IN {
+ type master;
+ file "/var/named/dynamic/0.168.192-rev";
+ //allow-update { 192.168.0.27; };
+ update-policy {
+ grant capsule zonesub ANY;
+ };
+ };
+
+zone "lab" IN {
+ type master;
+ file "/var/named/dynamic/lab.zone";
+ //allow-update { 192.168.0.27; };
+ update-policy {
+ grant capsule zonesub ANY;
+ };
+
+};
+
+include "/etc/named.rfc1912.zones";
+ include "/etc/named.root.key";</pre>
+<p><strong>DNS ZONES</strong></p>
+<pre>[root@ipa ]# cat /var/named/dynamic/
+ 0.168.192-rev 0.168.192-rev.old lab.zone lab.zone.jnl managed-keys.bind testdns.sh
+ [root@ipa dynamic]# cat /var/named/dynamic/lab.zone
+ $ORIGIN lab.
+ $TTL 86400
+ @ IN SOA dns1.lab. hostmaster.lab. (
+ 2001062501 ; serial
+ 21600 ; refresh after 6 hours
+ 3600 ; retry after 1 hour
+ 604800 ; expire after 1 week
+ 86400 ) ; minimum TTL of 1 day
+ ;
+ ;
+ IN NS dns1.lab.
+ rhevm IN A 192.168.0.20
+ rhevh01 IN A 192.168.0.21
+ osp8 IN A 192.168.0.22
+ cf IN A 192.168.0.24
+ ipa IN A 192.168.0.26
+ sat6 IN A 192.168.0.27
+ IN AAAA aaaa:bbbb::1
+ ose-master IN A 192.168.0.25
+ * 300 IN A 192.168.0.25
+ ;
+ ;</pre>
+<pre>[root@ipa ]# cat /var/named/dynamic/0.168.192-rev
+ $TTL 86400 ; 24 hours, could have been written as 24h or 1d
+ $ORIGIN 0.168.192.IN-ADDR.ARPA.
+
+@ IN SOA dns1.lab. hostmaster.lab. (
+ 2001062501 ; serial
+ 21600 ; refresh after 6 hours
+ 3600 ; retry after 1 hour
+ 604800 ; expire after 1 week
+ 86400 ) ; minimum TTL of 1 day
+
+; Name servers for the zone - both out-of-zone - no A RRs required
+ IN NS dns1.lab.
+ ; server host definitions
+ 20 IN PTR rhevm.lab.
+ 21 IN PTR rhevh01.lab.
+ 22 IN PTR osp8.lab.
+ 24 IN PTR cf.lab.
+ 25 IN PTR ose3-master.lab.
+ 26 IN PTR ipa.lab.
+ 27 IN PTR sat6.lab.</pre>
+<h3>Installation</h3>
+<p>Before we start with manual install, a Solution Architect and colleague of mine, Sebastian Hetze, created an automated setup script that also can integrate IDM. I strongly recommend using this script and contributing to further enhancements.</p>
+<p><a href="https://github.com/shetze/hammer-scripts/blob/master/sat62-setup.sh">https://github.com/shetze/hammer-scripts/blob/master/sat62-setup.sh</a></p>
+<p>If you are of course doing this to learn then it is definitely good to walk through manual steps so you understand concepts and what is involved.</p>
+<pre class="screen">#yum install -y satellite</pre>
+<pre class="screen"><strong>With Integrated DNS</strong>
+# satellite-installer --scenario satellite --foreman-admin-username admin --foreman-admin-password redhat01 --foreman-proxy-dns true --foreman-proxy-dns-interface eth0 --foreman-proxy-dns-zone example.com --foreman-proxy-dns-forwarders 8.8.8.8 --foreman-proxy-dns-reverse 0.168.192.in-addr.arpa --foreman-proxy-dhcp true --foreman-proxy-dhcp-interface eth0 --foreman-proxy-dhcp-range "192.168.0.100 192.168.0.199" --foreman-proxy-dhcp-gateway 192.168.0.1 --foreman-proxy-dhcp-nameservers 192.168.0.27 --foreman-proxy-tftp true --foreman-proxy-tftp-servername $(hostname) --capsule-puppet true --foreman-proxy-puppetca true
+<strong>Without Integrated DNS</strong>
+# satellite-installer --scenario satellite --foreman-admin-username admin --foreman-admin-password redhat01 --foreman-proxy-dns true --foreman-proxy-dns-interface eth0 --foreman-proxy-dns-zone sat.lab --foreman-proxy-dns-forwarders 192.168.0.26 --foreman-proxy-dns-reverse 0.168.192.in-addr.arpa --foreman-proxy-dhcp true --foreman-proxy-dhcp-interface eth0 --foreman-proxy-dhcp-range "192.168.0.225 192.168.0.250" --foreman-proxy-dhcp-gateway 192.168.0.1 --foreman-proxy-dhcp-nameservers 192.168.0.27 --foreman-proxy-tftp true --foreman-proxy-tftp-servername $(hostname) --capsule-puppet true --foreman-proxy-puppetca true</pre>
+<h3>Configuration</h3>
+<p class="screen">At this point you should be able to reach the web UI using HTTPS. In this environment the url is https://sat6.lab.com. Next we need to setup the hammer CLI. Configure hammer so that we automatically pass authentication credentials.</p>
+<pre class="programlisting" style="padding-left:30px;">mkdir ~/.hammer
+cat &gt; .hammer/cli_config.yml &lt;&lt;EOF
+:foreman:
+    :host: 'https://sat6.lab/'
+    :username: 'admin'
+    :password: 'redhat01'
+
+EOF</pre>
+<p><strong>External DNS Configuration</strong></p>
+<p>If you setup external DNS then you need to allow Satellite server to update DNS records on your external DNS server.</p>
+<pre># vi /etc/foreman-proxy/settings.d/dns.yml</pre>
+<pre class="screen">---
+:enabled: true
+:dns_provider: nsupdate
+:dns_key: /etc/rndc.key
+:dns_server: 192.168.38.2
+:dns_ttl: 86400</pre>
+<pre class="screen"># systemctl restart foreman-proxy</pre>
+<p class="screen"><strong>Register Satellite Server in Red Hat Network (RHN).</strong></p>
+<p class="screen"><a href="https://keithtenzer.files.wordpress.com/2015/09/sat6_register.png"><img class="alignnone wp-image-1248" src="{{ site.baseurl }}/assets/2016/08/sat6_register.png?w=300" alt="SAT6_REGISTER" width="1189" height="654" /></a></p>
+<p class="screen">Assign subscriptions to the Satellite server and download manifest from RHN.</p>
+<p class="screen"><a href="https://keithtenzer.files.wordpress.com/2015/09/sat_attached_sub.png"><img class="alignnone wp-image-1249" src="{{ site.baseurl }}/assets/2016/08/sat_attached_sub.png?w=300" alt="SAT_ATTACHED_SUB" width="1185" height="731" /></a></p>
+<p class="screen">Note: In the next section we will be using the hammer CLI to configure Satellite. In this environment we are using the organization "Default Organization", you would probably change this to a more specific organization name. If so you need to first create a new organization.</p>
+<p class="screen"><strong>Upload manifest file to Satellite server.</strong></p>
+<pre class="screen" style="padding-left:30px;">#hammer subscription upload --organization "Default Organization" --file /root/manifest_d586388b-f556-4623-b6a0-9f76857bedbc.zip</pre>
+<p class="screen">Create a subnet in Satellite 6 under Infrastructure-&gt;Subnet. In this environment the subnet is 192.168.122.0/24 and we are using external D.</p>
+<p class="screen"><img class="alignnone size-full wp-image-3542" src="{{ site.baseurl }}/assets/2016/08/screenshot-from-2016-08-03-143306.png" alt="Screenshot from 2016-08-03 14:33:06" width="1848" height="909" /></p>
+<p class="screen">Enable basic repositories.</p>
+<p class="screen">At minimum you need RHEL Server, Satellite Tools and RH Common.</p>
+<pre class="screen" style="padding-left:30px;">#hammer repository-set enable --organization "Default Organization" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (RPMs)'
+#hammer repository-set enable --organization "Default Organization" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (Kickstart)'
+#hammer repository-set enable --organization "Default Organization" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --name 'Red Hat Satellite Tools 6.2 (for RHEL 7 Server) (RPMs)'
+
+#hammer repository-set enable --organization "Default Organization" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --name 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server'</pre>
+<p class="screen">Enable EPEL repository for 3rd party packages.</p>
+<pre class="screen" style="padding-left:30px;">#wget -q https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7  -O /root/RPM-GPG-KEY-EPEL-7
+#hammer gpg create --key /root/RPM-GPG-KEY-EPEL-7  --name 'GPG-EPEL-7' --organization "Default Organization"</pre>
+<p class="screen">Create a new product for the EPEL repository. In Satellite 6 products are a groupings of external content outside of RHN. Products can contain RPM repositories, Puppet modules or container images.</p>
+<pre class="screen" style="padding-left:30px;">#hammer product create --name='EPEL 3rd Party Packages' --organization "Default Organization" --description 'EPEL 3rd Party Packages'
+#hammer repository create --name='EPEL 7 - x86_64' --organization "Default Organization" --product='EPEL 3rd Party Packages' --content-type='yum' --publish-via-http=true --url=http://dl.fedoraproject.org/pub/epel/7/x86_64/ --checksum-type=sha256 --gpg-key=GPG-EPEL-7</pre>
+<p class="screen"> Synchronize the repositories. This will take a while as all of the RPM packages will be downloaded. Note: you can also use the --async option to run tasks in parallel.</p>
+<pre class="screen" style="padding-left:30px;">#hammer repository synchronize --async --organization "Default Organization" --product 'Red Hat Enterprise Linux Server'  --name 'Red Hat Enterprise Linux 7 Server Kickstart x86_64 7Server'
+#hammer repository synchronize --async --organization "Default Organization" --product 'Red Hat Enterprise Linux Server'  --name 'Red Hat Satellite Tools 6.2 for RHEL 7 Server RPMs x86_64'
+#hammer repository synchronize --async --organization "Default Organization" --product 'Red Hat Enterprise Linux Server'  --name 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server'
+
+#hammer repository synchronize --async --organization "Default Organization" --product 'Red Hat Enterprise Linux Server'  --name 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server'
+
+#hammer repository synchronize --async --organization "$ORG" --product 'EPEL 3rd Party Packages  --name  'EPEL 7 - x86_64'</pre>
+<p class="screen">Create life cycles for development and production.</p>
+<pre class="screen" style="padding-left:30px;">#hammer lifecycle-environment create --organization "Default Organization" --description 'Development' --name 'DEV' --label development --prior Library
+#hammer lifecycle-environment create --organization "Default Organization" --description 'Production' --name 'PROD' --label production --prior 'DEV'</pre>
+<p class="screen">Create content view for RHEL 7 base.</p>
+<pre class="screen" style="padding-left:30px;">#hammer content-view create --organization "Default Organization" --name 'RHEL7_base' --label rhel7_base --description 'Core Build for RHEL 7'
+
+#hammer content-view add-repository --organization "Default Organization" --name 'RHEL7_base' --product 'Red Hat Enterprise Linux Server' --repository 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server'
+#hammer content-view add-repository --organization "Default Organization" --name 'RHEL7_base' --product 'Red Hat Enterprise Linux Server' --repository 'Red Hat Satellite Tools 6.2 for RHEL 7 Server RPMs x86_64'
+
+#hammer content-view add-repository --organization "Default Organization" --name 'RHEL7_base' --product 'Red Hat Enterprise Linux Server' --repository 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server'
+
+#hammer content-view add-repository --organization "Default Organization" --name 'RHEL7_base' --product 'EPEL 3rd Party Packages'  --repository  'EPEL 7 - x86_64'</pre>
+<p class="screen">Publish and promote content view to the environments.</p>
+<pre class="screen" style="padding-left:30px;">#hammer content-view publish --organization "Default Organization" --name RHEL7_base --description 'Initial Publishing'
+#hammer content-view version promote --organization "Default Organization" --content-view RHEL7_base --to-lifecycle-environment DEV
+#hammer content-view version promote --organization "Default Organization" --content-view RHEL7_base --to-lifecycle-environment PROD</pre>
+<p class="screen">Add activation keys for both stage environments.</p>
+<pre class="screen" style="padding-left:30px;">#hammer activation-key create --organization "Default Organization" --description 'RHEL7 Key for DEV' --content-view 'RHEL7_base' --unlimited-hosts --name ak-Reg_To_DEV --lifecycle-environment 'DEV'
+#hammer activation-key create --organization "Default Organization" --description 'RHEL7 Key for PROD' --content-view 'RHEL7_base' --unlimited-hosts --name ak-Reg_To_PROD --lifecycle-environment 'PROD'</pre>
+<p class="screen">Add subscriptions to activation keys.</p>
+<p class="screen"><img class="alignnone  wp-image-3535" src="{{ site.baseurl }}/assets/2016/08/screenshot-from-2016-08-03-125341.png" alt="Screenshot from 2016-08-03 12:53:41" width="896" height="352" /></p>
+<p class="screen">Get medium id needed for hostgroup creation.</p>
+<pre class="screen">#hammer medium list
+---|----------------------------------------------------------------------------------|---------------------------------------------------------------------------------
+ID | NAME | PATH 
+---|----------------------------------------------------------------------------------|---------------------------------------------------------------------------------
+1 | CentOS mirror | http://mirror.centos.org/centos/$version/os/$arch 
+8 | CoreOS mirror | http://$release.release.core-os.net 
+2 | Debian mirror | http://ftp.debian.org/debian 
+9 | Default_Organization/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server... | http://sat6.lab/pulp/repos/Default_Organization/Library/content/dist/rhel/ser...
+4 | Fedora Atomic mirror | http://dl.fedoraproject.org/pub/alt/atomic/stable/Cloud_Atomic/$arch/os/ 
+3 | Fedora mirror | http://dl.fedoraproject.org/pub/fedora/linux/releases/$major/Server/$arch/os/ 
+5 | FreeBSD mirror | http://ftp.freebsd.org/pub/FreeBSD/releases/$arch/$version-RELEASE/ 
+6 | OpenSUSE mirror | http://download.opensuse.org/distribution/$version/repo/oss 
+7 | Ubuntu mirror | http://archive.ubuntu.com/ubuntu 
+---|----------------------------------------------------------------------------------|---------------------------------------------------------------------------------</pre>
+<p class="screen">Create a host group. A host group is a foreman construct and is used for automation of provisioning parameters. A host is provisioned based on its host group. The host group contains kickstart/provisioning templates, OS information, network information, activation keys, parameters, puppet environment and if virtual a compute profile. Note: you will need to change the hostname sat6.lab.com.</p>
+<pre class="screen" style="padding-left:30px;">#hammer hostgroup create --architecture x86_64 --content-source-id 1 --content-view RHEL7_base --domain lab --lifecycle-environment DEV --locations 'Default Location' --name RHEL7_DEV_Servers --organizations "Default Organization" --puppet-ca-proxy sat6.lab --puppet-proxy sat6.lab --subnet VLAN_0 --partition-table 'Kickstart default' --operatingsystem 'RedHat 7.2' --medium-id 9</pre>
+<p>Add compute resource for RHEV.</p>
+<pre># hammer compute-resource create --provider Ovirt --name RHEV --url https://rhevm.lab/api --organizations "Default Organization" --locations 'Default Location' --user admin@internal --password redhat01</pre>
+<h3>Satellite 6 Bootstrapping</h3>
+<p>Satellite bootstrapping is the process for taking an already provisioned system and attaching it to the Satellite server. The minimum process is outlined below:</p>
+<p>Install Katello package from Satellite server.</p>
+<pre><code>#rpm -Uvh http://sat6.lab.com/pub/katello-ca-consumer-latest.noarch.rpm
+</code></pre>
+<p>Subscribe using activation key.</p>
+<pre><code>#subscription-manager register --org="Default_Organization" --activationkey="DEV_CORE"</code></pre>
+<p>Enable Satellite tools repository and install katello agent.</p>
+<pre class="screen">#yum -y install --enablerepo rhel-7-server-satellite-tools-6.2-rpms katello-agent</pre>
+<p>In addition to get full functionality you would also need to install and configure Puppet. Many customers are also looking for a solution that would gracefully move a system attached to Satellite 5 into Satellite 6. As such there is a bootstrapping script I can recommend from Evgeni Golov (one of our top Satellite Consultants @Red Hat):</p>
+<p><a href="https://github.com/buildout/buildout/blob/master/bootstrap/bootstrap.py">https://github.com/buildout/buildout/blob/master/bootstrap/bootstrap.py</a></p>
+<h3>Remote Command Execution</h3>
+<p>A new feature many Satellite 5 customers have been waiting for is remote-cmd execution. This feature allows you to run and schedule commands on clients connected to Satellite 6 server. You can think of this as poor-man's Ansible.</p>
+<p>Ensure remote-cmd execution is configured for Satellite capsule.</p>
+<p><img class="alignnone size-full wp-image-4064" src="{{ site.baseurl }}/assets/2016/08/screenshot-from-2016-08-23-124715.png" alt="Screenshot from 2016-08-23 12:47:15" width="1740" height="801" /></p>
+<p>Note: If you aren't using provisioning template "Satellite Kickstart Default" and you upgraded from Satellite 6.1, you will need to re-clone the "Satellite Kickstart Default" template and apply your changes. A snippet was added to "Satellite Kickstart Default" in order to automatically configure foreman-proxy ssh keys.</p>
+<p><img class="alignnone size-full wp-image-4069" src="{{ site.baseurl }}/assets/2016/08/screenshot-from-2016-08-23-125318.png" alt="Screenshot from 2016-08-23 12:53:18.png" width="1706" height="813" /></p>
+<p>For systems that are already provisioned you need to copy foreman-proxy ssh key.</p>
+<pre># ssh-copy-id -i /usr/share/foreman-proxy/.ssh/id_rsa_foreman_proxy.pub root@192.168.122.210</pre>
+<p>Run "ls" command for a given client using remote-cmd execution.</p>
+<pre># hammer job-invocation create --async --inputs "command=ls -l /root" --search-query name=client1.lab.com --job-template "Run Command - SSH Default"</pre>
+<p>Run command using input file or script.</p>
+<pre># hammer job-invocation create --async <code>--input-files command=/root/script.sh </code>--search-query name=client1.lab.com --job-template "Run Command - SSH Default"</pre>
+<p>Run command on multiple hosts.</p>
+<pre># hammer job-invocation create --async --inputs "command=ls -l /root" --search-query "name ~ client1.lab.com|client2.lab.com" --job-template "Run Command - SSH Default"</pre>
+<p>List jobs that are running, completed or failed.</p>
+<pre># hammer job-invocation list
+---|---------------------|-----------|---------|--------|---------|-------|------------------------
+ID | DESCRIPTION | STATUS | SUCCESS | FAILED | PENDING | TOTAL | START 
+---|---------------------|-----------|---------|--------|---------|-------|------------------------
+4 | Run ls -l /root | succeeded | 1 | 0 | 0 | 1 | 2016-08-23 11:10:50 UTC
+3 | Run puppet agent -t | succeeded | 1 | 0 | 0 | 1 | 2016-08-23 10:43:20 UTC
+2 | Run puppet agent -t | failed | 0 | 1 | 0 | 1 | 2016-08-23 10:37:18 UTC
+1 | Run puppet agent -t | failed | 0 | 1 | 0 | 1 | 2016-08-23 10:19:41 UTC
+---|---------------------|-----------|---------|--------|---------|-------|------------------------</pre>
+<p>Show details of a completed job.</p>
+<pre># hammer job-invocation info --id 3
+ID: 4
+Description: Run ls -l /root
+Status: succeeded
+Success: 2
+Failed: 0
+Pending: 0
+Total: 2
+Start: 2016-08-23 11:34:05 UTC
+Job Category: Commands
+Mode: 
+Cron line: 
+Recurring logic ID: 
+Hosts: 
+ - client1.lab.com
+ - client2.lab.com</pre>
+<p>Show output from a completed command for a given host. Satellite will show stdout and return code from command.</p>
+<pre># hammer job-invocation output --host client1.lab.com --id 4
+total 36
+-rw-------. 1 root root 4256 Aug 23 10:34 anaconda-ks.cfg
+-rw-r--r--. 1 root root 21054 Aug 23 10:34 install.post.log
+-rw-r--r--. 1 root root 54 Aug 23 10:33 install.postnochroot.log
+Exit status: 0</pre>
+<h3>Summary</h3>
+<p>In this article we learned how to deploy Satellite 6.2 environment. We looked at some different options regarding DNS. Provided a guideline for getting a basic Satellite 6.2 environment up and running. Finally we looked a bit more into the new feature remote-cmd execution. I hope you found this article useful. If you have anything to share or otherwise feedback please don't be shy.</p>
+<p>Happy Satelliting!</p>
+<p>(c) 2016 Keith Tenzer</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

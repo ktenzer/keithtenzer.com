@@ -1,0 +1,164 @@
+<h2><img class="alignnone size-full wp-image-10393" src="/assets/2017/12/ansible-tower-logotype-large-rgb-fullgrey-300x124_0.png" alt="Ansible-Tower-Logotype-Large-RGB-FullGrey-300x124_0" width="300" height="124" /></h2>
+<h2>Overview</h2>
+<p>In this article we will setup and configure an Ansible Tower cluster on Red Hat Enterprise Linux (RHEL). If you are interested in a single all-in-one deployment, I have already documented this <a href="https://keithtenzer.com/2017/07/06/ansible-tower-installation-and-configuration-guide/">here</a>.</p>
+<p>Ansible Tower clustering replaces the traditional active/passive with an active/active configuration. It provides not only HA but scalability as well. Ansible Tower has two critical components: Tower instances running API/Scheduler and the database. RabbitMQ is used for communication between the Tower instances.</p>
+<p><!--more--></p>
+<p><strong>Tower Instances</strong></p>
+<p>Tower instances can be assigned to instance groups and those can be further assigned to resources (Organizations, Inventories and Job Templates). Jobs executed against a resource are assigned to instance group for execution. Isolated instance groups that overcome physical network boundaries are also possible. In this case a minimal Ansible configuration is used on isolated instances so that a Tower instance can execute playbooks in a network zone where there is no direct access to Ansible client nodes. Ansible Tower accesses isolated groups is via ssh.</p>
+<p><strong>Tower Database</strong></p>
+<p>Ansible Tower uses PostgreSQL for it's internal database. The options are to use a built-in database, installed via playbook during Tower installation or use external PostgreSQL database. The PostgreSQL database can be clustered in active/passive configuration. If this is desired then it is recommended to setup a standalone external PostgreSQL database.</p>
+<p>If you are installing the database using the ansible playbook it will be installed in the default location, /var/lib/pgsql/. You need to make sure /var is backed by fast storage and also large enough.</p>
+<p><strong>Load Balancer</strong></p>
+<p>A load balancer is recommended. You can either terminate SSL at the load balancer and go http from there or pass SSL through load balancer to Tower instances.</p>
+<h2>Environment</h2>
+<p>In this configuration we will setup three Ansible Tower instances and a single Tower database using the built-in installer (playbook). The environment will sized to handle 300 forks (total number of parallel processes that can be run).</p>
+<p>Tip: Sizing guidelines suggest 1vCPU per 10 forks and 4GB RAM per 100 forks.</p>
+<p><strong>Tower Instance Sizing</strong>: 10 vCPUs, 4GB RAM, 25GB Local Storage (&gt;= 750 IOPS)</p>
+<p>Note: 10GB of 25GB Local Storage must be dedicated to /var</p>
+<p><strong>Tower Database Sizing</strong>: 10 vCPUs, 16GB RAM, 25GB Local Storage and 150+ Database Storage (&gt;= 1000 IOPS)</p>
+<p>Note: for a demo environment you can optionally exclude database storage.</p>
+<p><img class="alignnone size-full wp-image-12283" src="/assets/2017/12/tower_architecture1.png" alt="tower_architecture" width="834" height="606" /></p>
+<h2>Prerequisites</h2>
+<p>Before starting you need to deploy four hosts or VM with RHEL 7.3 or 7.4. Once the hosts are configured and on the network, you can register them with subscription-manager and enable the required repositories. For Ansible Tower you need rhel-7-server-rpms, rhel-7-server-extras-rpms and EPEL.</p>
+<p>Ports and instances used by Tower are as follows:</p>
+<ul class="gmail-simple">
+<li>80, 443 (normal Tower ports)</li>
+<li>22 (ssh)</li>
+<li>5432 (database instance - if the database is installed on an external instance, needs to be opened to the tower instances)</li>
+</ul>
+<p>Clustering/RabbitMQ ports:</p>
+<ul class="gmail-simple">
+<li>4369, 25672 (ports specifically used by RabbitMQ to maintain a cluster, needs to be open between each instance)</li>
+<li>15672 (if the RabbitMQ Management Interface is enabled, this port needs to be opened (optional))</li>
+</ul>
+<p><strong>[All Nodes]</strong></p>
+<pre># subscription-manager register</pre>
+<pre># subscription-manager list --available</pre>
+<pre># subscription-manager attach --pool=&lt;pool id&gt;</pre>
+<pre># subscription-manager repos --disable=*</pre>
+<pre class="screen"># subscription-manager repos --enable=rhel-7-server-rpms \
+--enable=rhel-7-server-extras-rpms</pre>
+<p>Install and configure EPEL repositories.</p>
+<pre># yum install -y http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm</pre>
+<p>Install Ansible.</p>
+<pre># yum install -y ansible</pre>
+<h2>Install Ansible Tower</h2>
+<p><strong>Optional [On towerdb.lab]</strong></p>
+<p>Create LVM Volume and Mountpoint for Database.</p>
+<p>Postgres writes in 8k pages so we will set blocksize to 8k.</p>
+<pre># pvcreate /dev/sdb1
+# vgcreate vg_postgres /dev/sdb1
+# lvcreate -L 150G vg_postgres -n postgres_disk1
+# mkfs.xfs -d su=8k /dev/vg_postgres/psotgres_disk1</pre>
+<p><strong>[On tower1.lab]</strong></p>
+<p>Create Invetory File.</p>
+<p>We will use ansible to allow our user (ktenzer) to sudo without password. This is needed for the installer. You can also of course use root to install Tower.</p>
+<pre># vi inventory_tower_hosts
+[servers]
+tower1.lab
+tower2.lab
+tower3.lab
+towerdb.lab</pre>
+<p>Allow User Privileged Permissions.</p>
+<pre># ansible -m lineinfile -a "dest=/etc/sudoers.d/ktenzer \
+line='ktenzer ALL=(ALL) NOPASSWD: ALL' create=yes state=present" -u root \
+--ask-pass -i ./inventory_tower_hosts servers</pre>
+<p>Setup ssh keys.</p>
+<p>We need to create ssh key and copy it to all nodes for user who will install Tower (in this case ktenzer).</p>
+<pre># su - ktenzer</pre>
+<pre>ktenzer$ ssh-keygen</pre>
+<pre>ktenzer$ for p in tower1.lab tower2.lab tower3.lab towerdb.lab; \
+do ssh-copy-id $p; done</pre>
+<p>&nbsp;</p>
+<pre>ktenzer$ for p in tower1.lab tower2.lab tower3.lab towerdb.lab; \
+do ssh $p; exit done</pre>
+<p>Download Ansible Tower.</p>
+<pre>[ktenzer@tower1 ~]$ curl -O http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz</pre>
+<p>Extract Tower tarball.</p>
+<pre>[ktenzer@tower1 ~]$ gunzip ansible-tower-setup-latest.tar.gz</pre>
+<pre>[ktenzer@tower1 ~]$ tar xvf ansible-tower-setup-latest.tar</pre>
+<p>Configure Tower Installation Inventory File.</p>
+<pre>[ktenzer@tower1 ~]$ cd ansible-tower-setup-3.2.1/</pre>
+<pre><span class="p">[ktenzer@tower1 ~]$ vi inventory
+[</span><span class="n">tower</span><span class="p">]</span>
+tower1.lab
+tower2.lab
+tower3.lab
+
+<span class="p">[</span><span class="n">database</span><span class="p">]</span>
+towerdb.lab
+
+<span class="p">[</span><span class="nb">all</span><span class="p">:</span><span class="nb">vars</span><span class="p">]</span>
+<span class="n">ansible_become</span><span class="o">=</span><span class="n">true</span>
+
+<span class="n">admin_password</span><span class="o">=</span><span class="s1">'redhat01'</span>
+
+<span class="n">pg_host</span><span class="o">=</span><span class="s1">'towerdb.lab'</span>
+<span class="n">pg_port</span><span class="o">=</span><span class="s1">'5432'</span>
+
+<span class="n">pg_database</span><span class="o">=</span><span class="s1">'tower'</span>
+<span class="n">pg_username</span><span class="o">=</span><span class="s1">'tower'</span>
+<span class="n">pg_password</span><span class="o">=</span><span class="s1">'redhat01'</span>
+
+<span class="n">rabbitmq_port</span><span class="o">=</span><span class="mi">5672</span>
+<span class="n">rabbitmq_vhost</span><span class="o">=</span><span class="n">tower</span>
+<span class="n">rabbitmq_username</span><span class="o">=</span><span class="n">tower</span>
+<span class="n">rabbitmq_password</span><span class="o">=</span><span class="n">redhat01</span>
+<span class="n">rabbitmq_cookie</span><span class="o">=</span><span class="n">rabbitmqcookie</span>
+
+<span class="c1"># Needs to be true for fqdns and ip addresses</span>
+<span class="n">rabbitmq_use_long_name</span><span class="o">=</span><span class="n">true</span></pre>
+<p>Run Setup.</p>
+<pre>[ktenzer@tower1 ~]$ ./setup.sh
+PLAY RECAP *****************************************************************************************
+tower1.lab : ok=118 changed=54 unreachable=0 failed=0
+tower2.lab : ok=112 changed=52 unreachable=0 failed=0
+tower3.lab : ok=112 changed=52 unreachable=0 failed=0
+towerdb.lab : ok=46 changed=18 unreachable=0 failed=0</pre>
+<h2>Configure Ansible Tower</h2>
+<p>Ansible Tower Provides a RESTful API, CLI and UI. To connect to the UI simply open browser using https and point to your Ansible Tower IP or hostname.</p>
+<pre>https://&lt;Ansible Tower IP or Hostname&gt;</pre>
+<p>Login using the user you configured in the inventory file, in this case admin/redhat01.</p>
+<p><img class="alignnone size-full wp-image-10199" src="/assets/2017/12/tower_login.png" alt="tower_login" width="666" height="431" /></p>
+<p>Once you are logged in, you need to install Tower license. Tower license comes in a file, so simply browse to the file and accept the terms. If you don't have a license you can get a trial <a href="https://www.ansible.com/license">here</a>.</p>
+<p><img class="alignnone size-full wp-image-10202" src="/assets/2017/12/tower_license.png" alt="tower_license" width="1643" height="838" /></p>
+<p>Verify Tower instances under settings (next to the user, upper right).</p>
+<p><img class="alignnone size-full wp-image-12281" src="/assets/2017/12/tower_instance_groups.png" alt="tower_instance_groups" width="2024" height="823" /></p>
+<h2>Summary</h2>
+<p>In this article we explained a bit about Tower clustering and a general way to approach sizing. In addition we went through the easy installation steps to deploy a cluster with three Tower instances and a database.  Regardless of if you are new to Ansible or experienced, Tower is definitely worth looking at as it provides a solid management platform for Ansible, making Ansible even easier and more powerful!</p>
+<p>Happy Ansibleling!</p>
+<p>(c) 2017 Keith Tenzer</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

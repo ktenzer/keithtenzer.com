@@ -1,0 +1,50 @@
+<h2><img class="alignnone  wp-image-12890" src="/assets/2020/04/OpenShift-LogoType.svg_.png" alt="OpenShift-LogoType.svg" width="111" height="118" /><img class="alignnone  wp-image-5506" src="/assets/2020/04/plus_sign.gif" alt="plus_sign" width="142" height="142" /><img class="alignnone  wp-image-14504" src="/assets/2020/04/le-logo-twitter-noalpha.png" alt="le-logo-twitter-noalpha" width="161" height="161" /></h2>
+<h2>Overview</h2>
+<p>In this short article we will look at a solution for application certificates in OpenShift. Let's Encrypt is a non-profit certificate authority and provides easy on-demand TLS certificates. Each application you create that you want to expose to users will of course have it's own URL and require a TLS certificate. It can be quite tedious to manage these certificates and deploy them manually. Kubernetes platforms also require an innovative, built-in native approach to properly mitigate complexity.</p>
+<p>Thankfully a fellow RHatter (Tomáš Nožička) has created a k8s admission controller that integrates with let's encrypt. A k8s admission controller is a pattern for extending kubernetes platform capabilities by reacting to API events in real-time.  In this case the admission controller watches the route APIs. If a new route is added, plus has the right annotation, the admission controller will automatically register the route with Let's Encrypt, wait for the certificate and finally configure the certificate automatically in the route.</p>
+<p>Tomáš has provided the code and yaml for an easy deployment in the following Github repository: <a href="https://github.com/tnozicka/openshift-acme">https://github.com/tnozicka/openshift-acme</a>. While hee does provide documentation there are a few additional steps that need explanation when creating a route. I decided to as such put it all together in a simple concise post.</p>
+<p><!--more--></p>
+<h2>Configure Let's Encrypt OpenShift Admission Controller</h2>
+<p>Here we will enable the k8s admission controller on the entire cluster but it is possible to limit the scope to individual namespaces. See Github repository for more information.</p>
+<p><strong>Create new project</strong></p>
+<pre>$ oc new-project acme</pre>
+<p><strong>Deploy Controller</strong></p>
+<pre>$ oc apply -fhttps://raw.githubusercontent.com/tnozicka/openshift-acme/master/deploy/cluster-wide/{clusterrole,serviceaccount,issuer-letsencrypt-live,deployment}.yaml</pre>
+<p><strong>Create Service Account and Role Binding</strong></p>
+<pre>$ oc create clusterrolebinding openshift-acme --clusterrole=openshift-acme \
+--serviceaccount="$( oc project -q ):openshift-acme" --dry-run -o yaml | \
+oc apply -f -</pre>
+<h2>Add Certificate to Application Route</h2>
+<p>Now that the k8s admission controller is deployed we will create a route. In OpenShift a route is how we expose a service to the outside world. Since we will provide a custom TLS certificate, route termination should be on the edge. As such we can use http from the router edge to the service.</p>
+<p><strong>Create Route</strong></p>
+<pre>$ vi letsencrypt_route.yaml
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: meet
+  labels:
+    app: jitsi
+  annotations:
+    openshift.io/host.generated: 'true'
+    <strong>kubernetes.io/tls-acme: "true"</strong>
+spec:
+  host: meet-jitsi.apps.ocp4.keithtenzer.com
+  to:
+    kind: Service
+    name: web
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+  wildcardPolicy: None
+</pre>
+<p><strong>Validate Route</strong></p>
+<p>As soon as the ACME admission controller sees a route with the annotation kubernetes.io/tls-acme: "true" it will register URL with Let's Encrypt. A temporary route will be created so once the certificate is accepted it can be pulled down and added to route.</p>
+<p><img class="alignnone  wp-image-14500" src="/assets/2020/04/exposer.png" alt="exposer" width="1256" height="327" /></p>
+<p>Once process completes the temporary exposer route is removed and the certificate and private key are added to the original route.</p>
+<p><img class="alignnone  wp-image-14501" src="/assets/2020/04/exposer_2.png" alt="exposer_2" width="2040" height="396" /></p>
+<p>It's that easy and you now have a valid certificate for your application in OpenShift.</p>
+<h2>Summary</h2>
+<p>In this article we showed how to setup application certificates in an OpenShift enviornment using a k8s admission controller. This solution also shows the value of a k8s admission controller being able to customize and adapt the environment to an organizations governance model.</p>
+<p>(c) 2020 Keith Tenzer</p>

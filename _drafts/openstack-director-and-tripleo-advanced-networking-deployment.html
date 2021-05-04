@@ -1,0 +1,96 @@
+---
+layout: post
+title: OpenStack Director and TripleO - Advanced Networking Deployment
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta:
+  _oembed_468cded184836a375806f28fbab25a0e: '<a href="https://keithtenzer.com/2015/10/14/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">HOWTO:
+    OpenStack Deployment using TripleO and the Red Hat OpenStack&nbsp;Director</a>'
+  _oembed_time_468cded184836a375806f28fbab25a0e: '1463483140'
+  _oembed_7ac9526b1e647b9822abf7e55d153952: <a href="https://keithtenzer.com/2015/11/09/advanced-deployment-with-tripleo-and-openstack-director/">Advanced
+    Deployment with TripleO and OpenStack&nbsp;Director</a>
+  _oembed_time_7ac9526b1e647b9822abf7e55d153952: '1463483165'
+  _oembed_bb372c31146545a5232356516ebc9cb1: "{{unknown}}"
+  _oembed_229b12dd7dd82c16491bfe24cb0bddf5: "{{unknown}}"
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p>https://keithtenzer.com/2015/10/14/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/</p>
+<p>https://keithtenzer.com/2015/11/09/advanced-deployment-with-tripleo-and-openstack-director/</p>
+<p># su - stack</p>
+<p>[stack@undercloud ~]$ source stackrc</p>
+<p>[stack@undercloud ~]$ git clone https://github.com/ktenzer/openstack-heat-templates.git</p>
+<p>[stack@undercloud ~]$ cp -r openstack-heat-templates/director/lab/templates .</p>
+<p>[stack@undercloud ~]$ vi templates/network-environment.yaml</p>
+<pre>parameter_defaults:
+  InternalApiNetCidr: 192.168.124.0/24
+  TenantNetCidr: 10.100.0.0/16
+  ExternalNetCidr: 192.168.122.0/24
+  InternalApiAllocationPools: [{'start': '192.168.124.11', 'end': '192.168.124.254'}]
+  TenantAllocationPools: [{'start': '10.100.0.10', 'end': '10.100.253.254'}]
+  # Leave room for floating IPs in the External allocation pool
+  ExternalAllocationPools: [{'start': '192.168.122.101', 'end': '192.168.122.150'}]
+  # Set to the router gateway on the external network
+  ExternalInterfaceDefaultRoute: 192.168.122.1
+  # Gateway router for the provisioning network (or Undercloud IP)
+  ControlPlaneDefaultRoute: 192.168.126.254
+  # The IP address of the EC2 metadata server. Generally the IP of the Undercloud
+  EC2MetadataIp: 192.168.126.1
+  # Define the DNS servers (maximum 2) for the overcloud nodes
+  DnsServers: ["8.8.8.8","8.8.4.4"]</pre>
+<p>Update the nic-configs for the compute nodes. Ensure NICE interface is correct.  NICs are numbered during device enumeration. Ensure NIC is mapped to the correct network.</p>
+<p>[stack@undercloud ~]$ vi templates/nic-configs/compute.yaml</p>
+<pre> type: interface
+ name: nic2</pre>
+<p>Enter IP for the external interface gateway. The external interface is for floating ip networks.</p>
+<p>Update the nic-configs for the compute nodes. Ensure NICE interface is correct.  NICs are numbered during device enumeration. Ensure NIC is mapped to the correct network.</p>
+<p>[stack@undercloud ~]$ vi templates/nic-configs/controller.yaml</p>
+<pre>ExternalInterfaceDefaultRoute:
+ default: '192.168.122.1'
+ description: default route for the external network
+ type: string</pre>
+<pre> type: interface
+ name: nic2</pre>
+<p>Deploy Overcloud</p>
+<p>[stack@undercloud ~]$ openstack overcloud deploy --templates -e /usr/share/openstack-tripleo-heat-templates/environments/network-isolation.yaml -e ~/templates/network-environment.yaml  -e ~/templates/firstboot-environment.yaml --control-scale 1 --compute-scale 1 --control-flavor control --compute-flavor compute --ntp-server pool.ntp.org --neutron-network-type vxlan --neutron-tunnel-types vxlan</p>
+<p>Overcloud Scaling</p>
+<p>[stack@undercloud ~]$ openstack overcloud deploy --templates -e /usr/share/openstack-tripleo-heat-templates/environments/network-isolation.yaml -e ~/templates/network-environment.yaml  -e ~/templates/firstboot-environment.yaml --control-scale 1 --compute-scale 2 --control-flavor control --compute-flavor compute --ntp-server pool.ntp.org --neutron-network-type vxlan --neutron-tunnel-types vxlan</p>
+<p>Upgrade Director</p>
+<pre style="padding-left:30px;"><code>rm -fr /var/cache/yum/*</code></pre>
+<pre style="padding-left:30px;"><code>yum clean all </code></pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ sudo subscription-manager repos --disable=rhel-7-server-openstack-7.0-rpms --disable=rhel-7-server-openstack-7.0-director-rpms</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ sudo subscription-manager repos --enable=rhel-7-server-openstack-8-rpms --enable=rhel-7-server-openstack-8-director-rpms</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ sudo yum upgrade -y</pre>
+<p>If you get error 404 that the heat templates cant be installed, follow below workaround.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ sudo yum install openstack-tripleo-heat-templates-0.8.14-9.el7ost.noarch
+[stack@undercloud ~]$ sudo "echo \"exclude=openstack-tripleo-heat-templates*\" &gt;&gt; /etc/yum.conf"
+[stack@undercloud ~]$ sudo rm ~stack/undercloud*
+[stack@undercloud ~]$ sudo yum upgrade -y</pre>
+<p>Complete undercloud upgrade.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ openstack undercloud upgrade</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ keystone role-create --name _member_</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ keystone user-role-add --user admin --role _member_ --tenant admin</pre>
+<p>&nbsp;</p>
+<p>Upgrade Overcloud Images</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ sudo yum install rhosp-director-images rhosp-director-images-ipa</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$rm -rf ~/images/*</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ cp /usr/share/rhosp-director-images/overcloud-full-latest-8.0.tar ~/images/.</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ cp /usr/share/rhosp-director-images/ironic-python-agent-latest-8.0.tar ~/images/.</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ cd ~/images</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ for tarfile in *.tar; do tar -xf $tarfile; done</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ openstack overcloud image upload --update-existing --image-path ~/images/.</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ openstack baremetal configure boot</pre>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

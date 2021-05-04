@@ -1,0 +1,137 @@
+---
+layout: post
+title: Deploying OpenShift on Microsoft Azure
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta:
+  _oembed_15c610876aef4680232edb468122cb16: "{{unknown}}"
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<h3>Overview</h3>
+<p>In this article we will explore how to deploy a production ready OpenShift cluster on Microsoft Azure. We will do everything completely automated using Ansible. Not only will we deploy OpenShift, but we will also deploy all the components required in Azure using <a href="https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/">ARM</a> (Azure Resource Manager). Everything is template driven and uses APIs. The bennefit is you can build and tear-down a complete OpenShift PaaS environment in the cloud in about an hour.</p>
+<p>OpenShift has always used Ansible as its installer however a Red Hat colleague Ivan McKinley expanded that to also build out Azure components and optimally configure OpenShift to run in Azure Cloud.</p>
+<p>You can get more info and look at his Ansible templates at his personal Github page:</p>
+<p><a href="https://github.com/ivanthelad/ansible-azure">https://github.com/ivanthelad/ansible-azure</a></p>
+<p>&nbsp;</p>
+<p>The following articles might also be of Interest:</p>
+<ul>
+<li><a href="https://keithtenzer.com/2016/08/04/openshift-enterprise-3-2-all-in-one-lab-environment/">OpenShift v3.2 All-in-one Lab Environment</a></li>
+<li><a href="https://keithtenzer.com/2016/08/11/openshift-v3-basic-release-deployment-scenarios/">OpenShift Basic Release Deployment Scenarios</a></li>
+</ul>
+<h3>Deploying to Azure</h3>
+<p>Install Fedora 24 workstation. You need very recent versions of python 2.7.12. Unfortunately it isn't available in RHEL or CentOS at writing of this article.</p>
+<h4>Install Python and Dependencies</h4>
+<pre># sudo yum install python
+# sudo yum install python-pip
+# sudo dnf install python-devel
+# sudo dnf install redhat-rpm-config
+# sudo dnf install openssl-devel</pre>
+<h4>Install Azure CLI</h4>
+<pre># sudo dnf install npm
+# sudo npm install azure-cli -g
+# sudo pip install --upgrade pip
+# sudo pip install azure==2.0.0rc5</pre>
+<h4>Install Ansible Core</h4>
+<pre># sudo dnf install ansible</pre>
+<h4>Clone OpenShift Azure Ansible Playbooks</h4>
+<pre># git clone https://github.com/ivanthelad/ansible-azure.git</pre>
+<h4>Authenticate Azure CLI</h4>
+<pre>[ktenzer@ktenzer ansible-azure]$ azure login
+ info: Executing command login
+ \info: To sign in, use a web browser to open the page https://aka.ms/devicelogin. Enter the code CB8P5ZCKP to authenticate.
+ -info: Added subscription Pay-As-You-Go
+ info: Added subscription ITS - RedHat Openshift
+ info: Setting subscription "Pay-As-You-Go" as default
+ +
+ info: login command OK</pre>
+<h3>List Azure Resource Groups</h3>
+<pre>[ktenzer@ktenzer ansible-azure]$ azure group list --subscription 2d63c006-c6b1-4a78-a553-71a3e9d78fd3
+ info: Executing command group list
+ + Listing resource groups
+ data: Name Location Provisioning State Tags:
+ data: ------------- ---------- ------------------ -----
+ data: OpenShift_POC westeurope Succeeded null
+ data: Shared westeurope Succeeded null
+ info: group list command OK</pre>
+<p>&nbsp;</p>
+<h3>Run Ansible Playbook</h3>
+<pre># ansible-playbook --forks=50 -i inventory.azure playbooks/setup_multimaster.new.yml</pre>
+<h3></h3>
+<h3>Customizing OpenShift</h3>
+<p>You can not only create custom login page, you can also change the header, image logo and logout page. To get started you can create a custom login page as below.</p>
+<pre class="nowrap"># oadm create-login-template &gt; /etc/origin/master/login-template.html</pre>
+<p>You need to customize the css style-sheet and then copy it to all masters. In order to apply it you need to update the master-config.yml.</p>
+<pre class="nowrap">#vi /etc/origin/master/master-config.yml
+oauthConfig:
+  ...
+  templates:
+    login: /etc/origin/master/login-template.html</pre>
+<p>&nbsp;</p>
+<p>Restart Multi-master</p>
+<pre class="nowrap"># systemctl restart atomic-openshift-master-api
+# systemctl restart atomic-openshift-master-controllers</pre>
+<p>Login as Azure AD user</p>
+<p>[root@master1 ~]# oc login -u Keith_Tenzer@mydomain.onmicrosoft.com -n default<br />
+Login failed (401 Unauthorized)<br />
+You must obtain an API token by visiting https://master-dpdhlose2.westeurope.cloudapp.azure.com:8443/oauth/token/request</p>
+<p><img class="alignnone size-full wp-image-5134" src="{{ site.baseurl }}/assets/token.jpg" alt="token" width="1299" height="406" /></p>
+<p>[root@master1 ~]# oc login --token=0h9tKLlTicyAr5dYIgW5xiejiMVHIvltEuX6LLVW8CY --server=https://master-dpdhlose2.westeurope.cloudapp.azure.com:8443<br />
+Logged into "https://master-dpdhlose2.westeurope.cloudapp.azure.com:8443" as "EYnyqEyOzGFzNCI45feUyvGdEoNapPAD03tg5MWkFXM" using the token provided.<strong><br />
+</strong></p>
+<p>Notice that the user is actually known to OpenShift is "EYnyqEyOzGFzNCI45feUyvGdEoNapPAD03tg5MWkFXM" not  Keith_Tenzer@mydomain.onmicrosoft.com</p>
+<p>To give user cluster-admin permission</p>
+<p>#oadm policy add-cluster-role-to-user cluster-admin "EYnyqEyOzGFzNCI45feUyvGdEoNapPAD03tg5MWkFXM"</p>
+<p>To give user permission to project</p>
+<p>#oadm policy add-role-to-user admin "EYnyqEyOzGFzNCI45feUyvGdEoNapPAD03tg5MWkFXM" -n test</p>
+<p>&nbsp;</p>
+<p>identityProviders:<br />
+- name: openId<br />
+challenge: false<br />
+login: true<br />
+mappingMethod: claim<br />
+provider:<br />
+apiVersion: v1<br />
+kind: OpenIDIdentityProvider<br />
+clientID: &lt;client id&gt;<br />
+clientSecret: &lt;client secret&gt;<br />
+claims:<br />
+id:<br />
+- sub<br />
+preferredUsername:<br />
+- preferred_username<br />
+name:<br />
+- name<br />
+email:<br />
+- email<br />
+urls:<br />
+authorize: https://login.microsoftonline.com/&lt;tenant id&gt;/oauth2/authorize<br />
+token: https://login.microsoftonline.com/&lt;tenant id&gt;/oauth2/token</p>
+<p>&nbsp;</p>
+<p>[root@master1 ~]# oc get users<br />
+NAME UID FULL NAME IDENTITIES<br />
+EYnyqEyOzGFzNCI45feUyvGdEoNapPAD03tg5MWkFXM 08bfec9f-79ff-11e6-81bb-000d3a256909 Keith Tenzer openId:EYnyqEyOzGFzNCI45feUyvGdEoNapPAD03tg5MWkFXM<br />
+admin 5be01a39-6bd1-11e6-9389-000d3a256909 htpasswd_auth:admin<br />
+bpardiwa 276cc92c-767c-11e6-a092-000d3a256223 htpasswd_auth:bpardiwa<br />
+ktenzer d18e924b-6dbf-11e6-9389-000d3a256909 htpasswd_auth:ktenzer<br />
+torben c67da387-704d-11e6-a092-000d3a256223 htpasswd_auth:torben<br />
+user1 2a2273b4-7045-11e6-9da7-000d3a256909 htpasswd_auth:user1<br />
+[root@master1 ~]# oc get identity<br />
+NAME IDP NAME IDP USER NAME USER NAME USER UID<br />
+htpasswd_auth:admin htpasswd_auth admin admin 5be01a39-6bd1-11e6-9389-000d3a256909<br />
+htpasswd_auth:bpardiwa htpasswd_auth bpardiwa bpardiwa 276cc92c-767c-11e6-a092-000d3a256223<br />
+htpasswd_auth:ktenzer htpasswd_auth ktenzer ktenzer d18e924b-6dbf-11e6-9389-000d3a256909<br />
+htpasswd_auth:torben htpasswd_auth torben torben c67da387-704d-11e6-a092-000d3a256223<br />
+htpasswd_auth:user1 htpasswd_auth user1 user1 2a2273b4-7045-11e6-9da7-000d3a256909<br />
+openId:EYnyqEyOzGFzNCI45feUyvGdEoNapPAD03tg5MWkFXM openId EYnyqEyOzGFzNCI45feUyvGdEoNapPAD03tg5MWkFXM EYnyqEyOzGFzNCI45feUyvGdEoNapPAD03tg5MWkFXM 08bfec9f-79ff-11e6-81bb-000d3a256909</p>

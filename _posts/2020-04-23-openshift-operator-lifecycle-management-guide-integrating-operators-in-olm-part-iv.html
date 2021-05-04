@@ -1,0 +1,112 @@
+---
+layout: post
+title: 'OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM
+  Part IV'
+date: 2020-04-23 12:39:04.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- OpenShift
+tags:
+- Containers
+- Kubernetes
+- olm
+- OpenShift
+- Operator
+- Operator Lifecycle Management
+- operator-sdk
+meta:
+  timeline_notification: '1587645545'
+  publicize_linkedin_url: ''
+  _publicize_done_22634452: '1'
+  _wpas_done_23861140: '1'
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '43381243700'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2020/04/23/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/"
+---
+<h2><img class="alignnone  wp-image-14443" src="{{ site.baseurl }}/assets/2020/04/38202270.png?w=173&amp;h=173" alt="38202270" width="173" height="173" /></h2>
+<h2>Overview</h2>
+<p>In this article we will provide a hands-on guide to integrating your already built Operator with the Operator Lifecycle Manager (OLM). Using the Operator SDK and OPM tool we will create the application manifests and images so your application Operator can be managed through OLM.</p>
+<p>This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2020/04/23/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a></li>
+<li><a href="https://keithtenzer.com/2020/01/27/openshift-operator-sdk-go-getting-started-guide-part-ii/">OpenShift Operator SDK: Go Getting Started Guide Part II</a></li>
+<li><a href="https://keithtenzer.com/2020/04/23/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">OpenShift Operator SDK: Ansible Getting Started Guide Part III</a></li>
+<li><a href="https://keithtenzer.com/2020/04/23/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</a></li>
+</ul>
+<p><!--more--></p>
+<p>In order to add your Operator to OLM you will need two tools: the <a href="https://github.com/operator-framework/operator-sdk/releases">operator-sdk</a> and <a href="https://github.com/operator-framework/operator-registry/releases">opm</a>. Download the binaries for operator-sdk and opm. Install them under /usr/local/bin.</p>
+<h2>Create Cluster Service Version</h2>
+<p>The Cluster Service Version (CSV) is the manifest that allows your application operator to be bundled and exposed to the OLM API. The CSV is itself a CRD in kubernetes. Before creating a the CSV manifest you need the deployment scafolding. These are the objects and CRDs that your Operator require. These are created automatically when using the operator-sdk to create a application under the deploy directory.</p>
+<pre>$ operator-sdk new cars-operator --repo github.com/cars-operator</pre>
+<p>When generating an CSV you will provide the path to the deploy directory where those objects can be found.</p>
+<pre>$ operator-sdk generate csv --csv-version 1.0.0 --deploy-dir deploy</pre>
+<p>The generate csv command will create an olm_catalog/cars-operator/manifests directory. There you will find the 'clusterserviceversion' yaml. You will however want to edit and add a lot. As such I have provided an <a href="https://github.com/sa-mw-dach/podium/blob/master/podium-operator/deploy/olm-catalog/podium-operator/manifests/podium-operator.clusterserviceversion.yaml">example</a> csv for an Operator I built.</p>
+<p>Note: If you want to add an icon, so it shows up nicely in Operator Hub, the image needs to be a base64 bit stream inside the csv.</p>
+<pre>$ cat myimage.png | base64</pre>
+<h2>Create Application Operator Catalog Bundle</h2>
+<p>Now that we have generated and updated our CSV we can create an application bundle.</p>
+<pre>$ sudo operator-sdk bundle create quay.io/ktenzer/podium-operator-catalog:latest \
+--channels beta --package podium-operator-catalog --directory \
+deploy/olm-catalog/podium-operator/manifests</pre>
+<p>This will package the application manifest into a container image. Push the image to a public or private repository.</p>
+<pre>$ sudo docker push quay.io/ktenzer/podium-operator-catalog:latest</pre>
+<h2>Create Application Operator Catalog Index</h2>
+<p>Once we have bundled an application operator we can add it to a catalog index. The catalog index provides one or more application bundles to OLM. This is also what the Operator Hub directly interfaces with.</p>
+<pre>$ sudo opm index add -c docker --bundles \
+quay.io/ktenzer/podium-operator-catalog:latest \
+--tag quay.io/ktenzer/podium-operator-index:latest</pre>
+<p>Again an image is created that needs to be pushed to our private or public repository.</p>
+<pre>$ sudo docker push quay.io/ktenzer/podium-operator-index:latest</pre>
+<h2>Deploy Catalog Source</h2>
+<p>A catalog source is a CRD that defines an OLM catalog and points to a catalog index image, for example the one we just created.</p>
+<p>Create a catalog source yaml file that points to the catalog index image.</p>
+<pre>$ vi catalog_source.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: podium-operator-catalog
+spec:
+  sourceType: grpc
+  <strong>image: quay.io/ktenzer/podium-operator-index:latest</strong>
+  displayName: Podium Operator Catalog
+  publisher: Podium Community</pre>
+<p>Deploy the catalog source under the openshift-marketplace namespace or where you have deployed OLM.</p>
+<pre>$ oc create -f catalog_source.yaml -n openshift-marketplace</pre>
+<p>Below we can see a list of catalogs. Again each catalog can contain one or more applications. All are default in OpenShift, except the one in bold which I added.</p>
+<pre>$ oc get catalogsource -n openshift-marketplace
+NAME                     DISPLAY                 TYPE PUBLISHER        AGE
+certified-operators      Certified Operators     grpc Red Hat          18d
+community-operators      Community Operators     grpc Red Hat          18d
+<strong>podium-operator-catalog  Podium Operator Catalog grpc Podium Community 31m</strong>
+redhat-operators         Red Hat Operators       grpc Red Hat          18d</pre>
+<p>Each catalog has it's own operator / pod.</p>
+<pre>$ oc get pods -n openshift-marketplace
+NAME                                    READY   STATUS    RESTARTS   AGE
+certified-operators-76d9d8b886-bnsz7    1/1     Running   0          14h
+community-operators-74d675f545-g7d2t    1/1     Running   0          18h
+<strong>podium-operator-catalog-67gsk           1/1     Running   0          31m</strong>
+marketplace-operator-75f49679d7-n7v2r   1/1     Running   0          17d
+redhat-operators-87d549bf4-mxf7w        1/1     Running   0          13h</pre>
+<p>Once a catalog operator exists, the applications it offers will show up in Operator Hub and can be installed.</p>
+<p><img class="alignnone size-full wp-image-14528" src="{{ site.baseurl }}/assets/2020/04/podium_install.png" alt="podium_install" width="1094" height="828" /></p>
+<p>Operators can be cluster-wide or namespace scoped. The Operator Lifecycle Management also provides a subscription, allowing updates to be pulled from various channels. This is similar to the relationship between an RPM and Repository.</p>
+<p><img class="alignnone size-full wp-image-14529" src="{{ site.baseurl }}/assets/2020/04/podium_install2.png" alt="podium_install2" width="792" height="743" /></p>
+<p>After you deploy application via Operator Hub it will launch the operator. Cluster-wide operators will run in the openshift-operators namespace while namespaced operators will only run in a user defined namespace.</p>
+<pre>$ oc get pods -n openshift-operators
+NAME                               READY   STATUS    RESTARTS   AGE
+podium-operator-6855dc9478-q65bt   1/1     Running   0          38m</pre>
+<h2>Summary</h2>
+<p>In this article we stepped through the process of integrating an already existing operator with the Operator Lifecycle Manager. We saw how to generate an application manifest, build an application catalog bundle, add the bundle to an application index and finally deploy the application catalog, seamlessly integrating with Operator Hub. Using OLM provides not only a way to install applications but manage their lifecycle, releases and updates.</p>
+<p>Happy Operatoring!</p>
+<p>(c) 2020 Keith Tenzer</p>

@@ -1,0 +1,655 @@
+---
+layout: post
+title: 'OpenShift Enterprise 3.3: all-in-one Lab Environment with Jenkins Build Pipeline'
+date: 2016-11-21 15:00:50.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- OpenShift
+tags:
+- Containers
+- Docker
+- Jenkins
+- Kubernetes
+- OpenShift
+meta:
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '29150535635'
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6206481292842930176&type=U&a=sUbM
+  _publicize_done_9423386: '1'
+  _wpas_done_9468659: '1'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2016/11/21/openshift-enterprise-3-3-all-in-one-lab-environment-with-jenkins-build-pipeline/"
+---
+<h3><img class="alignnone size-full wp-image-3655" src="{{ site.baseurl }}/assets/2016/11/screenshot-from-2016-08-04-144007.png?w=440" alt="Screenshot from 2016-08-04 14:40:07" /></h3>
+<h3>Overview</h3>
+<p>In this article we will setup a OpenShift Enterprise 3.3 all-in-one configuration. We will also configure OpenShift router, registry, aggregate logging, metrics, CloudForms integration and finally an integrated jenkins build pipeline.</p>
+<p>OpenShift has several different roles: masters, nodes, etcd and load balancers. An all-in-one setup means running all service on a single system. Since we are only using a single system, a load balancer or ha-proxy won’t be configured. If you would like to read more about OpenShift I can recommend the following:</p>
+<ul>
+<li><a href="https://blog.openshift.com/">General OpenShift Product Blogs</a></li>
+<li><a href="https://keithtenzer.com/2015/08/20/openshift-v3-unlocking-the-power-of-persistent-storage/">Persistent Storage</a></li>
+<li><a href="http://www.opensourcerers.org/openshift-3-1-networking-from-a-containerworkload-point-of-view-part-1-container-networking-on-a-plain-docker-host/">OpenShift Networking Part I</a></li>
+<li><a href="http://www.opensourcerers.org/openshift-networking-from-a-containerworkload-point-of-view-part-2-container-networking-on-an-openshift-node/">OpenShift Networking Part II</a></li>
+</ul>
+<p><!--more--></p>
+<h3>Prerequisites</h3>
+<h4>Configure a VM with following:</h4>
+<ul>
+<li>RHEL 7.2</li>
+<li>2 CPUs</li>
+<li>4096 RAM</li>
+<li>30GB disk for OS</li>
+<li>25GB disk for docker images</li>
+</ul>
+<h4>Register valid subscription</h4>
+<pre># subscription-manager register</pre>
+<pre># subscription-manager attach --pool=843298293829382</pre>
+<pre class="nowrap"># subscription-manager repos --disable="*"</pre>
+<pre class="nowrap">#subscription-manager repos \
+    --enable="rhel-7-server-rpms" \
+    --enable="rhel-7-server-extras-rpms" \
+    --enable="rhel-7-server-ose-3.3-rpms"</pre>
+<h4>Install required tools</h4>
+<pre class="nowrap"># yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion</pre>
+<h4>Update</h4>
+<pre class="nowrap"># yum update -y</pre>
+<h4>Install OpenShift tools</h4>
+<pre class="nowrap"># yum install -y atomic-openshift-utils</pre>
+<h4>Restart OpenShift master</h4>
+<pre class="nowrap"># systemctl reboot</pre>
+<h4>Configure Docker</h4>
+<pre class="nowrap"># yum install -y docker-1.10.3</pre>
+<h4>Enable Docker daemon to pull from OpenShift registry</h4>
+<pre># vi /etc/sysconfig/docker
+OPTIONS='--selinux-enabled --insecure-registry 172.30.0.0/16'</pre>
+<h4>Setup Docker storage for OpenShift registry</h4>
+<p>Note: we will use the second disk for configuring docker storage.</p>
+<pre class="nowrap"># cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup
+DEVS=/dev/vdb
+VG=docker-vg
+EOF</pre>
+<pre class="nowrap"># docker-storage-setup</pre>
+<h4>Enable and start Docker daemon</h4>
+<pre># systemctl enable docker</pre>
+<pre># systemctl start docker</pre>
+<h4>Setup ssh access without password for Ansible</h4>
+<pre># ssh-keygen</pre>
+<pre># ssh-copy-id -i /root/.ssh/id_rsa.pub ose3-master.lab.com</pre>
+<h3>DNS Setup</h3>
+<p>DNS is a requirement for OpenShift Enterprise. In fact most issues you may run into are a result of not having a properly working DNS environment. For OpenShift you can either use dnsmasq or bind. I recommend using dnsmasq but in this article I will cover both options.</p>
+<p>Note: Since OpenShift also has skydns for providing DNS services to containers running on port 53 you need to setup dnsmasq or bind on a separate system. The OpenShift environment should resolv to that DNS server.</p>
+<h4>Option 1: DNSMASQ</h4>
+<p>A colleague Ivan Mckinely was nice enough to create an ansible playbook for deploying dnsmasq. To deploy dnsmasq run following steps on OpenShift master.</p>
+<pre># git clone https://github.com/ivanthelad/ansible-aos-scripts.git</pre>
+<pre>#cd ansible-aos-scripts</pre>
+<p><strong>Edit inventory file and set dns to IP of the system that should be providing DNS</strong></p>
+<p>Also ensure nodes and masters have correct IPs for your OpenShift servers. In our case 192.168.122.60 is master, node and DNS.</p>
+<pre>#vi inventory
+# ip of DNS server
+[dns] 192.168.122.59
+# ip of OpenShift nodes
+[nodes] 192.168.122.60
+# ip of OpenShift masters
+[masters] 192.168.122.60</pre>
+<p><strong>Configure dnsmasq and add wildcard DNS so all hosts with</strong></p>
+<pre># vi playbooks/roles/dnsmasq/templates/dnsmasq.conf
+
+strict-order
+domain-needed
+local=/lab.com/
+bind-dynamic
+resolv-file=/etc/resolv.conf.upstream
+no-hosts
+address=/.cloudapps.lab.com/192.168.122.60
+address=/ose3-master.lab.com/192.168.122.60
+address=/dns.lab.com/192.168.122.59
+log-queries</pre>
+<p><strong>Ensure all hosts you want in DNS are also in /etc/hosts</strong></p>
+<p>The dnsmasq service reads /etc/hosts upon startup so all entries in hosts file can be queried through DNS.</p>
+<pre>#vi /etc/hosts
+192.168.122.60  ose3-master.lab.com     ose3-master</pre>
+<p><strong>Install dnsmasq via ansible</strong></p>
+<pre># ansible-playbook -i inventory playbooks/install_dnsmas.yml</pre>
+<p>If you need to make changes you can edit the /etc/dnsmasq.conf file and restart dnsmasq service.</p>
+<p><strong>Below is a sample dnsmasq.conf</strong></p>
+<pre># vi /etc/dnsmasq.conf
+strict-order
+domain-needed
+local=/example.com/
+bind-dynamic
+resolv-file=/etc/resolv.conf.upstream
+no-hosts
+address=/.apps.lab.com/192.168.122.60
+address=/ose3-master.lab.com/192.168.122.60
+address=/ose3-master.lab.com/192.168.122.60
+address=/dns.lab.com/192.168.122.59
+address=/kubernetes.default.svc/192.168.122.60
+log-queries</pre>
+<h4>Option 2: NAMED</h4>
+<p><strong>Install DNS tools and utilities</strong></p>
+<pre class="screen"># yum -y install bind bind-utils</pre>
+<pre># systemctl enable named
+# systemctl start named</pre>
+<p><strong>Set firewall rules using iptables</strong></p>
+<pre><code># iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 53 -j ACCEPT
+# iptables -A INPUT -p udp -m state --state NEW -m udp --dport 53 -j ACCEPT
+</code></pre>
+<p><strong>Save the iptables Using</strong></p>
+<pre><code># service iptables save
+iptables: Saving firewall rules to /etc/sysconfig/iptables:[  OK  ]</code></pre>
+<p>Note: If you are using firewalld you can just enable service DNS using firwall-cmd utility.</p>
+<p><strong>Example of zone file for lab.com</strong></p>
+<pre>vi /var/named/dynamic/lab.com.zone 
+
+$ORIGIN lab.com.
+$TTL 86400
+@ IN SOA dns1.lab.com. hostmaster.lab.com. (
+ 2001062501 ; serial
+ 21600 ; refresh after 6 hours
+ 3600 ; retry after 1 hour
+ 604800 ; expire after 1 week
+ 86400 ) ; minimum TTL of 1 day
+;
+;
+ IN NS dns1.lab.com.
+dns1 IN A 192.168.122.1
+ IN AAAA aaaa:bbbb::1
+ose3-master IN A 192.168.122.60
+*.cloudapps 300 IN A 192.168.122.60</pre>
+<p><strong>Example of named configuration</strong></p>
+<pre># vi /etc/named.conf 
+//
+// named.conf
+//
+// Provided by Red Hat bind package to configure the ISC BIND named(8) DNS
+// server as a caching only nameserver (as a localhost DNS resolver only).
+//
+// See /usr/share/doc/bind*/sample/ for example named configuration files.
+//
+
+options {
+ listen-on port 53 { 127.0.0.1;192.168.122.1; };
+ listen-on-v6 port 53 { ::1; };
+ directory "/var/named";
+ dump-file "/var/named/data/cache_dump.db";
+ statistics-file "/var/named/data/named_stats.txt";
+ memstatistics-file "/var/named/data/named_mem_stats.txt";
+ allow-query { localhost;192.168.122.0/24;192.168.123.0/24; };
+
+/* 
+ - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+ - If you are building a RECURSIVE (caching) DNS server, you need to enable 
+ recursion. 
+ - If your recursive DNS server has a public IP address, you MUST enable access 
+ control to limit queries to your legitimate users. Failing to do so will
+ cause your server to become part of large scale DNS amplification 
+ attacks. Implementing BCP38 within your network would greatly
+ reduce such attack surface 
+ */
+ recursion yes;
+
+dnssec-enable yes;
+ dnssec-validation yes;
+ dnssec-lookaside auto;
+
+/* Path to ISC DLV key */
+ bindkeys-file "/etc/named.iscdlv.key";
+
+managed-keys-directory "/var/named/dynamic";
+
+pid-file "/run/named/named.pid";
+ session-keyfile "/run/named/session.key";
+
+//forward first;
+ forwarders {
+ //10.38.5.26;
+ 8.8.8.8;
+ };
+};
+
+logging {
+ channel default_debug {
+ file "data/named.run";
+ severity dynamic;
+ };
+};
+
+zone "." IN {
+ type hint;
+ file "named.ca";
+};
+
+zone "lab.com" IN {
+ type master;
+ file "/var/named/dynamic/lab.com.zone";
+ allow-update { none; };
+};
+
+//zone "122.168.192.in-addr.arpa" IN {
+// type master;
+// file "/var/named/dynamic/122.168.192.db";
+// allow-update { none; };
+//};
+
+include "/etc/named.rfc1912.zones";
+include "/etc/named.root.key";</pre>
+<h3>Install OpenShift</h3>
+<p>OpenShift is installed and managed through Ansible. You have two options to install. Either advanced installation where you configure Ansible playbook or basic installation that simply runs a vanilla playbook with default options. I recommend always doing an advanced install and as such will not cover basic installation.</p>
+<h4>Configure the inventory</h4>
+<p>Note: If you have different dns names then change items in bold below.</p>
+<pre># vi /etc/ansible/hosts
+##########################
+### OSEv3 Server Types ###
+##########################
+[OSEv3:children]
+masters
+nodes
+etcd
+
+################################################
+### Set variables common for all OSEv3 hosts ###
+################################################
+[OSEv3:vars]
+ansible_ssh_user=root
+os_sdn_network_plugin_name='redhat/openshift-ovs-subnet'
+deployment_type=openshift-enterprise
+openshift_master_default_subdomain=<strong><a href="http://apps.lab.com/" target="_blank">apps.lab.com</a></strong>
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_node_kubelet_args={'maximum-dead-containers': ['100'], 'maximum-dead-containers-per-container': ['2'], 'minimum-container-ttl-duration': ['10s'], 'max-pods': ['110'], 'image-gc-high-threshold': ['90'], 'image-gc-low-threshold': ['80']}
+logrotate_scripts=[{"name": "syslog", "path": "/var/log/cron\n/var/log/maillog\n/var/log/messages\n/var/log/secure\n/var/log/spooler\n", "options": ["daily", "rotate 7", "compress", "sharedscripts", "missingok"], "scripts": {"postrotate": "/bin/kill -HUP `cat /var/run/syslogd.pid 2&gt; /dev/null` 2&gt; /dev/null || true"}}]
+openshift_docker_options="--log-opt max-size=1M --log-opt max-file=3"
+openshift_node_iptables_sync_period=5s
+openshift_master_pod_eviction_timeout=3m
+osm_controller_args={'resource-quota-sync-period': ['10s']}
+osm_api_server_args={'max-requests-inflight': ['400']}
+openshift_use_dnsmasq=false
+
+##############################
+### host group for masters ###
+##############################
+[masters]
+<strong><a href="http://ose3-master.lab.com/" target="_blank">ose3-master.lab.com</a></strong>
+
+###################################
+### host group for etcd servers ###
+###################################
+[etcd]
+<strong><a href="http://ose3-master.lab.com/" target="_blank">ose3-master.lab.com</a></strong>
+
+##################################################
+### host group for nodes, includes region info ###
+##################################################
+[nodes]
+<strong><a href="http://ose3-master.lab.com/" target="_blank">ose3-master.lab.com</a></strong> openshift_schedulable=True</pre>
+<h4>Run playbook to install OpenShift</h4>
+<pre class="nowrap"># ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml</pre>
+<h3>Configure OpenShift</h3>
+<p>Once OpenShift is installed we need to configure an admin user and also setup the router and registry.</p>
+<h4>Create local admin account and enable permissions</h4>
+<pre># oc login -u system:admin -n default</pre>
+<pre># htpasswd -c /etc/origin/master/htpasswd admin</pre>
+<pre># oadm policy add-cluster-role-to-user cluster-admin admin</pre>
+<pre># oc login -u admin -n default</pre>
+<h4>Configure OpenShift registry</h4>
+<p>Image streams and Docker images are stored in registry. When you build application, your application code will be added as a image stream. This enables S2I (Source to Image) and allows for fast build times.</p>
+<pre>#oadm registry --service-account=registry \
+--config=/etc/origin/master/admin.kubeconfig \
+--images='registry.access.redhat.com/openshift3/ose-${component}:${version}'</pre>
+<p>Note: normally you would want to setup registry in HA configuration.</p>
+<h4>Configure OpenShift router</h4>
+<p>The OpenShift router is basically an HA-Proxy that sends incoming requests to node where pod/container are running.</p>
+<p>Note: normally you would want to setup the router in an HA configuration.</p>
+<pre>#oadm router router --replicas=1 \
+    --credentials='/etc/origin/master/openshift-router.kubeconfig' \
+    --service-account=router</pre>
+<h3>Optional: CloudForms Integration</h3>
+<p>CloudForms is a cloud management platform. It integrates not only with OpenShift but also other Cloud platforms (OpenStack, Amazon, GCE, Azure) and traditional virtualization platforms (VMware, RHEV, Hyper-V). Since OpenShift is usually running on cloud or traditional virtualization platforms, CloudForms enables true end-to-end visibility. CloudForms provides not only performance metrics, events, smart state analysis of containers (scanning container contents) but also can provide chargeback for OpenShift projects. CloudForms is included in OpenShift subscription for purpose of managing OpenShift. To add OpenShift as provider in CloudForms follow the below steps.</p>
+<p>The management-infra project in OpenShift is designed for scanning container images. A container is started in this context and the image to be scanned is mounted. A service account management-admin exists and should be used to provide CloudForms access.</p>
+<p>Note: scanning images is CPU intensive so it is important to ensure the management-admin project schedules pods/containers on infrastructure nodes.</p>
+<p>List tokens that are configured in management-infra project (this is created at install time).</p>
+<pre># oc project management-infra</pre>
+<pre># oc get sa management-admin -o yaml
+apiVersion: v1
+imagePullSecrets:
+- name: management-admin-dockercfg-ln1an
+kind: ServiceAccount
+metadata:
+ creationTimestamp: 2016-07-24T11:36:58Z
+ name: management-admin
+ namespace: management-infra
+ resourceVersion: "400"
+ selfLink: /api/v1/namespaces/management-infra/serviceaccounts/management-admin
+ uid: ee6a1426-5192-11e6-baff-001a4ae42e01
+secrets:
+- name: management-admin-token-wx17s
+- name: management-admin-dockercfg-ln1an</pre>
+<h4>Use describe to get token to enable CloudForms to accesss the management-admin project.</h4>
+<pre># oc describe secret management-admin-token-wx17s
+Name: management-admin-token-wx17s
+Namespace: management-infra
+Labels: 
+Annotations: kubernetes.io/service-account.name=management-admin,kubernetes.io/service-account.uid=ee6a1426-5192-11e6-baff-001a4ae42e01
+
+Type: kubernetes.io/service-account-token
+
+Data
+====
+ca.crt: 1066 bytes
+namespace: 16 bytes
+token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJtYW5hZ2VtZW50LWluZnJhIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6Im1hbmFnZW1lbnQtYWRtaW4tdG9rZW4td3gxN3MiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoibWFuYWdlbWVudC1hZG1pbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImVlNmExNDI2LTUxOTItMTFlNi1iYWZmLTAwMWE0YWU0MmUwMSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDptYW5hZ2VtZW50LWluZnJhOm1hbmFnZW1lbnQtYWRtaW4ifQ.Y0IlcwhHW_CpKyFvk_ap-JMAT69fbIqCjkAbmpgZEUJ587LP0pQz06OpBW05XNJ3cJg5HeckF0IjCJBDbMS3P1W7KAnLrL9uKlVsZ7qZ8-M2yvckdIxzmEy48lG0GkjtUVMeAOJozpDieFClc-ZJbMrYxocjasevVNQHAUpSwOIATzcuV3bIjcLNwD82-42F7ykMn-A-TaeCXbliFApt6q-R0hURXCZ0dkWC-za2qZ3tVXaykWmoIFBVs6wgY2budZZLhT4K9b4lbiWC5udQ6ga2ATZO1ioRg-bVZXcTin5kf__a5u6c775-8n6DeLPcfUqnLucaYr2Ov7RistJRvg</pre>
+<h4>Add OpenShift provider to CloudForms using the management-admin service token.</h4>
+<p><img class="alignnone size-full wp-image-3614" src="{{ site.baseurl }}/assets/2016/11/cf_container_2.png?w=440" alt="CF_CONTAINER_2" /></p>
+<h3>Optional: CloudForms Container Provider</h3>
+<p>CloudForms is a cloud management platform. It integrates not only with OpenShift but also other Cloud platforms (OpenStack, Amazon, GCE, Azure) and traditional virtualization platforms (VMware, RHEV, Hyper-V). Since OpenShift is usually running on cloud or traditional virtualization platforms, CloudForms enables true end-to-end visibility. CloudForms provides not only performance metrics, events, smart state analysis of containers (scanning container contents) but also can provide chargeback for OpenShift projects. CloudForms is included in OpenShift subscription for purpose of managing OpenShift. To add OpenShift as provider in CloudForms follow the below steps.</p>
+<h4>Get token for CloudForms Access</h4>
+<p>Use management-admin token that is created in management-admin project during install to provide access to CloudForms.</p>
+<pre># oc describe sa -n management-infra management-admin
+Name: management-admin
+Namespace: management-infra
+Labels: 
+
+Mountable secrets: management-admin-token-vr21i
+ management-admin-dockercfg-5j3m3
+
+Tokens: management-admin-token-mxy4m
+ management-admin-token-vr21i
+
+Image pull secrets: management-admin-dockercfg-5j3m3</pre>
+<pre># oc describe secret -n management-infra management-admin-token-mxy4m
+Name: management-admin-token-mxy4m
+Namespace: management-infra
+Labels: 
+Annotations: kubernetes.io/service-account.name=management-admin,kubernetes.io/service-account.uid=87f8f4e4-4c0f-11e6-8aca-52540057bf27
+
+Type: kubernetes.io/service-account-token
+
+Data
+====
+token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJtYW5hZ2VtZW50LWluZnJhIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6Im1hbmFnZW1lbnQtYWRtaW4tdG9rZW4tbXh5NG0iLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoibWFuYWdlbWVudC1hZG1pbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6Ijg3ZjhmNGU0LTRjMGYtMTFlNi04YWNhLTUyNTQwMDU3YmYyNyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDptYW5hZ2VtZW50LWluZnJhOm1hbmFnZW1lbnQtYWRtaW4ifQ.dN-CmGdSR2TRh1h0qHvwkqnW6TLvhXJtuHX6qY2jsrZIZCg2LcyuQI9edjBhl5tDE6PfOrpmh9-1NKAA6xbbYVJlRz52gnEdtm1PVgvzh8_WnKiQLZu-xC1qRX_YL7ohbglFSf8b5zgf4lBdJbgM_2P4sm1Czhu8lr5A4ix95y40zEl3P2R_aXnns62hrRF9XpmweASGMjooKOHB_5HUcZ8QhvdgsveD4j9de-ZzYrUDHi0NqOEtenBThe5kbEpiWzSWMAkIeC2wDPEnaMTyOM2bEfY04bwz5IVS_IAnrEF7PogejgsrAQRtYss5yKSZfwNTyraAXSobgVa-e4NsWg
+ca.crt: 1066 bytes
+namespace: 16 bytes</pre>
+<h4>Add OpenShift provider to CloudForms using token</h4>
+<h3><img class="alignnone size-full wp-image-3270" src="{{ site.baseurl }}/assets/2016/11/ose3_login_cf.png?w=440" alt="OSE3_login_cf" /></h3>
+<h4>Configure metrics by supplying the service name exposed by OpenShift</h4>
+<p><img class="alignnone size-full wp-image-3272" src="{{ site.baseurl }}/assets/2016/11/ose3_hawkular_cf.png?w=440" alt="OSE3_hawkular_cf" /></p>
+<h4>Choose a container image to scan</h4>
+<p><img class="alignnone size-full wp-image-3274" src="{{ site.baseurl }}/assets/2016/11/osev3_smartstate.png?w=440" alt="OSEV3_SMartState" /></p>
+<h4>Check for scanning container</h4>
+<p>You should see scanning container start in the project management-infra.</p>
+<pre>[root@ose3-master ~]# oc project management-infra</pre>
+<pre>[root@ose3-master ~]# oc get pods
+NAME READY STATUS RESTARTS AGE
+manageiq-img-scan-24297 0/1 ContainerCreating 0 12s</pre>
+<pre>[root@ose3-master ~]# oc get pods
+NAME READY STATUS RESTARTS AGE
+manageiq-img-scan-24297 1/1 Running 0 1m</pre>
+<h4>Check image in CloudForms</h4>
+<p>You should now see an OpenSCAP report and in addition visibility into packages that are actually installed in the container itself.</p>
+<p>Compute-&gt;Containers-Container Images-&gt;MySQL</p>
+<p><img class="alignnone size-full wp-image-3278" src="{{ site.baseurl }}/assets/2016/11/osev3_smart_state_results.png?w=440" alt="OSEv3_SMart_State_REsults" /></p>
+<h4>Packages</h4>
+<p><img class="alignnone size-full wp-image-3284" src="{{ site.baseurl }}/assets/2016/11/osev3_packages.png?w=440" alt="OSEV3_Packages" /></p>
+<h4>OpenScap HTML Report</h4>
+<p><img class="alignnone size-full wp-image-3281" src="{{ site.baseurl }}/assets/2016/11/osev3_openscap.png?w=440" alt="OSEV3_OpenScap" /></p>
+<h3>Optional: Performance Metrics</h3>
+<p>OpenShift provides ability to collect performance metrics using Hawkular. This runs as container and uses cassandra to persist the data. CloudForms is able to display capacity and utilization metrics for OpenShift using Hawkular.</p>
+<h4>Switch to openshift-infra project</h4>
+<pre>[root@ose3-master ~]# oc project openshift-infra</pre>
+<h4>Create service account for metrics-deployer pod</h4>
+<pre>[root@ose3-master ~]# oc create -f - &lt;</pre>
+<h4>Enable permissions and set secret</h4>
+<pre>[root@ose3-master ~]# oadm policy add-role-to-user edit system:serviceaccount:openshift-infra:metrics-deployer</pre>
+<pre>[root@ose3-master ~]#oadm policy add-cluster-role-to-user cluster-reader system:serviceaccount:openshift-infra:heapster</pre>
+<pre>[root@ose3-master ~]# oc secrets new metrics-deployer nothing=/dev/null</pre>
+<h4>Deploy metrics environment for OpenShift</h4>
+<pre>[root@ose3-master ~]# oc new-app -f /usr/share/openshift/examples/infrastructure-templates/enterprise/metrics-deployer.yaml \
+-p HAWKULAR_METRICS_HOSTNAME=hawkular-metrics.apps.lab.com \
+-p USE_PERSISTENT_STORAGE=false -p MASTER_URL=https://ose3-master.lab.com:8443</pre>
+<h4>Add the metrics URL to the OpenShift master config file</h4>
+<pre># vi /etc/origin/master/master-config.yaml
+assetConfig:
+metricsPublicURL: "https://hawkular-metrics.apps.lab.com/hawkular/metrics"</pre>
+<h4>Restart OpenShift Master</h4>
+<pre># systemctl restart atomic-openshift-master</pre>
+<h4>Cleanup</h4>
+<pre class="screen"># oc delete all,sa,templates,secrets,pvc --selector="metrics-infra"</pre>
+<pre># oc delete sa,secret metrics-deployer</pre>
+<h3>Optional: Aggregate Logging</h3>
+<p>OpenShift Enterprise supports Kibana and the ELK Stack for log aggregation. Any pod and container that log to STDOUT will have all their log messages aggregated. This provides centralized logging for all application components. Logging is completely integrated within OpenShift and the ELK Stack runs of course containerized within OpenShift.</p>
+<p>In openshift-infra project create service account for logging and necessary permissions.</p>
+<h4>Switch to logging project</h4>
+<pre># oc project logging</pre>
+<h4>Create service accounts, roles and bindings</h4>
+<pre># oc new-app logging-deployer-account-template</pre>
+<h4>Setup permissions</h4>
+<pre class="nowrap"># oadm policy add-cluster-role-to-user oauth-editor \
+       system:serviceaccount:logging:logging-deployer</pre>
+<pre class="nowrap"># oadm policy add-scc-to-user privileged  \
+    system:serviceaccount:logging:aggregated-logging-fluentd</pre>
+<pre class="nowrap"># oadm policy add-cluster-role-to-user cluster-reader \
+    system:serviceaccount:logging:aggregated-logging-fluentd</pre>
+<h4>Create configmap</h4>
+<pre># oc create configmap logging-deployer \
+ --from-literal kibana-hostname=kibana.lab.com \
+ --from-literal public-master-url=https://ose3-master.lab.com:8443 \
+ --from-literal es-cluster-size=1 \
+ --from-literal es-instance-ram=2G</pre>
+<h4>Create secret</h4>
+<pre># oc secrets new logging-deployer nothing=/dev/null</pre>
+<h4>Deploy aggregate logging</h4>
+<pre># oc new-app logging-deployer-template</pre>
+<p><strong>Option 1:Enable fluentd on specific nodes</strong></p>
+<pre class="screen"># oc label node/node.example.com logging-infra-fluentd=true</pre>
+<p><strong>Option 2: Enable fluentd all nodes</strong></p>
+<pre class="screen"># oc label node --all logging-infra-fluentd=true</pre>
+<h4>Cleanup</h4>
+<p># oc new-app logging-deployer-template --param MODE=uninstall</p>
+<h3>Optional: Jenkins Build Pipeline</h3>
+<p>As of OpenShift 3.3 Jenkins build pipelines are integrated within OpenShift. This means you can not only execute but also observe and configure build pipelines without leaving OpenShift. In OpenShift 3.3 this feature is technology preview.</p>
+<p>Before we build a pipleline we need to create some projects and deploy an application. For this example we have prepared a basic helloworld nodejs application. The application has two versions both are available via branches in Github. Using the build pipeline an end-to-end application upgrade and rollout will be demonstrated. The application will be deployed across three stages: development, integration and production. The development stage has both versions of the application while integration and test have one version, either v1 or v2. In development and integration the application will be scaled to only a single pod. Production is using scaling of 4 pods.</p>
+<h4>Create Projects</h4>
+<pre># oc new-project dev
+# oc new-project int
+# oc new-project prod</pre>
+<h4>Switch to dev project</h4>
+<pre># oc project dev</pre>
+<h4>Build v1 of nodejs application</h4>
+<pre># oc new-app --name v1 https://github.com/ktenzer/nodejs-ex.git</pre>
+<pre># oc expose service v1</pre>
+<h4>Build v2 of nodejs application</h4>
+<pre># oc new-app --name v1 https://github.com/ktenzer/nodejs-ex.git#v2</pre>
+<pre># oc expose service v2</pre>
+<h4>Enable Jenkins build pipelines in OpenShift</h4>
+<pre># vi /etc/origin/tech-preview/pipelines.js
+window.OPENSHIFT_CONSTANTS.ENABLE_TECH_PREVIEW_FEATURE.pipelines = true;</pre>
+<pre># vi /etc/origin/master/master-config.yaml
+jenkinsPipelineConfig:
+  autoProvisionEnabled: true
+  templateNamespace: openshift
+  templateName: jenkins-ephemeral
+  serviceName: jenkins
+assetConfig:
+  extensionScripts:
+    - /etc/origin/tech-preview/pipelines.js</pre>
+<h4>Restart OpenShift master</h4>
+<pre># systemctl restart atomic-openshift-master</pre>
+<h4>Setup permissions for build pipeline</h4>
+<p>In this case we have three projects. Both the integration and production projects need to pull images from development. In addition jenkins service account in development where jenkins will run needs access to both integration and production projects.</p>
+<pre># oc policy add-role-to-user edit system:serviceaccount:dev:jenkins -n prod
+# oc policy add-role-to-user edit system:serviceaccount:dev:jenkins -n int
+# oc policy add-role-to-user edit system:serviceaccount:dev:jenkins -n dev
+# oc policy add-role-to-user system:image-puller system:serviceaccount:int:default -n dev
+# oc policy add-role-to-user system:image-puller system:serviceaccount:prod:default -n dev</pre>
+<h4>Reconsile roles</h4>
+<p>In case you did an upgrade from OpenShift roles might need to be reconsiled. If you have problems or issues I would recommend these steps.</p>
+<pre class="gmail_default"># oadm policy reconcile-cluster-roles --confirm
+# oadm policy reconcile-cluster-role-bindings --confirm
+# oadm policy reconcile-sccs --confirm</pre>
+<h4>Create Jenkins Build Pipeline</h4>
+<pre># vi pipeline.json
+{
+    "kind": "List",
+    "apiVersion": "v1",
+    "metadata": {},
+    "items": [{
+        "kind": "BuildConfig",
+        "apiVersion": "v1",
+        "metadata": {
+            "name": "nodejs-pipeline-master",
+            "labels": {
+                "app": "nodejs-integration"
+            },
+            "annotations": {
+                "pipeline.alpha.openshift.io/uses": "[{\"name\": \"master\", \"namespace\": \"\", \"kind\": \"DeploymentConfig\"}]"
+            }
+        },
+        "spec": {
+            "triggers": [{
+                "type": "GitHub",
+                "github": {
+                    "secret": "EgXVqyOOobmMzjVzQHSh"
+                }
+            }, {
+                "type": "Generic",
+                "generic": {
+                    "secret": "bz6uJc9u-0-58EoYKgL3"
+                }
+            }],
+            "source": {
+                "type": "Git",
+                "git": {
+                    "uri": "https://github.com/ktenzer/nodejs-ex.git",
+                    "ref": "master"
+                }
+            },
+            "strategy": {
+                "type": "JenkinsPipeline",
+                "jenkinsPipelineStrategy": {
+                    "jenkinsfilePath": "jenkins-pipeline.dsl"
+                }
+            }
+        }
+    }, {
+        "kind": "BuildConfig",
+        "apiVersion": "v1",
+        "metadata": {
+            "name": "nodejs-pipeline-v2",
+            "labels": {
+                "app": "nodejs-integration"
+            },
+            "annotations": {
+                "pipeline.alpha.openshift.io/uses": "[{\"name\": \"v2\", \"namespace\": \"\", \"kind\": \"DeploymentConfig\"}]"
+            }
+        },
+        "spec": {
+            "triggers": [{
+                "type": "GitHub",
+                "github": {
+                    "secret": "EgXVqyOOobmMzjVzQHSh"
+                }
+            }, {
+                "type": "Generic",
+                "generic": {
+                    "secret": "bz6uJc9u-0-58EoYKgL3"
+                }
+            }],
+            "source": {
+                "type": "Git",
+                "git": {
+                    "uri": "https://github.com/ktenzer/nodejs-ex.git",
+                    "ref": "v2"
+                }
+            },
+            "strategy": {
+                "type": "JenkinsPipeline",
+                "jenkinsPipelineStrategy": {
+                    "jenkinsfilePath": "jenkins-pipeline.dsl"
+                }
+            }
+        }
+    }]
+}
+</pre>
+<pre># oc create -f pipeline.json</pre>
+<h4>Setup Pipeline for nodejs application master branch</h4>
+<p>Here we setup v1 of application in development project. Under Build-&gt;pipelines select the nodejs-pipeline-master. On right select actions-&gt;edit. You will need to change "Jenkins Type" to inline. Once you have selected inline copy/paste below Jenkins DSL:</p>
+<pre>node {
+stage 'build'
+openshiftBuild(buildConfig: 'v1', showBuildLogs: 'true')
+stage 'deploy development'
+openshiftVerifyDeployment(deploymentConfig: 'v1')
+stage 'promote to int'
+openshiftTag(alias: 'false', apiURL: '', authToken: '', destStream: 'helloworld', destTag: 'v1', destinationAuthToken: '', destinationNamespace: 'int', namespace: 'dev', srcStream: 'v1', srcTag: 'latest', verbose: 'false')
+openshiftTag(alias: 'false', apiURL: '', authToken: '', destStream: 'acceptance', destTag: 'latest', destinationAuthToken: '', destinationNamespace: 'int', namespace: 'int', srcStream: 'helloworld', srcTag: 'v1', verbose: 'false')
+stage 'deploy int'
+openshiftVerifyDeployment(namespace: 'int', deploymentConfig: 'acceptance')
+openshiftScale(namespace: 'int', deploymentConfig: 'acceptance',replicaCount: '1')
+stage 'promote to production'
+openshiftTag(alias: 'false', apiURL: '', authToken: '', destStream: 'helloworld', destTag: 'v1', destinationAuthToken: '', destinationNamespace: 'prod', namespace: 'int', srcStream: 'helloworld', srcTag: 'v1', verbose: 'false')
+openshiftTag(alias: 'false', apiURL: '', authToken: '', destStream: 'production', destTag: 'latest', destinationAuthToken: '', destinationNamespace: 'prod', namespace: 'prod', srcStream: 'helloworld', srcTag: 'v1', verbose: 'false')
+stage 'deploy production'
+openshiftVerifyDeployment(namespace: 'prod', deploymentConfig: 'production')
+openshiftScale(namespace: 'prod', deploymentConfig: 'production', replicaCount: '4')
+}</pre>
+<h4>Setup Pipeline for nodejs application v2 branch</h4>
+<p>Here we setup v2 of application in development project. Under Build-&gt;pipelines select the nodejs-pipeline-v2. On right select actions-&gt;edit. You will need to change "Jenkins Type" to inline. Once you have selected inline copy/paste below Jenkins DSL:</p>
+<pre>node {
+stage 'build'
+openshiftBuild(buildConfig: 'v2', showBuildLogs: 'true')
+stage 'deploy development'
+openshiftVerifyDeployment(deploymentConfig: 'v2')
+stage 'promote to int'
+openshiftTag(alias: 'false', apiURL: '', authToken: '', destStream: 'helloworld', destTag: 'v2', destinationAuthToken: '', destinationNamespace: 'int', namespace: 'dev', srcStream: 'v2', srcTag: 'latest', verbose: 'false')
+openshiftTag(alias: 'false', apiURL: '', authToken: '', destStream: 'acceptance', destTag: 'latest', destinationAuthToken: '', destinationNamespace: 'int', namespace: 'int', srcStream: 'helloworld', srcTag: 'v2', verbose: 'false')
+stage 'deploy int'
+openshiftVerifyDeployment(namespace: 'int', deploymentConfig: 'acceptance')
+openshiftScale(namespace: 'int', deploymentConfig: 'acceptance',replicaCount: '1')
+stage 'promote to production'
+openshiftTag(alias: 'false', apiURL: '', authToken: '', destStream: 'helloworld', destTag: 'v2', destinationAuthToken: '', destinationNamespace: 'prod', namespace: 'int', srcStream: 'helloworld', srcTag: 'v2', verbose: 'false')
+openshiftTag(alias: 'false', apiURL: '', authToken: '', destStream: 'production', destTag: 'latest', destinationAuthToken: '', destinationNamespace: 'prod', namespace: 'prod', srcStream: 'helloworld', srcTag: 'v2', verbose: 'false')
+stage 'deploy production'
+openshiftVerifyDeployment(namespace: 'prod', deploymentConfig: 'production')
+openshiftScale(namespace: 'prod', deploymentConfig: 'production', replicaCount: '4')
+}</pre>
+<h3>Optional: OpenShift Upgrade from 3.2</h3>
+<p>If you have an OpenShift 3.2 environment and want to try the integrated jenkins build pipleline follow the steps below.</p>
+<h4>OpenShift Upgrade</h4>
+<pre class="screen">subscription-manager repos --disable="rhel-7-server-ose-3.2-rpms" \
+    --enable="rhel-7-server-ose-3.3-rpms"\
+    --enable="rhel-7-server-extras-rpms"</pre>
+<pre class="screen">yum clean all</pre>
+<pre class="screen">yum update atomic-openshift-utils</pre>
+<pre># ansible-playbook -i /etc/ansible/hosts /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-cluster/upgrades/v3_3/upgrade.yml</pre>
+<pre># systemctl reboot</pre>
+<h4>Update images</h4>
+<pre># NS=openshift;for img in `oc get is -n ${NS}|awk '{print $1;}'|grep -v NAME`; do oc import-image -n ${NS} $img;done</pre>
+<h4>Verify</h4>
+<pre># oc get nodes
+ NAME STATUS AGE
+ ose3-master.lab.com Ready 115d</pre>
+<pre># oc get -n default dc/docker-registry -o json | grep \"image\"
+ "image": "openshift3/ose-docker-registry:v3.3.1.3",</pre>
+<pre># oc get -n default dc/router -o json | grep \"image\"
+ "image": "openshift3/ose-haproxy-router:v3.3.1.3",</pre>
+<h4>Upgrade Aggregate Logging</h4>
+<pre class="screen"># oc project logging</pre>
+<pre class="screen"># oc apply -n openshift -f \
+    /usr/share/openshift/examples/infrastructure-templates/enterprise/logging-deployer.yaml</pre>
+<pre class="screen"># oc process logging-deployer-account-template | oc apply -f -</pre>
+<pre class="screen"># oadm policy add-cluster-role-to-user oauth-editor \
+       system:serviceaccount:logging:logging-deployer</pre>
+<h4>Upgrade Cluster Metrics</h4>
+<p>To upgrade metrics I recommend just deleting and re-creating. Before doing so you should prune the existing images so the new 3.3 images are downloaded.</p>
+<h3>Summary</h3>
+<p>In this article we have seen how to configure an OpenShift 3.3 all-in-one lab environment. We have also seen how install and configuration can be adapted through ansible playbook. We have seen how to configure various DNS options required by OpenShift. It should be repeated that most OpenShift problems are a direct result of improper DNS setup! We have seen how to integrate OpenShift in CloudForms, setup aggregate logging and how to configure metrics using hawkular. Finally we have seen how to create a Jenkins build pipeline using a nodejs application across three stages. As always if you have any feedback please share.</p>
+<p>Happy OpenShifting!</p>
+<p>(c) 2016 Keith Tenzer</p>

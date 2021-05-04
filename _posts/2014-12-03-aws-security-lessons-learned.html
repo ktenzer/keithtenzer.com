@@ -1,0 +1,107 @@
+---
+layout: post
+title: AWS Security Lessons Learned
+date: 2014-12-03 18:34:27.000000000 -08:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- AWS
+- Cloud
+- DevOps
+- Java
+- Security
+meta:
+  _edit_last: '63054820'
+  geo_public: '0'
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=5945978177481363456&type=U&a=956X
+  _wpas_done_9468659: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"pzvfqtzaYA";b:1;}}
+  _wpas_skip_9468659: '1'
+  _wpas_skip_9542380: '1'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2014/12/03/aws-security-lessons-learned/"
+---
+<h3>My Story</h3>
+<p>Once upon a time not too long ago, I had a project to transport data in and out of S3 using Java. Things started off rather smoothly. Within about 30 minutes I had my Amazon Web Services (AWS) account active, had the Java SDK pulled into Eclipse through Maven and was testing my first AWS S3 API calls. <!--more-->Everything was fine except I embedded my AWS access key in the code! I spent a few hours prototyping, testing API calls and understanding how I wanted to structure the code for this project. Along the way I got side-tracked, switched to working on other things and eventually came back to my AWS S3 project. At this point I had a pretty good prototype for structuring data in S3 as well as getting data in and out. I wanted to save my work and had forgotten all about the fact that my AWS access key was still embedded in the code. I created a public Github repo and checked in the code, it had been a long day and was about to get much longer...</p>
+<p>A few hours went by and I got a call from Amazon Web Services, there had been suspicious activity on my account. At this point I started to realise what might have happened and I rushed home. Upon logging in I found 20 XXL EC2 instances running in every AWS region and in just a few hours my bill was already over $700 USD. I couldn't believe it and thought why on Earth would anyone want to startup EC2 instances? I am just going to delete them, what was the purpose of this?</p>
+<p>I quickly shutdown all the EC2 instances and expunged them, except one. I wanted to take a closer look and see what was actually running in the instance. Upon gaining access I looked at the process table and saw to my surprise Bitcoin processes running and chewing on the CPU. Bitcoin!!! But of course, it was now so clear, I provided some happy miners free CPU for a few hours and they took full advantage of my stupidity. This was the first time I had ever been hacked or had my security (knowingly) breeched. I felt vulnerable, foolish, and extremely frustrated.</p>
+<p>Finally I phoned Amazon Web Services and explained what happened. They confirmed and told me that this happens all too often and this kind of theft is on the rise. Bitcoin miners scrub all code sites like Github and search for patterns like "AWS Secret Key". If they find them, they will try to deploy Bitcoin servers on unsuspecting accounts and why not it is easy money, right? In a quick Github search I found more keys than I knew what to do with, very disturbing. I tried to get Amazon Web Services to track down the culprits but unfortunately they used TOR which masked outbound traffic so there was no way to trace the source. Thankfully Amazon Web Services credited my account so I didn't have to pay the penalty for my carelessness.</p>
+<h3>What about DevOps?</h3>
+<p>More and more DevOps teams are using the cloud as it enables getting products to market faster in many cases. Many are startups and were born in the cloud. However a growing number are enterprise IT organisations not used to dealing with security in the cloud. Worse, many of these are shadow IT groups, meaning groups that have abandoned their internal IT and gone to the cloud without an enterprise strategy. This is very similar to my personal experience, they are just jumping into the cloud without a complete security strategy. There have already been numerous companies which have had to close their doors due to cloud security breaches and the threat is real. So what is different in the cloud? The main thing is that we are used to working and trusting our internal IT for protecting us. We as developers have become very security complacent and have not had to be responsible for securing our environments. With the cloud that all changes, everyone must be re-trained on security and become stewards for protecting company assets. The firewall is the people. Don't jump into the cloud until you have your security straight!</p>
+<h3>Lessons Learned</h3>
+<ul>
+<li>Lesson 1: Don't just jump into cloud and start doing stuff, ensure you have appropriate security setup for your environment first</li>
+<li>Lesson 2: Never ever save your AWS access key in code or any file in your code branch. As soon as you do this you have completely compromised your security</li>
+<li>Lesson 3: Always use <a href="https://aws.amazon.com/iam/details/mfa/">multi-factor authentication</a></li>
+<li>Lesson 4: Always create an AWS IAM user and always give that IAM user only access to resources it needs through<a href="http://docs.aws.amazon.com/IAM/latest/UserGuide/PoliciesOverview.html"> IAM policies</a> before generating AWS keys</li>
+<li>Lesson 5: Store AWS key in user environment or credentials file outside of code branch</li>
+<li>Lesson 6: Update and change your keys on regular basis</li>
+<li>Lesson 7: Consider using only private repos in Github or ensure code is private and not public</li>
+</ul>
+<h3>Configure AWS Permissions</h3>
+<ul>
+<li>Create IAM user</li>
+</ul>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/screen-shot-2014-12-01-at-17-31-23.png"><img class="  wp-image-48 aligncenter" src="{{ site.baseurl }}/assets/2014/12/screen-shot-2014-12-01-at-17-31-23.png?w=300" alt="Screen Shot 2014-12-01 at 17.31.23" width="635" height="273" /></a></p>
+<ul>
+<li><span style="font-family:'Noto Sans', sans-serif;line-height:1.5;">Create group for each resource you want to grant for example, one group for S3, another for SNS, etc</span></li>
+</ul>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/screen-shot-2014-12-01-at-17-25-51.png"><img class="  wp-image-46 aligncenter" src="{{ site.baseurl }}/assets/2014/12/screen-shot-2014-12-01-at-17-25-51.png?w=300" alt="Screen Shot 2014-12-01 at 17.25.51" width="624" height="179" /></a></p>
+<ul>
+<li>Add permissions to the group</li>
+</ul>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/screen-shot-2014-12-01-at-17-28-39.png"><img class="  wp-image-47 aligncenter" src="{{ site.baseurl }}/assets/2014/12/screen-shot-2014-12-01-at-17-28-39.png?w=300" alt="Screen Shot 2014-12-01 at 17.28.39" width="619" height="339" /></a></p>
+<h3>How to properly store AWS credentials</h3>
+<p>There are two options for storing the AWS access and secret key. You can either save them in a credentials file or the user environment. I would recommend the user environment and this is typically what I use.</p>
+<h4>Storing AWS key in credentials file</h4>
+<ul>
+<li>Create the following file: ~/.aws/credentials</li>
+<li>In the AWS console go to the user and create new access key by selecting the "manage access keys" option.</li>
+<li>Update the credentials file ~/.aws/credentials
+<ul>
+<li><span class="s1">[</span><span class="s2">default</span><span class="s1">]</span></li>
+<li>aws_access_key_id=&lt;access key&gt;</li>
+<li><span class="s2">aws_secret_access_key</span>=&lt;secret key&gt;</li>
+</ul>
+</li>
+<li>Get credentials from credentials file. Below is an example in Java:</li>
+</ul>
+<p>[code language="java"]<br />
+public AWSCredentials getAWSCredentialsFromFile() throws Exception {<br />
+     AWSCredentials credentials = null;<br />
+     try {<br />
+          credentials = new ProfileCredentialsProvider().getCredentials();<br />
+     } catch (Exception e) {<br />
+          throw new Exception (&quot;Cannot load the credentials from the credential profiles file. Please make sure that your credentials file is at the correct location (~/.aws/credentials), and is in valid format.&quot;, e);<br />
+     }<br />
+     return credentials;<br />
+}<br />
+[/code]</p>
+<h4>Storing AWS key in environment</h4>
+<ul>
+<li>In the AWS console go to the user and create new access key by selecting the "manage access keys" option.</li>
+<li>Add access key and secret key to the user's .bashrc file under ~/.bachrc
+<ul>
+<li>AWS_ACCESS_KEY_ID=&lt;access key&gt;</li>
+<li>AWS_SECRET_ACCESS_KEY=&lt;secret key&gt;</li>
+</ul>
+</li>
+<li>Get the credentials from user environment. Below is an example in Java:</li>
+</ul>
+<p>[code language="java"]</p>
+<p>public AWSCredentials getAwsCredentialsFromEnvironment() throws IOException {</p>
+<p>     EnvironmentVariableCredentialsProvider credentials = new EnvironmentVariableCredentialsProvider();<br />
+     return credentials.getCredentials();<br />
+}<br />
+[/code]</p>
+<p>(c) 2014 Keith Tenzer</p>
+<p>&nbsp;</p>

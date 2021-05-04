@@ -1,0 +1,71 @@
+---
+layout: post
+title: The Birth of the Niche Cloud?
+date: 2018-10-05 15:50:42.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- Cloud
+- future
+- niche cloud
+- public cloud
+- technology
+meta:
+  timeline_notification: '1538754643'
+  _rest_api_published: '1'
+  _rest_api_client_id: "-1"
+  _publicize_job_id: '22872542875'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2018/10/05/the-birth-of-the-niche-cloud/"
+---
+<h2><img class="alignnone  wp-image-12572" src="{{ site.baseurl }}/assets/2018/10/1200px-flightless_dung_beetle_circellium_bachuss_addo_elephant_national_park_south_africa.jpg" alt="1200px-Flightless_Dung_Beetle_Circellium_Bachuss,_Addo_Elephant_National_Park,_South_Africa" width="407" height="273" /></h2>
+<p><em>source: <a href="https://en.wikipedia.org/wiki/Ecological_niche">https://en.wikipedia.org/wiki/Ecological_niche</a></em></p>
+<ul>
+<li><a href="https://keithtenzer.com/2018/10/05/the-birth-of-the-niche-cloud/">Part I: Birth of the Niche Cloud?</a></li>
+<li><a href="https://keithtenzer.com/2018/10/25/building-a-niche-cloud-a-pragmatic-approach/">Part II: Building a Niche Cloud: A Pragmatic Approach</a></li>
+</ul>
+<h2>Overview</h2>
+<p>In this article we will take a step back from my typical technical discussions and how-to guides to think about the path that lies ahead of us, in our industry. Today we have a very polarizing environment, similar in fact to the US political system.  On one side you have extremely customized on-premise environments that serve specific purpose or business niches but on the whole are hard, if not impossible to maintain and very costly. On the other side you have generic public cloud, infrastructure that always works (well almost, nothing is perfect), scales and is available at click of a button with predictable pricing structure but doesn't fit specific purpose by default.</p>
+<p>The industry has for many years recognized these worlds were growing further apart and defined the solution as hybrid cloud management to manage them or even bridge the worlds. But gluing two polarized worlds together was only ever destined to fail. Hybrid cloud, which often drags with it the management, is dead. I think more are interested in talking about multi-cloud and I see multi-cloud replacing what hybrid cloud once stood for. I see container platforms providing the glue, management platforms once promised.</p>
+<p>The same battle purpose built vs generic repeats itself over and over in all facets of our lives. The truth is we need both. In this article we will explore a new thought or idea, called niche clouds which could provide a purpose built cloud of the future.</p>
+<p><!--more--></p>
+<h2>What is a niche cloud?</h2>
+<p>In short a cloud built for purpose composed of multiple generic clouds.  Those generic clouds are likely a combination of Google, Microsoft, Amazon and maybe on-premise clouds or those from third parties. A niche cloud would provide services to a market segment or business vertical such as retail, energy, travel, logistics, insurance, banking, manufacturing and so on. It would not only provide the business processes and methodology but also security, certification and regulatory needs those industries require.</p>
+<p>I believe in the future organizations will get their IT from niche clouds not generic ones, probably most will be public. I believe the current public clouds will provide the basis for building such niche clouds.</p>
+<p><img class="alignnone  wp-image-12571" src="{{ site.baseurl }}/assets/2018/10/niche_clouds.png" alt="niche_clouds" width="1288" height="695" /></p>
+<h2>Who will build niche clouds?</h2>
+<p>The market segment leaders. The knowledge to build the niche clouds is in the business verticals. They understand their business processes and requirements much better than one of the generic cloud providers. If you want infrastructure for a Bank for example, image a cloud that was not only certified but also met all regulatory compliance banks need while also providing capabilities or features tailored to banks.</p>
+<h2>The case for niche clouds</h2>
+<p>Again, today we have highly customized, hard to maintain, on-premise infrastructure environments and highly generic public clouds.  The choices and experiences couldn't be more extreme.</p>
+<p>Looking into the future, I think the generic cloud is pretty much saturated and done very well by Amazon, Google and Microsoft. If you aren't them and you are doing a generic cloud, you are in the wrong business. Hence the move to purpose built or niche clouds.</p>
+<p>The question is what happens to the highly customized on-premise environments? We all know they aren't sustainable, scalable or maintainable in their current form. But the purpose they provide is of value. Logically speaking we also know the public clouds can only ever be generic, serving the masses. They don't have the deep business understanding and knowledge to add market segment purpose to their clouds even if they wanted that. I am convinced business operations can be provided as-a-service and what history tells us, anything that can be provided as-a-service, will be.</p>
+<p>If you follow my argument then the natural conclusion is someone will build purpose built services for specific market segments and those services will be public and consumed by others. The only question is how fast will this happen and who will do it?</p>
+<h2>Three Steps to start niche cloud journey?</h2>
+<p><strong>Step One: Everything built with an API and external service consumption in mind.</strong></p>
+<p>The good news here, this is already happening, just not enough. Fortunately Jeff Bezos provided us a mandate on how to transition to an everything-as-a-service company. Let's face it, Amazon didn't get to where they are by accident. Many might question, well it is probably too late. No it isn't, very few companies in the world have been able to do this, likely because of their legacy and the inability to abstract it away. Then again Amazon also has legacy by now.</p>
+<p>Jeff Bezos mandate from 2002.</p>
+<ol>
+<li><em>All teams will henceforth expose their data and functionality through service interfaces.</em></li>
+<li><em>Teams must communicate with each other through these interfaces.</em></li>
+<li><em>There will be no other form of interprocess communication allowed: no direct linking, no direct reads of another team’s data store, no shared-memory model, no back-doors whatsoever. The only communication allowed is via service interface calls over the network.</em></li>
+<li><em>It doesn’t matter what technology they use. HTTP, Corba, Pubsub, custom protocols — doesn’t matter.</em></li>
+<li><em>All service interfaces, without exception, must be designed from the ground up to be externalizable. That is to say, the team must plan and design to be able to expose the interface to developers in the outside world. No exceptions.</em></li>
+<li><em>Anyone who doesn’t do this will be fired.</em></li>
+<li><em>Thank you; have a nice day!</em></li>
+</ol>
+<p><strong>Step two: Start small but determine your purpose, value, consumer, build it from what already exists in public cloud, start over on-premise and put everything in containers.</strong></p>
+<p>The easiest thing to do is start leveraging public clouds, since they already provide basic infrastructure at scale. It may also be desired to have an on-premise cloud. If so that effort should be done in parallel and should be done from scratch. OpenStack is the only technology that to me makes any sense on-premise. Maybe even a scaled down OpenStack, just consisting of Ironic, Nova and few other core services allowing you to provision metal. On top of all cloud platforms: public or on-premise, run a container platform and everything inside containers. Here you will definitely want a consistent K8s, that is available across all clouds. This will allow consistent deployment experience for all applications regardless of cloud and also abstract infrastructure away entirely.</p>
+<p><strong>Step three: Win the war for talent, or at least don't lose it!</strong></p>
+<p>Those bright young engineers you so badly want, are unfortunately smart enough to know, you don't change an oil tanker into a speed boat. You build a fleet of speed boats instead. This gives further credence to starting over. It took me a while to come to grips that existing IT environments, legacy, needs to just rot away in the corner somewhere until being decommissioned. If you try to make your ugly Datacenter beautiful, you will be doing it mostly with archaeologists, that see beauty, in what we all know is ugly. This means making waves, not all with follow the vision, many won't and many won't want to change. But what choice is there really? Keep on doing what we are doing all leads to same place, only now it is so much closer.</p>
+<h2>Summary</h2>
+<p>In this article we discussed where our industry may be headed. Public clouds are building blocks and should, provide consistent infrastructure layers where we need it, when we need it. But, in future most likely will consume purpose built clouds, an additional layer that differentiates clouds, along possibly market segments. Today most organizations are at a crossroads. They have what they have on-premise and are trying to adapt public cloud. Organizations need to address and start driving toward the future. Most of what exists today on-premise clearly needs to be maintained but a new platform must be built, there is no hope in some bridge or magic that will take what exists and make it future-ready. My advice is re-platform, build new applications or services and don't re-write the existing ones, instead abstract them away into obsoleteness, as is possible. Organizations should build everything as-a-service or not build anything at all. Application should all run in containers, regardless of big or small. Hopefully you enjoyed this article, please share your views and suggestions?</p>
+<p>(c) 2018 Keith Tenzer</p>

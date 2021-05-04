@@ -1,0 +1,111 @@
+---
+layout: post
+title: Governing the Cloud with CloudForms
+date: 2015-07-14 15:48:00.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- CloudForms
+tags:
+- Cloud
+- cloud management
+- governance
+- ManageIQ
+- Security
+meta:
+  _edit_last: '63054820'
+  geo_public: '0'
+  _wpas_skip_9542380: '1'
+  _publicize_job_id: '12723000170'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2015/07/14/governing-the-cloud-with-cloudforms/"
+---
+<h3>Overview</h3>
+<p>In a previous <a href="http://keithtenzer.com/2015/01/14/to-cloud-or-not-to-cloud-that-is-the-question/">article</a> it was stated that <span style="text-decoration:underline;"><em>cloud in not a technology but rather an architectural methodology of resource governance that utilizes underlying virtualization technologies</em></span>. Since cloud is more about the methodology, the technology platforms such as VMware vCenter, Red Hat Virtualization Management (RHEVM), Microsoft System Center, Amazon EC2 and OpenStack can change as application requirements or life cycles change. An application may start on a virtualization platform like VMware but over time move to a cloud platform such as OpenStack. It could even have components serviced by both. This is the exact concept behind what Gartner talks about when they refer to <a href="http://www.gartner.com/it-glossary/bimodal">Bi-Modal IT</a>. Gartner also says 50% of companies will screw this up. A bridge is definitely needed for managing applications between these various platforms. Red Hat CloudForms is exactly that bridge. It allows us to create an abstraction above the virtualization platforms so that governance and business process can remain consistent across the cloud.<br />
+<!--more-->In this article we will take a look at how to setup governance of cloud resources using CloudForms. If you are new to CloudForms I would suggest reading this <a href="http://keithtenzer.com/2015/01/21/red-hat-cloudforms-overview-and-setup/">article </a>to get a proper introduction.</p>
+<p>Before we get into creating policies that define resource governance in the cloud, we need to enable a few advanced features in CloudForms. "Capacity and Utilization" is needed for more detailed reporting and "SmartState Analysis" is required to get visibility inside virtual machines.</p>
+<h3>Configure Capcity and Utilization</h3>
+<p>CloudForms connects to infrastructure or cloud providers in order to report capacity and utilization. Therefore it is important to ensure the provider itself is collecting and reporting information. In this case we will configure Red Hat Enterprise Virtualization Management (RHEVM) provider to display capacity and utilization in CloudForms. Some steps are of course provider specific, in this case RHEVM specific.</p>
+<h4>Configure RHEVM</h4>
+<p>In RHEVM we need to configure reporting database user and allow remote access to the database.</p>
+<pre style="padding-left:30px;"><code>#psql -U postgres CREATE ROLE newuser LOGIN UNENCRYPTED PASSWORD 'newuserpassword' SUPERUSER VALID UNTIL 'infinity'; \q</code></pre>
+<pre style="padding-left:30px;"><code>#iptables -I INPUT -p tcp -m tcp --dport 5432 -j ACCEPT
+#service  iptables  save</code><code></code></pre>
+<pre style="padding-left:30px;">#vi /var/lib/pgsql/data/pg_hba.conf
+host    all      all    0.0.0.0/0     md5</pre>
+<pre style="padding-left:30px;"><code>#vi /var/lib/pgsql/data/postgresql.conf
+</code><code>listen_addresses  =  '*'
+</code></pre>
+<pre style="padding-left:30px;"><code>#service  postgresql  reload
+</code></pre>
+<h4>Configure CloudForms</h4>
+<p>Once our reporting user and provider database is configured it is time to enable capacity and utilization in CloudForms.</p>
+<p>Ensure all server roles are enabled except "Database Synchronization" and "RHN Mirror".</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/07/cf_settings.jpg"><img class="  wp-image-1062 alignleft" src="{{ site.baseurl }}/assets/2015/07/cf_settings.jpg?w=300" alt="CF_SETTINGS" width="948" height="474" /></a></p>
+<p>&nbsp;</p>
+<p>Under "Configure-&gt;Configure" set the capacity and utilization policy for the CloudForms region. In this case we will enable all clusters and datastores.</p>
+<p><a style="line-height:1.5;" href="https://keithtenzer.files.wordpress.com/2015/07/cf_addcapacity_and_util_2.jpg"><img class="alignnone  wp-image-1051" src="{{ site.baseurl }}/assets/2015/07/cf_addcapacity_and_util_2.jpg?w=300" alt="CF_ADDCAPACITY_AND_UTIL_2" width="956" height="188" /></a></p>
+<h3>Configure Smart State Analysis</h3>
+<p>SmartState analysis allows us to look inside virtual machines. CloudForms does this by mounting datastores and peering inside the virtual disks. CloudForms is able to see user accounts, installed packages and configuration files for given virtual machine. This data enables us to create resource governance policies as you will see later.</p>
+<p>Under "Configuration-&gt;Configuration-&gt;Settings" edit the zone and enter IP of the CloudForms appliance you want to act as smart proxy. This is the system that will mount and connect to virtual machines for SmartState analysis. As such the CloudForms appliance requires access to shared storage used for datastores.</p>
+<p><code><a href="https://keithtenzer.files.wordpress.com/2015/07/cf_smart_proxy.jpg"><img class="alignnone  wp-image-1053" src="{{ site.baseurl }}/assets/2015/07/cf_smart_proxy.jpg?w=300" alt="CF_SMART_PROXY" width="948" height="452" /></a></code></p>
+<p>Finally the last step is to make CloudForms aware of what virtual machines are hosting CloudForm appliances. Under "Infrastructure-&gt;Virtual Machines" select appropriate virtual machine and edit management engine relationship. You can then match the virtual machine with the appropriate CloudForms engine. Note: this is new in CloudForms 3.2. Previously you would configure this under "Configure-&gt;Configure-&gt;Smart Proxies".</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_smart_proxy_2.jpg"><img class="alignnone  wp-image-1054" src="{{ site.baseurl }}/assets/2015/07/cf_smart_proxy_2.jpg?w=300" alt="CF_SMART_PROXY_2" width="949" height="465" /></a></code></p>
+<p>At this point we have configured both capacity and utilization in addition to SmartState analysis. You can now gather SmartState information about hosts and virtual machine by selecting "Perform SmartState Analysis" under configuration of host or virtual machine. Ideally you would create a schedule that runs the SmartState analysis on a regular interval for all hosts and virtual machines. You could also however create a control policy that runs SmartState analysis whenever hosts or virtual machines are started.</p>
+<h3>Governance Policies</h3>
+<p>CloudForms has two types of governance policies: compliance and control. Compliance policies are scheduled or run manually and check the compliance state of hosts or virtual machines. If a host or virtual machine is found out of compliance an action can be taken. Control policies differ only slightly in that a control policy is run based on an event occurring, so these are automated policies based on events where compliance policies are manually operated or scheduled via the administrator.</p>
+<p>This may be a bit confusing at first but let me give an example. Lets suppose you want to protect against a known security vulnerability in virtual machines. You have two options and the only difference really is when do you check for vulnerability? If you check at a given time decided by administrator you would create compliance policy. If you check based on event happening like the virtual machine starting you would create a control policy.</p>
+<h4>CloudForms Terminology</h4>
+<p>Below is terminology relating to policies in CloudForms:</p>
+<p><strong>Policy Profile</strong> - Grouping of policies that can be applied to hosts or virtual machines.</p>
+<p><strong>Policy</strong> - Defines conditions and actions. Can be triggered by user in case of compliance policy or event in case of control policy.</p>
+<p><strong>Condition</strong> - Tests for a desired or non-desired state. Can be true or false. Conditions are used to trigger actions.</p>
+<p><strong>Action</strong> - Triggered based on condition matching true or false.</p>
+<p><strong>Event</strong> - Only relating to control policy, this is what triggers the control policy to execute.</p>
+<h4>Create Compliance Policy</h4>
+<p>In this example we will create a compliance policy that checks if the firewall is disabled on hypervisor hosts. If the firewall is disabled the condition would be true and an action will set those hosts to non-compliant.</p>
+<p>Under "Control-&gt;Explorer" select the policies accordion. Create a new policy called "Check Firewall".</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_add_policy.jpg"><img class="alignnone  wp-image-1042" src="{{ site.baseurl }}/assets/2015/07/cf_add_policy.jpg?w=300" alt="CF_ADD_POLICY" width="949" height="465" /></a></code></p>
+<p>Next select the policy and add a new condition. Conditions allow us to check for state, in this case the state being that the firewall is disabled. You can have multiple conditions in an expression but in this example we just need one. Select field and "Host / Node.OS:Firewall Rules Active". Select false which means if the firewall is not active, the condition is true. Click the check mark to add the condition to the expression box.</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_add_condition_1.jpg"><img class="alignnone  wp-image-1043" src="{{ site.baseurl }}/assets/2015/07/cf_add_condition_1.jpg?w=300" alt="CF_ADD_CONDITION_1" width="950" height="453" /></a></code></p>
+<p>The condition should now appear in the expression box and can now be saved.</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_add_condition_2.jpg"><img class="alignnone  wp-image-1044" src="{{ site.baseurl }}/assets/2015/07/cf_add_condition_2.jpg?w=300" alt="CF_ADD_CONDITION_2" width="950" height="456" /></a></code></p>
+<p>Next we need to create a policy profile. This is simply a grouping of policies that we can apply to a host or virtual machine. In "Control-&gt;Explorer" select the policy profile accordion and under configuration dropdown add a new policy profile. You can give it a name "RHEV Hypervisor" and add policies by moving them from left to right.</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_policy_profile.jpg"><img class="alignnone  wp-image-1045" src="{{ site.baseurl }}/assets/2015/07/cf_policy_profile.jpg?w=300" alt="CF_POLICY_PROFILE" width="950" height="459" /></a></code></p>
+<p>Once we have a policy profile defined we can add it to the hypervisor hosts. Under "Infrastructure-&gt;Hosts" select the hosts and under policy dropdown select manage policies.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/07/cf_policy_run.jpg"><img class="alignnone  wp-image-1047" src="{{ site.baseurl }}/assets/2015/07/cf_policy_run.jpg?w=300" alt="CF_POLICY_RUN" width="952" height="257" /></a></p>
+<p>Now we can enable policy profiles on the selected hosts.</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_apply_policy.jpg"><img class="alignnone  wp-image-1046" src="{{ site.baseurl }}/assets/2015/07/cf_apply_policy.jpg?w=300" alt="CF_APPLY_POLICY" width="953" height="308" /></a></code></p>
+<p>We can test the compliance policy by selecting the "check compliance of last known configuration" option from the host policy dropdown. When clicking on the host we can see if it is compliant under the compliance section.</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_compliance_status.jpg"><img class="alignnone  wp-image-1048" src="{{ site.baseurl }}/assets/2015/07/cf_compliance_status.jpg?w=300" alt="CF_COMPLIANCE_STATUS" width="950" height="456" /></a></code></p>
+<p>In this case our host is not compliant because the firewall is disabled.</p>
+<pre style="padding-left:30px;"># systemctl status iptables
+iptables.service - IPv4 firewall with iptables
+ Loaded: loaded (/usr/lib/systemd/system/iptables.service; disabled)
+ Active: inactive (dead)</pre>
+<h4>Create Control Policy</h4>
+<p>As mentioned control policies are not that much different than compliance policies, they are simply driven from events. In this example we will do same check to see if firewall is enabled, only this time with control policy. Everytime a host is started and connected we will check if firewall is disabled. If the firewall is disabled we will have an action write to the audit log. Again both control and compliance policies can do same actions only difference is the trigger, in this case an event.</p>
+<p>Under "Control-&gt;Explore" policies accordion select control policy and create a new control policy for host.</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_control_policy_1.jpg"><img class="alignnone  wp-image-1036" src="{{ site.baseurl }}/assets/2015/07/cf_control_policy_1.jpg?w=300" alt="CF_CONTROL_POLICY_1" width="943" height="456" /></a></code></p>
+<p>Since we are using the same condition to check if firewall is disabled we can simply edit condition and select the condition we already created. All policies can leverage same conditions.</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_control_policy_2.jpg"><img class="alignnone  wp-image-1037" src="{{ site.baseurl }}/assets/2015/07/cf_control_policy_2.jpg?w=300" alt="CF_CONTROL_POLICY_2" width="942" height="452" /></a></code></p>
+<p>Next we need to tell CloudForms what event will drive the policy into action. Select the policy and under the configuration dropdown "edit policy event assignments". In this example our event is the starting of a host.</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_control_policy_3.jpg"><img class="alignnone  wp-image-1038" src="{{ site.baseurl }}/assets/2015/07/cf_control_policy_3.jpg?w=300" alt="CF_CONTROL_POLICY_3" width="936" height="446" /></a></code></p>
+<p>Under "Host Connect" event we can add an action. In this case to generate an audit log message. Under configuration dropdown select "edit action for this policy event". Select "generate audit event" if the conditions are true, meaning the firewall is in fact disabled.</p>
+<p><code> <a href="https://keithtenzer.files.wordpress.com/2015/07/cf_control_policy_4.jpg"><img class="alignnone  wp-image-1039" src="{{ site.baseurl }}/assets/2015/07/cf_control_policy_4.jpg?w=300" alt="CF_CONTROL_POLICY_4" width="935" height="449" /></a></code></p>
+<p>Finally under "Control-Explore" policy profile accordion we can add our new control policy to the existing profile policy "RHEV Hypervisor".</p>
+<p><code><a href="https://keithtenzer.files.wordpress.com/2015/07/cf_control_policy_5.jpg"><img class="alignnone  wp-image-1041" src="{{ site.baseurl }}/assets/2015/07/cf_control_policy_5.jpg?w=300" alt="CF_CONTROL_POLICY_5" width="938" height="450" /></a></code></p>
+<p>In order to test the control policy I can simply restart a host. Once host is restarted the control policy will automatically run and if the firewall is disabled an event will be written in the audit log. The audit log can be viewed under "Configure-&gt;Configure" diagnostics accordion.</p>
+<pre style="padding-left:30px;"><code>[2015-07-12T00:01:31.139400 #6530:af7ea4]  INFO -- Success: MIQ(PolicyProfiles.profile_edit) userid: [admin] - [11fe79f2-2815-11e5-9d99-001a4aa04b00] Record updated (policies:[{"Host / Node Compliance: Check Firewall"=&gt;1000000000003}] to [{"Host / Node Compliance: Check Firewall"=&gt;1000000000003, "Host / Node Control: Generate Audit Event for Firewall"=&gt;1000000000006}]) </code></pre>
+<h3>Conclusion</h3>
+<p>In this article we have seen how to use Red Hat CloudForms to create both compliance and control policies that can govern our cloud infrastructure. Regardless of if your cloud consists of VMware vCenter, RHEV, Microsoft Systems Center, Amazon EC2 or even OpenStack common policies that define cloud governance can rule them all. The true power of CloudForms is allowing cloud administrators to build an abstraction layer around virtualization platforms that enables cloud governance. Regardless of what virtualization platform one uses, the policies should remain constant across all infrastructure. This is truly the only way to govern a cloud and create a standard operating environment. Hopefully you have found the information and topic discussed in this article informative. This is only of course the tip of the iceberg, but if it has gained your interest, I certainly implore you to consider looking into cloud management with CloudForms.</p>
+<p>Happy cloud governance and rest easy with CloudForms!</p>
+<p>(c) 2015 Keith Tenzer</p>

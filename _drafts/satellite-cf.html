@@ -1,0 +1,67 @@
+---
+layout: post
+title: Satellite + CF
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta: {}
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p>create template</p>
+<pre><code># rm -f /etc/udev/rules.d/70-persistent-net.rules</code></pre>
+<p>&nbsp;</p>
+<p>#vi /etc/sysconfig/network-scripts-ifcfg-eth0</p>
+<pre><code>DEVICE=eth0
+BOOTPROTO=dhcp
+ONBOOT=yes</code></pre>
+<p>&nbsp;</p>
+<pre><code># subscription-manager unsubscribe --all
+# subscription-manager unregister
+# subscription-manager clean</code></pre>
+<p>&nbsp;</p>
+<pre><code># rm -rf /etc/ssh/ssh_host_*</code></pre>
+<p>in VM install rhev agent tools. Needed to get host info like IP address in RHEV console.</p>
+<pre><code>subscription-manager repos --enable=rhel-7-server-rh-common-rpms</code></pre>
+<pre><code>yum install -y rhevm-guest-agent-common</code></pre>
+<p>&nbsp;</p>
+<pre><code>systemctl start ovirt-guest-agent.service</code></pre>
+<pre><code>systemctl enable ovirt-guest-agent.service</code></pre>
+<p>&nbsp;</p>
+<p>From CloudForms copy ssh-key</p>
+<p>[root@cfme ~]# ssh-keygen</p>
+<p>[root@cfme ~]# ssh-copy-id 192.168.0.100</p>
+<p>&nbsp;</p>
+<p>Set Autosign of Puppet certs</p>
+<p>#vi /etc/puppet/puppet.conf</p>
+<p>Under [master] and [main] sections</p>
+<p>autosign = true</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

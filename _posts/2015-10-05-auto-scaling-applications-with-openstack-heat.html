@@ -1,0 +1,333 @@
+---
+layout: post
+title: Auto Scaling Applications with OpenStack Heat
+date: 2015-10-05 12:14:07.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags:
+- Auto-Scaling
+- Ceilometer
+- HA-PROXY
+- Heat
+- Kilo
+- LBAAS
+- Load Balancer
+- OpenStack
+meta:
+  _edit_last: '63054820'
+  geo_public: '0'
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6056773155790295040&type=U&a=-oAK
+  _wpas_skip_9542380: '1'
+  _publicize_job_id: '15496466251'
+  _publicize_done_9423386: '1'
+  _wpas_done_9468659: '1'
+  _wpas_skip_9468659: '1'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2015/10/05/auto-scaling-applications-with-openstack-heat/"
+---
+<h3><a href="https://keithtenzer.files.wordpress.com/2015/10/goldfish_bowl_2.png"><img class="alignnone size-full wp-image-1324" src="{{ site.baseurl }}/assets/2015/10/goldfish_bowl_2.png" alt="goldfish_bowl_2" width="250" height="288" /></a></h3>
+<h3>Overview</h3>
+<p>In this article we will look at how to build a auto scaling application in OpenStack using Heat. This article builds on the following previous articles:</p>
+<p><a href="http://keithtenzer.com/2015/09/01/openstack-kilo-lab-installation-and-configuration-guide/">OpenStack Kilo Setup and Configuration</a><br />
+<a href="http://keithtenzer.com/2015/09/02/auto-scaling-applications-with-openstack/">Auto Scaling Instances with OpenStack</a><br />
+<!--more--><br />
+As discussed in previous articles, Heat is the orchestration framework that not only automates provisioning but also provides policies around auto scaling. This article will build on <a href="http://keithtenzer.com/2015/09/02/auto-scaling-applications-with-openstack/">previous</a> article that showed how to automatically scale up or down instances. Here we will take things one step further and scale-up as well as scale-down a simple PHP web application. In addition to using Ceilometer to determine when a application should be scaled based on CPU load, Neutron will be used to provide not only networking but also Load Balancer As-a-Service (LBAAS). While you can of course use an external load balancer, out-of-the-box OpenStack uses ha-proxy.</p>
+<p>You can get access to Heat templates below or directly from GitHub: <a href="https://github.com/ktenzer/openstack-heat-templates">https://github.com/ktenzer/openstack-heat-templates</a>.</p>
+<h3>Update Ceilometer Collection Interval</h3>
+<p>By default Ceilometer will collect CPU data from instances every 10 minutes. For this example we want to change that to 60 seconds. Change the interval to 60 in the pipeline.yaml file and restart OpenStack services.</p>
+<pre style="padding-left:30px;">#vi /etc/ceilometer/pipeline.yaml</pre>
+<p>[code language="java"]</p>
+<p>- name: cpu_source<br />
+interval: 60<br />
+meters:<br />
+- &amp;amp;amp;quot;cpu&amp;amp;amp;quot;<br />
+sinks:<br />
+- cpu_sink</p>
+<p>[/code]</p>
+<pre style="padding-left:30px;">#openstack-service restart</pre>
+<h3>Heat Stack Environment</h3>
+<p>The Heat stack environment describes the unit we are dealing with and the unit of scale. The environment usually contains one or more instances and their dependencies. In this case the environment is a single instance that is a member of a load balancer. Metadata is used to create an association between all instances that are part of the stack template. This is important for metering and determining scaling events.</p>
+<pre style="padding-left:30px;">#vi /etc/heat/templates/lb-env.yaml</pre>
+<pre>heat_template_version: 2014-10-16
+description: A load-balancer server
+parameters:
+  image:
+    type: string
+    description: Image used for servers
+  key_name:
+    type: string
+    description: SSH key to connect to the servers
+  flavor:
+    type: string
+    description: flavor used by the servers
+  pool_id:
+    type: string
+    description: Pool to contact
+  user_data:
+    type: string
+    description: Server user_data
+  metadata:
+    type: json
+  network:
+    type: string
+    description: Network used by the server
+
+resources:
+  server:
+    type: OS::Nova::Server
+    properties:
+      flavor: {get_param: flavor}
+      image: {get_param: image}
+      key_name: {get_param: key_name}
+      metadata: {get_param: metadata}
+      user_data: {get_param: user_data}
+      networks:
+        - port: { get_resource: port }
+
+  member:
+    type: OS::Neutron::PoolMember
+    properties:
+      pool_id: {get_param: pool_id}
+      address: {get_attr: [server, first_address]}
+      protocol_port: 80
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      network: {get_param: network}
+      security_groups:
+        - base
+
+outputs:
+  server_ip:
+    description: IP Address of the load-balanced server.
+    value: { get_attr: [server, first_address] }
+  lb_member:
+    description: LB member details.
+    value: { get_attr: [member, show] }
+</pre>
+<h3>Heat Stack Template</h3>
+<p>The below heat stack template is used to create the Heat environment dependencies and determine auto scaling policies. In this example we are creating a load balancer and using already existing networks for tenant as well as Floating IP. The scale up and down policies are triggered by Ceilometer events based on CPU utilization. You will need to replace the information under parameters with your own information from your environment.</p>
+<pre style="padding-left:30px;">#vi /root/lb-webserver-fedora.yaml</pre>
+<pre>heat_template_version: 2014-10-16
+description: AutoScaling Fedora 22 Web Application
+parameters:
+  image:
+    type: string
+    description: Image used for servers
+    default: Fedora 22
+  key_name:
+    type: string
+    description: SSH key to connect to the servers
+    default: admin
+  flavor:
+    type: string
+    description: flavor used by the web servers
+    default: m2.tiny
+  network:
+    type: string
+    description: Network used by the server
+    default: private
+  subnet_id:
+    type: string
+    description: subnet on which the load balancer will be located
+    default: 9daa6b7d-e647-482a-b387-dd5f855b88ef
+  external_network_id:
+    type: string
+    description: UUID of a Neutron external network
+    default: db17c885-77fa-45e8-8647-dbb132517960
+
+resources:
+  webserver:
+    type: OS::Heat::AutoScalingGroup
+    properties:
+      min_size: 1
+      max_size: 3
+      cooldown: 60
+      desired_capacity: 1
+      resource:
+        type: file:///etc/heat/templates/lb-env.yaml
+        properties:
+          flavor: {get_param: flavor}
+          image: {get_param: image}
+          key_name: {get_param: key_name}
+          network: {get_param: network}
+          pool_id: {get_resource: pool}
+          metadata: {"metering.stack": {get_param: "OS::stack_id"}}
+          user_data:
+            str_replace:
+              template: |
+                #!/bin/bash -v
+                yum -y install httpd php
+                systemctl enable httpd
+                systemctl start httpd
+                cat &lt; /var/www/html/hostname.php
+                <!--?php echo "Hello, My name is " . php_uname('n'); ?-->
+                EOF
+              params:
+                hostip: 192.168.122.70
+                fqdn: sat6.lab.com
+                shortname: sat6
+
+  web_server_scaleup_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: {get_resource: webserver}
+      cooldown: 60
+      scaling_adjustment: 1
+
+  web_server_scaledown_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: {get_resource: webserver}
+      cooldown: 60
+      scaling_adjustment: -1
+
+  cpu_alarm_high:
+    type: OS::Ceilometer::Alarm
+    properties:
+      description: Scale-up if the average CPU &gt; 95% for 1 minute
+      meter_name: cpu_util
+      statistic: avg
+      period: 60
+      evaluation_periods: 1
+      threshold: 95
+      alarm_actions:
+        - {get_attr: [web_server_scaleup_policy, alarm_url]}
+      matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
+      comparison_operator: gt
+
+  cpu_alarm_low:
+    type: OS::Ceilometer::Alarm
+    properties:
+      description: Scale-down if the average CPU &lt; 15% for 60 minutes
+      meter_name: cpu_util
+      statistic: avg
+      period: 60
+      evaluation_periods: 1
+      threshold: 15
+      alarm_actions:
+        - {get_attr: [web_server_scaledown_policy, alarm_url]}
+      matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
+      comparison_operator: lt
+
+  monitor:
+    type: OS::Neutron::HealthMonitor
+    properties:
+      type: TCP
+      delay: 5
+      max_retries: 5
+      timeout: 5
+
+  pool:
+    type: OS::Neutron::Pool
+    properties:
+      protocol: HTTP
+      monitors: [{get_resource: monitor}]
+      subnet_id: {get_param: subnet_id}
+      lb_method: ROUND_ROBIN
+      vip:
+        protocol_port: 80
+
+  lb:
+    type: OS::Neutron::LoadBalancer
+    properties:
+      protocol_port: 80
+      pool_id: {get_resource: pool}
+
+  lb_floating:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: {get_param: external_network_id}
+      port_id: {get_attr: [pool, vip, port_id]}
+
+outputs:
+  scale_up_url:
+    description: &gt;
+      This URL is the webhook to scale up the autoscaling group.  You
+      can invoke the scale-up operation by doing an HTTP POST to this
+      URL; no body nor extra headers are needed.
+    value: {get_attr: [web_server_scaleup_policy, alarm_url]}
+  scale_dn_url:
+    description: &gt;
+      This URL is the webhook to scale down the autoscaling group.
+      You can invoke the scale-down operation by doing an HTTP POST to
+      this URL; no body nor extra headers are needed.
+    value: {get_attr: [web_server_scaledown_policy, alarm_url]}
+  pool_ip_address:
+    value: {get_attr: [pool, vip, address]}
+    description: The IP address of the load balancing pool
+  website_url:
+    value:
+      str_replace:
+        template: http://serviceip/hostname.php
+        params:
+          serviceip: { get_attr: [lb_floating, floating_ip_address] }
+    description: &gt;
+      This URL is the "external" URL that can be used to access the
+      website.
+  ceilometer_query:
+    value:
+      str_replace:
+        template: &gt;
+          ceilometer statistics -m cpu_util
+          -q metadata.user_metadata.stack=stackval -p 600 -a avg
+        params:
+          stackval: { get_param: "OS::stack_id" }
+    description: &gt;
+      This is a Ceilometer query for statistics on the cpu_util meter
+      Samples about OS::Nova::Server instances in this stack.  The -q
+      parameter selects Samples according to the subject's metadata.
+      When a VM's metadata includes an item of the form metering.X=Y,
+      the corresponding Ceilometer resource has a metadata item of the
+      form user_metadata.X=Y and samples about resources so tagged can
+      be queried with a Ceilometer query term of the form
+      metadata.user_metadata.X=Y.  In this case the nested stacks give
+      their VMs metadata that is passed as a nested stack parameter,
+      and this stack passes a metadata of the form metering.stack=Y,
+      where Y is this stack's ID.
+</pre>
+<h3>Running Heat Stack</h3>
+<p>Once both the environment and stack yaml files exist we can run the Heat stack. Make sure you also download Fedora 22 cloud image to Glance. Using the CLI we can run the following commands:</p>
+<pre style="padding-left:30px;">#. /root/keystonerc_admin
+#heat stack-create webfarm -f /root/lb-webserver-stack.yaml</pre>
+<p>You can monitor the Heat stack creation in Horizon under "Orchestration-&gt;Stacks-&gt;Webfarm". Horizon provides a very nice Heat stack topology view, where we can see how the environment dependencies fit together and if the deployment of the Heat stack was successful.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/heat_stack_create.png"><img class="alignnone wp-image-1310" src="{{ site.baseurl }}/assets/2015/10/heat_stack_create.png?w=300" alt="heat_stack_create" width="1110" height="603" /></a></p>
+<p>Once the Heat stack has been created we can view the outputs. These provide information on how to interact with the stack. In this case we are showing endpoints for triggering manual scale-up or scale-down events using REST endpoints, the Floating IP (this is IP we can use to access website) used by the Load Balancer and the Ceilometer command for getting the CPU utilization of the entire stack. This is useful for determining if the stack is scaling properly.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/heat_stack_output.png"><img class="alignnone wp-image-1311" src="{{ site.baseurl }}/assets/2015/10/heat_stack_output.png?w=300" alt="Heat_Stack_Output" width="1205" height="506" /></a></p>
+<p>Looking in Horizon under "Network-&gt;Load Balancers" should reveal the Load Balancer.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/load_balancer.png"><img class="alignnone wp-image-1312" src="{{ site.baseurl }}/assets/2015/10/load_balancer.png?w=300" alt="Load_Balancer" width="1205" height="221" /></a></p>
+<p>Once the webserver is running the instance should be listed as an active member of the Load Balancer.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/load_balancer_member_active.png"><img class="alignnone wp-image-1313" src="{{ site.baseurl }}/assets/2015/10/load_balancer_member_active.png?w=300" alt="Load_Balancer_Member_Active" width="1200" height="216" /></a></p>
+<p>We should now be able to access the website URL listed in the Heat Stack Output: http://192.168.122.179/hostname.php.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/running_website.png"><img class="alignnone wp-image-1314" src="{{ site.baseurl }}/assets/2015/10/running_website.png?w=300" alt="running_website" width="1188" height="103" /></a></p>
+<p>Finally we can view the CPU performance data of the entire Heat stack using the Ceilometer command displayed in Heat stack output. Note the metadata associated to each instance that is part of the Heat stack template.</p>
+<pre style="padding-left:30px;">#ceilometer statistics -m cpu_util -q metadata.user_metadata.stack=8f86c3d5-15cf-4a64-b9e8-70215498c046 -p 600 -a avg</pre>
+<h3>Application Auto Scaling</h3>
+<p>There are two ways we can scale the application up. We can either generate sustained 95% CPU utilization or use the REST scale_up_url. In Mozilla you can install "REST Easy" plugin in order to do simple REST operations through the web browser. To use the Heat REST hooks we need to do a post using REST Easy.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/scale_up.png"><img class="alignnone wp-image-1316" src="{{ site.baseurl }}/assets/2015/10/scale_up.png?w=300" alt="SCALE_UP" width="1212" height="299" /></a></p>
+<p>Once the REST call returns a 200, the HTTP status code for successful, we should be able to see the event in Horizon under "Orchestration-&gt;Stacks-&gt;Webfarm-&gt;Events".</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/scale_up_event.png"><img class="alignnone wp-image-1317" src="{{ site.baseurl }}/assets/2015/10/scale_up_event.png?w=300" alt="SCALE_UP_EVENT" width="1205" height="261" /></a></p>
+<p>The scale up event will create an additional webserver and add it to the Load Balancer. This takes a few minutes as the instance needs to be stated and the HTTP server must be installed as well as configured. Once complete, the instance will go to active. You will see that the website URL gets routed through the Load Balancer, to all the webservers in the farm.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/scale_up_load_balancer.png"><img class="alignnone wp-image-1318" src="{{ site.baseurl }}/assets/2015/10/scale_up_load_balancer.png?w=300" alt="SCALE_UP_LOAD_BALANCER" width="1210" height="242" /></a></p>
+<p>One thing to be aware of is that the application with scale down automatically if CPU utilization dips below 15% for 60 seconds. You may want to alter thresholds in the Heat stack template to suit your purposes. In addition you can generate load manually by allocating a Floating IP to one of the instances and following these steps:</p>
+<pre style="padding-left:30px;">#ssh -i admin.key fedora@192.168.122.152
+$sudo -i
+#dd if=/dev/zero of=/dev/null &amp;
+#dd if=/dev/zero of=/dev/null &amp;
+#dd if=/dev/zero of=/dev/null &amp;</pre>
+<h3>Summary</h3>
+<p>In this article we have seen how to setup an auto scaling webserver farm using Heat. We have seen how Ceilometer and network services such as a Load Balancer play their important roles. Heat is the brains behind OpenStack, to know OpenStack is to understand it through Heat. The goal of this article is to really demonstrate and learn the strengths of OpenStack. Many organizations I speak with are trying to understand how OpenStack could add value and how it differentiates itself with traditional virtualization. Auto scaling applications is a major use case but it is really about services. Our auto scaling application leverages many services provided to us through OpenStack. Furthermore, OpenStack allows us to abstract processes behind services and that is the real difference maker. Hopefully this article has shed some light and provided insight in better understanding OpenStack use cases. If you have feedback or other interesting use cases, please share.</p>
+<p>Happy OpenStacking!</p>
+<p>(c) 2015 Keith Tenzer</p>

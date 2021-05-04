@@ -1,0 +1,248 @@
+---
+layout: post
+title: Kubernetes Container Orchestration through Java APIs
+date: 2015-05-04 15:04:56.000000000 -07:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Containers
+tags:
+- API
+- Fabric8
+- Java
+- Kubernetes
+- Linux
+- LXC
+meta:
+  _edit_last: '63054820'
+  geo_public: '0'
+  _wpas_skip_9542380: '1'
+  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6001011487211032583&type=U&a=hb7u
+  _wpas_done_9468659: '1'
+  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"pzvfqtzaYA";b:1;}}
+  _wpas_skip_9468659: '1'
+  _publicize_job_id: '11169974844'
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/2015/05/04/kubernetes-container-orchestration-through-java-apis/"
+---
+<h3>Overview</h3>
+<p>In this article we will look at how to drive Kubernetes using Java APIs. More general information about Kubernetes and containers can be found <a href="http://keithtenzer.com/2015/04/15/containers-at-scale-with-kubernetes-on-openstack/">here</a>. Kubernetes itself offers a RESTful API but of course most prefer to use a client that is already handling low-level HTTP protocol operations.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/05/kubernetes_api_architecture2.png"><img class="  wp-image-877 aligncenter" src="{{ site.baseurl }}/assets/2015/05/kubernetes_api_architecture2.png?w=300" alt="Kubernetes_API_Architecture" width="1388" height="782" /></a> <!--more-->It turns out <a href="http://fabric8.io/">Fabric8 </a>is providing an integration and management platform above kubernetes and docker. In addition to integrating container orchestration through Kubernetes, Fabric8 also integrates with OpenShift v3 and Jube. OpenShift v3 exposes Kubernetes extensions such as app templates and builds. These Kubernetes extensions allow the container to be bundled with the application code and thus greatly increase application deployment cycles. Jube is a pure Java implementation of Kubernetes to provide containers to non-Linux world. In this article we will just focus on Kubernetes using the Fabric8 Java API.</p>
+<h3>Setup</h3>
+<p>The easiest way to get access to the Fabric8 Kubernetes Java API is through maven. Both Kubernetes and Fabric8 are changing fast so make sure you update and stay current with versions. The below dependency can be added to your pom.xml file.</p>
+<p>[code language="xml"]</p>
+<p>&lt;dependency&gt;<br />
+   &lt;groupId&gt;io.fabric8&lt;/groupId&gt;<br />
+   &lt;artifactId&gt;kubernetes-api&lt;/artifactId&gt;<br />
+   &lt;version&gt;2.0.37&lt;/version&gt;<br />
+&lt;/dependency&gt;</p>
+<p>[/code]</p>
+<p>After updating the pom.xml you can run maven to add the new dependency to the local maven repository.</p>
+<pre>mvn clean compile</pre>
+<h3>Connection</h3>
+<p>In order to communicate with Kubernetes through the Fabric8 Java API a connection must be established. The Kubernetes API support HTTPS through TLS certificates but in this example we are just using HTTP and no authentication. The ConnectionExample class requires only IP and Port in order to return a kube connection object. By default unless specified the Kubernetes API will be read-only. In oder to get access to the read-write API the following environment parameters must be exported:</p>
+<pre>export KUBERNETES_SERVICE_HOST=192.168.2.14
+export KUBERNETES_SERVICE_PORT=8080</pre>
+<p>[code language="java"]<br />
+package examples;</p>
+<p>import io.fabric8.kubernetes.api.KubernetesClient;<br />
+import io.fabric8.kubernetes.api.KubernetesFactory;</p>
+<p>public class ConnectionExample {<br />
+   private String ip;<br />
+   private String port;</p>
+<p>   public ConnectionExample(String ip, String port) {<br />
+      this.ip= ip;<br />
+      this.port = port;<br />
+   }</p>
+<p>   public KubernetesClient getConnection() {<br />
+      final String URI = &quot;http://&quot; + ip+ &quot;:&quot; + port;<br />
+      final KubernetesClient kubernetes = new KubernetesClient(new KubernetesFactory(URI));</p>
+<p>      return kubernetes;<br />
+   }<br />
+}</p>
+<p>[/code]</p>
+<p>Once we have a Kubernetes connection object we can manage pods, replication controllers and services. We can perform typical RESTFul operations such as get, post, update and delete.</p>
+<h3>Pods</h3>
+<p>A pod is the most granular unit of management in Kubernetes and contains one or more containers that share the same resources. The main operations that can be performed are listing, creating and deleting pods.</p>
+<h4>Listing Pods</h4>
+<p>[code language="java"]<br />
+ public List&lt;KubePodModel&gt; getKubePods() {<br />
+    List&lt;KubePodModel&gt; kubePodList = new ArrayList&lt;KubePodModel&gt;();</p>
+<p>    for (Pod pod : kubernetes.getPods().getItems()) {<br />
+       KubePodModel model = new KubePodModel();</p>
+<p>       model.setId(pod.getId());<br />
+       model.setApiVersion(pod.getApiVersion());<br />
+       model.setCreationTime(pod.getCreationTimestamp());<br />
+       model.setNamespace(pod.getNamespace());<br />
+       model.setPodHostName(pod.getCurrentState().getHost());<br />
+       model.setPodIp(pod.getCurrentState().getPodIP());<br />
+       model.setStatus(pod.getCurrentState().getStatus());</p>
+<p>       kubePodList.add(podModel);</p>
+<p>    }</p>
+<p>    return kubePodModelList;<br />
+ }<br />
+[/code]</p>
+<h4>Creating Pods</h4>
+<p>[code language="java"]</p>
+<p>public void createKubePod(String id, String namespace, List&lt;String&gt; containerPorts, String image, Map&lt;String, String&gt; labels) {</p>
+<p>   Pod pod = new Pod();<br />
+   pod.setId(id);</p>
+<p>   pod.setLabels(labels);<br />
+   PodState desiredState = new PodState();<br />
+   ContainerManifest manifest = new ContainerManifest();</p>
+<p>   Container manifestContainer = new Container();<br />
+   manifestContainer.setName(podId);<br />
+   manifestContainer.setImage(image);</p>
+<p>   List&lt;Port&gt; ports = new ArrayList&lt;Port&gt;();<br />
+   for (String containerInputPort : containerPorts) {<br />
+      CharSequence inputStr = containerInputPort;<br />
+      String patternStr = &quot;(\\S+):(\\S+)&quot;;<br />
+      Pattern pattern = Pattern.compile(patternStr);<br />
+      Matcher matcher = pattern.matcher(inputStr);<br />
+      boolean matchFound = matcher.find();</p>
+<p>      if (matchFound) {<br />
+         int contanierPort = Integer.valueOf(matcher.group(1));<br />
+         String containerProto = matcher.group(2);</p>
+<p>         Port port = new Port();<br />
+         port.setContainerPort(contanierPort);<br />
+         port.setProtocol(containerProto);<br />
+         ports.add(port);<br />
+     }<br />
+   }</p>
+<p>   manifestForContainer.setPorts(ports);</p>
+<p>   List&lt;Container&gt; containers = new ArrayList&lt;&gt;();<br />
+   containers.add(manifestForContainer);<br />
+   manifest.setContainers(containers);</p>
+<p>   desiredState.setManifest(manifest);<br />
+   pod.setDesiredState(desiredState);</p>
+<p>   kubernetes.createPod(pod, namespace);<br />
+}</p>
+<p>[/code]</p>
+<h4>Deleting Pods</h4>
+<p>[code language="java"]</p>
+<p>public void deleteKubePod(String id, String namespace) {<br />
+   kubernetes.deletePod(id, namespace);<br />
+}</p>
+<p>[/code]</p>
+<h3>Replication Controllers</h3>
+<p>A replication controller is a pod that has N replicas. The replication controller ensures the number of pod replicas defined also exists. The replication controller will automatically manage pod deployments.The main operations that can be performed are listing, creating and deleting replication controllers.</p>
+<h4>Listing Replication Controllers</h4>
+<p>[code language="java"]</p>
+<p>public List&lt;ControllerModel&gt; getKubeReplicationControllers() {<br />
+   List&lt;ControllerModel&gt; controllerList = new ArrayList&lt;ReplicationControllerModel&gt;();<br />
+   for (ReplicationController controller : kubernetes.getReplicationControllers().getItems()) {<br />
+      ControllerModel model = new ControllerModel();</p>
+<p>      model.setId(controller.getId());<br />
+      model.setApiVersion(controller.getApiVersion());<br />
+      model.setCreationTime(controller.getCreationTimestamp());<br />
+      model.setReplicas(controller.getCurrentState().getReplicas());</p>
+<p>      controllerList.add(model);<br />
+   }</p>
+<p>   return controllerList;<br />
+}</p>
+<p>[/code]</p>
+<h4>Creating Replication Controllers</h4>
+<p>[code language="java"]</p>
+<p>public void createKubeReplicationController(String id, String namespace, int replicas, Map&lt;String, String&gt; controllerLabels,<br />
+   Map&lt;String, String&gt; selectorLabels, String podId, String image, List&lt;String&gt; containerPorts, Map&lt;String, String&gt; podLabels, String manifestId) {<br />
+   ReplicationController controller = new ReplicationController();<br />
+   controller.setId(id);<br />
+   controller.setNamespace(namespace);<br />
+   controller.setLabels(controllerLabels);</p>
+<p>   PodState podState = new PodState();<br />
+   ReplicationControllerState repState = new ReplicationControllerState();<br />
+   repState.setReplicas(replicas);<br />
+   repState.setReplicaSelector(selectorLabels);</p>
+<p>   PodTemplate podTmpl = new PodTemplate();<br />
+   podTmpl.setLabels(podLabels);</p>
+<p>   ContainerManifest manifest = new ContainerManifest();<br />
+   manifest.setId(manifestId);<br />
+   Container manifestContainer = new Container();<br />
+   manifestContainer.setName(podId);<br />
+   manifestContainer.setImage(image);</p>
+<p>   List&lt;Port&gt; ports = new ArrayList&lt;Port&gt;();<br />
+   for (String containerInputPort : containerPorts) {<br />
+      CharSequence inputStr = containerInputPort;<br />
+      String patternStr = &quot;(\\S+):(\\S+)&quot;;<br />
+      Pattern pattern = Pattern.compile(patternStr);<br />
+      Matcher matcher = pattern.matcher(inputStr);<br />
+      boolean matchFound = matcher.find();</p>
+<p>      if (matchFound) {<br />
+         int contanierPort = Integer.valueOf(matcher.group(1));<br />
+         String containerProtocol = matcher.group(2);</p>
+<p>         Port port = new Port();<br />
+         port.setContainerPort(contanierPort);<br />
+         port.setProtocol(containerProtocol);<br />
+         ports.add(port);<br />
+      }<br />
+   }</p>
+<p>   manifestContainer.setPorts(ports);</p>
+<p>   List&lt;Container&gt; containers = new ArrayList&lt;&gt;();<br />
+   containers.add(manifestContainer);<br />
+   manifest.setContainers(containers);</p>
+<p>   podState.setManifest(manifest);<br />
+   podTmpl.setDesiredState(podState);<br />
+   repState.setPodTemplate(podTmpl);</p>
+<p>   controller.setDesiredState(repState);</p>
+<p>   kubernetes.createReplicationController(controller, namespace);</p>
+<p>}</p>
+<p>[/code]</p>
+<h4>Deleting Replication Controllers</h4>
+<p>[code language="java"]</p>
+<p>public void deleteReplicationController(String id, String namespace) {<br />
+   kubernetes.deleteReplicationController(id, namespace);<br />
+}</p>
+<p>[/code]</p>
+<h3>Services</h3>
+<p>A service exposes an application running in a pod externally using the Kubernetes proxy. It essentially maps public IPs / Ports on Kubernetes Minions (nodes) to internal container IPs / Ports. The main operations that can be performed are listing, creating and deleting services.</p>
+<h4>Listing Services</h4>
+<p>[code language="java"]</p>
+<p>public List&lt;ServiceModel&gt; getKubeServices() {<br />
+   List&lt;ServiceModel&gt; serviceList = new ArrayList&lt;ServiceModel&gt;();<br />
+   for (Service service : kubernetes.getServices().getItems()) {<br />
+       ServiceModel model = new ServiceModel();</p>
+<p>       model.setId(service.getId());<br />
+       model.setApiVersion(service.getApiVersion());<br />
+       model.setCreationTime(service.getCreationTimestamp());<br />
+       model.setIp(service.getPortalIP());<br />
+       model.setPort(service.getPort());<br />
+       model.setProtocol(service.getProtocol());</p>
+<p>       serviceList.add(serviceModel);<br />
+   }</p>
+<p>   return serviceList;<br />
+}</p>
+<p>[/code]</p>
+<h4>Creating Services</h4>
+<p>[code language="java"]</p>
+<p>public void createKubeService(String id, String namespace, int containerPort, int port, List&lt;String&gt; publicIps,<br />
+   Map&lt;String, String&gt; labels, Map&lt;String, String&gt; selectors) {<br />
+   Service service = new Service();</p>
+<p>   IntOrString containerPortObj = new IntOrString();<br />
+   containerPortPojo.setIntVal(containerPort);</p>
+<p>   service.setId(id);<br />
+   service.setContainerPort(containerPortObj);<br />
+   service.setPort(port);<br />
+   service.setPublicIPs(publicIps);<br />
+   service.setLabels(labels);<br />
+   service.setSelector(selectors);</p>
+<p>   kubernetes.createService(service, namespace);<br />
+}</p>
+<p>[/code]</p>
+<h4>Deleting Services</h4>
+<p>[code language="java"]</p>
+<p>public void deleteService(String id, String namespace) {<br />
+   kubernetes.deleteService(id, namespace);<br />
+}</p>
+<p>[/code]</p>
+<h3>Summary</h3>
+<p>Kubernetes and Linux containers are rapidly developing and emerging technologies. We have seen how to easily orchestrate containers in a Kubernetes environment using the Fabric8 Java APIs. Container orchestration is about performing operations on various Kubernetes components such as pods, replication controllers and services. Using the APIs you can easily build Kubernetes functionality into any Java applications. I hope you found this article useful. If you have examples of orchestrating Kubernetes or containers through APIs please share!</p>
+<p>Happy Containerizing!</p>
+<p>(c) 2015 Keith Tenzer</p>

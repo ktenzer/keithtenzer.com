@@ -1,0 +1,138 @@
+---
+layout: post
+title: Iot Meets Gardening
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta:
+  _oembed_12a22cea2b68e3073b4248cc158d91dc: "{{unknown}}"
+  _oembed_86ec79026448203b8d0abed72d3e7742: "{{unknown}}"
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p>https://fedoraproject.org/wiki/Raspberry_Pi</p>
+<p>[root@gw01 ~]# nmcli -p r<br />
+====================================<br />
+Radio switches<br />
+====================================<br />
+WIFI-HW WIFI WWAN-HW WWAN<br />
+------------------------------------<br />
+enabled enabled enabled enabled</p>
+<p>[root@gw01 ~]# dnf install rfkill</p>
+<p>[root@gw01 ~]# rfkill list<br />
+0: phy0: Wireless LAN<br />
+Soft blocked: Yes<br />
+Hard blocked: no</p>
+<p>[root@gw01 ~]# rfkill unblock wlan</p>
+<p>[root@gw01 ~]# systemctl stop NetworkManager</p>
+<p>[root@gw01 ~]# systemctl disable NetworkManager</p>
+<p>[root@gw01 ~]# iwconfig wlan0 mode Ad-Hoc<br />
+[root@gw01 ~]# iwconfig wlan0 essid iot</p>
+<p>[root@gw01 ~]# iwconfig wlan0 key 2178788820</p>
+<p>Setup port forwarding</p>
+<p>[root@gw01 ~]# firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -o eth0 -j MASQUERADE<br />
+[root@gw01 ~]# firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 0 -i wlan0 -o eth0 -j ACCEPT<br />
+[root@gw01 ~]# firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 0 -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT<br />
+[root@gw01 ~]# firewall-cmd --reload</p>
+<p>&nbsp;</p>
+<pre>[root@gw01 ~]# dnf install -y dnsmasq</pre>
+<p>[root@gw01 ~]# vi /etc/dnsmasq.conf</p>
+<pre class=" ">interface=wlan0
+dhcp-range=192.168.1.50,192.168.1.150,12h
+no-resolv
+no-poll</pre>
+<p>[root@gw01 ~]# systemctl start dnsmasq</p>
+<p>[root@gw01 ~]# systemctl enable dnsmasq</p>
+<pre class=" ">firewall-cmd --permanent --zone=public --add-interface=wlan0
+firewall-cmd --permanent --zone=public --add-masquerade
+firewall-cmd --permanent --zone=public --add-service=dhcp
+firewall-cmd --permanent --zone=public --add-service=dns
+firewall-cmd --reload</pre>
+<p>[root@gw01 ~]# vi /etc/sysconfig/network-scripts/ifcfg-Wi-Fi_connection_1</p>
+<p>SSID="iot"<br />
+MODE=Ad-Hoc<br />
+TYPE=Wireless<br />
+BOOTPROTO=none<br />
+DEFROUTE=yes<br />
+IPV4_FAILURE_FATAL=no<br />
+IPV6INIT=no<br />
+IPV6_AUTOCONF=yes<br />
+IPV6_DEFROUTE=yes<br />
+IPV6_PEERDNS=yes<br />
+IPV6_PEERROUTES=yes<br />
+IPV6_FAILURE_FATAL=no<br />
+IPV6_ADDR_GEN_MODE=stable-privacy<br />
+NAME="Wi-Fi connection 1"<br />
+UUID=cb04e387-45f6-48bc-84cd-83d669c9c539<br />
+DEVICE=wlan0<br />
+ONBOOT=yes<br />
+MAC_ADDRESS_RANDOMIZATION=default<br />
+IPADDR=192.168.1.1<br />
+PREFIX=24<br />
+ZONE=public</p>
+<p>Node-red</p>
+<p>[root@gw01 ~]# dnf install npm</p>
+<p>[root@gw01 ~]# npm install -g node-gyp</p>
+<p>&nbsp;</p>
+<pre class="highlight"><code>[root@gw01 ~]# npm install -g --unsafe-perm node-red</code></pre>
+<p>[root@gw01 ~]# node-red</p>
+<p>Webcam</p>
+<p>[root@gw01 ~]# dnf -y install fswebcam</p>
+<p>[root@gw01 ~]# fswebcam --no-banner -r 640x480 image.jpg</p>
+<h3>DHT22 node-red</h3>
+<p>dnf install -y gcc-c++</p>
+<p>wget http://www.airspayce.com/mikem/bcm2835/bcm2835-1.50.tar.gz</p>
+<p>tar xvf bcm2835-1.50.tar.gz</p>
+<p>cd bcm2835-1.50</p>
+<p>./configure</p>
+<p>make CFLAGS='-g -O2 -fPIC'</p>
+<p>make check</p>
+<p>make install</p>
+<p>npm install node-dht-sensor</p>
+<p>npm install node-red-contrib-dht-sensor</p>
+<h3>Create SystemD Script</h3>
+<p>vi /etc/systemd/system/Node-Red.service<br />
+[Unit]<br />
+Description=Node-RED is a tool for wiring together hardware devices, APIs and online services in new and interesting ways.<br />
+After=syslog.target network.target<br />
+Documentation=http://nodered.org/</p>
+<p>[Service]<br />
+Environment="NODE_OPTIONS=--max-old-space-size=128"<br />
+Environment="NODE_RED_OPTIONS=-v"<br />
+ExecStart=/usr/bin/node-red $NODE_OPTIONS red.js $NODE_RED_OPTIONS<br />
+WorkingDirectory=/root/.node-red/<br />
+User=root<br />
+Group=root<br />
+Nice=10<br />
+SyslogIdentifier=Node-RED<br />
+StandardOutput=syslog<br />
+Restart=on-failure<br />
+KillSignal=SIGINT</p>
+<p>[Install]<br />
+WantedBy=multi-user.target</p>
+<p># systemctl enable Node-Red.service</p>
+<p>#systemctl start Node-Red.service</p>
+<h3><strong>Build realtek kernel mod</strong></h3>
+<p>#dnf install -y bc ncurses-devel</p>
+<p>wget https://raw.githubusercontent.com/notro/rpi-source/master/rpi-source<br />
+chmod a+x rpi-source<br />
+sudo apt-get install bc libncurses5-dev<br />
+./rpi-source --skip-gcc<br />
+cd /lib/modules/`uname -r`/build<br />
+ln -sf arm arch/armv7l</p>
+<p>cd /root</p>
+<p>git clone https://github.com/Mange/rtl8192eu-linux-driver</p>
+<p>cd rtl8192eu-linux-driver</p>
+<p>make<br />
+sudo make install<br />
+sudo modprobe 8192eu</p>

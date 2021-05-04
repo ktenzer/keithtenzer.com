@@ -1,0 +1,49 @@
+<h2><img class="alignnone  wp-image-14584" src="/assets/2020/05/ecommerce-subscription-ts-100621375-large.jpg" alt="ecommerce-subscription-ts-100621375-large" width="362" height="240" /></h2>
+<p><em>source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html</em></p>
+<h2>Overview</h2>
+<p>This article will look at the various options available, to do subscription reporting for Red Hat products. Many large organizations sometimes struggle to keep track of what subscriptions are being used, often maintaining their own spreadsheets. This can be very error prone and time consuming. Systems can even be subscribed to the wrong subscriptions, for example a virtual machine running RHEL using a physical subscription. Many Red Hat customers have several different products, not just RHEL and being able to actively inventory the entire subscription landscape is critical.</p>
+<p><!--more--></p>
+<h2>Options for Subscription Reporting</h2>
+<p>There are various options for subscription reporting depending on if you have Satellite (Red Hat Systems Management) or not.</p>
+<p><strong>Subscription Entitlement Report </strong></p>
+<p>Starting with Satellite 6.7 there is now a canned report that is very customizable. This is the recommended way of reporting subscriptions in Satellite 6.7+. Provides granular host level subscription reporting.</p>
+<p>Example of the out-of-the-box entitlement report is <a href="https://gist.github.com/ktenzer/7632ad9f75ba4424b1b59a9e0ba229ea">here</a>.</p>
+<p><strong>Red Hat Discovery Tool</strong></p>
+<p>The discovery tool can do reporting on subscriptions in Satellite and non-Satellite environments. Provides granular host level subscription reporting. This is the recommendation if you don't have Satellite 6.7+ or have systems not subscribing through Satellite. The discovery tool can be installed in a connected or disconnected environment.</p>
+<p>The discovery tool also has an upstream project and is available via the community: <a href="https://github.com/quipucords/quipucords">https://github.com/quipucords/quipucords</a></p>
+<p><strong>Red Hat Subscription Watch</strong></p>
+<p>This is a cloud service offering that can aggregate subscription reporting across various infrastructure or even organizations. Data is sent either from Red Hat Insights or Satellite to a customers portal on cloud.redhat.com. This is a recommended addition to provide additional visibility but does not provide granular information at the host level.</p>
+<p><strong>Subscription Inventory Script</strong></p>
+<p>Provides granular host level subscription reporting for Satellite environments. This is a script not a product so use at your own risk. However this is recommended if you have Satellite 6.6 or below and cannot for whatever reason leverage the Red Hat Discovery tool.</p>
+<p><a href="https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert">https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert</a></p>
+<h2>Using the Satellite Subscription Inventory Script</h2>
+<p>Since the other options are products and well documented, I will focus on showing how to do subscription reporting using the inventory script on RHEL 7. First you will need to deploy a RHEL 7 system.</p>
+<p><strong>Enable Correct RHEL Repos</strong></p>
+<p>First ensure all repositories are disabled and then just enable the rhel-7-server-rpms.</p>
+<pre>$ sudo subscription-manager repos --disable=*
+$ sudo subscription-manager repos --enable=rhel-7-server-rpms</pre>
+<p><strong>Install python 2.6+</strong></p>
+<pre>$ sudo yum install -y python</pre>
+<p><strong>Install Git (Only for connected setup)</strong></p>
+<pre>$ sudo yum install -y git</pre>
+<p><strong>Clone git repository (Only for connected setup)</strong></p>
+<pre>$ git clone https://github.com/RedHatSatellite/sat6Inventory.git</pre>
+<p>If the system isn't connected to the internet then you need to download from the git repository. You can download the script from <a href="https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert">https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert</a> by selecting download. You can then copy the tarball to your system and extract it.</p>
+<p><img class="alignnone  wp-image-14605" src="/assets/2020/05/download.png" alt="download" width="1828" height="484" /></p>
+<p><strong>Change directory</strong></p>
+<pre>cd sat6Inventory</pre>
+<p><strong>Run the inventory script</strong></p>
+<p>You need to pass the admin user, password and the Satellite organization.</p>
+<pre>./sat6Inventory.py -s sat-bc87.rhpds.opentlc.com -l admin -p  \
+-o 'EXAMPLE.COM'</pre>
+<p>The script will output a CSV.</p>
+<pre>$ ls
+<strong>EXAMPLE.COM_inventory_report.csv</strong> LICENSE README.md Sample Report sat6Inventory.py</pre>
+<p>You can now import the script output CSV into a spreadsheet program and manipulate as desired.</p>
+<p>A sample report is also provided <a href="https://github.com/RedHatSatellite/sat6Inventory/blob/product-cert/Sample%20Report/Example_inventory_report.csv">here</a>.</p>
+<h2>Reconciling mismatched entitlements</h2>
+<p>If you have a Satellite environment with RHEL physical and VDC (virtual subscriptions) it is possible that a virtual RHEL host is possibly using a physical instead of virtual subscription. To identify such hosts you can run the below command from your Satellite server.</p>
+<pre>$ sudo foreman-rake katello:virt_who_report</pre>
+<h2>Summary</h2>
+<p>In this article we covered the various options for doing subscription reporting of Red Hat products. We also showed a short hands-on guide for using the inventory script. Hopefully this provided guidance to choose the most appropriate approach to subscription reporting.</p>
+<p>(c) 2020 Keith Tenzer</p>
