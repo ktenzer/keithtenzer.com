@@ -2,8 +2,6 @@
 main:
   - title: "About"
     url: /about/index.html
-  - title: "Contact"
-    url: /contact/index.html
   - title: "Conferences and Events"
     url: /conferences-and-events/index.html
   - title: "Videos"
