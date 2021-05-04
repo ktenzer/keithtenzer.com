@@ -1,0 +1,844 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Detecting Security Vulnerabilities in Docker Container Images - KEITHTENZER.COM</title>
+<meta name="description" content="Overview Containers, especially Docker container images have been on fire of late and it is simple to understand why? Docker container images give your development and operations organizations a major shot of adrenaline. The results are quite impressive. Applications are developed at never before seen speeds and as such organizations are able to deliver innovation to customers much faster. It&#39;s all so easy, just get on Docker Hub, download a container and run it. So why isn&#39;t everyone already doing this? Unfortunately it is not quite that simple. Enterprises have many other requirements such as security. Once IT operations gets involved they typically start asking a lot of questions. Who built this container? How is the container maintained? Who provides support for the software within the container? Does the software running within the container adhere to our security guidelines? How can we run security compliance checks within containers? How do we update software within containers?  Red Hat has stepped up and decided that container security is an area where Red Hat can bring significant value. CloudForms 4 is a cloud management platform. In addition to supporting virtual machines platforms (RHEV, Hyper-V, VMware, OpenStack, Amazon EC2 and Azure) now also supports containers through OpenShift 3 and Atomic Enterprise. CloudForms 4 integrates either directly with OpenShift 3 (PaaS with CI/CD) or Atomic Enterprise (Container IaaS). In fact, CloudForms 4 should work with any container platform that implements Kubernetes by Google as that is basis for both. OpenShift 3 provides additional value on top of Atomic Enterprise around development workflows (CI / CD) and integration with development tooling to build automated pipelines. If you are building applications OpenShift 3 is what you want, period. If you are running containerized Applications then either OpenShift 3 or Atomic Enterprise. As part of integrating with containers CloudForms 4 has a feature called smartstate analysis. Previously this worked only on virtual machines and allowed you to scan software content inside the virtual machine. You could then build security policies and automatically handle compliance events, such as shutting down non-compliant virtual machines. The smartstate analysis feature is now enabled through CloudForms 4, for container workloads. Let&#39;s see how it works! In this article we will show how to connect OpenShift 3 to CloudForms 4 through it&#39;s provider and perform smartstate anylysis for a MySQL Docker container image. Connecting CloudForms 4 to OpenShift 3 As mentioned CloudForms has providers and now with CloudForms 4 there is a OpenShift 3 provider. In order to add the provider we must create a service account in OpenShift 3 and provide CloudForms with a service token from OpenShift. Create JSON for CFME service account [root@ose3-master ~]# vi cfme.json {  &quot;apiVersion&quot;: &quot;v1&quot;,  &quot;kind&quot;: &quot;ServiceAccount&quot;,  &quot;metadata&quot;: {  &quot;name&quot;: &quot;cfme&quot;  } } Ensure you are in the default project of OpenShift 3. Note: Projects in OpenShift map to Kubernetes namespaces. [root@ose3-master ~]# oc new-project management-infra Create the service account using JSON file. [root@ose3-master ~]# oc create -f cfme.json Give the server account cluster-admin role. [root@ose3-master ~]# oadm policy add-cluster-role-to-user cluster-admin system:serviceaccount:management-infra:cfme Get the token name from the service account. [root@ose3-master ~]# oc get sa cfme -o yaml  apiVersion: v1  imagePullSecrets:  - name: cfme-dockercfg-1z8sc  kind: ServiceAccount  metadata:  creationTimestamp: 2015-11-26T12:53:46Z  name: cfme  namespace: default  resourceVersion: &quot;53311&quot;  selfLink: /api/v1/namespaces/default/serviceaccounts/cfme  uid: bb38592b-943c-11e5-924e-525400bca113  secrets:  - name: cfme-token-9cxzf  - name: cfme-dockercfg-1z8sc Get the token itself for authentification. [root@ose3-master ~]# oc describe secret cfme-token-9cxzf Name: cfme-token-9cxzf  Labels: &lt;none&gt;  Annotations: kubernetes.io/service-account.name=cfme,kubernetes.io/service-account.uid=bb38592b-943c-11e5-924e-525400bca113 Type: kubernetes.io/service-account-token Data  ====  token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImNmbWUtdG9rZW4tOWN4emYiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiY2ZtZSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImJiMzg1OTJiLTk0M2MtMTFlNS05MjRlLTUyNTQwMGJjYTExMyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmNmbWUifQ.XH00iOfbXI2jOQNgLVt1jEXp5412bVoCZCqJQ-UR-9iWLJA2ha4E22uc0omq1tZ4xsJRpNaDJzB4g96xH_izQNAFTXWm5R7ESdrGvPBNaK_q6K2mh4C_sVKBCgqQYaq23Yhkan-7dchNCrX2mTPA8tZ7GpW7SRW7jRakhZhD5ljEthFbo8kWsYlreOeVidV3voV__o25425Yn4p6VHYZ5-eGAzieMI6IQvnynDvwZPEkxECX78oyx-8uap_IYCrg1kJUfGezXx05SHeYomOhBLMI7VMs6pHMhVTRGymRBi8aypWjPltzanR3NELKsHOdUx6PAFJ7YPGWkn753nEgHQ Adding OpenShift 3 Provider Once a service account for CloudForms has been created in OpenShift 3 we can add the provider. In CloudForms 4 under Containers add a new provider.  Select OpenShift and copy/paste the token  After a few minutes you should see the container dashboard in CloudForms 4 populate with information. Note: we see Kubernetes constructs such as pods, replicators and services.  Add Security Context Constraints Security context constraints allow OpenShift 3 administrators to control permissions on container pods. In order for CloudForms 4 to perform smartstate analysis on container images it needs super-privileged container access. Create security context constraint YAML file. Ensure you add the cfme service account to list of users. Note: you need to allow privileged containers and host volume plugins as these are needed for smartstate analysis. [root@ose3-master ~]# vi scc_cfme.yaml  kind: SecurityContextConstraints  apiVersion: v1  metadata:    name: scc-admin  allowHostDirVolumePlugin: true  allowPrivilegedContainer: true  runAsUser:    type: RunAsAny  seLinuxContext:    type: RunAsAny  fsGroup:    type: RunAsAny  supplementalGroups:    type: RunAsAny  users:  - system:serviceaccount:management-infra:cfme Create security context constraint. [root@ose3-master ~]# oc create -f scc_cfme.yaml Run Smartstate Analysis At this point everything is in place to run smartstate analysis and peer into individual Docker container images. In this case we will look into a MySQL container image. In CloudForms 4 go to Container Images and find the desired container image.  Here we notice that the packages are 0. This means no smartstate analysis has run. To run smartstate analysis select the option under the configuration dropdown.  After smartstate analysis completes you will see the software packages installed within your container image.  By clicking on the packages you can see all the individual packages and most importantly their versions.  Container image software packages and versions are now known to CloudForms 4. In a future version of CloudForms 4 when active container management is introduced, you should be able to create security compliance policies and define actions in the event of a security violation. To learn more about creating compliance policies in CloudForms see this article that was previously published. Summary In this article we have seen how to enable smartstate analysis in CloudForms 4 in order to peer into container images. Container technology is without question revolutionizing the way we develop and run applications. The only thing standing in it&#39;s way has been security. This is a major step forward in the ability to ensure enterprise security compliance of container environments. Red Hat is focusing greatly on container security and enabling container technology in the enterprise. This is the start of much more to come so stay tuned, buckle up and enjoy the ride! Happy Container Compliance with CloudForms 4 and OpenShift 3! (c) 2015 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Detecting Security Vulnerabilities in Docker Container Images">
+<meta property="og:url" content="https://keithtenzer.com/cloudforms/detecting-security-vulnerabilities-in-docker-container-images/">
+
+
+  <meta property="og:description" content="Overview Containers, especially Docker container images have been on fire of late and it is simple to understand why? Docker container images give your development and operations organizations a major shot of adrenaline. The results are quite impressive. Applications are developed at never before seen speeds and as such organizations are able to deliver innovation to customers much faster. It&#39;s all so easy, just get on Docker Hub, download a container and run it. So why isn&#39;t everyone already doing this? Unfortunately it is not quite that simple. Enterprises have many other requirements such as security. Once IT operations gets involved they typically start asking a lot of questions. Who built this container? How is the container maintained? Who provides support for the software within the container? Does the software running within the container adhere to our security guidelines? How can we run security compliance checks within containers? How do we update software within containers?  Red Hat has stepped up and decided that container security is an area where Red Hat can bring significant value. CloudForms 4 is a cloud management platform. In addition to supporting virtual machines platforms (RHEV, Hyper-V, VMware, OpenStack, Amazon EC2 and Azure) now also supports containers through OpenShift 3 and Atomic Enterprise. CloudForms 4 integrates either directly with OpenShift 3 (PaaS with CI/CD) or Atomic Enterprise (Container IaaS). In fact, CloudForms 4 should work with any container platform that implements Kubernetes by Google as that is basis for both. OpenShift 3 provides additional value on top of Atomic Enterprise around development workflows (CI / CD) and integration with development tooling to build automated pipelines. If you are building applications OpenShift 3 is what you want, period. If you are running containerized Applications then either OpenShift 3 or Atomic Enterprise. As part of integrating with containers CloudForms 4 has a feature called smartstate analysis. Previously this worked only on virtual machines and allowed you to scan software content inside the virtual machine. You could then build security policies and automatically handle compliance events, such as shutting down non-compliant virtual machines. The smartstate analysis feature is now enabled through CloudForms 4, for container workloads. Let&#39;s see how it works! In this article we will show how to connect OpenShift 3 to CloudForms 4 through it&#39;s provider and perform smartstate anylysis for a MySQL Docker container image. Connecting CloudForms 4 to OpenShift 3 As mentioned CloudForms has providers and now with CloudForms 4 there is a OpenShift 3 provider. In order to add the provider we must create a service account in OpenShift 3 and provide CloudForms with a service token from OpenShift. Create JSON for CFME service account [root@ose3-master ~]# vi cfme.json {  &quot;apiVersion&quot;: &quot;v1&quot;,  &quot;kind&quot;: &quot;ServiceAccount&quot;,  &quot;metadata&quot;: {  &quot;name&quot;: &quot;cfme&quot;  } } Ensure you are in the default project of OpenShift 3. Note: Projects in OpenShift map to Kubernetes namespaces. [root@ose3-master ~]# oc new-project management-infra Create the service account using JSON file. [root@ose3-master ~]# oc create -f cfme.json Give the server account cluster-admin role. [root@ose3-master ~]# oadm policy add-cluster-role-to-user cluster-admin system:serviceaccount:management-infra:cfme Get the token name from the service account. [root@ose3-master ~]# oc get sa cfme -o yaml  apiVersion: v1  imagePullSecrets:  - name: cfme-dockercfg-1z8sc  kind: ServiceAccount  metadata:  creationTimestamp: 2015-11-26T12:53:46Z  name: cfme  namespace: default  resourceVersion: &quot;53311&quot;  selfLink: /api/v1/namespaces/default/serviceaccounts/cfme  uid: bb38592b-943c-11e5-924e-525400bca113  secrets:  - name: cfme-token-9cxzf  - name: cfme-dockercfg-1z8sc Get the token itself for authentification. [root@ose3-master ~]# oc describe secret cfme-token-9cxzf Name: cfme-token-9cxzf  Labels: &lt;none&gt;  Annotations: kubernetes.io/service-account.name=cfme,kubernetes.io/service-account.uid=bb38592b-943c-11e5-924e-525400bca113 Type: kubernetes.io/service-account-token Data  ====  token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImNmbWUtdG9rZW4tOWN4emYiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiY2ZtZSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImJiMzg1OTJiLTk0M2MtMTFlNS05MjRlLTUyNTQwMGJjYTExMyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmNmbWUifQ.XH00iOfbXI2jOQNgLVt1jEXp5412bVoCZCqJQ-UR-9iWLJA2ha4E22uc0omq1tZ4xsJRpNaDJzB4g96xH_izQNAFTXWm5R7ESdrGvPBNaK_q6K2mh4C_sVKBCgqQYaq23Yhkan-7dchNCrX2mTPA8tZ7GpW7SRW7jRakhZhD5ljEthFbo8kWsYlreOeVidV3voV__o25425Yn4p6VHYZ5-eGAzieMI6IQvnynDvwZPEkxECX78oyx-8uap_IYCrg1kJUfGezXx05SHeYomOhBLMI7VMs6pHMhVTRGymRBi8aypWjPltzanR3NELKsHOdUx6PAFJ7YPGWkn753nEgHQ Adding OpenShift 3 Provider Once a service account for CloudForms has been created in OpenShift 3 we can add the provider. In CloudForms 4 under Containers add a new provider.  Select OpenShift and copy/paste the token  After a few minutes you should see the container dashboard in CloudForms 4 populate with information. Note: we see Kubernetes constructs such as pods, replicators and services.  Add Security Context Constraints Security context constraints allow OpenShift 3 administrators to control permissions on container pods. In order for CloudForms 4 to perform smartstate analysis on container images it needs super-privileged container access. Create security context constraint YAML file. Ensure you add the cfme service account to list of users. Note: you need to allow privileged containers and host volume plugins as these are needed for smartstate analysis. [root@ose3-master ~]# vi scc_cfme.yaml  kind: SecurityContextConstraints  apiVersion: v1  metadata:    name: scc-admin  allowHostDirVolumePlugin: true  allowPrivilegedContainer: true  runAsUser:    type: RunAsAny  seLinuxContext:    type: RunAsAny  fsGroup:    type: RunAsAny  supplementalGroups:    type: RunAsAny  users:  - system:serviceaccount:management-infra:cfme Create security context constraint. [root@ose3-master ~]# oc create -f scc_cfme.yaml Run Smartstate Analysis At this point everything is in place to run smartstate analysis and peer into individual Docker container images. In this case we will look into a MySQL container image. In CloudForms 4 go to Container Images and find the desired container image.  Here we notice that the packages are 0. This means no smartstate analysis has run. To run smartstate analysis select the option under the configuration dropdown.  After smartstate analysis completes you will see the software packages installed within your container image.  By clicking on the packages you can see all the individual packages and most importantly their versions.  Container image software packages and versions are now known to CloudForms 4. In a future version of CloudForms 4 when active container management is introduced, you should be able to create security compliance policies and define actions in the event of a security violation. To learn more about creating compliance policies in CloudForms see this article that was previously published. Summary In this article we have seen how to enable smartstate analysis in CloudForms 4 in order to peer into container images. Container technology is without question revolutionizing the way we develop and run applications. The only thing standing in it&#39;s way has been security. This is a major step forward in the ability to ensure enterprise security compliance of container environments. Red Hat is focusing greatly on container security and enabling container technology in the enterprise. This is the start of much more to come so stay tuned, buckle up and enjoy the ride! Happy Container Compliance with CloudForms 4 and OpenShift 3! (c) 2015 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Detecting Security Vulnerabilities in Docker Container Images">
+  <meta name="twitter:description" content="Overview Containers, especially Docker container images have been on fire of late and it is simple to understand why? Docker container images give your development and operations organizations a major shot of adrenaline. The results are quite impressive. Applications are developed at never before seen speeds and as such organizations are able to deliver innovation to customers much faster. It&#39;s all so easy, just get on Docker Hub, download a container and run it. So why isn&#39;t everyone already doing this? Unfortunately it is not quite that simple. Enterprises have many other requirements such as security. Once IT operations gets involved they typically start asking a lot of questions. Who built this container? How is the container maintained? Who provides support for the software within the container? Does the software running within the container adhere to our security guidelines? How can we run security compliance checks within containers? How do we update software within containers?  Red Hat has stepped up and decided that container security is an area where Red Hat can bring significant value. CloudForms 4 is a cloud management platform. In addition to supporting virtual machines platforms (RHEV, Hyper-V, VMware, OpenStack, Amazon EC2 and Azure) now also supports containers through OpenShift 3 and Atomic Enterprise. CloudForms 4 integrates either directly with OpenShift 3 (PaaS with CI/CD) or Atomic Enterprise (Container IaaS). In fact, CloudForms 4 should work with any container platform that implements Kubernetes by Google as that is basis for both. OpenShift 3 provides additional value on top of Atomic Enterprise around development workflows (CI / CD) and integration with development tooling to build automated pipelines. If you are building applications OpenShift 3 is what you want, period. If you are running containerized Applications then either OpenShift 3 or Atomic Enterprise. As part of integrating with containers CloudForms 4 has a feature called smartstate analysis. Previously this worked only on virtual machines and allowed you to scan software content inside the virtual machine. You could then build security policies and automatically handle compliance events, such as shutting down non-compliant virtual machines. The smartstate analysis feature is now enabled through CloudForms 4, for container workloads. Let&#39;s see how it works! In this article we will show how to connect OpenShift 3 to CloudForms 4 through it&#39;s provider and perform smartstate anylysis for a MySQL Docker container image. Connecting CloudForms 4 to OpenShift 3 As mentioned CloudForms has providers and now with CloudForms 4 there is a OpenShift 3 provider. In order to add the provider we must create a service account in OpenShift 3 and provide CloudForms with a service token from OpenShift. Create JSON for CFME service account [root@ose3-master ~]# vi cfme.json {  &quot;apiVersion&quot;: &quot;v1&quot;,  &quot;kind&quot;: &quot;ServiceAccount&quot;,  &quot;metadata&quot;: {  &quot;name&quot;: &quot;cfme&quot;  } } Ensure you are in the default project of OpenShift 3. Note: Projects in OpenShift map to Kubernetes namespaces. [root@ose3-master ~]# oc new-project management-infra Create the service account using JSON file. [root@ose3-master ~]# oc create -f cfme.json Give the server account cluster-admin role. [root@ose3-master ~]# oadm policy add-cluster-role-to-user cluster-admin system:serviceaccount:management-infra:cfme Get the token name from the service account. [root@ose3-master ~]# oc get sa cfme -o yaml  apiVersion: v1  imagePullSecrets:  - name: cfme-dockercfg-1z8sc  kind: ServiceAccount  metadata:  creationTimestamp: 2015-11-26T12:53:46Z  name: cfme  namespace: default  resourceVersion: &quot;53311&quot;  selfLink: /api/v1/namespaces/default/serviceaccounts/cfme  uid: bb38592b-943c-11e5-924e-525400bca113  secrets:  - name: cfme-token-9cxzf  - name: cfme-dockercfg-1z8sc Get the token itself for authentification. [root@ose3-master ~]# oc describe secret cfme-token-9cxzf Name: cfme-token-9cxzf  Labels: &lt;none&gt;  Annotations: kubernetes.io/service-account.name=cfme,kubernetes.io/service-account.uid=bb38592b-943c-11e5-924e-525400bca113 Type: kubernetes.io/service-account-token Data  ====  token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImNmbWUtdG9rZW4tOWN4emYiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiY2ZtZSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImJiMzg1OTJiLTk0M2MtMTFlNS05MjRlLTUyNTQwMGJjYTExMyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmNmbWUifQ.XH00iOfbXI2jOQNgLVt1jEXp5412bVoCZCqJQ-UR-9iWLJA2ha4E22uc0omq1tZ4xsJRpNaDJzB4g96xH_izQNAFTXWm5R7ESdrGvPBNaK_q6K2mh4C_sVKBCgqQYaq23Yhkan-7dchNCrX2mTPA8tZ7GpW7SRW7jRakhZhD5ljEthFbo8kWsYlreOeVidV3voV__o25425Yn4p6VHYZ5-eGAzieMI6IQvnynDvwZPEkxECX78oyx-8uap_IYCrg1kJUfGezXx05SHeYomOhBLMI7VMs6pHMhVTRGymRBi8aypWjPltzanR3NELKsHOdUx6PAFJ7YPGWkn753nEgHQ Adding OpenShift 3 Provider Once a service account for CloudForms has been created in OpenShift 3 we can add the provider. In CloudForms 4 under Containers add a new provider.  Select OpenShift and copy/paste the token  After a few minutes you should see the container dashboard in CloudForms 4 populate with information. Note: we see Kubernetes constructs such as pods, replicators and services.  Add Security Context Constraints Security context constraints allow OpenShift 3 administrators to control permissions on container pods. In order for CloudForms 4 to perform smartstate analysis on container images it needs super-privileged container access. Create security context constraint YAML file. Ensure you add the cfme service account to list of users. Note: you need to allow privileged containers and host volume plugins as these are needed for smartstate analysis. [root@ose3-master ~]# vi scc_cfme.yaml  kind: SecurityContextConstraints  apiVersion: v1  metadata:    name: scc-admin  allowHostDirVolumePlugin: true  allowPrivilegedContainer: true  runAsUser:    type: RunAsAny  seLinuxContext:    type: RunAsAny  fsGroup:    type: RunAsAny  supplementalGroups:    type: RunAsAny  users:  - system:serviceaccount:management-infra:cfme Create security context constraint. [root@ose3-master ~]# oc create -f scc_cfme.yaml Run Smartstate Analysis At this point everything is in place to run smartstate analysis and peer into individual Docker container images. In this case we will look into a MySQL container image. In CloudForms 4 go to Container Images and find the desired container image.  Here we notice that the packages are 0. This means no smartstate analysis has run. To run smartstate analysis select the option under the configuration dropdown.  After smartstate analysis completes you will see the software packages installed within your container image.  By clicking on the packages you can see all the individual packages and most importantly their versions.  Container image software packages and versions are now known to CloudForms 4. In a future version of CloudForms 4 when active container management is introduced, you should be able to create security compliance policies and define actions in the event of a security violation. To learn more about creating compliance policies in CloudForms see this article that was previously published. Summary In this article we have seen how to enable smartstate analysis in CloudForms 4 in order to peer into container images. Container technology is without question revolutionizing the way we develop and run applications. The only thing standing in it&#39;s way has been security. This is a major step forward in the ability to ensure enterprise security compliance of container environments. Red Hat is focusing greatly on container security and enabling container technology in the enterprise. This is the start of much more to come so stay tuned, buckle up and enjoy the ride! Happy Container Compliance with CloudForms 4 and OpenShift 3! (c) 2015 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/cloudforms/detecting-security-vulnerabilities-in-docker-container-images/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2015-12-04T00:00:00-08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/cloudforms/detecting-security-vulnerabilities-in-docker-container-images/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#cloudforms" itemprop="item"><span itemprop="name">Cloudforms</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Detecting Security Vulnerabilities in Docker Container Images</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Detecting Security Vulnerabilities in Docker Container Images">
+    <meta itemprop="description" content="OverviewContainers, especially Docker container images have been on fire of late and it is simple to understand why? Docker container images give your development and operations organizations a major shot of adrenaline. The results are quite impressive. Applications are developed at never before seen speeds and as such organizations are able to deliver innovation to customers much faster. It&#39;s all so easy, just get on Docker Hub, download a container and run it. So why isn&#39;t everyone already doing this? Unfortunately it is not quite that simple. Enterprises have many other requirements such as security. Once IT operations gets involved they typically start asking a lot of questions. Who built this container? How is the container maintained? Who provides support for the software within the container? Does the software running within the container adhere to our security guidelines? How can we run security compliance checks within containers? How do we update software within containers?Red Hat has stepped up and decided that container security is an area where Red Hat can bring significant value. CloudForms 4 is a cloud management platform. In addition to supporting virtual machines platforms (RHEV, Hyper-V, VMware, OpenStack, Amazon EC2 and Azure) now also supports containers through OpenShift 3 and Atomic Enterprise. CloudForms 4 integrates either directly with OpenShift 3 (PaaS with CI/CD) or Atomic Enterprise (Container IaaS). In fact, CloudForms 4 should work with any container platform that implements Kubernetes by Google as that is basis for both.OpenShift 3 provides additional value on top of Atomic Enterprise around development workflows (CI / CD) and integration with development tooling to build automated pipelines. If you are building applications OpenShift 3 is what you want, period. If you are running containerized Applications then either OpenShift 3 or Atomic Enterprise. As part of integrating with containers CloudForms 4 has a feature called smartstate analysis. Previously this worked only on virtual machines and allowed you to scan software content inside the virtual machine. You could then build security policies and automatically handle compliance events, such as shutting down non-compliant virtual machines. The smartstate analysis feature is now enabled through CloudForms 4, for container workloads. Let&#39;s see how it works! In this article we will show how to connect OpenShift 3 to CloudForms 4 through it&#39;s provider and perform smartstate anylysis for a MySQL Docker container image.Connecting CloudForms 4 to OpenShift 3As mentioned CloudForms has providers and now with CloudForms 4 there is a OpenShift 3 provider. In order to add the provider we must create a service account in OpenShift 3 and provide CloudForms with a service token from OpenShift.Create JSON for CFME service account[root@ose3-master ~]# vi cfme.json{ &quot;apiVersion&quot;: &quot;v1&quot;, &quot;kind&quot;: &quot;ServiceAccount&quot;, &quot;metadata&quot;: { &quot;name&quot;: &quot;cfme&quot; }}Ensure you are in the default project of OpenShift 3. Note: Projects in OpenShift map to Kubernetes namespaces.[root@ose3-master ~]# oc new-project management-infraCreate the service account using JSON file.[root@ose3-master ~]# oc create -f cfme.jsonGive the server account cluster-admin role.[root@ose3-master ~]# oadm policy add-cluster-role-to-user cluster-admin system:serviceaccount:management-infra:cfmeGet the token name from the service account.[root@ose3-master ~]# oc get sa cfme -o yaml apiVersion: v1 imagePullSecrets: - name: cfme-dockercfg-1z8sc kind: ServiceAccount metadata: creationTimestamp: 2015-11-26T12:53:46Z name: cfme namespace: default resourceVersion: &quot;53311&quot; selfLink: /api/v1/namespaces/default/serviceaccounts/cfme uid: bb38592b-943c-11e5-924e-525400bca113 secrets: - name: cfme-token-9cxzf - name: cfme-dockercfg-1z8scGet the token itself for authentification.[root@ose3-master ~]# oc describe secret cfme-token-9cxzfName: cfme-token-9cxzf Labels: &lt;none&gt; Annotations: kubernetes.io/service-account.name=cfme,kubernetes.io/service-account.uid=bb38592b-943c-11e5-924e-525400bca113Type: kubernetes.io/service-account-tokenData ==== token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImNmbWUtdG9rZW4tOWN4emYiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiY2ZtZSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImJiMzg1OTJiLTk0M2MtMTFlNS05MjRlLTUyNTQwMGJjYTExMyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmNmbWUifQ.XH00iOfbXI2jOQNgLVt1jEXp5412bVoCZCqJQ-UR-9iWLJA2ha4E22uc0omq1tZ4xsJRpNaDJzB4g96xH_izQNAFTXWm5R7ESdrGvPBNaK_q6K2mh4C_sVKBCgqQYaq23Yhkan-7dchNCrX2mTPA8tZ7GpW7SRW7jRakhZhD5ljEthFbo8kWsYlreOeVidV3voV__o25425Yn4p6VHYZ5-eGAzieMI6IQvnynDvwZPEkxECX78oyx-8uap_IYCrg1kJUfGezXx05SHeYomOhBLMI7VMs6pHMhVTRGymRBi8aypWjPltzanR3NELKsHOdUx6PAFJ7YPGWkn753nEgHQAdding OpenShift 3 ProviderOnce a service account for CloudForms has been created in OpenShift 3 we can add the provider.In CloudForms 4 under Containers add a new provider.Select OpenShift and copy/paste the tokenAfter a few minutes you should see the container dashboard in CloudForms 4 populate with information. Note: we see Kubernetes constructs such as pods, replicators and services.Add Security Context ConstraintsSecurity context constraints allow OpenShift 3 administrators to control permissions on container pods. In order for CloudForms 4 to perform smartstate analysis on container images it needs super-privileged container access.Create security context constraint YAML file. Ensure you add the cfme service account to list of users. Note: you need to allow privileged containers and host volume plugins as these are needed for smartstate analysis.[root@ose3-master ~]# vi scc_cfme.yaml kind: SecurityContextConstraints apiVersion: v1 metadata:   name: scc-admin allowHostDirVolumePlugin: true allowPrivilegedContainer: true runAsUser:   type: RunAsAny seLinuxContext:   type: RunAsAny fsGroup:   type: RunAsAny supplementalGroups:   type: RunAsAny users: - system:serviceaccount:management-infra:cfmeCreate security context constraint.[root@ose3-master ~]# oc create -f scc_cfme.yamlRun Smartstate AnalysisAt this point everything is in place to run smartstate analysis and peer into individual Docker container images. In this case we will look into a MySQL container image.In CloudForms 4 go to Container Images and find the desired container image.Here we notice that the packages are 0. This means no smartstate analysis has run. To run smartstate analysis select the option under the configuration dropdown.After smartstate analysis completes you will see the software packages installed within your container image.By clicking on the packages you can see all the individual packages and most importantly their versions.Container image software packages and versions are now known to CloudForms 4. In a future version of CloudForms 4 when active container management is introduced, you should be able to create security compliance policies and define actions in the event of a security violation. To learn more about creating compliance policies in CloudForms see this article that was previously published.SummaryIn this article we have seen how to enable smartstate analysis in CloudForms 4 in order to peer into container images. Container technology is without question revolutionizing the way we develop and run applications. The only thing standing in it&#39;s way has been security. This is a major step forward in the ability to ensure enterprise security compliance of container environments. Red Hat is focusing greatly on container security and enabling container technology in the enterprise. This is the start of much more to come so stay tuned, buckle up and enjoy the ride!Happy Container Compliance with CloudForms 4 and OpenShift 3!(c) 2015 Keith Tenzer">
+    <meta itemprop="datePublished" content="2015-12-04T00:00:00-08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Detecting Security Vulnerabilities in Docker Container Images
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2015-12-04T00:00:00-08:00">December 4, 2015</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h3><a href="https://keithtenzer.files.wordpress.com/2015/12/container_sec.jpg" rel="attachment wp-att-1453"><img class="alignnone size-medium wp-image-1453" src="/assets/2015/12/container_sec.jpg?w=300" alt="container_sec" width="300" height="135" /></a></h3>
+<h3>Overview</h3>
+<p>Containers, especially Docker container images have been on fire of late and it is simple to understand why? Docker container images give your development and operations organizations a major shot of adrenaline. The results are quite impressive. Applications are developed at never before seen speeds and as such organizations are able to deliver innovation to customers much faster. It's all so easy, just get on <a href="https://hub.docker.com/">Docker Hub</a>, download a container and run it. So why isn't everyone already doing this? Unfortunately it is not quite that simple. Enterprises have many other requirements such as security. Once IT operations gets involved they typically start asking a lot of questions. Who built this container? How is the container maintained? Who provides support for the software within the container? Does the software running within the container adhere to our security guidelines? How can we run security compliance checks within containers? How do we update software within containers?<br />
+<!--more--><br />
+Red Hat has stepped up and decided that container security is an area where Red Hat can bring significant value. CloudForms 4 is a cloud management platform. In addition to supporting virtual machines platforms (RHEV, Hyper-V, VMware, OpenStack, Amazon EC2 and Azure) now also supports containers through OpenShift 3 and Atomic Enterprise. CloudForms 4 integrates either directly with OpenShift 3 (PaaS with CI/CD) or Atomic Enterprise (Container IaaS). In fact, CloudForms 4 should work with any container platform that implements Kubernetes by Google as that is basis for both.</p>
+<p>OpenShift 3 provides additional value on top of Atomic Enterprise around development workflows (CI / CD) and integration with development tooling to build automated pipelines. If you are building applications OpenShift 3 is what you want, period. If you are running containerized Applications then either OpenShift 3 or Atomic Enterprise. As part of integrating with containers CloudForms 4 has a feature called smartstate analysis. Previously this worked only on virtual machines and allowed you to scan software content inside the virtual machine. You could then build security policies and automatically handle compliance events, such as shutting down non-compliant virtual machines. The smartstate analysis feature is now enabled through CloudForms 4, for container workloads. Let's see how it works! In this article we will show how to connect OpenShift 3 to CloudForms 4 through it's provider and perform smartstate anylysis for a MySQL Docker container image.</p>
+<h3>Connecting CloudForms 4 to OpenShift 3</h3>
+<p>As mentioned CloudForms has providers and now with CloudForms 4 there is a OpenShift 3 provider. In order to add the provider we must create a service account in OpenShift 3 and provide CloudForms with a service token from OpenShift.</p>
+<p>Create JSON for CFME service account</p>
+<pre>[root@ose3-master ~]# vi cfme.json
+{
+ "apiVersion": "v1",
+ "kind": "ServiceAccount",
+ "metadata": {
+ "name": "cfme"
+ }
+}</pre>
+<p>Ensure you are in the default project of OpenShift 3. Note: Projects in OpenShift map to Kubernetes namespaces.</p>
+<pre>[root@ose3-master ~]# oc new-project management-infra</pre>
+<p>Create the service account using JSON file.</p>
+<pre>[root@ose3-master ~]# oc create -f cfme.json</pre>
+<p>Give the server account cluster-admin role.</p>
+<pre>[root@ose3-master ~]# oadm policy add-cluster-role-to-user cluster-admin system:serviceaccount:management-infra:cfme</pre>
+<p>Get the token name from the service account.</p>
+<pre>[root@ose3-master ~]# oc get sa cfme -o yaml
+ apiVersion: v1
+ imagePullSecrets:
+ - name: cfme-dockercfg-1z8sc
+ kind: ServiceAccount
+ metadata:
+ creationTimestamp: 2015-11-26T12:53:46Z
+ name: cfme
+ namespace: default
+ resourceVersion: "53311"
+ selfLink: /api/v1/namespaces/default/serviceaccounts/cfme
+ uid: bb38592b-943c-11e5-924e-525400bca113
+ secrets:
+ - name: cfme-token-9cxzf
+ - name: cfme-dockercfg-1z8sc</pre>
+<p>Get the token itself for authentification.</p>
+<pre>[root@ose3-master ~]# oc describe secret cfme-token-9cxzf
+Name: cfme-token-9cxzf
+ Labels: &lt;none&gt;
+ Annotations: kubernetes.io/service-account.name=cfme,kubernetes.io/service-account.uid=bb38592b-943c-11e5-924e-525400bca113
+Type: kubernetes.io/service-account-token
+Data
+ ====
+ token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImNmbWUtdG9rZW4tOWN4emYiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiY2ZtZSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImJiMzg1OTJiLTk0M2MtMTFlNS05MjRlLTUyNTQwMGJjYTExMyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmNmbWUifQ.XH00iOfbXI2jOQNgLVt1jEXp5412bVoCZCqJQ-UR-9iWLJA2ha4E22uc0omq1tZ4xsJRpNaDJzB4g96xH_izQNAFTXWm5R7ESdrGvPBNaK_q6K2mh4C_sVKBCgqQYaq23Yhkan-7dchNCrX2mTPA8tZ7GpW7SRW7jRakhZhD5ljEthFbo8kWsYlreOeVidV3voV__o25425Yn4p6VHYZ5-eGAzieMI6IQvnynDvwZPEkxECX78oyx-8uap_IYCrg1kJUfGezXx05SHeYomOhBLMI7VMs6pHMhVTRGymRBi8aypWjPltzanR3NELKsHOdUx6PAFJ7YPGWkn753nEgHQ</pre>
+<h3>Adding OpenShift 3 Provider</h3>
+<p>Once a service account for CloudForms has been created in OpenShift 3 we can add the provider.</p>
+<p>In CloudForms 4 under Containers add a new provider.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/12/cf_container_1.png" rel="attachment wp-att-1439"><img class="alignnone wp-image-1439" src="/assets/2015/12/cf_container_1.png?w=300" alt="CF_CONTAINER_1" width="1219" height="447" /></a></p>
+<p>Select OpenShift and copy/paste the token</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/12/cf_container_2.png" rel="attachment wp-att-1440"><img class="alignnone wp-image-1440" src="/assets/2015/12/cf_container_2.png?w=300" alt="CF_CONTAINER_2" width="1205" height="450" /></a></p>
+<p>After a few minutes you should see the container dashboard in CloudForms 4 populate with information. Note: we see Kubernetes constructs such as pods, replicators and services.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/12/cf_container_3.png" rel="attachment wp-att-1441"><img class="alignnone wp-image-1441" src="/assets/2015/12/cf_container_3.png?w=300" alt="CF_CONTAINER_3" width="1206" height="189" /></a></p>
+<h3>Add Security Context Constraints</h3>
+<p>Security context constraints allow OpenShift 3 administrators to control permissions on container pods. In order for CloudForms 4 to perform smartstate analysis on container images it needs super-privileged container access.</p>
+<p>Create security context constraint YAML file. Ensure you add the cfme service account to list of users. Note: you need to allow privileged containers and host volume plugins as these are needed for smartstate analysis.</p>
+<pre>[root@ose3-master ~]# vi scc_cfme.yaml
+ kind: SecurityContextConstraints
+ apiVersion: v1
+ metadata:
+   name: scc-admin
+ allowHostDirVolumePlugin: true
+ allowPrivilegedContainer: true
+ runAsUser:
+   type: RunAsAny
+ seLinuxContext:
+   type: RunAsAny
+ fsGroup:
+   type: RunAsAny
+ supplementalGroups:
+   type: RunAsAny
+ users:
+ - system:serviceaccount:management-infra:cfme</pre>
+<p>Create security context constraint.</p>
+<pre>[root@ose3-master ~]# oc create -f scc_cfme.yaml</pre>
+<h3>Run Smartstate Analysis</h3>
+<p>At this point everything is in place to run smartstate analysis and peer into individual Docker container images. In this case we will look into a MySQL container image.</p>
+<p>In CloudForms 4 go to Container Images and find the desired container image.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/12/cf_container_4.png" rel="attachment wp-att-1443"><img class="alignnone wp-image-1443" src="/assets/2015/12/cf_container_4.png?w=300" alt="CF_CONTAINER_4" width="1123" height="363" /></a></p>
+<p>Here we notice that the packages are 0. This means no smartstate analysis has run. To run smartstate analysis select the option under the configuration dropdown.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/12/cf_container_5.png" rel="attachment wp-att-1444"><img class="alignnone wp-image-1444" src="/assets/2015/12/cf_container_5.png?w=300" alt="CF_CONTAINER_5" width="1126" height="394" /></a></p>
+<p>After smartstate analysis completes you will see the software packages installed within your container image.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/12/cf_container_6.png" rel="attachment wp-att-1445"><img class="alignnone wp-image-1445" src="/assets/2015/12/cf_container_6.png?w=300" alt="CF_CONTAINER_6" width="1124" height="356" /></a></p>
+<p>By clicking on the packages you can see all the individual packages and most importantly their versions.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/12/cf_container_7.png" rel="attachment wp-att-1446"><img class="alignnone wp-image-1446" src="/assets/2015/12/cf_container_7.png?w=300" alt="CF_CONTAINER_7" width="1119" height="526" /></a></p>
+<p>Container image software packages and versions are now known to CloudForms 4. In a future version of CloudForms 4 when active container management is introduced, you should be able to create security compliance policies and define actions in the event of a security violation. To learn more about creating compliance policies in CloudForms see this <a href="http://keithtenzer.com/2015/07/14/governing-the-cloud-with-cloudforms/">article</a> that was previously published.</p>
+<h3>Summary</h3>
+<p>In this article we have seen how to enable smartstate analysis in CloudForms 4 in order to peer into container images. Container technology is without question revolutionizing the way we develop and run applications. The only thing standing in it's way has been security. This is a major step forward in the ability to ensure enterprise security compliance of container environments. Red Hat is focusing greatly on container security and enabling container technology in the enterprise. This is the start of much more to come so stay tuned, buckle up and enjoy the ride!</p>
+<p>Happy Container Compliance with CloudForms 4 and OpenShift 3!</p>
+<p>(c) 2015 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#containers" class="page__taxonomy-item" rel="tag">Containers</a><span class="sep">, </span>
+    
+      <a href="/tags/#docker" class="page__taxonomy-item" rel="tag">Docker</a><span class="sep">, </span>
+    
+      <a href="/tags/#linux" class="page__taxonomy-item" rel="tag">Linux</a><span class="sep">, </span>
+    
+      <a href="/tags/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a><span class="sep">, </span>
+    
+      <a href="/tags/#security" class="page__taxonomy-item" rel="tag">Security</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#cloudforms" class="page__taxonomy-item" rel="tag">CloudForms</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2015-12-04T00:00:00-08:00">December 4, 2015</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Detecting+Security+Vulnerabilities+in+Docker+Container+Images%20https%3A%2F%2Fkeithtenzer.com%2Fcloudforms%2Fdetecting-security-vulnerabilities-in-docker-container-images%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fcloudforms%2Fdetecting-security-vulnerabilities-in-docker-container-images%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fcloudforms%2Fdetecting-security-vulnerabilities-in-docker-container-images%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openstack/advanced-deployment-with-tripleo-and-openstack-director/" class="pagination--pager" title="Advanced Deployment with TripleO and OpenStack Director
+">Previous</a>
+    
+    
+      <a href="/general/2015-in-review/" class="pagination--pager" title="2015 in review
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

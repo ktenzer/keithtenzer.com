@@ -1,0 +1,799 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Red Hat Subscription Reporting Guide - KEITHTENZER.COM</title>
+<meta name="description" content="source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html Overview This article will look at the various options available, to do subscription reporting for Red Hat products. Many large organizations sometimes struggle to keep track of what subscriptions are being used, often maintaining their own spreadsheets. This can be very error prone and time consuming. Systems can even be subscribed to the wrong subscriptions, for example a virtual machine running RHEL using a physical subscription. Many Red Hat customers have several different products, not just RHEL and being able to actively inventory the entire subscription landscape is critical.  Options for Subscription Reporting There are various options for subscription reporting depending on if you have Satellite (Red Hat Systems Management) or not. Subscription Entitlement Report  Starting with Satellite 6.7 there is now a canned report that is very customizable. This is the recommended way of reporting subscriptions in Satellite 6.7+. Provides granular host level subscription reporting. Example of the out-of-the-box entitlement report is here. Red Hat Discovery Tool The discovery tool can do reporting on subscriptions in Satellite and non-Satellite environments. Provides granular host level subscription reporting. This is the recommendation if you don&#39;t have Satellite 6.7+ or have systems not subscribing through Satellite. The discovery tool can be installed in a connected or disconnected environment. The discovery tool also has an upstream project and is available via the community: https://github.com/quipucords/quipucords Red Hat Subscription Watch This is a cloud service offering that can aggregate subscription reporting across various infrastructure or even organizations. Data is sent either from Red Hat Insights or Satellite to a customers portal on cloud.redhat.com. This is a recommended addition to provide additional visibility but does not provide granular information at the host level. Subscription Inventory Script Provides granular host level subscription reporting for Satellite environments. This is a script not a product so use at your own risk. However this is recommended if you have Satellite 6.6 or below and cannot for whatever reason leverage the Red Hat Discovery tool. https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert Using the Satellite Subscription Inventory Script Since the other options are products and well documented, I will focus on showing how to do subscription reporting using the inventory script on RHEL 7. First you will need to deploy a RHEL 7 system. Enable Correct RHEL Repos First ensure all repositories are disabled and then just enable the rhel-7-server-rpms. $ sudo subscription-manager repos --disable=* $ sudo subscription-manager repos --enable=rhel-7-server-rpms Install python 2.6+ $ sudo yum install -y python Install Git (Only for connected setup) $ sudo yum install -y git Clone git repository (Only for connected setup) $ git clone https://github.com/RedHatSatellite/sat6Inventory.git If the system isn&#39;t connected to the internet then you need to download from the git repository. You can download the script from https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert by selecting download. You can then copy the tarball to your system and extract it.  Change directory cd sat6Inventory Run the inventory script You need to pass the admin user, password and the Satellite organization. ./sat6Inventory.py -s sat-bc87.rhpds.opentlc.com -l admin -p  \ -o &#39;EXAMPLE.COM&#39; The script will output a CSV. $ ls EXAMPLE.COM_inventory_report.csv LICENSE README.md Sample Report sat6Inventory.py You can now import the script output CSV into a spreadsheet program and manipulate as desired. A sample report is also provided here. Reconciling mismatched entitlements If you have a Satellite environment with RHEL physical and VDC (virtual subscriptions) it is possible that a virtual RHEL host is possibly using a physical instead of virtual subscription. To identify such hosts you can run the below command from your Satellite server. $ sudo foreman-rake katello:virt_who_report Summary In this article we covered the various options for doing subscription reporting of Red Hat products. We also showed a short hands-on guide for using the inventory script. Hopefully this provided guidance to choose the most appropriate approach to subscription reporting. (c) 2020 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Red Hat Subscription Reporting Guide">
+<meta property="og:url" content="https://keithtenzer.com/general/red-hat-subscription-reporting-guide/">
+
+
+  <meta property="og:description" content="source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html Overview This article will look at the various options available, to do subscription reporting for Red Hat products. Many large organizations sometimes struggle to keep track of what subscriptions are being used, often maintaining their own spreadsheets. This can be very error prone and time consuming. Systems can even be subscribed to the wrong subscriptions, for example a virtual machine running RHEL using a physical subscription. Many Red Hat customers have several different products, not just RHEL and being able to actively inventory the entire subscription landscape is critical.  Options for Subscription Reporting There are various options for subscription reporting depending on if you have Satellite (Red Hat Systems Management) or not. Subscription Entitlement Report  Starting with Satellite 6.7 there is now a canned report that is very customizable. This is the recommended way of reporting subscriptions in Satellite 6.7+. Provides granular host level subscription reporting. Example of the out-of-the-box entitlement report is here. Red Hat Discovery Tool The discovery tool can do reporting on subscriptions in Satellite and non-Satellite environments. Provides granular host level subscription reporting. This is the recommendation if you don&#39;t have Satellite 6.7+ or have systems not subscribing through Satellite. The discovery tool can be installed in a connected or disconnected environment. The discovery tool also has an upstream project and is available via the community: https://github.com/quipucords/quipucords Red Hat Subscription Watch This is a cloud service offering that can aggregate subscription reporting across various infrastructure or even organizations. Data is sent either from Red Hat Insights or Satellite to a customers portal on cloud.redhat.com. This is a recommended addition to provide additional visibility but does not provide granular information at the host level. Subscription Inventory Script Provides granular host level subscription reporting for Satellite environments. This is a script not a product so use at your own risk. However this is recommended if you have Satellite 6.6 or below and cannot for whatever reason leverage the Red Hat Discovery tool. https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert Using the Satellite Subscription Inventory Script Since the other options are products and well documented, I will focus on showing how to do subscription reporting using the inventory script on RHEL 7. First you will need to deploy a RHEL 7 system. Enable Correct RHEL Repos First ensure all repositories are disabled and then just enable the rhel-7-server-rpms. $ sudo subscription-manager repos --disable=* $ sudo subscription-manager repos --enable=rhel-7-server-rpms Install python 2.6+ $ sudo yum install -y python Install Git (Only for connected setup) $ sudo yum install -y git Clone git repository (Only for connected setup) $ git clone https://github.com/RedHatSatellite/sat6Inventory.git If the system isn&#39;t connected to the internet then you need to download from the git repository. You can download the script from https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert by selecting download. You can then copy the tarball to your system and extract it.  Change directory cd sat6Inventory Run the inventory script You need to pass the admin user, password and the Satellite organization. ./sat6Inventory.py -s sat-bc87.rhpds.opentlc.com -l admin -p  \ -o &#39;EXAMPLE.COM&#39; The script will output a CSV. $ ls EXAMPLE.COM_inventory_report.csv LICENSE README.md Sample Report sat6Inventory.py You can now import the script output CSV into a spreadsheet program and manipulate as desired. A sample report is also provided here. Reconciling mismatched entitlements If you have a Satellite environment with RHEL physical and VDC (virtual subscriptions) it is possible that a virtual RHEL host is possibly using a physical instead of virtual subscription. To identify such hosts you can run the below command from your Satellite server. $ sudo foreman-rake katello:virt_who_report Summary In this article we covered the various options for doing subscription reporting of Red Hat products. We also showed a short hands-on guide for using the inventory script. Hopefully this provided guidance to choose the most appropriate approach to subscription reporting. (c) 2020 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Red Hat Subscription Reporting Guide">
+  <meta name="twitter:description" content="source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html Overview This article will look at the various options available, to do subscription reporting for Red Hat products. Many large organizations sometimes struggle to keep track of what subscriptions are being used, often maintaining their own spreadsheets. This can be very error prone and time consuming. Systems can even be subscribed to the wrong subscriptions, for example a virtual machine running RHEL using a physical subscription. Many Red Hat customers have several different products, not just RHEL and being able to actively inventory the entire subscription landscape is critical.  Options for Subscription Reporting There are various options for subscription reporting depending on if you have Satellite (Red Hat Systems Management) or not. Subscription Entitlement Report  Starting with Satellite 6.7 there is now a canned report that is very customizable. This is the recommended way of reporting subscriptions in Satellite 6.7+. Provides granular host level subscription reporting. Example of the out-of-the-box entitlement report is here. Red Hat Discovery Tool The discovery tool can do reporting on subscriptions in Satellite and non-Satellite environments. Provides granular host level subscription reporting. This is the recommendation if you don&#39;t have Satellite 6.7+ or have systems not subscribing through Satellite. The discovery tool can be installed in a connected or disconnected environment. The discovery tool also has an upstream project and is available via the community: https://github.com/quipucords/quipucords Red Hat Subscription Watch This is a cloud service offering that can aggregate subscription reporting across various infrastructure or even organizations. Data is sent either from Red Hat Insights or Satellite to a customers portal on cloud.redhat.com. This is a recommended addition to provide additional visibility but does not provide granular information at the host level. Subscription Inventory Script Provides granular host level subscription reporting for Satellite environments. This is a script not a product so use at your own risk. However this is recommended if you have Satellite 6.6 or below and cannot for whatever reason leverage the Red Hat Discovery tool. https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert Using the Satellite Subscription Inventory Script Since the other options are products and well documented, I will focus on showing how to do subscription reporting using the inventory script on RHEL 7. First you will need to deploy a RHEL 7 system. Enable Correct RHEL Repos First ensure all repositories are disabled and then just enable the rhel-7-server-rpms. $ sudo subscription-manager repos --disable=* $ sudo subscription-manager repos --enable=rhel-7-server-rpms Install python 2.6+ $ sudo yum install -y python Install Git (Only for connected setup) $ sudo yum install -y git Clone git repository (Only for connected setup) $ git clone https://github.com/RedHatSatellite/sat6Inventory.git If the system isn&#39;t connected to the internet then you need to download from the git repository. You can download the script from https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert by selecting download. You can then copy the tarball to your system and extract it.  Change directory cd sat6Inventory Run the inventory script You need to pass the admin user, password and the Satellite organization. ./sat6Inventory.py -s sat-bc87.rhpds.opentlc.com -l admin -p  \ -o &#39;EXAMPLE.COM&#39; The script will output a CSV. $ ls EXAMPLE.COM_inventory_report.csv LICENSE README.md Sample Report sat6Inventory.py You can now import the script output CSV into a spreadsheet program and manipulate as desired. A sample report is also provided here. Reconciling mismatched entitlements If you have a Satellite environment with RHEL physical and VDC (virtual subscriptions) it is possible that a virtual RHEL host is possibly using a physical instead of virtual subscription. To identify such hosts you can run the below command from your Satellite server. $ sudo foreman-rake katello:virt_who_report Summary In this article we covered the various options for doing subscription reporting of Red Hat products. We also showed a short hands-on guide for using the inventory script. Hopefully this provided guidance to choose the most appropriate approach to subscription reporting. (c) 2020 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/general/red-hat-subscription-reporting-guide/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2020-05-13T00:00:00-07:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/general/red-hat-subscription-reporting-guide/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#general" itemprop="item"><span itemprop="name">General</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Red Hat Subscription Reporting Guide</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Red Hat Subscription Reporting Guide">
+    <meta itemprop="description" content="source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.htmlOverviewThis article will look at the various options available, to do subscription reporting for Red Hat products. Many large organizations sometimes struggle to keep track of what subscriptions are being used, often maintaining their own spreadsheets. This can be very error prone and time consuming. Systems can even be subscribed to the wrong subscriptions, for example a virtual machine running RHEL using a physical subscription. Many Red Hat customers have several different products, not just RHEL and being able to actively inventory the entire subscription landscape is critical.Options for Subscription ReportingThere are various options for subscription reporting depending on if you have Satellite (Red Hat Systems Management) or not.Subscription Entitlement Report Starting with Satellite 6.7 there is now a canned report that is very customizable. This is the recommended way of reporting subscriptions in Satellite 6.7+. Provides granular host level subscription reporting.Example of the out-of-the-box entitlement report is here.Red Hat Discovery ToolThe discovery tool can do reporting on subscriptions in Satellite and non-Satellite environments. Provides granular host level subscription reporting. This is the recommendation if you don&#39;t have Satellite 6.7+ or have systems not subscribing through Satellite. The discovery tool can be installed in a connected or disconnected environment.The discovery tool also has an upstream project and is available via the community: https://github.com/quipucords/quipucordsRed Hat Subscription WatchThis is a cloud service offering that can aggregate subscription reporting across various infrastructure or even organizations. Data is sent either from Red Hat Insights or Satellite to a customers portal on cloud.redhat.com. This is a recommended addition to provide additional visibility but does not provide granular information at the host level.Subscription Inventory ScriptProvides granular host level subscription reporting for Satellite environments. This is a script not a product so use at your own risk. However this is recommended if you have Satellite 6.6 or below and cannot for whatever reason leverage the Red Hat Discovery tool.https://github.com/RedHatSatellite/sat6Inventory/tree/product-certUsing the Satellite Subscription Inventory ScriptSince the other options are products and well documented, I will focus on showing how to do subscription reporting using the inventory script on RHEL 7. First you will need to deploy a RHEL 7 system.Enable Correct RHEL ReposFirst ensure all repositories are disabled and then just enable the rhel-7-server-rpms.$ sudo subscription-manager repos --disable=*$ sudo subscription-manager repos --enable=rhel-7-server-rpmsInstall python 2.6+$ sudo yum install -y pythonInstall Git (Only for connected setup)$ sudo yum install -y gitClone git repository (Only for connected setup)$ git clone https://github.com/RedHatSatellite/sat6Inventory.gitIf the system isn&#39;t connected to the internet then you need to download from the git repository. You can download the script from https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert by selecting download. You can then copy the tarball to your system and extract it.Change directorycd sat6InventoryRun the inventory scriptYou need to pass the admin user, password and the Satellite organization../sat6Inventory.py -s sat-bc87.rhpds.opentlc.com -l admin -p  \-o &#39;EXAMPLE.COM&#39;The script will output a CSV.$ lsEXAMPLE.COM_inventory_report.csv LICENSE README.md Sample Report sat6Inventory.pyYou can now import the script output CSV into a spreadsheet program and manipulate as desired.A sample report is also provided here.Reconciling mismatched entitlementsIf you have a Satellite environment with RHEL physical and VDC (virtual subscriptions) it is possible that a virtual RHEL host is possibly using a physical instead of virtual subscription. To identify such hosts you can run the below command from your Satellite server.$ sudo foreman-rake katello:virt_who_reportSummaryIn this article we covered the various options for doing subscription reporting of Red Hat products. We also showed a short hands-on guide for using the inventory script. Hopefully this provided guidance to choose the most appropriate approach to subscription reporting.(c) 2020 Keith Tenzer">
+    <meta itemprop="datePublished" content="2020-05-13T00:00:00-07:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Red Hat Subscription Reporting Guide
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h2><img class="alignnone  wp-image-14584" src="/assets/2020/05/ecommerce-subscription-ts-100621375-large.jpg" alt="ecommerce-subscription-ts-100621375-large" width="362" height="240" /></h2>
+<p><em>source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html</em></p>
+<h2>Overview</h2>
+<p>This article will look at the various options available, to do subscription reporting for Red Hat products. Many large organizations sometimes struggle to keep track of what subscriptions are being used, often maintaining their own spreadsheets. This can be very error prone and time consuming. Systems can even be subscribed to the wrong subscriptions, for example a virtual machine running RHEL using a physical subscription. Many Red Hat customers have several different products, not just RHEL and being able to actively inventory the entire subscription landscape is critical.</p>
+<p><!--more--></p>
+<h2>Options for Subscription Reporting</h2>
+<p>There are various options for subscription reporting depending on if you have Satellite (Red Hat Systems Management) or not.</p>
+<p><strong>Subscription Entitlement Report </strong></p>
+<p>Starting with Satellite 6.7 there is now a canned report that is very customizable. This is the recommended way of reporting subscriptions in Satellite 6.7+. Provides granular host level subscription reporting.</p>
+<p>Example of the out-of-the-box entitlement report is <a href="https://gist.github.com/ktenzer/7632ad9f75ba4424b1b59a9e0ba229ea">here</a>.</p>
+<p><strong>Red Hat Discovery Tool</strong></p>
+<p>The discovery tool can do reporting on subscriptions in Satellite and non-Satellite environments. Provides granular host level subscription reporting. This is the recommendation if you don't have Satellite 6.7+ or have systems not subscribing through Satellite. The discovery tool can be installed in a connected or disconnected environment.</p>
+<p>The discovery tool also has an upstream project and is available via the community: <a href="https://github.com/quipucords/quipucords">https://github.com/quipucords/quipucords</a></p>
+<p><strong>Red Hat Subscription Watch</strong></p>
+<p>This is a cloud service offering that can aggregate subscription reporting across various infrastructure or even organizations. Data is sent either from Red Hat Insights or Satellite to a customers portal on cloud.redhat.com. This is a recommended addition to provide additional visibility but does not provide granular information at the host level.</p>
+<p><strong>Subscription Inventory Script</strong></p>
+<p>Provides granular host level subscription reporting for Satellite environments. This is a script not a product so use at your own risk. However this is recommended if you have Satellite 6.6 or below and cannot for whatever reason leverage the Red Hat Discovery tool.</p>
+<p><a href="https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert">https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert</a></p>
+<h2>Using the Satellite Subscription Inventory Script</h2>
+<p>Since the other options are products and well documented, I will focus on showing how to do subscription reporting using the inventory script on RHEL 7. First you will need to deploy a RHEL 7 system.</p>
+<p><strong>Enable Correct RHEL Repos</strong></p>
+<p>First ensure all repositories are disabled and then just enable the rhel-7-server-rpms.</p>
+<pre>$ sudo subscription-manager repos --disable=*
+$ sudo subscription-manager repos --enable=rhel-7-server-rpms</pre>
+<p><strong>Install python 2.6+</strong></p>
+<pre>$ sudo yum install -y python</pre>
+<p><strong>Install Git (Only for connected setup)</strong></p>
+<pre>$ sudo yum install -y git</pre>
+<p><strong>Clone git repository (Only for connected setup)</strong></p>
+<pre>$ git clone https://github.com/RedHatSatellite/sat6Inventory.git</pre>
+<p>If the system isn't connected to the internet then you need to download from the git repository. You can download the script from <a href="https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert">https://github.com/RedHatSatellite/sat6Inventory/tree/product-cert</a> by selecting download. You can then copy the tarball to your system and extract it.</p>
+<p><img class="alignnone  wp-image-14605" src="/assets/2020/05/download.png" alt="download" width="1828" height="484" /></p>
+<p><strong>Change directory</strong></p>
+<pre>cd sat6Inventory</pre>
+<p><strong>Run the inventory script</strong></p>
+<p>You need to pass the admin user, password and the Satellite organization.</p>
+<pre>./sat6Inventory.py -s sat-bc87.rhpds.opentlc.com -l admin -p  \
+-o 'EXAMPLE.COM'</pre>
+<p>The script will output a CSV.</p>
+<pre>$ ls
+<strong>EXAMPLE.COM_inventory_report.csv</strong> LICENSE README.md Sample Report sat6Inventory.py</pre>
+<p>You can now import the script output CSV into a spreadsheet program and manipulate as desired.</p>
+<p>A sample report is also provided <a href="https://github.com/RedHatSatellite/sat6Inventory/blob/product-cert/Sample%20Report/Example_inventory_report.csv">here</a>.</p>
+<h2>Reconciling mismatched entitlements</h2>
+<p>If you have a Satellite environment with RHEL physical and VDC (virtual subscriptions) it is possible that a virtual RHEL host is possibly using a physical instead of virtual subscription. To identify such hosts you can run the below command from your Satellite server.</p>
+<pre>$ sudo foreman-rake katello:virt_who_report</pre>
+<h2>Summary</h2>
+<p>In this article we covered the various options for doing subscription reporting of Red Hat products. We also showed a short hands-on guide for using the inventory script. Hopefully this provided guidance to choose the most appropriate approach to subscription reporting.</p>
+<p>(c) 2020 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#red-hat" class="page__taxonomy-item" rel="tag">Red Hat</a><span class="sep">, </span>
+    
+      <a href="/tags/#reporting" class="page__taxonomy-item" rel="tag">Reporting</a><span class="sep">, </span>
+    
+      <a href="/tags/#rhel" class="page__taxonomy-item" rel="tag">RHEL</a><span class="sep">, </span>
+    
+      <a href="/tags/#satellite" class="page__taxonomy-item" rel="tag">Satellite</a><span class="sep">, </span>
+    
+      <a href="/tags/#subscription" class="page__taxonomy-item" rel="tag">Subscription</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#general" class="page__taxonomy-item" rel="tag">General</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Red+Hat+Subscription+Reporting+Guide%20https%3A%2F%2Fkeithtenzer.com%2Fgeneral%2Fred-hat-subscription-reporting-guide%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fgeneral%2Fred-hat-subscription-reporting-guide%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fgeneral%2Fred-hat-subscription-reporting-guide%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/" class="pagination--pager" title="OpenShift Operator SDK: Ansible Getting Started Guide Part III
+">Previous</a>
+    
+    
+      <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" class="pagination--pager" title="Windows Automation with Ansible: Getting Started Guide
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/" rel="permalink">OpenShift Operator SDK: Ansible Getting Started Guide Part III
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-04-23T00:00:00-07:00">April 23, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will provide a hands-on guide to building your very first operator in Ansible. Using the Operator SDK we will learn how to creat...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

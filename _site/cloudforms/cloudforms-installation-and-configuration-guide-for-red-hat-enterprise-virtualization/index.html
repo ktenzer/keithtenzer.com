@@ -1,0 +1,852 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>CloudForms Installation and Configuration Guide for Red Hat Virtualization - KEITHTENZER.COM</title>
+<meta name="description" content="Overview In this article we will deploy CloudForms 4.2 on Red Hat Enterprise Virtualization (RHV). We will also show how to configure CloudForms in order to properly manage a RHV cluster and it&#39;s hosts as well as virtual machines. Before you begin a RHV cluster is needed. If you haven&#39;t set one up, here is a guide on how to build a basic two node RHV cluster.  Install CloudForms CloudForms is provided by Red Hat as a virtual applicance. Red Hat provides appliances for many infrastructure platforms such as RHV, VMware, Hyper-V, OpenStack, AWS, GCE and Azure. In this case we will download the RHV virtual appliance. Download Image Image should be downloaded to the CFME appliance using your RHN login. https://access.redhat.com/downloads/content/167/ver=/cf-me---4.2/4.2/x86_64/product-software Add Appliance into RHV Export Domain In order to import an appliance it needs to be copied to export domain or imported to export domain using CLI. # cp cfme-rhevm-5.7.2.1-1.x86_64.rhevm.ova /usr/share/export/30621071-3dba-401d-9605-02a914b4069a Once copied to export domain we need to extract the appliance and set permissions. # cd /usr/share/export/30621071-3dba-401d-9605-02a914b4069a/ # tar xvf cfme-rhevm-5.3-15.x86_64.rhevm.ova # chown -R 36:36 images/ # chown -R 36:36 master/ Import CFME Appliance as Template Once the appliance is in the export domain we can import it as an appliance using the RHV-M management console. Under export domain and template, choose the import option.   We can provide our CFME template with a new name.  Once import completes the status will change to &quot;OK&quot;.  Create CloudForms Virtual Machine Under &quot;Virtual Machines&quot;, select &quot;new&quot; in the RHV-M management console. For template choose the newly imported CFME template.  Add Additional Disk for CloudForms Database Under CFME &quot;Virtual Machine&quot; Disks select &quot;new&quot; to add a new disk. I would recommend 30GB but this is based on how much data is to be collected and for how long.  Configure Appliance Start CFME VM from RHV-M management console. Login as &quot;root/smartvm&quot; and run &quot;appliance_console&quot; to configure CloudForms.  Configure static network settings  Configure local database  Make sure you create an internal database  Choose a disk, this should be the 30GB disk we added  Choose &quot;N&quot; to run standalone database server  Create database region and choose password  Restart the CFME appliance  Below are the basic settings that should be configured  Configure RHV for CloudForms In order for CloudForms to report capacity &amp; utilization we need to configure access from RHV-M. Login to RHV-M host using ssh as root Connect to RHV-M database # su - postgres As postgres user add a new role for CloudForms. As of this article CloudForms needs superuser but there is an RFE to enable read-only access in future. $ psql -U postgres CREATE ROLE cfme LOGIN UNENCRYPTED PASSWORD &#39;redhat01&#39; \ SUPERUSER VALID UNTIL &#39;infinity&#39;; \q &nbsp; Open firewall ports to allow communication to database # firewall-cmd --add-port=5432/tcp --permanent # firewall-cmd --reload Ensure PostgreSQL is exposing port and listening to all interfaces # vi /var/lib/pgsql/data/pg_hba.conf host all all 0.0.0.0/0 md5 # vi /var/lib/pgsql/data/postgresql.conf listen_addresses = &#39;*&#39; Restart PostgreSQL database # service postgresql reload Configure RHV Provider in CloudForms Connect to CloudForms management console Using browser you can simply hit the IP of CloudForms appliance using https. Login with &quot;admin/smartvm&quot;.  Add RHV Provider Under providers, choose &quot;Infrastructure Providers&quot; and &quot;new&quot;. Add the default credentials using IP or name of RHV-M host. The user should be admin@internal for RHV-M. Once that is complete, go to the &quot;C&amp; U Database&quot; tab. Here you will enter the IP or name for the RHV-M host and the superuser credentials you created above. In this example &quot;cfme/redhat01&quot;. Configure Hypervisors CloudForms requires access to hypervisors for certain capabilities like &quot;smart state analysis&quot;. Ability to peer inside VM images in order to for example, check security vulnerabilities. In this environment there are two hypervisor hosts (rhevh01.lab and rhevh02.lab). Configure RHEVH01 Under RHV infrastructure provider select host rhevh01.lab and configure.  Configure RHEVH02 Under RHV infrastructure provider select host rhevh02.lab and configure.  Enable Capacity and Utilization On upper far right in CloudForms management console under user, select &quot;Configuration&quot;. Enable the Capacity and Utilization roles underthe &quot;Server: EVM&quot;. C &amp; U  Set SmartProxy Affinity Under &quot;Zone: Default Zone&quot; associate all hosts and datastores.  Enable Capacity and Utilization Collection of RHV Environment Under &quot;CFME:Region&quot; enable collection for all clusters and datastores.  At this point CloudForms is collecting capacity and utilization statistics and after a few hours you should start seeing data under VM. You can also use planning to forecast and model various growth scenarios. Summary In this article we installed and configured the CloudForms appliance on an existing RHV cluster. We prepared RHV-M for CloudForms data collection. Configured a new infrastructure provider for RHV in CloudForms. Finally we enabled capacity and utilization for RHV within CloudForms. Happy CloudForming! (c) 2017 Keith Tenzer &nbsp;">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="CloudForms Installation and Configuration Guide for Red Hat Virtualization">
+<meta property="og:url" content="https://keithtenzer.com/cloudforms/cloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization/">
+
+
+  <meta property="og:description" content="Overview In this article we will deploy CloudForms 4.2 on Red Hat Enterprise Virtualization (RHV). We will also show how to configure CloudForms in order to properly manage a RHV cluster and it&#39;s hosts as well as virtual machines. Before you begin a RHV cluster is needed. If you haven&#39;t set one up, here is a guide on how to build a basic two node RHV cluster.  Install CloudForms CloudForms is provided by Red Hat as a virtual applicance. Red Hat provides appliances for many infrastructure platforms such as RHV, VMware, Hyper-V, OpenStack, AWS, GCE and Azure. In this case we will download the RHV virtual appliance. Download Image Image should be downloaded to the CFME appliance using your RHN login. https://access.redhat.com/downloads/content/167/ver=/cf-me---4.2/4.2/x86_64/product-software Add Appliance into RHV Export Domain In order to import an appliance it needs to be copied to export domain or imported to export domain using CLI. # cp cfme-rhevm-5.7.2.1-1.x86_64.rhevm.ova /usr/share/export/30621071-3dba-401d-9605-02a914b4069a Once copied to export domain we need to extract the appliance and set permissions. # cd /usr/share/export/30621071-3dba-401d-9605-02a914b4069a/ # tar xvf cfme-rhevm-5.3-15.x86_64.rhevm.ova # chown -R 36:36 images/ # chown -R 36:36 master/ Import CFME Appliance as Template Once the appliance is in the export domain we can import it as an appliance using the RHV-M management console. Under export domain and template, choose the import option.   We can provide our CFME template with a new name.  Once import completes the status will change to &quot;OK&quot;.  Create CloudForms Virtual Machine Under &quot;Virtual Machines&quot;, select &quot;new&quot; in the RHV-M management console. For template choose the newly imported CFME template.  Add Additional Disk for CloudForms Database Under CFME &quot;Virtual Machine&quot; Disks select &quot;new&quot; to add a new disk. I would recommend 30GB but this is based on how much data is to be collected and for how long.  Configure Appliance Start CFME VM from RHV-M management console. Login as &quot;root/smartvm&quot; and run &quot;appliance_console&quot; to configure CloudForms.  Configure static network settings  Configure local database  Make sure you create an internal database  Choose a disk, this should be the 30GB disk we added  Choose &quot;N&quot; to run standalone database server  Create database region and choose password  Restart the CFME appliance  Below are the basic settings that should be configured  Configure RHV for CloudForms In order for CloudForms to report capacity &amp; utilization we need to configure access from RHV-M. Login to RHV-M host using ssh as root Connect to RHV-M database # su - postgres As postgres user add a new role for CloudForms. As of this article CloudForms needs superuser but there is an RFE to enable read-only access in future. $ psql -U postgres CREATE ROLE cfme LOGIN UNENCRYPTED PASSWORD &#39;redhat01&#39; \ SUPERUSER VALID UNTIL &#39;infinity&#39;; \q &nbsp; Open firewall ports to allow communication to database # firewall-cmd --add-port=5432/tcp --permanent # firewall-cmd --reload Ensure PostgreSQL is exposing port and listening to all interfaces # vi /var/lib/pgsql/data/pg_hba.conf host all all 0.0.0.0/0 md5 # vi /var/lib/pgsql/data/postgresql.conf listen_addresses = &#39;*&#39; Restart PostgreSQL database # service postgresql reload Configure RHV Provider in CloudForms Connect to CloudForms management console Using browser you can simply hit the IP of CloudForms appliance using https. Login with &quot;admin/smartvm&quot;.  Add RHV Provider Under providers, choose &quot;Infrastructure Providers&quot; and &quot;new&quot;. Add the default credentials using IP or name of RHV-M host. The user should be admin@internal for RHV-M. Once that is complete, go to the &quot;C&amp; U Database&quot; tab. Here you will enter the IP or name for the RHV-M host and the superuser credentials you created above. In this example &quot;cfme/redhat01&quot;. Configure Hypervisors CloudForms requires access to hypervisors for certain capabilities like &quot;smart state analysis&quot;. Ability to peer inside VM images in order to for example, check security vulnerabilities. In this environment there are two hypervisor hosts (rhevh01.lab and rhevh02.lab). Configure RHEVH01 Under RHV infrastructure provider select host rhevh01.lab and configure.  Configure RHEVH02 Under RHV infrastructure provider select host rhevh02.lab and configure.  Enable Capacity and Utilization On upper far right in CloudForms management console under user, select &quot;Configuration&quot;. Enable the Capacity and Utilization roles underthe &quot;Server: EVM&quot;. C &amp; U  Set SmartProxy Affinity Under &quot;Zone: Default Zone&quot; associate all hosts and datastores.  Enable Capacity and Utilization Collection of RHV Environment Under &quot;CFME:Region&quot; enable collection for all clusters and datastores.  At this point CloudForms is collecting capacity and utilization statistics and after a few hours you should start seeing data under VM. You can also use planning to forecast and model various growth scenarios. Summary In this article we installed and configured the CloudForms appliance on an existing RHV cluster. We prepared RHV-M for CloudForms data collection. Configured a new infrastructure provider for RHV in CloudForms. Finally we enabled capacity and utilization for RHV within CloudForms. Happy CloudForming! (c) 2017 Keith Tenzer &nbsp;">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="CloudForms Installation and Configuration Guide for Red Hat Virtualization">
+  <meta name="twitter:description" content="Overview In this article we will deploy CloudForms 4.2 on Red Hat Enterprise Virtualization (RHV). We will also show how to configure CloudForms in order to properly manage a RHV cluster and it&#39;s hosts as well as virtual machines. Before you begin a RHV cluster is needed. If you haven&#39;t set one up, here is a guide on how to build a basic two node RHV cluster.  Install CloudForms CloudForms is provided by Red Hat as a virtual applicance. Red Hat provides appliances for many infrastructure platforms such as RHV, VMware, Hyper-V, OpenStack, AWS, GCE and Azure. In this case we will download the RHV virtual appliance. Download Image Image should be downloaded to the CFME appliance using your RHN login. https://access.redhat.com/downloads/content/167/ver=/cf-me---4.2/4.2/x86_64/product-software Add Appliance into RHV Export Domain In order to import an appliance it needs to be copied to export domain or imported to export domain using CLI. # cp cfme-rhevm-5.7.2.1-1.x86_64.rhevm.ova /usr/share/export/30621071-3dba-401d-9605-02a914b4069a Once copied to export domain we need to extract the appliance and set permissions. # cd /usr/share/export/30621071-3dba-401d-9605-02a914b4069a/ # tar xvf cfme-rhevm-5.3-15.x86_64.rhevm.ova # chown -R 36:36 images/ # chown -R 36:36 master/ Import CFME Appliance as Template Once the appliance is in the export domain we can import it as an appliance using the RHV-M management console. Under export domain and template, choose the import option.   We can provide our CFME template with a new name.  Once import completes the status will change to &quot;OK&quot;.  Create CloudForms Virtual Machine Under &quot;Virtual Machines&quot;, select &quot;new&quot; in the RHV-M management console. For template choose the newly imported CFME template.  Add Additional Disk for CloudForms Database Under CFME &quot;Virtual Machine&quot; Disks select &quot;new&quot; to add a new disk. I would recommend 30GB but this is based on how much data is to be collected and for how long.  Configure Appliance Start CFME VM from RHV-M management console. Login as &quot;root/smartvm&quot; and run &quot;appliance_console&quot; to configure CloudForms.  Configure static network settings  Configure local database  Make sure you create an internal database  Choose a disk, this should be the 30GB disk we added  Choose &quot;N&quot; to run standalone database server  Create database region and choose password  Restart the CFME appliance  Below are the basic settings that should be configured  Configure RHV for CloudForms In order for CloudForms to report capacity &amp; utilization we need to configure access from RHV-M. Login to RHV-M host using ssh as root Connect to RHV-M database # su - postgres As postgres user add a new role for CloudForms. As of this article CloudForms needs superuser but there is an RFE to enable read-only access in future. $ psql -U postgres CREATE ROLE cfme LOGIN UNENCRYPTED PASSWORD &#39;redhat01&#39; \ SUPERUSER VALID UNTIL &#39;infinity&#39;; \q &nbsp; Open firewall ports to allow communication to database # firewall-cmd --add-port=5432/tcp --permanent # firewall-cmd --reload Ensure PostgreSQL is exposing port and listening to all interfaces # vi /var/lib/pgsql/data/pg_hba.conf host all all 0.0.0.0/0 md5 # vi /var/lib/pgsql/data/postgresql.conf listen_addresses = &#39;*&#39; Restart PostgreSQL database # service postgresql reload Configure RHV Provider in CloudForms Connect to CloudForms management console Using browser you can simply hit the IP of CloudForms appliance using https. Login with &quot;admin/smartvm&quot;.  Add RHV Provider Under providers, choose &quot;Infrastructure Providers&quot; and &quot;new&quot;. Add the default credentials using IP or name of RHV-M host. The user should be admin@internal for RHV-M. Once that is complete, go to the &quot;C&amp; U Database&quot; tab. Here you will enter the IP or name for the RHV-M host and the superuser credentials you created above. In this example &quot;cfme/redhat01&quot;. Configure Hypervisors CloudForms requires access to hypervisors for certain capabilities like &quot;smart state analysis&quot;. Ability to peer inside VM images in order to for example, check security vulnerabilities. In this environment there are two hypervisor hosts (rhevh01.lab and rhevh02.lab). Configure RHEVH01 Under RHV infrastructure provider select host rhevh01.lab and configure.  Configure RHEVH02 Under RHV infrastructure provider select host rhevh02.lab and configure.  Enable Capacity and Utilization On upper far right in CloudForms management console under user, select &quot;Configuration&quot;. Enable the Capacity and Utilization roles underthe &quot;Server: EVM&quot;. C &amp; U  Set SmartProxy Affinity Under &quot;Zone: Default Zone&quot; associate all hosts and datastores.  Enable Capacity and Utilization Collection of RHV Environment Under &quot;CFME:Region&quot; enable collection for all clusters and datastores.  At this point CloudForms is collecting capacity and utilization statistics and after a few hours you should start seeing data under VM. You can also use planning to forecast and model various growth scenarios. Summary In this article we installed and configured the CloudForms appliance on an existing RHV cluster. We prepared RHV-M for CloudForms data collection. Configured a new infrastructure provider for RHV in CloudForms. Finally we enabled capacity and utilization for RHV within CloudForms. Happy CloudForming! (c) 2017 Keith Tenzer &nbsp;">
+  <meta name="twitter:url" content="https://keithtenzer.com/cloudforms/cloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2017-05-11T00:00:00-07:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/cloudforms/cloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#cloudforms" itemprop="item"><span itemprop="name">Cloudforms</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">CloudForms Installation and Configuration Guide for Red Hat Virtualization</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="CloudForms Installation and Configuration Guide for Red Hat Virtualization">
+    <meta itemprop="description" content="OverviewIn this article we will deploy CloudForms 4.2 on Red Hat Enterprise Virtualization (RHV). We will also show how to configure CloudForms in order to properly manage a RHV cluster and it&#39;s hosts as well as virtual machines.Before you begin a RHV cluster is needed. If you haven&#39;t set one up, here is a guide on how to build a basic two node RHV cluster.Install CloudFormsCloudForms is provided by Red Hat as a virtual applicance. Red Hat provides appliances for many infrastructure platforms such as RHV, VMware, Hyper-V, OpenStack, AWS, GCE and Azure. In this case we will download the RHV virtual appliance.Download ImageImage should be downloaded to the CFME appliance using your RHN login.https://access.redhat.com/downloads/content/167/ver=/cf-me---4.2/4.2/x86_64/product-softwareAdd Appliance into RHV Export DomainIn order to import an appliance it needs to be copied to export domain or imported to export domain using CLI.# cp cfme-rhevm-5.7.2.1-1.x86_64.rhevm.ova /usr/share/export/30621071-3dba-401d-9605-02a914b4069aOnce copied to export domain we need to extract the appliance and set permissions.# cd /usr/share/export/30621071-3dba-401d-9605-02a914b4069a/# tar xvf cfme-rhevm-5.3-15.x86_64.rhevm.ova# chown -R 36:36 images/# chown -R 36:36 master/Import CFME Appliance as TemplateOnce the appliance is in the export domain we can import it as an appliance using the RHV-M management console. Under export domain and template, choose the import option.We can provide our CFME template with a new name.Once import completes the status will change to &quot;OK&quot;.Create CloudForms Virtual MachineUnder &quot;Virtual Machines&quot;, select &quot;new&quot; in the RHV-M management console. For template choose the newly imported CFME template.Add Additional Disk for CloudForms DatabaseUnder CFME &quot;Virtual Machine&quot; Disks select &quot;new&quot; to add a new disk. I would recommend 30GB but this is based on how much data is to be collected and for how long.Configure ApplianceStart CFME VM from RHV-M management console. Login as &quot;root/smartvm&quot; and run &quot;appliance_console&quot; to configure CloudForms.Configure static network settingsConfigure local databaseMake sure you create an internal databaseChoose a disk, this should be the 30GB disk we addedChoose &quot;N&quot; to run standalone database serverCreate database region and choose passwordRestart the CFME applianceBelow are the basic settings that should be configuredConfigure RHV for CloudFormsIn order for CloudForms to report capacity &amp; utilization we need to configure access from RHV-M.Login to RHV-M host using ssh as rootConnect to RHV-M database# su - postgresAs postgres user add a new role for CloudForms. As of this article CloudForms needs superuser but there is an RFE to enable read-only access in future.$ psql -U postgres CREATE ROLE cfme LOGIN UNENCRYPTED PASSWORD &#39;redhat01&#39; \SUPERUSER VALID UNTIL &#39;infinity&#39;; \q&nbsp;Open firewall ports to allow communication to database# firewall-cmd --add-port=5432/tcp --permanent# firewall-cmd --reloadEnsure PostgreSQL is exposing port and listening to all interfaces# vi /var/lib/pgsql/data/pg_hba.confhost all all 0.0.0.0/0 md5# vi /var/lib/pgsql/data/postgresql.conflisten_addresses = &#39;*&#39;Restart PostgreSQL database# service postgresql reloadConfigure RHV Provider in CloudFormsConnect to CloudForms management consoleUsing browser you can simply hit the IP of CloudForms appliance using https. Login with &quot;admin/smartvm&quot;.Add RHV ProviderUnder providers, choose &quot;Infrastructure Providers&quot; and &quot;new&quot;. Add the default credentials using IP or name of RHV-M host. The user should be admin@internal for RHV-M.Once that is complete, go to the &quot;C&amp; U Database&quot; tab. Here you will enter the IP or name for the RHV-M host and the superuser credentials you created above. In this example &quot;cfme/redhat01&quot;.Configure HypervisorsCloudForms requires access to hypervisors for certain capabilities like &quot;smart state analysis&quot;. Ability to peer inside VM images in order to for example, check security vulnerabilities. In this environment there are two hypervisor hosts (rhevh01.lab and rhevh02.lab).Configure RHEVH01Under RHV infrastructure provider select host rhevh01.lab and configure.Configure RHEVH02Under RHV infrastructure provider select host rhevh02.lab and configure.Enable Capacity and UtilizationOn upper far right in CloudForms management console under user, select &quot;Configuration&quot;. Enable the Capacity and Utilization roles underthe &quot;Server: EVM&quot;.C &amp; USet SmartProxy AffinityUnder &quot;Zone: Default Zone&quot; associate all hosts and datastores.Enable Capacity and Utilization Collection of RHV EnvironmentUnder &quot;CFME:Region&quot; enable collection for all clusters and datastores.At this point CloudForms is collecting capacity and utilization statistics and after a few hours you should start seeing data under VM. You can also use planning to forecast and model various growth scenarios.SummaryIn this article we installed and configured the CloudForms appliance on an existing RHV cluster. We prepared RHV-M for CloudForms data collection. Configured a new infrastructure provider for RHV in CloudForms. Finally we enabled capacity and utilization for RHV within CloudForms.Happy CloudForming!(c) 2017 Keith Tenzer&nbsp;">
+    <meta itemprop="datePublished" content="2017-05-11T00:00:00-07:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">CloudForms Installation and Configuration Guide for Red Hat Virtualization
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2017-05-11T00:00:00-07:00">May 11, 2017</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h2><img class="alignnone wp-image-10020" src="/assets/2017/05/manageiq-logo-glyph.png" alt="manageiq-logo-glyph" width="239" height="239" /></h2>
+<h2>Overview</h2>
+<p>In this article we will deploy CloudForms 4.2 on Red Hat Enterprise Virtualization (RHV). We will also show how to configure CloudForms in order to properly manage a RHV cluster and it's hosts as well as virtual machines.</p>
+<p>Before you begin a RHV cluster is needed. If you haven't set one up, <a href="https://keithtenzer.com/2017/05/02/rhev-4-1-lab-installation-and-configuration-guide/">here </a>is a guide on how to build a basic two node RHV cluster.</p>
+<p><!--more--></p>
+<h2>Install CloudForms</h2>
+<p>CloudForms is provided by Red Hat as a virtual applicance. Red Hat provides appliances for many infrastructure platforms such as RHV, VMware, Hyper-V, OpenStack, AWS, GCE and Azure. In this case we will download the RHV virtual appliance.</p>
+<p><strong>Download Image</strong></p>
+<p>Image should be downloaded to the CFME appliance using your RHN login.</p>
+<p><a href="https://access.redhat.com/downloads/content/167/ver=/cf-me---4.2/4.2/x86_64/product-software">https://access.redhat.com/downloads/content/167/ver=/cf-me---4.2/4.2/x86_64/product-software</a></p>
+<p><strong>Add Appliance into RHV Export Domain</strong></p>
+<p>In order to import an appliance it needs to be copied to export domain or imported to export domain using CLI.</p>
+<pre># cp cfme-rhevm-5.7.2.1-1.x86_64.rhevm.ova /usr/share/export/30621071-3dba-401d-9605-02a914b4069a</pre>
+<p>Once copied to export domain we need to extract the appliance and set permissions.</p>
+<pre># cd /usr/share/export/30621071-3dba-401d-9605-02a914b4069a/</pre>
+<pre># tar xvf cfme-rhevm-5.3-15.x86_64.rhevm.ova</pre>
+<pre># chown -R 36:36 images/
+# chown -R 36:36 master/</pre>
+<p><strong>Import CFME Appliance as Template</strong></p>
+<p>Once the appliance is in the export domain we can import it as an appliance using the RHV-M management console. Under export domain and template, choose the import option.</p>
+<p><img class="alignnone size-full wp-image-9595" src="/assets/2017/05/rhevm_cfme_imported.jpg" alt="rhevm_cfme_imported" width="1367" height="786" /></p>
+<p><img class="alignnone size-full wp-image-9598" src="/assets/2017/05/rhevm_import_cfme.jpg" alt="rhevm_import_cfme" width="256" height="173" /></p>
+<p>We can provide our CFME template with a new name.</p>
+<p><img class="alignnone size-full wp-image-9599" src="/assets/2017/05/cfme_import_2.jpg" alt="cfme_import_2" width="989" height="558" /></p>
+<p>Once import completes the status will change to "OK".</p>
+<p><img class="alignnone size-full wp-image-9601" src="/assets/2017/05/rhevm_cfme_import_complete.jpg" alt="rhevm_cfme_import_complete" width="1094" height="134" /></p>
+<p><strong>Create CloudForms Virtual Machine</strong></p>
+<p>Under "Virtual Machines", select "new" in the RHV-M management console. For template choose the newly imported CFME template.</p>
+<p><img class="alignnone size-full wp-image-9602" src="/assets/2017/05/cfme_new_vm.jpg" alt="cfme_new_vm" width="874" height="627" /></p>
+<p><strong>Add Additional Disk for CloudForms Database</strong></p>
+<p>Under CFME "Virtual Machine" Disks select "new" to add a new disk. I would recommend 30GB but this is based on how much data is to be collected and for how long.</p>
+<p><img class="alignnone size-full wp-image-9628" src="/assets/2017/05/cfme_db_disk.jpg" alt="cfme_db_disk" width="807" height="600" /></p>
+<h2>Configure Appliance</h2>
+<p>Start CFME VM from RHV-M management console. Login as "root/smartvm" and run "appliance_console" to configure CloudForms.</p>
+<p><img class="alignnone size-full wp-image-9629" src="/assets/2017/05/cfme_setup1.jpg" alt="cfme_setup1" width="1018" height="227" /></p>
+<p><strong>Configure static network settings</strong></p>
+<p><img class="alignnone size-full wp-image-9633" src="/assets/2017/05/cfme_setup2.jpg" alt="cfme_setup2" width="1023" height="216" /></p>
+<p><strong>Configure local database</strong></p>
+<p><img class="alignnone size-full wp-image-9635" src="/assets/2017/05/cfme_db_1.jpg" alt="cfme_db_1" width="846" height="496" /></p>
+<p><strong>Make sure you create an internal database</strong></p>
+<p><img class="alignnone size-full wp-image-9639" src="/assets/2017/05/cfme_db_22.jpg" alt="cfme_db_2" width="1013" height="439" /></p>
+<p><strong>Choose a disk, this should be the 30GB disk we added</strong></p>
+<p><img class="alignnone size-full wp-image-9641" src="/assets/2017/05/cfme_db_3.jpg" alt="cfme_db_3" width="1016" height="162" /></p>
+<p><strong>Choose "N" to run standalone database server</strong></p>
+<p><img class="alignnone size-full wp-image-9642" src="/assets/2017/05/cfme_db_4.jpg" alt="cfme_db_4" width="1022" height="199" /></p>
+<p><strong>Create database region and choose password</strong></p>
+<p><img class="alignnone size-full wp-image-9644" src="/assets/2017/05/cfme_db_5.jpg" alt="cfme_db_5" width="1018" height="133" /></p>
+<p><strong>Restart the CFME appliance</strong></p>
+<p><img class="alignnone size-full wp-image-9645" src="/assets/2017/05/cfme_db_6.jpg" alt="cfme_db_6" width="1015" height="491" /></p>
+<p><strong>Below are the basic settings that should be configured</strong></p>
+<p><img class="alignnone size-full wp-image-9647" src="/assets/2017/05/cfme_db_7.jpg" alt="cfme_db_7" width="1019" height="406" /></p>
+<h2>Configure RHV for CloudForms</h2>
+<p>In order for CloudForms to report capacity &amp; utilization we need to configure access from RHV-M.</p>
+<p><strong>Login to RHV-M host using ssh as root</strong></p>
+<p><strong>Connect to RHV-M database</strong></p>
+<pre># su - postgres</pre>
+<p>As postgres user add a new role for CloudForms. As of this article CloudForms needs superuser but there is an RFE to enable read-only access in future.</p>
+<pre>$ psql -U postgres CREATE ROLE cfme LOGIN UNENCRYPTED PASSWORD 'redhat01' \
+SUPERUSER VALID UNTIL 'infinity'; \q</pre>
+<p>&nbsp;</p>
+<p><strong>Open firewall ports to allow communication to database</strong></p>
+<pre># firewall-cmd --add-port=5432/tcp --permanent
+# firewall-cmd --reload</pre>
+<p><strong>Ensure PostgreSQL is exposing port and listening to all interfaces</strong></p>
+<pre># vi /var/lib/pgsql/data/pg_hba.conf
+host all all 0.0.0.0/0 md5</pre>
+<pre># vi /var/lib/pgsql/data/postgresql.conf
+listen_addresses = '*'</pre>
+<p><strong>Restart PostgreSQL database</strong></p>
+<pre># service postgresql reload</pre>
+<h2>Configure RHV Provider in CloudForms</h2>
+<p><strong>Connect to CloudForms management console</strong></p>
+<p>Using browser you can simply hit the IP of CloudForms appliance using https. Login with "admin/smartvm".</p>
+<p><img class="alignnone size-full wp-image-9648" src="/assets/2017/05/cfme_login.jpg" alt="cfme_login" width="1233" height="867" /></p>
+<p><strong>Add RHV Provider</strong></p>
+<p>Under providers, choose "Infrastructure Providers" and "new". Add the default credentials using IP or name of RHV-M host. The user should be admin@internal for RHV-M.</p>
+<p>Once that is complete, go to the "C&amp; U Database" tab. Here you will enter the IP or name for the RHV-M host and the superuser credentials you created above. In this example "cfme/redhat01".</p>
+<p><img class="alignnone size-full wp-image-9620" src="/assets/2017/05/cfme_add_rhev_provider.jpg" alt="cfme_add_rhev_provider" width="999" height="766" /><strong>Configure Hypervisors</strong></p>
+<p>CloudForms requires access to hypervisors for certain capabilities like "smart state analysis". Ability to peer inside VM images in order to for example, check security vulnerabilities. In this environment there are two hypervisor hosts (rhevh01.lab and rhevh02.lab).</p>
+<p><strong>Configure RHEVH01</strong></p>
+<p>Under RHV infrastructure provider select host rhevh01.lab and configure.</p>
+<p><img class="alignnone size-full wp-image-9623" src="/assets/2017/05/cfme_rhev_hypervisor.jpg" alt="cfme_rhev_hypervisor" width="1688" height="739" /></p>
+<p><strong>Configure RHEVH02</strong></p>
+<p>Under RHV infrastructure provider select host rhevh02.lab and configure.</p>
+<p><img class="alignnone size-full wp-image-9625" src="/assets/2017/05/cfme_rhev_hypervisor2.jpg" alt="cfme_rhev_hypervisor2" width="1688" height="746" /></p>
+<p><strong>Enable Capacity and Utilization</strong></p>
+<p>On upper far right in CloudForms management console under user, select "Configuration". Enable the Capacity and Utilization roles underthe "Server: EVM".</p>
+<p>C &amp; U</p>
+<p><img class="alignnone size-full wp-image-9652" src="/assets/2017/05/cfme_cu.jpg" alt="cfme_c+u" width="1249" height="725" /></p>
+<p><strong>Set SmartProxy Affinity</strong></p>
+<p>Under "Zone: Default Zone" associate all hosts and datastores.</p>
+<p><img class="alignnone size-full wp-image-9653" src="/assets/2017/05/cmfe_cu2.jpg" alt="cmfe_c+u2" width="1677" height="379" /></p>
+<p><strong>Enable Capacity and Utilization Collection of RHV Environment</strong></p>
+<p>Under "CFME:Region" enable collection for all clusters and datastores.</p>
+<p><img class="alignnone size-full wp-image-9658" src="/assets/2017/05/cfme_cu4.jpg" alt="cfme_c+u4" width="1679" height="372" /></p>
+<p>At this point CloudForms is collecting capacity and utilization statistics and after a few hours you should start seeing data under VM. You can also use planning to forecast and model various growth scenarios.</p>
+<h2>Summary</h2>
+<p>In this article we installed and configured the CloudForms appliance on an existing RHV cluster. We prepared RHV-M for CloudForms data collection. Configured a new infrastructure provider for RHV in CloudForms. Finally we enabled capacity and utilization for RHV within CloudForms.</p>
+<p>Happy CloudForming!</p>
+<p>(c) 2017 Keith Tenzer</p>
+<p>&nbsp;</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#cloud" class="page__taxonomy-item" rel="tag">Cloud</a><span class="sep">, </span>
+    
+      <a href="/tags/#cloud-management" class="page__taxonomy-item" rel="tag">cloud management</a><span class="sep">, </span>
+    
+      <a href="/tags/#kvm" class="page__taxonomy-item" rel="tag">KVM</a><span class="sep">, </span>
+    
+      <a href="/tags/#manageiq" class="page__taxonomy-item" rel="tag">ManageIQ</a><span class="sep">, </span>
+    
+      <a href="/tags/#rhev" class="page__taxonomy-item" rel="tag">RHEV</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#cloudforms" class="page__taxonomy-item" rel="tag">CloudForms</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2017-05-11T00:00:00-07:00">May 11, 2017</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=CloudForms+Installation+and+Configuration+Guide+for+Red+Hat+Virtualization%20https%3A%2F%2Fkeithtenzer.com%2Fcloudforms%2Fcloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fcloudforms%2Fcloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fcloudforms%2Fcloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/rhev/rhev-4-1-lab-installation-and-configuration-guide/" class="pagination--pager" title="RHV 4.1 Lab Installation and Configuration Guide
+">Previous</a>
+    
+    
+      <a href="/openstack/explaining-openstack-cinder-types-and-scheduler/" class="pagination--pager" title="Explaining OpenStack Cinder Types and Scheduler
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

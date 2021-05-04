@@ -1,12 +1,6 @@
 ---
-layout: post
+layout: single 
 title: 'Application Containers: A Practical HowTo Guide'
-date: 2015-05-11 15:10:27.000000000 -07:00
-type: post
-parent_id: '0'
-published: true
-password: ''
-status: publish
 categories:
 - Containers
 tags:
@@ -14,23 +8,6 @@ tags:
 - Kubernetes
 - Linux
 - LXC
-meta:
-  _edit_last: '63054820'
-  geo_public: '0'
-  _oembed_8e9785dd84cbdfd9bffa91e9ddef9947: "{{unknown}}"
-  _wpas_skip_9542380: '1'
-  _publicize_pending: '1'
-  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6003546513769324544&type=U&a=_pqZ
-  _wpas_done_9468659: '1'
-  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"pzvfqtzaYA";b:1;}}
-  _wpas_skip_9468659: '1'
-author:
-  login: ktenzer1
-  email: keith.tenzer@gmail.com
-  display_name: ktenzer
-  first_name: ''
-  last_name: ''
-permalink: "/2015/05/11/application-containers-a-practical-howto-guide/"
 ---
 <h3>Overview</h3>
 <p>We have by now all heard plenty about Linux containers and for good reason. Containers change the way applications are operated and allow us to deploy applications at unprecedented speeds. Containers pick up where Virtual Machines left off, at the application layer. In this article we will focus on the journey to a container driven world and explore the phases along the way. <!--more--></p>
@@ -73,7 +50,7 @@ permalink: "/2015/05/11/application-containers-a-practical-howto-guide/"
 <pre style="padding-left:30px;"># docker ps
 CONTAINER     ID IMAGE         COMMAND       CREATED         STATUS
 b4a37b0d8040  debian:latest    "/bin/bash"   5 minutes ago   Up 5 minutes</pre>
-<pre class="lang-sh prettyprint prettyprinted" style="padding-left:30px;"><code><span class="pln"># docker inspect -f '{{.Id}}' b4a37b0d8040
+<pre class="lang-sh prettyprint prettyprinted" style="padding-left:30px;"><code><span class="pln"># docker inspect -f b4a37b0d8040
 b4a37b0d8040a0d624b7edc264425693a7e0e50444f72d09a54209ff6461b377</span></code></pre>
 <pre class="lang-sh prettyprint prettyprinted" style="padding-left:30px;"><code><span class="pln">cp </span></code>rest-1.0.2-uber.jar /var/lib/docker/devicemapper/mnt/b4a37b0d8040a0d624b7edc264425693a7e0e50444f72d09a54209ff6461b377/rootfs</pre>
 <p>Now that we have copied the JAR file from our host OS to the container we can run the Integra reactor and ensure it works.</p>

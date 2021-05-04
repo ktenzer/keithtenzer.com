@@ -1,34 +1,11 @@
 ---
-layout: post
+layout: single 
 title: RHEV - Importing OVA Templates
-date: 2015-01-12 14:04:37.000000000 -08:00
-type: post
-parent_id: '0'
-published: true
-password: ''
-status: publish
 categories:
 - RHEV
 tags:
 - OVA
 - Red Hat
-meta:
-  _edit_last: '63054820'
-  geo_public: '0'
-  _wpas_skip_9542380: '1'
-  _wpas_skip_9468659: '1'
-  _publicize_job_id: '14430352789'
-  _oembed_198602da0c29c25065d4b28062e6a07b: "{{unknown}}"
-  _oembed_c17fe716bb92a773b6f3367dedb2775a: "{{unknown}}"
-  _oembed_e0c1b6341f528244db6195d3de5887c2: "{{unknown}}"
-  _oembed_5fd538f5dab767ef9c5542b9b1be45c6: "{{unknown}}"
-author:
-  login: ktenzer1
-  email: keith.tenzer@gmail.com
-  display_name: ktenzer
-  first_name: ''
-  last_name: ''
-permalink: "/2015/01/12/rhev-importing-ova-templates/"
 ---
 <h3>Overview</h3>
 <p>Virtual machine disk images are specific to hypervisors and each hypervisor has its own format. Open Virtual Format (OVF) is a packaging standard designed to address portability and deployment of virtual machines across different hypervisors. <!--more-->The OVF structure consists of a number files: descriptor, manifest, certificate and disk images or resource files such as ISOs. In order to make things even more streamlined and simpler for deploying virtual appliances an Open Virtual Applicance (OVA) standard was created. OVA is a single file distribution of an OVF package, stored in TAR format. In this post we will explore how to import OVAs into RHEV.</p>

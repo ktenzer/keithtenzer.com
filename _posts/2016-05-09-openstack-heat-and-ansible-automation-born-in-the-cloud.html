@@ -1,43 +1,12 @@
 ---
-layout: post
+layout: single 
 title: OpenStack Heat and Ansible - Automation Born in the Cloud
-date: 2016-05-09 08:06:16.000000000 -07:00
-type: post
-parent_id: '0'
-published: true
-password: ''
-status: publish
 categories:
 - Ansible
 tags:
 - Ansible Tower
 - Heat
 - OpenStack
-meta:
-  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6135348946383429633&type=U&a=6eex
-  _rest_api_published: '1'
-  _rest_api_client_id: "-1"
-  _publicize_job_id: '22624189816'
-  _publicize_done_9423386: '1'
-  _wpas_done_9468659: '1'
-  _oembed_3ddb4a4b022b7eb8967b6070e9a05f89: "{{unknown}}"
-  _oembed_17c97389fd714eb9482d3e548d6929b8: "{{unknown}}"
-  _oembed_39f9852e9bf7b298037be8065ba0cf79: "{{unknown}}"
-  _oembed_2a20d785f740fd6d79381ec9e21b66f0: "{{unknown}}"
-  _oembed_6fec4b65be608a436b44f4856c0b7f1b: "{{unknown}}"
-  _oembed_5f7620b06f2758f8f23f246e750b34ae: "{{unknown}}"
-  _oembed_25487b39f0215807ff03576495a88250: "{{unknown}}"
-  _oembed_8e4e6d8121792f0dd4416aeffb81dea7: "{{unknown}}"
-  _oembed_2892cda90e45668668406925edf92369: "{{unknown}}"
-  _oembed_33620051242f06e4f48029489cc28465: "{{unknown}}"
-  _oembed_3cbb113ee98067a667c33018f5fded82: "{{unknown}}"
-author:
-  login: ktenzer1
-  email: keith.tenzer@gmail.com
-  display_name: ktenzer
-  first_name: ''
-  last_name: ''
-permalink: "/2016/05/09/openstack-heat-and-ansible-automation-born-in-the-cloud/"
 ---
 <h3><img class="alignnone size-full wp-image-2609" src="{{ site.baseurl }}/assets/2016/05/ansible_2.png" alt="ansible_2" width="225" height="225" /></h3>
 <h3>Overview</h3>
@@ -456,9 +425,9 @@ outputs:
 </pre>
 <p>In order to notify Heat when Ansible playbook has completed two things are required. First handle the incoming parameters and second, using a role, send notification to Heat.</p>
 <p>There are several ways to handle parameters in Ansible, for this example I chose to set them globally by adding following to playbook:</p>
-<pre> vars:
-  heat_endpoint: "{{ HEAT_ENDPOINT|default('foo') }}"
-  heat_token: "{{ HEAT_TOKEN|default('foo') }}"</pre>
+<pre> vars:</pre>
+        heat_endpoint: "{{ HEAT_ENDPOINT }}"
+        heat_token: "{{ HEAT_TOKEN }}"</pre>
 <p>Using roles in Ansible allows for greater re-usability, roles can be re-used in many playbooks. Below is the new role to support sending notification to Heat.</p>
 <pre>---
 - block:

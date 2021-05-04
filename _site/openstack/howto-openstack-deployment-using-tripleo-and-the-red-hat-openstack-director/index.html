@@ -1,0 +1,1119 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director - KEITHTENZER.COM</title>
+<meta name="description" content="Overview In this article we will look at how to deploy an OpenStack cloud using TripleO, the upstream project from the Red Hat OpenStack Director. Regardless of what OpenStack distribution you are using OpenStack is essentially OpenStack. Everyone has the same code-base to work with. The main differences between distributions are around what OpenStack projects are part of distribution, how it is supported and the deployment of the distribution. Every distribution has their own OpenStack deployment tool. Clearly deployments differ as they are based on support decisions each distribution makes. However many distributions have created their own proprietary installers. Shouldn&#39;t the OpenStack community unite around a common installer? What would be better than using OpenStack to deploy OpenStack? Why should OpenStack administrators have to learn separate proprietary tooling? Why should we be creating unnecessary vendor lock-in for OpenStack&#39;s deployment tooling? Installing OpenStack is one thing but what about upgrade and life-cycle management?  This is the promise of TripleO! The TripleO (OpenStack on OpenStack) project was started to solve these problems and bring unification around OpenStack deployment as well as eventually life-cycle management. This has taken quite some time and been a journey but finally the first distribution is using TripleO. Red Hat Enterprise OpenStack Platform 7 has shifted away from foreman/puppet and is now based largely on TripleO. Red Hat is bringing its expertise and learning over the past years around OpenStack deployments and contributing heavily to TripleO. TripleO Concepts Before getting into the weeds, we should understand some basic concepts. First TripleO uses OpenStack to deploy OpenStack. It mainly utilizes Ironic for provisioning and Heat for orchestration. Under the hood puppet is used for configuration management. TripleO first deploys an OpenStack cloud used to deploy other OpenStack clouds. This is referred to as the undercloud. The OpenStack cloud environment deployed from undercloud is known as overcloud. The networking requirement is that all systems share a non-routed provisioning network. TripleO also uses PXE to boot and install initial OS image (bootstrap). There are different types of nodes or roles a node can have. In addition to controller and compute you can have nodes for Cinder, CEPH or Swift storage. CEPH storage is also integrated and since most OpenStack deployments use CEPH this is an obvious advantage. Environment In this environment we have the KVM hypervisor host (Laptop), the undercloud (single VM) and overcloud (1 X compute, 1 Xcontroller). The undercloud and overcloud are all VMs running on the KVM hypervisor host (Laptop). The KVM hypervisor host is on the 192.168.122.0/24 network and has IP of 192.168.122.1. The undercloud runs on a single VM on the 192.168.122.0/24 management network and 192.168.126.0/24 (provisioning) netowrk. The undercloud has an IP address of 192.168.122.90 (eth0). The overcloud is on the 192.168.126.0/24 (provisioning) and 192.168.125.0/24 (external) network. This is a very simple network configuration. In a real production environment there will be many more networks used in overcloud.  Deploying Undercloud In this section we will configure the undercloud. Normally you would deploy OpenStack nodes on bare-metal but since this is designed to run on Laptop or in lab, we are using KVM virtualization. Before beginning install RHEL or CentOS 7.1 on your KVM hypervisor. Disable NetworkManager. undercloud# systemctl stop NetworkManager undercloud# systemctl disable NetworkManager Enable port forwarding. undercloud# vi /etc/sysctl.conf net.ipv4.ip_forward = 1 undercloud# sysctl -p /etc/sysctl.conf Ensure hostname is static. undercloud# hostnamectl set-hostname undercloud.lab.com undercloud# systemctl restart network Register to subscription manager and enable appropriate repositories for RHEL. undercloud# subscription-manager register undercloud# subscription-manager list --available undercloud# subscription-manager attach --pool=8a85f9814f2c669b014f3b872de132b5 undercloud# subscription-manager repos --disable=* undercloud# subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-optional-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-openstack-7.0-rpms --enable=rhel-7-server-openstack-7.0-director-rpms Perform yum update and reboot system. undercloud# yum update -y &amp;&amp; reboot Install facter and ensure hostname is set properly in /etc/hosts. undercloud# yum install facter -y undercloud# ipaddr=$(facter ipaddress_eth0) undercloud# echo -e &quot;$ipaddr\t\tundercloud.lab.com\tundercloud&quot; &gt;&gt; /etc/hosts Install TripleO packages. undercloud# yum install python-rdomanager-oscplugin -y  Create a stack user. undercloud# useradd stack undercloud# echo &quot;redhat&quot; | passwd stack --stdin undercloud# echo &quot;stack ALL=(root) NOPASSWD:ALL&quot; | tee -a /etc/sudoers.d/stack undercloud# chmod 0440 /etc/sudoers.d/stack undercloud# su - stack Determine network settings for undercloud. At minimum you need two networks. One for provisioning and the other for the overcloud which should be external network. In this case we have two networks. The undercloud provisioning network 192.168.126.0/24 and the overcloud external network 192.168.125.0/24. [stack@undercloud ~]$ cp /usr/share/instack-undercloud/undercloud.conf.sample ~/undercloud.conf [stack@undercloud ~]$ vi ~/undercloud.conf  [DEFAULT]  local_ip = 192.168.126.1/24  undercloud_public_vip = 192.168.126.10  undercloud_admin_vip = 192.168.126.11  local_interface = eth1  masquerade_network = 192.168.126.0/24  dhcp_start = 192.168.126.100  dhcp_end = 192.168.126.120  network_cidr = 192.168.126.0/24  network_gateway = 192.168.126.1  discovery_iprange = 192.168.126.130,192.168.126.150  [auth] Install the undercloud. [stack@undercloud ~]$ openstack undercloud install ############################################################################# instack-install-undercloud complete. The file containing this installation&#39;s passwords is at /home/stack/undercloud-passwords.conf. There is also a stackrc file at /home/stack/stackrc. These files are needed to interact with the OpenStack services, and should be secured. ############################################################################# Verify undercloud.  [stack@undercloud ~]$ source ~/stackrc  [stack@undercloud ~]$ openstack catalog show nova  +-----------+------------------------------------------------------------------------------+  | Field | Value |  +-----------+------------------------------------------------------------------------------+  | endpoints | regionOne                                                                    |  |           | publicURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a     |  |           | internalURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a   |  |           | adminURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a      |  |           |                                                                              |  | name      | nova                                                                         |  | type      | compute                                                                      |  +-----------+------------------------------------------------------------------------------+ Deploying Overcloud The overcloud is as mentioned a separate cloud from the undercloud. They are not sharing any resources, other than the provisioning network. Over and under sometimes confuse people into thinking the overcloud is sitting on top of undercloud, from networking perspective. This is of course not the case. In reality the clouds are sitting side-by-side from one another. The term over and under really refers to a logical relationship between both clouds. We will do a minimal deployment for the overcloud, 1 X controller and 1 X compute. Create directory for storing undercloud images. These are the images used by Ironic to provision an OpenStack node. [stack@undercloud]$ mkdir ~/images Download images from https://access.redhat.com/downloads/content/191/ver=7/rhel---7/7/x86_64/product-downloads and copy to ~/images. [stack@undercloud images]$ ls -l total 2307076 -rw-r-----. 1 stack stack 61419520 Oct 12 16:11 deploy-ramdisk-ironic-7.1.0-39.tar -rw-r-----. 1 stack stack 155238400 Oct 12 16:11 discovery-ramdisk-7.1.0-39.tar -rw-r-----. 1 stack stack 964567040 Oct 12 16:12 overcloud-full-7.1.0-39.tar Extract image tarballs. [stack@undercloud ~]$ cd ~/images [stack@undercloud ~]$ for tarfile in *.tar; do tar -xf $tarfile; done Upload images to Glance. [stack@undercloud ~]$ openstack overcloud image upload --image-path /home/stack/images [stack@undercloud ~]$ openstack image list  +--------------------------------------+------------------------+  | ID | Name |  +--------------------------------------+------------------------+  | 31c01b42-d164-4898-b615-4787c12d3a53 | bm-deploy-ramdisk |  | e38057f6-24f2-42d1-afae-bb54dead864d | bm-deploy-kernel |  | f1708a15-5b9b-41ac-8363-ffc9932534f3 | overcloud-full |  | 318768c2-5300-43cb-939d-44fb7abca7de | overcloud-full-initrd |  | 28422b76-c37f-4413-b885-cccb24a4611c | overcloud-full-vmlinuz |  +--------------------------------------+------------------------+ Configure DNS for undercloud. The undercloud system is connected to a network 192.168.122.0/24 that provides DNS. [stack@undercloud]$ neutron subnet-list +--------------------------------------+------+------------------+--------------------------------------------------------+ | id | name | cidr | allocation_pools | +--------------------------------------+------+------------------+--------------------------------------------------------+ | 532f3344-57ed-4a2f-b438-67a5d60c71fc | | 192.168.126.0/24 | {&quot;start&quot;: &quot;192.168.126.100&quot;, &quot;end&quot;: &quot;192.168.126.120&quot;} | +--------------------------------------+------+------------------+--------------------------------------------------------+ [stack@undercloud ~]$ neutron subnet-update 532f3344-57ed-4a2f-b438-67a5d60c71fc --dns-nameserver 192.168.122.1 Since we are in nested virtual environment it is necessary to tweak timeouts. undercloud# sudo su - undercloud# openstack-config --set /etc/nova/nova.conf DEFAULT rpc_response_timeout 600 undercloud# openstack-config --set /etc/ironic/ironic.conf DEFAULT rpc_response_timeout 600 undercloud# openstack-service restart nova  undercloud# openstack-service restart ironic undercloud# exit  Create provisioning and external networks on KVM Hypervisor host. Ensure that NAT forwarding and DHCP is enabled on the external network. The provisioning network should be non-routable and DHCP disabled. The undercloud will handle DHCP services for the provisioning network. [ktenzer@ktenzer ~]$ cat &gt; /tmp/external.xml &lt;&lt;EOF &lt;network&gt;    &lt;name&gt;external&lt;/name&gt;    &lt;forward mode=&#39;nat&#39;&gt;       &lt;nat&gt; &lt;port start=&#39;1024&#39; end=&#39;65535&#39;/&gt;       &lt;/nat&gt;    &lt;/forward&gt;    &lt;ip address=&#39;192.168.125.1&#39; netmask=&#39;255.255.255.0&#39;&gt;       &lt;dhcp&gt; &lt;range start=&#39;192.168.125.2&#39; end=&#39;192.168.125.254&#39;/&gt;       &lt;/dhcp&gt;    &lt;/ip&gt; &lt;/network&gt;  [ktenzer@ktenzer ~]$ virsh net-define /tmp/external.xml [ktenzer@ktenzer ~]$ virsh net-autostart external [ktenzer@ktenzer ~]$ virsh net-start external [ktenzer@ktenzer ~]$ cat &gt; /tmp/provisioning.xml &lt;&lt;EOF &lt;network&gt;    &lt;name&gt;provisioning&lt;/name&gt;    &lt;ip address=&#39;192.168.126.254&#39; netmask=&#39;255.255.255.0&#39;&gt;    &lt;/ip&gt; &lt;/network&gt; [ktenzer@ktenzer ~]$ virsh net-define /tmp/provisioning.xml [ktenzer@ktenzer ~]$ virsh net-autostart provisioning [ktenzer@ktenzer ~]$ virsh net-start provisioning Create VM hulls in KVM using virsh on hypervisor host. You will need to change the disk path to suit your needs. ktenzer# cd /home/ktenzer/VirtualMachines ktenzer# for i in {1..2}; do qemu-img create -f qcow2 -o preallocation=metadata overcloud-node$i.qcow2 60G; done ktenzer# for i in {1..2}; do virt-install --ram 4096 --vcpus 4 --os-variant rhel7 --disk path=/home/ktenzer/VirtualMachines/overcloud-node$i.qcow2,device=disk,bus=virtio,format=qcow2 --noautoconsole --vnc --network network:provisioning --network network:overcloud --name overcloud-node$i --cpu SandyBridge,+vmx --dry-run --print-xml &gt; /tmp/overcloud-node$i.xml; virsh define --file /tmp/overcloud-node$i.xml; done Enable access on KVM hypervisor host so that Ironic can control VMs. ktenzer# cat &lt;&lt; EOF &gt; /etc/polkit-1/localauthority/50-local.d/50-libvirt-user-stack.pkla [libvirt Management Access] Identity=unix-user:stack Action=org.libvirt.unix.manage ResultAny=yes ResultInactive=yes ResultActive=yes EOF Copy ssh key from undercloud system to KVM hypervisor host for stack user. undercloud$ ssh-copy-id -i ~/.ssh/id_rsa.pub stack@192.168.122.1 Save the MAC addresses for the provisioning network on the VMs. Ironic needs to know what MAC addresses a node has associated for provisioning network. [stack@undercloud ~]$ for i in {1..2}; do virsh -c qemu+ssh://stack@192.168.122.1/system domiflist overcloud-node$i | awk &#39;$3 == &quot;mgmt&quot; {print $5};&#39;; done &gt; /tmp/nodes.txt [stack@undercloud ~]$ cat /tmp/nodes.txt 52:54:00:44:60:2b 52:54:00:ea:e7:2e Create JSON file for Ironic baremetal node configuration. In this case we are configuring two nodes which are of course the virtual machines we already created. The pm_addr IP is set to IP of the KVM hypervisor host. [stack@undercloud ~]$ jq . &lt;&lt; EOF &gt; ~/instackenv.json {   &quot;ssh-user&quot;: &quot;stack&quot;,   &quot;ssh-key&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,   &quot;power_manager&quot;: &quot;nova.virt.baremetal.virtual_power_driver.VirtualPowerManager&quot;,   &quot;host-ip&quot;: &quot;192.168.122.1&quot;,   &quot;arch&quot;: &quot;x86_64&quot;,   &quot;nodes&quot;: [     {       &quot;pm_addr&quot;: &quot;192.168.122.1&quot;,       &quot;pm_password&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,       &quot;pm_type&quot;: &quot;pxe_ssh&quot;,       &quot;mac&quot;: [         &quot;$(sed -n 1p /tmp/nodes.txt)&quot;       ],       &quot;cpu&quot;: &quot;4&quot;,       &quot;memory&quot;: &quot;4096&quot;,       &quot;disk&quot;: &quot;60&quot;,       &quot;arch&quot;: &quot;x86_64&quot;,       &quot;pm_user&quot;: &quot;stack&quot;     },     {       &quot;pm_addr&quot;: &quot;192.168.122.1&quot;,       &quot;pm_password&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,       &quot;pm_type&quot;: &quot;pxe_ssh&quot;,       &quot;mac&quot;: [         &quot;$(sed -n 2p /tmp/nodes.txt)&quot;       ],       &quot;cpu&quot;: &quot;4&quot;,       &quot;memory&quot;: &quot;4096&quot;,       &quot;disk&quot;: &quot;60&quot;,       &quot;arch&quot;: &quot;x86_64&quot;,       &quot;pm_user&quot;: &quot;stack&quot;     }   ] } EOF Validate JSON file. [stack@undercloud ~]$ curl -O https://raw.githubusercontent.com/rthallisey/clapper/master/instackenv-validator.py python instackenv-validator.py -f instackenv.json INFO:__main__:Checking node 192.168.122.1 DEBUG:__main__:Identified virtual node INFO:__main__:Checking node 192.168.122.1 DEBUG:__main__:Identified virtual node DEBUG:__main__:Baremetal IPs are all unique. DEBUG:__main__:MAC addresses are all unique.  -------------------- SUCCESS: instackenv validator found 0 errors   Add nodes to Ironic [stack@undercloud ~]$ openstack baremetal import --json instackenv.json  List newly added baremetal nodes. [stack@undercloud ~]$ openstack baremetal list +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | UUID | Name | Instance UUID | Power State | Provision State | Maintenance | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | cd620ad0-4563-44a5-8078-531b7f906188 | None | None | power off | available | False | | 44df8163-7381-46a7-b016-a0dd18bfee53 | None | None | power off | available | False | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ Enable nodes for baremetal provisioning and inspect ram and kernel images. [stack@undercloud ~]$ openstack baremetal configure boot [stack@undercloud ~]$ ironic node-show cd620ad0-4563-44a5-8078-531b7f906188 | grep -A1 deploy  | driver_info | {u&#39;ssh_username&#39;: u&#39;stack&#39;, u&#39;deploy_kernel&#39;: u&#39;50125b15-9de3-4f03-bfbb- | | | 76e740741b68&#39;, u&#39;deploy_ramdisk&#39;: u&#39;25b55027-ca57-4f15-babe- | | | 6e14ba7d0b0c&#39;, u&#39;ssh_key_contents&#39;: u&#39;-----BEGIN RSA PRIVATE KEY----- | [stack@undercloud ~]$ openstack image show 50125b15-9de3-4f03-bfbb-76e740741b68 +------------------+--------------------------------------+ | Field | Value | +------------------+--------------------------------------+ | checksum | 061e63c269d9c5b9a48a23f118c865de | | container_format | aki | | created_at | 2015-10-12T10:22:38.000000 | | deleted | False | | disk_format | aki | | id | 50125b15-9de3-4f03-bfbb-76e740741b68 | | is_public | True | | min_disk | 0 | | min_ram | 0 | | name | bm-deploy-kernel | | owner | 2ad8c320cf7040ef9ec0440e94238f58 | | properties | {} | | protected | False | | size | 5027584 | | status | active | | updated_at | 2015-10-12T10:22:38.000000 | +------------------+--------------------------------------+ [stack@undercloud ~]$ openstack image show 25b55027-ca57-4f15-babe-6e14ba7d0b0c +------------------+--------------------------------------+ | Field | Value | +------------------+--------------------------------------+ | checksum | eafcb9601b03261a7c608bebcfdff41c | | container_format | ari | | created_at | 2015-10-12T10:22:38.000000 | | deleted | False | | disk_format | ari | | id | 25b55027-ca57-4f15-babe-6e14ba7d0b0c | | is_public | True | | min_disk | 0 | | min_ram | 0 | | name | bm-deploy-ramdisk | | owner | 2ad8c320cf7040ef9ec0440e94238f58 | | properties | {} | | protected | False | | size | 56355601 | | status | active | | updated_at | 2015-10-12T10:22:40.000000 | +------------------+--------------------------------------+ /pre&gt; Ironic at this point only supports IPMI booting and since we are using VMs we need to use ssh_pxe. This is a workaround to allow that to work.  [stack@undercloud ~]$ sudo su - undercloud# cat &lt;&lt; EOF &gt; /usr/bin/bootif-fix #!/usr/bin/env bash  while true;         do find /httpboot/ -type f ! -iname &quot;kernel&quot; ! -iname &quot;ramdisk&quot; ! -iname &quot;*.kernel&quot; ! -iname &quot;*.ramdisk&quot; -exec sed -i &#39;s|{mac|{net0/mac|g&#39; {} +; done EOF  undercloud# chmod a+x /usr/bin/bootif-fix undercloud# cat &lt;&lt; EOF &gt; /usr/lib/systemd/system/bootif-fix.service [Unit] Description=Automated fix for incorrect iPXE BOOFIF  [Service] Type=simple ExecStart=/usr/bin/bootif-fix  [Install] WantedBy=multi-user.target EOF  undercloud# systemctl daemon-reload undercloud# systemctl enable bootif-fix undercloud# systemctl start bootif-fix undercloud# exit Create new flavor for the baremetal nodes and set boot option to local. undercloud$ openstack flavor create --id auto --ram 4096 --disk 58 --vcpus 4 baremetal undercloud$ openstack flavor set --property &quot;cpu_arch&quot;=&quot;x86_64&quot; --property &quot;capabilities:boot_option&quot;=&quot;local&quot; baremetal Perform introspection on baremetal nodes. This will discover hardware and configure node roles. [stack@undercloud ~]$ openstack baremetal introspection bulk start Setting available nodes to manageable... Starting introspection of node: 79f2a51c-a0f0-436f-9e8a-c082ee61f938 Starting introspection of node: 8ba244fd-5362-45fe-bb6c-5f15f2949912 Waiting for discovery to finish... Discovery for UUID 79f2a51c-a0f0-436f-9e8a-c082ee61f938 finished successfully. Discovery for UUID 8ba244fd-5362-45fe-bb6c-5f15f2949912 finished successfully. Setting manageable nodes to available... Node 79f2a51c-a0f0-436f-9e8a-c082ee61f938 has been set to available. Node 8ba244fd-5362-45fe-bb6c-5f15f2949912 has been set to available. To check progress of introspection. [stack@undercloud ~]$ sudo journalctl -f -l -u openstack-ironic-discoverd -u openstack-ironic-discoverd-dnsmasq -f &nbsp; List the Ironic baremetal nodes. Nodes should be available if introspection worked. [stack@undercloud ~]$ ironic node-list  +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | UUID | Name | Instance UUID | Power State | Provision State | Maintenance | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | cd620ad0-4563-44a5-8078-531b7f906188 | None | None | power on | available | False | | 44df8163-7381-46a7-b016-a0dd18bfee53 | None | None | power on | available | False | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ Deploy overcloud. [stack@undercloud ~]$ openstack overcloud deploy --templates --control-scale 1 --compute-scale 1 --neutron-tunnel-types vxlan --neutron-network-type vxlan Overcloud Endpoint: http://192.168.126.119:5000/v2.0/ Overcloud Deployed   Check status of Heat resources to monitor status of overcloud deployment. [stack@undercloud ~]$ heat resource-list -n 5 overcloud Once the OS install is complete on the baremetal nodes you can follow progress of the OpenStack overcloud configuration. [stack@undercloud ~]$ nova list +--------------------------------------+------------------------+--------+------------+-------------+-------------------------+ | ID                                   | Name                   | Status | Task State | Power State | Networks                | +--------------------------------------+------------------------+--------+------------+-------------+-------------------------+ | 507d1172-fc73-476b-960f-1d9bf7c1c270 | overcloud-compute-0    | ACTIVE | -          | Running     | ctlplane=192.168.126.103| | ff0e5e15-5bb8-4c77-81c3-651588802ebd | overcloud-controller-0 | ACTIVE | -          | Running     | ctlplane=192.168.126.102| +--------------------------------------+------------------------+--------+------------+-------------+-------------------------+ [stack@undercloud ~]$ ssh heat-admin@192.168.126.102 overcloud-controller-0$ sudo -i overcloud-controller-0# journalctl -f -u os-collect-config Deploying using the OpenStack Director UI The overcloud deployment can be done using the UI. You can even do the preliminary configuration using the CLI and run deployment from UI.  We can see exactly what OpenStack services will be configured in the overcloud.  Deployment status is shown and using the UI it is also to see when baremetal nodes have been completely provisioned.  Deployment details are available in the deployment log.  Once deployment is complete using the UI, the overcloud must be initialized.  Upon completion the overcloud is available and can be accessed.  Summary In this article we have discussed how OpenStack distributions have a proprietary mindset in regards to their deployment tools. We have discussed the need for a OpenStack community sponsored upstream project responsible for deployment and life-cycle management. That project is TripleO and Red Hat is the first distribution to ship its deployment tool based on TripleO. Using OpenStack to deploy OpenStack not only benefits entire community but also administrators and end-users. Finally we have seen how to deploy both the undercloud as well as overcloud using TripleO and the Red Hat OpenStack Director. Hopefully you found this article informative and useful. I would be very interested in hearing your feedback on this topic, so please share. Happy OpenStacking! (c) 2015 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director">
+<meta property="og:url" content="https://keithtenzer.com/openstack/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">
+
+
+  <meta property="og:description" content="Overview In this article we will look at how to deploy an OpenStack cloud using TripleO, the upstream project from the Red Hat OpenStack Director. Regardless of what OpenStack distribution you are using OpenStack is essentially OpenStack. Everyone has the same code-base to work with. The main differences between distributions are around what OpenStack projects are part of distribution, how it is supported and the deployment of the distribution. Every distribution has their own OpenStack deployment tool. Clearly deployments differ as they are based on support decisions each distribution makes. However many distributions have created their own proprietary installers. Shouldn&#39;t the OpenStack community unite around a common installer? What would be better than using OpenStack to deploy OpenStack? Why should OpenStack administrators have to learn separate proprietary tooling? Why should we be creating unnecessary vendor lock-in for OpenStack&#39;s deployment tooling? Installing OpenStack is one thing but what about upgrade and life-cycle management?  This is the promise of TripleO! The TripleO (OpenStack on OpenStack) project was started to solve these problems and bring unification around OpenStack deployment as well as eventually life-cycle management. This has taken quite some time and been a journey but finally the first distribution is using TripleO. Red Hat Enterprise OpenStack Platform 7 has shifted away from foreman/puppet and is now based largely on TripleO. Red Hat is bringing its expertise and learning over the past years around OpenStack deployments and contributing heavily to TripleO. TripleO Concepts Before getting into the weeds, we should understand some basic concepts. First TripleO uses OpenStack to deploy OpenStack. It mainly utilizes Ironic for provisioning and Heat for orchestration. Under the hood puppet is used for configuration management. TripleO first deploys an OpenStack cloud used to deploy other OpenStack clouds. This is referred to as the undercloud. The OpenStack cloud environment deployed from undercloud is known as overcloud. The networking requirement is that all systems share a non-routed provisioning network. TripleO also uses PXE to boot and install initial OS image (bootstrap). There are different types of nodes or roles a node can have. In addition to controller and compute you can have nodes for Cinder, CEPH or Swift storage. CEPH storage is also integrated and since most OpenStack deployments use CEPH this is an obvious advantage. Environment In this environment we have the KVM hypervisor host (Laptop), the undercloud (single VM) and overcloud (1 X compute, 1 Xcontroller). The undercloud and overcloud are all VMs running on the KVM hypervisor host (Laptop). The KVM hypervisor host is on the 192.168.122.0/24 network and has IP of 192.168.122.1. The undercloud runs on a single VM on the 192.168.122.0/24 management network and 192.168.126.0/24 (provisioning) netowrk. The undercloud has an IP address of 192.168.122.90 (eth0). The overcloud is on the 192.168.126.0/24 (provisioning) and 192.168.125.0/24 (external) network. This is a very simple network configuration. In a real production environment there will be many more networks used in overcloud.  Deploying Undercloud In this section we will configure the undercloud. Normally you would deploy OpenStack nodes on bare-metal but since this is designed to run on Laptop or in lab, we are using KVM virtualization. Before beginning install RHEL or CentOS 7.1 on your KVM hypervisor. Disable NetworkManager. undercloud# systemctl stop NetworkManager undercloud# systemctl disable NetworkManager Enable port forwarding. undercloud# vi /etc/sysctl.conf net.ipv4.ip_forward = 1 undercloud# sysctl -p /etc/sysctl.conf Ensure hostname is static. undercloud# hostnamectl set-hostname undercloud.lab.com undercloud# systemctl restart network Register to subscription manager and enable appropriate repositories for RHEL. undercloud# subscription-manager register undercloud# subscription-manager list --available undercloud# subscription-manager attach --pool=8a85f9814f2c669b014f3b872de132b5 undercloud# subscription-manager repos --disable=* undercloud# subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-optional-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-openstack-7.0-rpms --enable=rhel-7-server-openstack-7.0-director-rpms Perform yum update and reboot system. undercloud# yum update -y &amp;&amp; reboot Install facter and ensure hostname is set properly in /etc/hosts. undercloud# yum install facter -y undercloud# ipaddr=$(facter ipaddress_eth0) undercloud# echo -e &quot;$ipaddr\t\tundercloud.lab.com\tundercloud&quot; &gt;&gt; /etc/hosts Install TripleO packages. undercloud# yum install python-rdomanager-oscplugin -y  Create a stack user. undercloud# useradd stack undercloud# echo &quot;redhat&quot; | passwd stack --stdin undercloud# echo &quot;stack ALL=(root) NOPASSWD:ALL&quot; | tee -a /etc/sudoers.d/stack undercloud# chmod 0440 /etc/sudoers.d/stack undercloud# su - stack Determine network settings for undercloud. At minimum you need two networks. One for provisioning and the other for the overcloud which should be external network. In this case we have two networks. The undercloud provisioning network 192.168.126.0/24 and the overcloud external network 192.168.125.0/24. [stack@undercloud ~]$ cp /usr/share/instack-undercloud/undercloud.conf.sample ~/undercloud.conf [stack@undercloud ~]$ vi ~/undercloud.conf  [DEFAULT]  local_ip = 192.168.126.1/24  undercloud_public_vip = 192.168.126.10  undercloud_admin_vip = 192.168.126.11  local_interface = eth1  masquerade_network = 192.168.126.0/24  dhcp_start = 192.168.126.100  dhcp_end = 192.168.126.120  network_cidr = 192.168.126.0/24  network_gateway = 192.168.126.1  discovery_iprange = 192.168.126.130,192.168.126.150  [auth] Install the undercloud. [stack@undercloud ~]$ openstack undercloud install ############################################################################# instack-install-undercloud complete. The file containing this installation&#39;s passwords is at /home/stack/undercloud-passwords.conf. There is also a stackrc file at /home/stack/stackrc. These files are needed to interact with the OpenStack services, and should be secured. ############################################################################# Verify undercloud.  [stack@undercloud ~]$ source ~/stackrc  [stack@undercloud ~]$ openstack catalog show nova  +-----------+------------------------------------------------------------------------------+  | Field | Value |  +-----------+------------------------------------------------------------------------------+  | endpoints | regionOne                                                                    |  |           | publicURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a     |  |           | internalURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a   |  |           | adminURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a      |  |           |                                                                              |  | name      | nova                                                                         |  | type      | compute                                                                      |  +-----------+------------------------------------------------------------------------------+ Deploying Overcloud The overcloud is as mentioned a separate cloud from the undercloud. They are not sharing any resources, other than the provisioning network. Over and under sometimes confuse people into thinking the overcloud is sitting on top of undercloud, from networking perspective. This is of course not the case. In reality the clouds are sitting side-by-side from one another. The term over and under really refers to a logical relationship between both clouds. We will do a minimal deployment for the overcloud, 1 X controller and 1 X compute. Create directory for storing undercloud images. These are the images used by Ironic to provision an OpenStack node. [stack@undercloud]$ mkdir ~/images Download images from https://access.redhat.com/downloads/content/191/ver=7/rhel---7/7/x86_64/product-downloads and copy to ~/images. [stack@undercloud images]$ ls -l total 2307076 -rw-r-----. 1 stack stack 61419520 Oct 12 16:11 deploy-ramdisk-ironic-7.1.0-39.tar -rw-r-----. 1 stack stack 155238400 Oct 12 16:11 discovery-ramdisk-7.1.0-39.tar -rw-r-----. 1 stack stack 964567040 Oct 12 16:12 overcloud-full-7.1.0-39.tar Extract image tarballs. [stack@undercloud ~]$ cd ~/images [stack@undercloud ~]$ for tarfile in *.tar; do tar -xf $tarfile; done Upload images to Glance. [stack@undercloud ~]$ openstack overcloud image upload --image-path /home/stack/images [stack@undercloud ~]$ openstack image list  +--------------------------------------+------------------------+  | ID | Name |  +--------------------------------------+------------------------+  | 31c01b42-d164-4898-b615-4787c12d3a53 | bm-deploy-ramdisk |  | e38057f6-24f2-42d1-afae-bb54dead864d | bm-deploy-kernel |  | f1708a15-5b9b-41ac-8363-ffc9932534f3 | overcloud-full |  | 318768c2-5300-43cb-939d-44fb7abca7de | overcloud-full-initrd |  | 28422b76-c37f-4413-b885-cccb24a4611c | overcloud-full-vmlinuz |  +--------------------------------------+------------------------+ Configure DNS for undercloud. The undercloud system is connected to a network 192.168.122.0/24 that provides DNS. [stack@undercloud]$ neutron subnet-list +--------------------------------------+------+------------------+--------------------------------------------------------+ | id | name | cidr | allocation_pools | +--------------------------------------+------+------------------+--------------------------------------------------------+ | 532f3344-57ed-4a2f-b438-67a5d60c71fc | | 192.168.126.0/24 | {&quot;start&quot;: &quot;192.168.126.100&quot;, &quot;end&quot;: &quot;192.168.126.120&quot;} | +--------------------------------------+------+------------------+--------------------------------------------------------+ [stack@undercloud ~]$ neutron subnet-update 532f3344-57ed-4a2f-b438-67a5d60c71fc --dns-nameserver 192.168.122.1 Since we are in nested virtual environment it is necessary to tweak timeouts. undercloud# sudo su - undercloud# openstack-config --set /etc/nova/nova.conf DEFAULT rpc_response_timeout 600 undercloud# openstack-config --set /etc/ironic/ironic.conf DEFAULT rpc_response_timeout 600 undercloud# openstack-service restart nova  undercloud# openstack-service restart ironic undercloud# exit  Create provisioning and external networks on KVM Hypervisor host. Ensure that NAT forwarding and DHCP is enabled on the external network. The provisioning network should be non-routable and DHCP disabled. The undercloud will handle DHCP services for the provisioning network. [ktenzer@ktenzer ~]$ cat &gt; /tmp/external.xml &lt;&lt;EOF &lt;network&gt;    &lt;name&gt;external&lt;/name&gt;    &lt;forward mode=&#39;nat&#39;&gt;       &lt;nat&gt; &lt;port start=&#39;1024&#39; end=&#39;65535&#39;/&gt;       &lt;/nat&gt;    &lt;/forward&gt;    &lt;ip address=&#39;192.168.125.1&#39; netmask=&#39;255.255.255.0&#39;&gt;       &lt;dhcp&gt; &lt;range start=&#39;192.168.125.2&#39; end=&#39;192.168.125.254&#39;/&gt;       &lt;/dhcp&gt;    &lt;/ip&gt; &lt;/network&gt;  [ktenzer@ktenzer ~]$ virsh net-define /tmp/external.xml [ktenzer@ktenzer ~]$ virsh net-autostart external [ktenzer@ktenzer ~]$ virsh net-start external [ktenzer@ktenzer ~]$ cat &gt; /tmp/provisioning.xml &lt;&lt;EOF &lt;network&gt;    &lt;name&gt;provisioning&lt;/name&gt;    &lt;ip address=&#39;192.168.126.254&#39; netmask=&#39;255.255.255.0&#39;&gt;    &lt;/ip&gt; &lt;/network&gt; [ktenzer@ktenzer ~]$ virsh net-define /tmp/provisioning.xml [ktenzer@ktenzer ~]$ virsh net-autostart provisioning [ktenzer@ktenzer ~]$ virsh net-start provisioning Create VM hulls in KVM using virsh on hypervisor host. You will need to change the disk path to suit your needs. ktenzer# cd /home/ktenzer/VirtualMachines ktenzer# for i in {1..2}; do qemu-img create -f qcow2 -o preallocation=metadata overcloud-node$i.qcow2 60G; done ktenzer# for i in {1..2}; do virt-install --ram 4096 --vcpus 4 --os-variant rhel7 --disk path=/home/ktenzer/VirtualMachines/overcloud-node$i.qcow2,device=disk,bus=virtio,format=qcow2 --noautoconsole --vnc --network network:provisioning --network network:overcloud --name overcloud-node$i --cpu SandyBridge,+vmx --dry-run --print-xml &gt; /tmp/overcloud-node$i.xml; virsh define --file /tmp/overcloud-node$i.xml; done Enable access on KVM hypervisor host so that Ironic can control VMs. ktenzer# cat &lt;&lt; EOF &gt; /etc/polkit-1/localauthority/50-local.d/50-libvirt-user-stack.pkla [libvirt Management Access] Identity=unix-user:stack Action=org.libvirt.unix.manage ResultAny=yes ResultInactive=yes ResultActive=yes EOF Copy ssh key from undercloud system to KVM hypervisor host for stack user. undercloud$ ssh-copy-id -i ~/.ssh/id_rsa.pub stack@192.168.122.1 Save the MAC addresses for the provisioning network on the VMs. Ironic needs to know what MAC addresses a node has associated for provisioning network. [stack@undercloud ~]$ for i in {1..2}; do virsh -c qemu+ssh://stack@192.168.122.1/system domiflist overcloud-node$i | awk &#39;$3 == &quot;mgmt&quot; {print $5};&#39;; done &gt; /tmp/nodes.txt [stack@undercloud ~]$ cat /tmp/nodes.txt 52:54:00:44:60:2b 52:54:00:ea:e7:2e Create JSON file for Ironic baremetal node configuration. In this case we are configuring two nodes which are of course the virtual machines we already created. The pm_addr IP is set to IP of the KVM hypervisor host. [stack@undercloud ~]$ jq . &lt;&lt; EOF &gt; ~/instackenv.json {   &quot;ssh-user&quot;: &quot;stack&quot;,   &quot;ssh-key&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,   &quot;power_manager&quot;: &quot;nova.virt.baremetal.virtual_power_driver.VirtualPowerManager&quot;,   &quot;host-ip&quot;: &quot;192.168.122.1&quot;,   &quot;arch&quot;: &quot;x86_64&quot;,   &quot;nodes&quot;: [     {       &quot;pm_addr&quot;: &quot;192.168.122.1&quot;,       &quot;pm_password&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,       &quot;pm_type&quot;: &quot;pxe_ssh&quot;,       &quot;mac&quot;: [         &quot;$(sed -n 1p /tmp/nodes.txt)&quot;       ],       &quot;cpu&quot;: &quot;4&quot;,       &quot;memory&quot;: &quot;4096&quot;,       &quot;disk&quot;: &quot;60&quot;,       &quot;arch&quot;: &quot;x86_64&quot;,       &quot;pm_user&quot;: &quot;stack&quot;     },     {       &quot;pm_addr&quot;: &quot;192.168.122.1&quot;,       &quot;pm_password&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,       &quot;pm_type&quot;: &quot;pxe_ssh&quot;,       &quot;mac&quot;: [         &quot;$(sed -n 2p /tmp/nodes.txt)&quot;       ],       &quot;cpu&quot;: &quot;4&quot;,       &quot;memory&quot;: &quot;4096&quot;,       &quot;disk&quot;: &quot;60&quot;,       &quot;arch&quot;: &quot;x86_64&quot;,       &quot;pm_user&quot;: &quot;stack&quot;     }   ] } EOF Validate JSON file. [stack@undercloud ~]$ curl -O https://raw.githubusercontent.com/rthallisey/clapper/master/instackenv-validator.py python instackenv-validator.py -f instackenv.json INFO:__main__:Checking node 192.168.122.1 DEBUG:__main__:Identified virtual node INFO:__main__:Checking node 192.168.122.1 DEBUG:__main__:Identified virtual node DEBUG:__main__:Baremetal IPs are all unique. DEBUG:__main__:MAC addresses are all unique.  -------------------- SUCCESS: instackenv validator found 0 errors   Add nodes to Ironic [stack@undercloud ~]$ openstack baremetal import --json instackenv.json  List newly added baremetal nodes. [stack@undercloud ~]$ openstack baremetal list +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | UUID | Name | Instance UUID | Power State | Provision State | Maintenance | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | cd620ad0-4563-44a5-8078-531b7f906188 | None | None | power off | available | False | | 44df8163-7381-46a7-b016-a0dd18bfee53 | None | None | power off | available | False | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ Enable nodes for baremetal provisioning and inspect ram and kernel images. [stack@undercloud ~]$ openstack baremetal configure boot [stack@undercloud ~]$ ironic node-show cd620ad0-4563-44a5-8078-531b7f906188 | grep -A1 deploy  | driver_info | {u&#39;ssh_username&#39;: u&#39;stack&#39;, u&#39;deploy_kernel&#39;: u&#39;50125b15-9de3-4f03-bfbb- | | | 76e740741b68&#39;, u&#39;deploy_ramdisk&#39;: u&#39;25b55027-ca57-4f15-babe- | | | 6e14ba7d0b0c&#39;, u&#39;ssh_key_contents&#39;: u&#39;-----BEGIN RSA PRIVATE KEY----- | [stack@undercloud ~]$ openstack image show 50125b15-9de3-4f03-bfbb-76e740741b68 +------------------+--------------------------------------+ | Field | Value | +------------------+--------------------------------------+ | checksum | 061e63c269d9c5b9a48a23f118c865de | | container_format | aki | | created_at | 2015-10-12T10:22:38.000000 | | deleted | False | | disk_format | aki | | id | 50125b15-9de3-4f03-bfbb-76e740741b68 | | is_public | True | | min_disk | 0 | | min_ram | 0 | | name | bm-deploy-kernel | | owner | 2ad8c320cf7040ef9ec0440e94238f58 | | properties | {} | | protected | False | | size | 5027584 | | status | active | | updated_at | 2015-10-12T10:22:38.000000 | +------------------+--------------------------------------+ [stack@undercloud ~]$ openstack image show 25b55027-ca57-4f15-babe-6e14ba7d0b0c +------------------+--------------------------------------+ | Field | Value | +------------------+--------------------------------------+ | checksum | eafcb9601b03261a7c608bebcfdff41c | | container_format | ari | | created_at | 2015-10-12T10:22:38.000000 | | deleted | False | | disk_format | ari | | id | 25b55027-ca57-4f15-babe-6e14ba7d0b0c | | is_public | True | | min_disk | 0 | | min_ram | 0 | | name | bm-deploy-ramdisk | | owner | 2ad8c320cf7040ef9ec0440e94238f58 | | properties | {} | | protected | False | | size | 56355601 | | status | active | | updated_at | 2015-10-12T10:22:40.000000 | +------------------+--------------------------------------+ /pre&gt; Ironic at this point only supports IPMI booting and since we are using VMs we need to use ssh_pxe. This is a workaround to allow that to work.  [stack@undercloud ~]$ sudo su - undercloud# cat &lt;&lt; EOF &gt; /usr/bin/bootif-fix #!/usr/bin/env bash  while true;         do find /httpboot/ -type f ! -iname &quot;kernel&quot; ! -iname &quot;ramdisk&quot; ! -iname &quot;*.kernel&quot; ! -iname &quot;*.ramdisk&quot; -exec sed -i &#39;s|{mac|{net0/mac|g&#39; {} +; done EOF  undercloud# chmod a+x /usr/bin/bootif-fix undercloud# cat &lt;&lt; EOF &gt; /usr/lib/systemd/system/bootif-fix.service [Unit] Description=Automated fix for incorrect iPXE BOOFIF  [Service] Type=simple ExecStart=/usr/bin/bootif-fix  [Install] WantedBy=multi-user.target EOF  undercloud# systemctl daemon-reload undercloud# systemctl enable bootif-fix undercloud# systemctl start bootif-fix undercloud# exit Create new flavor for the baremetal nodes and set boot option to local. undercloud$ openstack flavor create --id auto --ram 4096 --disk 58 --vcpus 4 baremetal undercloud$ openstack flavor set --property &quot;cpu_arch&quot;=&quot;x86_64&quot; --property &quot;capabilities:boot_option&quot;=&quot;local&quot; baremetal Perform introspection on baremetal nodes. This will discover hardware and configure node roles. [stack@undercloud ~]$ openstack baremetal introspection bulk start Setting available nodes to manageable... Starting introspection of node: 79f2a51c-a0f0-436f-9e8a-c082ee61f938 Starting introspection of node: 8ba244fd-5362-45fe-bb6c-5f15f2949912 Waiting for discovery to finish... Discovery for UUID 79f2a51c-a0f0-436f-9e8a-c082ee61f938 finished successfully. Discovery for UUID 8ba244fd-5362-45fe-bb6c-5f15f2949912 finished successfully. Setting manageable nodes to available... Node 79f2a51c-a0f0-436f-9e8a-c082ee61f938 has been set to available. Node 8ba244fd-5362-45fe-bb6c-5f15f2949912 has been set to available. To check progress of introspection. [stack@undercloud ~]$ sudo journalctl -f -l -u openstack-ironic-discoverd -u openstack-ironic-discoverd-dnsmasq -f &nbsp; List the Ironic baremetal nodes. Nodes should be available if introspection worked. [stack@undercloud ~]$ ironic node-list  +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | UUID | Name | Instance UUID | Power State | Provision State | Maintenance | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | cd620ad0-4563-44a5-8078-531b7f906188 | None | None | power on | available | False | | 44df8163-7381-46a7-b016-a0dd18bfee53 | None | None | power on | available | False | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ Deploy overcloud. [stack@undercloud ~]$ openstack overcloud deploy --templates --control-scale 1 --compute-scale 1 --neutron-tunnel-types vxlan --neutron-network-type vxlan Overcloud Endpoint: http://192.168.126.119:5000/v2.0/ Overcloud Deployed   Check status of Heat resources to monitor status of overcloud deployment. [stack@undercloud ~]$ heat resource-list -n 5 overcloud Once the OS install is complete on the baremetal nodes you can follow progress of the OpenStack overcloud configuration. [stack@undercloud ~]$ nova list +--------------------------------------+------------------------+--------+------------+-------------+-------------------------+ | ID                                   | Name                   | Status | Task State | Power State | Networks                | +--------------------------------------+------------------------+--------+------------+-------------+-------------------------+ | 507d1172-fc73-476b-960f-1d9bf7c1c270 | overcloud-compute-0    | ACTIVE | -          | Running     | ctlplane=192.168.126.103| | ff0e5e15-5bb8-4c77-81c3-651588802ebd | overcloud-controller-0 | ACTIVE | -          | Running     | ctlplane=192.168.126.102| +--------------------------------------+------------------------+--------+------------+-------------+-------------------------+ [stack@undercloud ~]$ ssh heat-admin@192.168.126.102 overcloud-controller-0$ sudo -i overcloud-controller-0# journalctl -f -u os-collect-config Deploying using the OpenStack Director UI The overcloud deployment can be done using the UI. You can even do the preliminary configuration using the CLI and run deployment from UI.  We can see exactly what OpenStack services will be configured in the overcloud.  Deployment status is shown and using the UI it is also to see when baremetal nodes have been completely provisioned.  Deployment details are available in the deployment log.  Once deployment is complete using the UI, the overcloud must be initialized.  Upon completion the overcloud is available and can be accessed.  Summary In this article we have discussed how OpenStack distributions have a proprietary mindset in regards to their deployment tools. We have discussed the need for a OpenStack community sponsored upstream project responsible for deployment and life-cycle management. That project is TripleO and Red Hat is the first distribution to ship its deployment tool based on TripleO. Using OpenStack to deploy OpenStack not only benefits entire community but also administrators and end-users. Finally we have seen how to deploy both the undercloud as well as overcloud using TripleO and the Red Hat OpenStack Director. Hopefully you found this article informative and useful. I would be very interested in hearing your feedback on this topic, so please share. Happy OpenStacking! (c) 2015 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director">
+  <meta name="twitter:description" content="Overview In this article we will look at how to deploy an OpenStack cloud using TripleO, the upstream project from the Red Hat OpenStack Director. Regardless of what OpenStack distribution you are using OpenStack is essentially OpenStack. Everyone has the same code-base to work with. The main differences between distributions are around what OpenStack projects are part of distribution, how it is supported and the deployment of the distribution. Every distribution has their own OpenStack deployment tool. Clearly deployments differ as they are based on support decisions each distribution makes. However many distributions have created their own proprietary installers. Shouldn&#39;t the OpenStack community unite around a common installer? What would be better than using OpenStack to deploy OpenStack? Why should OpenStack administrators have to learn separate proprietary tooling? Why should we be creating unnecessary vendor lock-in for OpenStack&#39;s deployment tooling? Installing OpenStack is one thing but what about upgrade and life-cycle management?  This is the promise of TripleO! The TripleO (OpenStack on OpenStack) project was started to solve these problems and bring unification around OpenStack deployment as well as eventually life-cycle management. This has taken quite some time and been a journey but finally the first distribution is using TripleO. Red Hat Enterprise OpenStack Platform 7 has shifted away from foreman/puppet and is now based largely on TripleO. Red Hat is bringing its expertise and learning over the past years around OpenStack deployments and contributing heavily to TripleO. TripleO Concepts Before getting into the weeds, we should understand some basic concepts. First TripleO uses OpenStack to deploy OpenStack. It mainly utilizes Ironic for provisioning and Heat for orchestration. Under the hood puppet is used for configuration management. TripleO first deploys an OpenStack cloud used to deploy other OpenStack clouds. This is referred to as the undercloud. The OpenStack cloud environment deployed from undercloud is known as overcloud. The networking requirement is that all systems share a non-routed provisioning network. TripleO also uses PXE to boot and install initial OS image (bootstrap). There are different types of nodes or roles a node can have. In addition to controller and compute you can have nodes for Cinder, CEPH or Swift storage. CEPH storage is also integrated and since most OpenStack deployments use CEPH this is an obvious advantage. Environment In this environment we have the KVM hypervisor host (Laptop), the undercloud (single VM) and overcloud (1 X compute, 1 Xcontroller). The undercloud and overcloud are all VMs running on the KVM hypervisor host (Laptop). The KVM hypervisor host is on the 192.168.122.0/24 network and has IP of 192.168.122.1. The undercloud runs on a single VM on the 192.168.122.0/24 management network and 192.168.126.0/24 (provisioning) netowrk. The undercloud has an IP address of 192.168.122.90 (eth0). The overcloud is on the 192.168.126.0/24 (provisioning) and 192.168.125.0/24 (external) network. This is a very simple network configuration. In a real production environment there will be many more networks used in overcloud.  Deploying Undercloud In this section we will configure the undercloud. Normally you would deploy OpenStack nodes on bare-metal but since this is designed to run on Laptop or in lab, we are using KVM virtualization. Before beginning install RHEL or CentOS 7.1 on your KVM hypervisor. Disable NetworkManager. undercloud# systemctl stop NetworkManager undercloud# systemctl disable NetworkManager Enable port forwarding. undercloud# vi /etc/sysctl.conf net.ipv4.ip_forward = 1 undercloud# sysctl -p /etc/sysctl.conf Ensure hostname is static. undercloud# hostnamectl set-hostname undercloud.lab.com undercloud# systemctl restart network Register to subscription manager and enable appropriate repositories for RHEL. undercloud# subscription-manager register undercloud# subscription-manager list --available undercloud# subscription-manager attach --pool=8a85f9814f2c669b014f3b872de132b5 undercloud# subscription-manager repos --disable=* undercloud# subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-optional-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-openstack-7.0-rpms --enable=rhel-7-server-openstack-7.0-director-rpms Perform yum update and reboot system. undercloud# yum update -y &amp;&amp; reboot Install facter and ensure hostname is set properly in /etc/hosts. undercloud# yum install facter -y undercloud# ipaddr=$(facter ipaddress_eth0) undercloud# echo -e &quot;$ipaddr\t\tundercloud.lab.com\tundercloud&quot; &gt;&gt; /etc/hosts Install TripleO packages. undercloud# yum install python-rdomanager-oscplugin -y  Create a stack user. undercloud# useradd stack undercloud# echo &quot;redhat&quot; | passwd stack --stdin undercloud# echo &quot;stack ALL=(root) NOPASSWD:ALL&quot; | tee -a /etc/sudoers.d/stack undercloud# chmod 0440 /etc/sudoers.d/stack undercloud# su - stack Determine network settings for undercloud. At minimum you need two networks. One for provisioning and the other for the overcloud which should be external network. In this case we have two networks. The undercloud provisioning network 192.168.126.0/24 and the overcloud external network 192.168.125.0/24. [stack@undercloud ~]$ cp /usr/share/instack-undercloud/undercloud.conf.sample ~/undercloud.conf [stack@undercloud ~]$ vi ~/undercloud.conf  [DEFAULT]  local_ip = 192.168.126.1/24  undercloud_public_vip = 192.168.126.10  undercloud_admin_vip = 192.168.126.11  local_interface = eth1  masquerade_network = 192.168.126.0/24  dhcp_start = 192.168.126.100  dhcp_end = 192.168.126.120  network_cidr = 192.168.126.0/24  network_gateway = 192.168.126.1  discovery_iprange = 192.168.126.130,192.168.126.150  [auth] Install the undercloud. [stack@undercloud ~]$ openstack undercloud install ############################################################################# instack-install-undercloud complete. The file containing this installation&#39;s passwords is at /home/stack/undercloud-passwords.conf. There is also a stackrc file at /home/stack/stackrc. These files are needed to interact with the OpenStack services, and should be secured. ############################################################################# Verify undercloud.  [stack@undercloud ~]$ source ~/stackrc  [stack@undercloud ~]$ openstack catalog show nova  +-----------+------------------------------------------------------------------------------+  | Field | Value |  +-----------+------------------------------------------------------------------------------+  | endpoints | regionOne                                                                    |  |           | publicURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a     |  |           | internalURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a   |  |           | adminURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a      |  |           |                                                                              |  | name      | nova                                                                         |  | type      | compute                                                                      |  +-----------+------------------------------------------------------------------------------+ Deploying Overcloud The overcloud is as mentioned a separate cloud from the undercloud. They are not sharing any resources, other than the provisioning network. Over and under sometimes confuse people into thinking the overcloud is sitting on top of undercloud, from networking perspective. This is of course not the case. In reality the clouds are sitting side-by-side from one another. The term over and under really refers to a logical relationship between both clouds. We will do a minimal deployment for the overcloud, 1 X controller and 1 X compute. Create directory for storing undercloud images. These are the images used by Ironic to provision an OpenStack node. [stack@undercloud]$ mkdir ~/images Download images from https://access.redhat.com/downloads/content/191/ver=7/rhel---7/7/x86_64/product-downloads and copy to ~/images. [stack@undercloud images]$ ls -l total 2307076 -rw-r-----. 1 stack stack 61419520 Oct 12 16:11 deploy-ramdisk-ironic-7.1.0-39.tar -rw-r-----. 1 stack stack 155238400 Oct 12 16:11 discovery-ramdisk-7.1.0-39.tar -rw-r-----. 1 stack stack 964567040 Oct 12 16:12 overcloud-full-7.1.0-39.tar Extract image tarballs. [stack@undercloud ~]$ cd ~/images [stack@undercloud ~]$ for tarfile in *.tar; do tar -xf $tarfile; done Upload images to Glance. [stack@undercloud ~]$ openstack overcloud image upload --image-path /home/stack/images [stack@undercloud ~]$ openstack image list  +--------------------------------------+------------------------+  | ID | Name |  +--------------------------------------+------------------------+  | 31c01b42-d164-4898-b615-4787c12d3a53 | bm-deploy-ramdisk |  | e38057f6-24f2-42d1-afae-bb54dead864d | bm-deploy-kernel |  | f1708a15-5b9b-41ac-8363-ffc9932534f3 | overcloud-full |  | 318768c2-5300-43cb-939d-44fb7abca7de | overcloud-full-initrd |  | 28422b76-c37f-4413-b885-cccb24a4611c | overcloud-full-vmlinuz |  +--------------------------------------+------------------------+ Configure DNS for undercloud. The undercloud system is connected to a network 192.168.122.0/24 that provides DNS. [stack@undercloud]$ neutron subnet-list +--------------------------------------+------+------------------+--------------------------------------------------------+ | id | name | cidr | allocation_pools | +--------------------------------------+------+------------------+--------------------------------------------------------+ | 532f3344-57ed-4a2f-b438-67a5d60c71fc | | 192.168.126.0/24 | {&quot;start&quot;: &quot;192.168.126.100&quot;, &quot;end&quot;: &quot;192.168.126.120&quot;} | +--------------------------------------+------+------------------+--------------------------------------------------------+ [stack@undercloud ~]$ neutron subnet-update 532f3344-57ed-4a2f-b438-67a5d60c71fc --dns-nameserver 192.168.122.1 Since we are in nested virtual environment it is necessary to tweak timeouts. undercloud# sudo su - undercloud# openstack-config --set /etc/nova/nova.conf DEFAULT rpc_response_timeout 600 undercloud# openstack-config --set /etc/ironic/ironic.conf DEFAULT rpc_response_timeout 600 undercloud# openstack-service restart nova  undercloud# openstack-service restart ironic undercloud# exit  Create provisioning and external networks on KVM Hypervisor host. Ensure that NAT forwarding and DHCP is enabled on the external network. The provisioning network should be non-routable and DHCP disabled. The undercloud will handle DHCP services for the provisioning network. [ktenzer@ktenzer ~]$ cat &gt; /tmp/external.xml &lt;&lt;EOF &lt;network&gt;    &lt;name&gt;external&lt;/name&gt;    &lt;forward mode=&#39;nat&#39;&gt;       &lt;nat&gt; &lt;port start=&#39;1024&#39; end=&#39;65535&#39;/&gt;       &lt;/nat&gt;    &lt;/forward&gt;    &lt;ip address=&#39;192.168.125.1&#39; netmask=&#39;255.255.255.0&#39;&gt;       &lt;dhcp&gt; &lt;range start=&#39;192.168.125.2&#39; end=&#39;192.168.125.254&#39;/&gt;       &lt;/dhcp&gt;    &lt;/ip&gt; &lt;/network&gt;  [ktenzer@ktenzer ~]$ virsh net-define /tmp/external.xml [ktenzer@ktenzer ~]$ virsh net-autostart external [ktenzer@ktenzer ~]$ virsh net-start external [ktenzer@ktenzer ~]$ cat &gt; /tmp/provisioning.xml &lt;&lt;EOF &lt;network&gt;    &lt;name&gt;provisioning&lt;/name&gt;    &lt;ip address=&#39;192.168.126.254&#39; netmask=&#39;255.255.255.0&#39;&gt;    &lt;/ip&gt; &lt;/network&gt; [ktenzer@ktenzer ~]$ virsh net-define /tmp/provisioning.xml [ktenzer@ktenzer ~]$ virsh net-autostart provisioning [ktenzer@ktenzer ~]$ virsh net-start provisioning Create VM hulls in KVM using virsh on hypervisor host. You will need to change the disk path to suit your needs. ktenzer# cd /home/ktenzer/VirtualMachines ktenzer# for i in {1..2}; do qemu-img create -f qcow2 -o preallocation=metadata overcloud-node$i.qcow2 60G; done ktenzer# for i in {1..2}; do virt-install --ram 4096 --vcpus 4 --os-variant rhel7 --disk path=/home/ktenzer/VirtualMachines/overcloud-node$i.qcow2,device=disk,bus=virtio,format=qcow2 --noautoconsole --vnc --network network:provisioning --network network:overcloud --name overcloud-node$i --cpu SandyBridge,+vmx --dry-run --print-xml &gt; /tmp/overcloud-node$i.xml; virsh define --file /tmp/overcloud-node$i.xml; done Enable access on KVM hypervisor host so that Ironic can control VMs. ktenzer# cat &lt;&lt; EOF &gt; /etc/polkit-1/localauthority/50-local.d/50-libvirt-user-stack.pkla [libvirt Management Access] Identity=unix-user:stack Action=org.libvirt.unix.manage ResultAny=yes ResultInactive=yes ResultActive=yes EOF Copy ssh key from undercloud system to KVM hypervisor host for stack user. undercloud$ ssh-copy-id -i ~/.ssh/id_rsa.pub stack@192.168.122.1 Save the MAC addresses for the provisioning network on the VMs. Ironic needs to know what MAC addresses a node has associated for provisioning network. [stack@undercloud ~]$ for i in {1..2}; do virsh -c qemu+ssh://stack@192.168.122.1/system domiflist overcloud-node$i | awk &#39;$3 == &quot;mgmt&quot; {print $5};&#39;; done &gt; /tmp/nodes.txt [stack@undercloud ~]$ cat /tmp/nodes.txt 52:54:00:44:60:2b 52:54:00:ea:e7:2e Create JSON file for Ironic baremetal node configuration. In this case we are configuring two nodes which are of course the virtual machines we already created. The pm_addr IP is set to IP of the KVM hypervisor host. [stack@undercloud ~]$ jq . &lt;&lt; EOF &gt; ~/instackenv.json {   &quot;ssh-user&quot;: &quot;stack&quot;,   &quot;ssh-key&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,   &quot;power_manager&quot;: &quot;nova.virt.baremetal.virtual_power_driver.VirtualPowerManager&quot;,   &quot;host-ip&quot;: &quot;192.168.122.1&quot;,   &quot;arch&quot;: &quot;x86_64&quot;,   &quot;nodes&quot;: [     {       &quot;pm_addr&quot;: &quot;192.168.122.1&quot;,       &quot;pm_password&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,       &quot;pm_type&quot;: &quot;pxe_ssh&quot;,       &quot;mac&quot;: [         &quot;$(sed -n 1p /tmp/nodes.txt)&quot;       ],       &quot;cpu&quot;: &quot;4&quot;,       &quot;memory&quot;: &quot;4096&quot;,       &quot;disk&quot;: &quot;60&quot;,       &quot;arch&quot;: &quot;x86_64&quot;,       &quot;pm_user&quot;: &quot;stack&quot;     },     {       &quot;pm_addr&quot;: &quot;192.168.122.1&quot;,       &quot;pm_password&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,       &quot;pm_type&quot;: &quot;pxe_ssh&quot;,       &quot;mac&quot;: [         &quot;$(sed -n 2p /tmp/nodes.txt)&quot;       ],       &quot;cpu&quot;: &quot;4&quot;,       &quot;memory&quot;: &quot;4096&quot;,       &quot;disk&quot;: &quot;60&quot;,       &quot;arch&quot;: &quot;x86_64&quot;,       &quot;pm_user&quot;: &quot;stack&quot;     }   ] } EOF Validate JSON file. [stack@undercloud ~]$ curl -O https://raw.githubusercontent.com/rthallisey/clapper/master/instackenv-validator.py python instackenv-validator.py -f instackenv.json INFO:__main__:Checking node 192.168.122.1 DEBUG:__main__:Identified virtual node INFO:__main__:Checking node 192.168.122.1 DEBUG:__main__:Identified virtual node DEBUG:__main__:Baremetal IPs are all unique. DEBUG:__main__:MAC addresses are all unique.  -------------------- SUCCESS: instackenv validator found 0 errors   Add nodes to Ironic [stack@undercloud ~]$ openstack baremetal import --json instackenv.json  List newly added baremetal nodes. [stack@undercloud ~]$ openstack baremetal list +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | UUID | Name | Instance UUID | Power State | Provision State | Maintenance | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | cd620ad0-4563-44a5-8078-531b7f906188 | None | None | power off | available | False | | 44df8163-7381-46a7-b016-a0dd18bfee53 | None | None | power off | available | False | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ Enable nodes for baremetal provisioning and inspect ram and kernel images. [stack@undercloud ~]$ openstack baremetal configure boot [stack@undercloud ~]$ ironic node-show cd620ad0-4563-44a5-8078-531b7f906188 | grep -A1 deploy  | driver_info | {u&#39;ssh_username&#39;: u&#39;stack&#39;, u&#39;deploy_kernel&#39;: u&#39;50125b15-9de3-4f03-bfbb- | | | 76e740741b68&#39;, u&#39;deploy_ramdisk&#39;: u&#39;25b55027-ca57-4f15-babe- | | | 6e14ba7d0b0c&#39;, u&#39;ssh_key_contents&#39;: u&#39;-----BEGIN RSA PRIVATE KEY----- | [stack@undercloud ~]$ openstack image show 50125b15-9de3-4f03-bfbb-76e740741b68 +------------------+--------------------------------------+ | Field | Value | +------------------+--------------------------------------+ | checksum | 061e63c269d9c5b9a48a23f118c865de | | container_format | aki | | created_at | 2015-10-12T10:22:38.000000 | | deleted | False | | disk_format | aki | | id | 50125b15-9de3-4f03-bfbb-76e740741b68 | | is_public | True | | min_disk | 0 | | min_ram | 0 | | name | bm-deploy-kernel | | owner | 2ad8c320cf7040ef9ec0440e94238f58 | | properties | {} | | protected | False | | size | 5027584 | | status | active | | updated_at | 2015-10-12T10:22:38.000000 | +------------------+--------------------------------------+ [stack@undercloud ~]$ openstack image show 25b55027-ca57-4f15-babe-6e14ba7d0b0c +------------------+--------------------------------------+ | Field | Value | +------------------+--------------------------------------+ | checksum | eafcb9601b03261a7c608bebcfdff41c | | container_format | ari | | created_at | 2015-10-12T10:22:38.000000 | | deleted | False | | disk_format | ari | | id | 25b55027-ca57-4f15-babe-6e14ba7d0b0c | | is_public | True | | min_disk | 0 | | min_ram | 0 | | name | bm-deploy-ramdisk | | owner | 2ad8c320cf7040ef9ec0440e94238f58 | | properties | {} | | protected | False | | size | 56355601 | | status | active | | updated_at | 2015-10-12T10:22:40.000000 | +------------------+--------------------------------------+ /pre&gt; Ironic at this point only supports IPMI booting and since we are using VMs we need to use ssh_pxe. This is a workaround to allow that to work.  [stack@undercloud ~]$ sudo su - undercloud# cat &lt;&lt; EOF &gt; /usr/bin/bootif-fix #!/usr/bin/env bash  while true;         do find /httpboot/ -type f ! -iname &quot;kernel&quot; ! -iname &quot;ramdisk&quot; ! -iname &quot;*.kernel&quot; ! -iname &quot;*.ramdisk&quot; -exec sed -i &#39;s|{mac|{net0/mac|g&#39; {} +; done EOF  undercloud# chmod a+x /usr/bin/bootif-fix undercloud# cat &lt;&lt; EOF &gt; /usr/lib/systemd/system/bootif-fix.service [Unit] Description=Automated fix for incorrect iPXE BOOFIF  [Service] Type=simple ExecStart=/usr/bin/bootif-fix  [Install] WantedBy=multi-user.target EOF  undercloud# systemctl daemon-reload undercloud# systemctl enable bootif-fix undercloud# systemctl start bootif-fix undercloud# exit Create new flavor for the baremetal nodes and set boot option to local. undercloud$ openstack flavor create --id auto --ram 4096 --disk 58 --vcpus 4 baremetal undercloud$ openstack flavor set --property &quot;cpu_arch&quot;=&quot;x86_64&quot; --property &quot;capabilities:boot_option&quot;=&quot;local&quot; baremetal Perform introspection on baremetal nodes. This will discover hardware and configure node roles. [stack@undercloud ~]$ openstack baremetal introspection bulk start Setting available nodes to manageable... Starting introspection of node: 79f2a51c-a0f0-436f-9e8a-c082ee61f938 Starting introspection of node: 8ba244fd-5362-45fe-bb6c-5f15f2949912 Waiting for discovery to finish... Discovery for UUID 79f2a51c-a0f0-436f-9e8a-c082ee61f938 finished successfully. Discovery for UUID 8ba244fd-5362-45fe-bb6c-5f15f2949912 finished successfully. Setting manageable nodes to available... Node 79f2a51c-a0f0-436f-9e8a-c082ee61f938 has been set to available. Node 8ba244fd-5362-45fe-bb6c-5f15f2949912 has been set to available. To check progress of introspection. [stack@undercloud ~]$ sudo journalctl -f -l -u openstack-ironic-discoverd -u openstack-ironic-discoverd-dnsmasq -f &nbsp; List the Ironic baremetal nodes. Nodes should be available if introspection worked. [stack@undercloud ~]$ ironic node-list  +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | UUID | Name | Instance UUID | Power State | Provision State | Maintenance | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ | cd620ad0-4563-44a5-8078-531b7f906188 | None | None | power on | available | False | | 44df8163-7381-46a7-b016-a0dd18bfee53 | None | None | power on | available | False | +--------------------------------------+------+---------------+-------------+-----------------+-------------+ Deploy overcloud. [stack@undercloud ~]$ openstack overcloud deploy --templates --control-scale 1 --compute-scale 1 --neutron-tunnel-types vxlan --neutron-network-type vxlan Overcloud Endpoint: http://192.168.126.119:5000/v2.0/ Overcloud Deployed   Check status of Heat resources to monitor status of overcloud deployment. [stack@undercloud ~]$ heat resource-list -n 5 overcloud Once the OS install is complete on the baremetal nodes you can follow progress of the OpenStack overcloud configuration. [stack@undercloud ~]$ nova list +--------------------------------------+------------------------+--------+------------+-------------+-------------------------+ | ID                                   | Name                   | Status | Task State | Power State | Networks                | +--------------------------------------+------------------------+--------+------------+-------------+-------------------------+ | 507d1172-fc73-476b-960f-1d9bf7c1c270 | overcloud-compute-0    | ACTIVE | -          | Running     | ctlplane=192.168.126.103| | ff0e5e15-5bb8-4c77-81c3-651588802ebd | overcloud-controller-0 | ACTIVE | -          | Running     | ctlplane=192.168.126.102| +--------------------------------------+------------------------+--------+------------+-------------+-------------------------+ [stack@undercloud ~]$ ssh heat-admin@192.168.126.102 overcloud-controller-0$ sudo -i overcloud-controller-0# journalctl -f -u os-collect-config Deploying using the OpenStack Director UI The overcloud deployment can be done using the UI. You can even do the preliminary configuration using the CLI and run deployment from UI.  We can see exactly what OpenStack services will be configured in the overcloud.  Deployment status is shown and using the UI it is also to see when baremetal nodes have been completely provisioned.  Deployment details are available in the deployment log.  Once deployment is complete using the UI, the overcloud must be initialized.  Upon completion the overcloud is available and can be accessed.  Summary In this article we have discussed how OpenStack distributions have a proprietary mindset in regards to their deployment tools. We have discussed the need for a OpenStack community sponsored upstream project responsible for deployment and life-cycle management. That project is TripleO and Red Hat is the first distribution to ship its deployment tool based on TripleO. Using OpenStack to deploy OpenStack not only benefits entire community but also administrators and end-users. Finally we have seen how to deploy both the undercloud as well as overcloud using TripleO and the Red Hat OpenStack Director. Hopefully you found this article informative and useful. I would be very interested in hearing your feedback on this topic, so please share. Happy OpenStacking! (c) 2015 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/openstack/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2015-10-14T00:00:00-07:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openstack/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openstack" itemprop="item"><span itemprop="name">Openstack</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director">
+    <meta itemprop="description" content="OverviewIn this article we will look at how to deploy an OpenStack cloud using TripleO, the upstream project from the Red Hat OpenStack Director. Regardless of what OpenStack distribution you are using OpenStack is essentially OpenStack. Everyone has the same code-base to work with. The main differences between distributions are around what OpenStack projects are part of distribution, how it is supported and the deployment of the distribution. Every distribution has their own OpenStack deployment tool. Clearly deployments differ as they are based on support decisions each distribution makes. However many distributions have created their own proprietary installers. Shouldn&#39;t the OpenStack community unite around a common installer? What would be better than using OpenStack to deploy OpenStack? Why should OpenStack administrators have to learn separate proprietary tooling? Why should we be creating unnecessary vendor lock-in for OpenStack&#39;s deployment tooling? Installing OpenStack is one thing but what about upgrade and life-cycle management?This is the promise of TripleO! The TripleO (OpenStack on OpenStack) project was started to solve these problems and bring unification around OpenStack deployment as well as eventually life-cycle management. This has taken quite some time and been a journey but finally the first distribution is using TripleO. Red Hat Enterprise OpenStack Platform 7 has shifted away from foreman/puppet and is now based largely on TripleO. Red Hat is bringing its expertise and learning over the past years around OpenStack deployments and contributing heavily to TripleO.TripleO ConceptsBefore getting into the weeds, we should understand some basic concepts. First TripleO uses OpenStack to deploy OpenStack. It mainly utilizes Ironic for provisioning and Heat for orchestration. Under the hood puppet is used for configuration management. TripleO first deploys an OpenStack cloud used to deploy other OpenStack clouds. This is referred to as the undercloud. The OpenStack cloud environment deployed from undercloud is known as overcloud. The networking requirement is that all systems share a non-routed provisioning network. TripleO also uses PXE to boot and install initial OS image (bootstrap). There are different types of nodes or roles a node can have. In addition to controller and compute you can have nodes for Cinder, CEPH or Swift storage. CEPH storage is also integrated and since most OpenStack deployments use CEPH this is an obvious advantage.EnvironmentIn this environment we have the KVM hypervisor host (Laptop), the undercloud (single VM) and overcloud (1 X compute, 1 Xcontroller). The undercloud and overcloud are all VMs running on the KVM hypervisor host (Laptop). The KVM hypervisor host is on the 192.168.122.0/24 network and has IP of 192.168.122.1. The undercloud runs on a single VM on the 192.168.122.0/24 management network and 192.168.126.0/24 (provisioning) netowrk. The undercloud has an IP address of 192.168.122.90 (eth0). The overcloud is on the 192.168.126.0/24 (provisioning) and 192.168.125.0/24 (external) network. This is a very simple network configuration. In a real production environment there will be many more networks used in overcloud.Deploying UndercloudIn this section we will configure the undercloud. Normally you would deploy OpenStack nodes on bare-metal but since this is designed to run on Laptop or in lab, we are using KVM virtualization. Before beginning install RHEL or CentOS 7.1 on your KVM hypervisor.Disable NetworkManager.undercloud# systemctl stop NetworkManagerundercloud# systemctl disable NetworkManagerEnable port forwarding.undercloud# vi /etc/sysctl.confnet.ipv4.ip_forward = 1undercloud# sysctl -p /etc/sysctl.confEnsure hostname is static.undercloud# hostnamectl set-hostname undercloud.lab.comundercloud# systemctl restart networkRegister to subscription manager and enable appropriate repositories for RHEL.undercloud# subscription-manager registerundercloud# subscription-manager list --availableundercloud# subscription-manager attach --pool=8a85f9814f2c669b014f3b872de132b5undercloud# subscription-manager repos --disable=*undercloud# subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-optional-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-openstack-7.0-rpms --enable=rhel-7-server-openstack-7.0-director-rpmsPerform yum update and reboot system.undercloud# yum update -y &amp;&amp; rebootInstall facter and ensure hostname is set properly in /etc/hosts.undercloud# yum install facter -yundercloud# ipaddr=$(facter ipaddress_eth0)undercloud# echo -e &quot;$ipaddr\t\tundercloud.lab.com\tundercloud&quot; &gt;&gt; /etc/hostsInstall TripleO packages.undercloud# yum install python-rdomanager-oscplugin -y Create a stack user.undercloud# useradd stackundercloud# echo &quot;redhat&quot; | passwd stack --stdinundercloud# echo &quot;stack ALL=(root) NOPASSWD:ALL&quot; | tee -a /etc/sudoers.d/stack undercloud# chmod 0440 /etc/sudoers.d/stackundercloud# su - stackDetermine network settings for undercloud. At minimum you need two networks. One for provisioning and the other for the overcloud which should be external network. In this case we have two networks. The undercloud provisioning network 192.168.126.0/24 and the overcloud external network 192.168.125.0/24.[stack@undercloud ~]$ cp /usr/share/instack-undercloud/undercloud.conf.sample ~/undercloud.conf[stack@undercloud ~]$ vi ~/undercloud.conf [DEFAULT] local_ip = 192.168.126.1/24 undercloud_public_vip = 192.168.126.10 undercloud_admin_vip = 192.168.126.11 local_interface = eth1 masquerade_network = 192.168.126.0/24 dhcp_start = 192.168.126.100 dhcp_end = 192.168.126.120 network_cidr = 192.168.126.0/24 network_gateway = 192.168.126.1 discovery_iprange = 192.168.126.130,192.168.126.150 [auth]Install the undercloud.[stack@undercloud ~]$ openstack undercloud install#############################################################################instack-install-undercloud complete.The file containing this installation&#39;s passwords is at /home/stack/undercloud-passwords.conf.There is also a stackrc file at /home/stack/stackrc.These files are needed to interact with the OpenStack services, and should be secured.#############################################################################Verify undercloud. [stack@undercloud ~]$ source ~/stackrc [stack@undercloud ~]$ openstack catalog show nova +-----------+------------------------------------------------------------------------------+ | Field | Value | +-----------+------------------------------------------------------------------------------+ | endpoints | regionOne                                                                    | |           | publicURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a     | |           | internalURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a   | |           | adminURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a      | |           |                                                                              | | name      | nova                                                                         | | type      | compute                                                                      | +-----------+------------------------------------------------------------------------------+Deploying OvercloudThe overcloud is as mentioned a separate cloud from the undercloud. They are not sharing any resources, other than the provisioning network. Over and under sometimes confuse people into thinking the overcloud is sitting on top of undercloud, from networking perspective. This is of course not the case. In reality the clouds are sitting side-by-side from one another. The term over and under really refers to a logical relationship between both clouds. We will do a minimal deployment for the overcloud, 1 X controller and 1 X compute.Create directory for storing undercloud images. These are the images used by Ironic to provision an OpenStack node.[stack@undercloud]$ mkdir ~/imagesDownload images from https://access.redhat.com/downloads/content/191/ver=7/rhel---7/7/x86_64/product-downloads and copy to ~/images.[stack@undercloud images]$ ls -ltotal 2307076-rw-r-----. 1 stack stack 61419520 Oct 12 16:11 deploy-ramdisk-ironic-7.1.0-39.tar-rw-r-----. 1 stack stack 155238400 Oct 12 16:11 discovery-ramdisk-7.1.0-39.tar-rw-r-----. 1 stack stack 964567040 Oct 12 16:12 overcloud-full-7.1.0-39.tarExtract image tarballs.[stack@undercloud ~]$ cd ~/images[stack@undercloud ~]$ for tarfile in *.tar; do tar -xf $tarfile; doneUpload images to Glance.[stack@undercloud ~]$ openstack overcloud image upload --image-path /home/stack/images[stack@undercloud ~]$ openstack image list +--------------------------------------+------------------------+ | ID | Name | +--------------------------------------+------------------------+ | 31c01b42-d164-4898-b615-4787c12d3a53 | bm-deploy-ramdisk | | e38057f6-24f2-42d1-afae-bb54dead864d | bm-deploy-kernel | | f1708a15-5b9b-41ac-8363-ffc9932534f3 | overcloud-full | | 318768c2-5300-43cb-939d-44fb7abca7de | overcloud-full-initrd | | 28422b76-c37f-4413-b885-cccb24a4611c | overcloud-full-vmlinuz | +--------------------------------------+------------------------+Configure DNS for undercloud. The undercloud system is connected to a network 192.168.122.0/24 that provides DNS.[stack@undercloud]$ neutron subnet-list+--------------------------------------+------+------------------+--------------------------------------------------------+| id | name | cidr | allocation_pools |+--------------------------------------+------+------------------+--------------------------------------------------------+| 532f3344-57ed-4a2f-b438-67a5d60c71fc | | 192.168.126.0/24 | {&quot;start&quot;: &quot;192.168.126.100&quot;, &quot;end&quot;: &quot;192.168.126.120&quot;} |+--------------------------------------+------+------------------+--------------------------------------------------------+[stack@undercloud ~]$ neutron subnet-update 532f3344-57ed-4a2f-b438-67a5d60c71fc --dns-nameserver 192.168.122.1Since we are in nested virtual environment it is necessary to tweak timeouts.undercloud# sudo su -undercloud# openstack-config --set /etc/nova/nova.conf DEFAULT rpc_response_timeout 600undercloud# openstack-config --set /etc/ironic/ironic.conf DEFAULT rpc_response_timeout 600undercloud# openstack-service restart nova undercloud# openstack-service restart ironicundercloud# exitCreate provisioning and external networks on KVM Hypervisor host. Ensure that NAT forwarding and DHCP is enabled on the external network. The provisioning network should be non-routable and DHCP disabled. The undercloud will handle DHCP services for the provisioning network.[ktenzer@ktenzer ~]$ cat &gt; /tmp/external.xml &lt;&lt;EOF&lt;network&gt;   &lt;name&gt;external&lt;/name&gt;   &lt;forward mode=&#39;nat&#39;&gt;      &lt;nat&gt; &lt;port start=&#39;1024&#39; end=&#39;65535&#39;/&gt;      &lt;/nat&gt;   &lt;/forward&gt;   &lt;ip address=&#39;192.168.125.1&#39; netmask=&#39;255.255.255.0&#39;&gt;      &lt;dhcp&gt; &lt;range start=&#39;192.168.125.2&#39; end=&#39;192.168.125.254&#39;/&gt;      &lt;/dhcp&gt;   &lt;/ip&gt;&lt;/network&gt;[ktenzer@ktenzer ~]$ virsh net-define /tmp/external.xml[ktenzer@ktenzer ~]$ virsh net-autostart external[ktenzer@ktenzer ~]$ virsh net-start external[ktenzer@ktenzer ~]$ cat &gt; /tmp/provisioning.xml &lt;&lt;EOF&lt;network&gt;   &lt;name&gt;provisioning&lt;/name&gt;   &lt;ip address=&#39;192.168.126.254&#39; netmask=&#39;255.255.255.0&#39;&gt;   &lt;/ip&gt;&lt;/network&gt;[ktenzer@ktenzer ~]$ virsh net-define /tmp/provisioning.xml[ktenzer@ktenzer ~]$ virsh net-autostart provisioning[ktenzer@ktenzer ~]$ virsh net-start provisioningCreate VM hulls in KVM using virsh on hypervisor host. You will need to change the disk path to suit your needs.ktenzer# cd /home/ktenzer/VirtualMachinesktenzer# for i in {1..2}; do qemu-img create -f qcow2 -o preallocation=metadata overcloud-node$i.qcow2 60G; donektenzer# for i in {1..2}; do virt-install --ram 4096 --vcpus 4 --os-variant rhel7 --disk path=/home/ktenzer/VirtualMachines/overcloud-node$i.qcow2,device=disk,bus=virtio,format=qcow2 --noautoconsole --vnc --network network:provisioning --network network:overcloud --name overcloud-node$i --cpu SandyBridge,+vmx --dry-run --print-xml &gt; /tmp/overcloud-node$i.xml; virsh define --file /tmp/overcloud-node$i.xml; doneEnable access on KVM hypervisor host so that Ironic can control VMs.ktenzer# cat &lt;&lt; EOF &gt; /etc/polkit-1/localauthority/50-local.d/50-libvirt-user-stack.pkla[libvirt Management Access]Identity=unix-user:stackAction=org.libvirt.unix.manageResultAny=yesResultInactive=yesResultActive=yesEOFCopy ssh key from undercloud system to KVM hypervisor host for stack user.undercloud$ ssh-copy-id -i ~/.ssh/id_rsa.pub stack@192.168.122.1Save the MAC addresses for the provisioning network on the VMs. Ironic needs to know what MAC addresses a node has associated for provisioning network.[stack@undercloud ~]$ for i in {1..2}; do virsh -c qemu+ssh://stack@192.168.122.1/system domiflist overcloud-node$i | awk &#39;$3 == &quot;mgmt&quot; {print $5};&#39;; done &gt; /tmp/nodes.txt[stack@undercloud ~]$ cat /tmp/nodes.txt52:54:00:44:60:2b52:54:00:ea:e7:2eCreate JSON file for Ironic baremetal node configuration. In this case we are configuring two nodes which are of course the virtual machines we already created. The pm_addr IP is set to IP of the KVM hypervisor host.[stack@undercloud ~]$ jq . &lt;&lt; EOF &gt; ~/instackenv.json{  &quot;ssh-user&quot;: &quot;stack&quot;,  &quot;ssh-key&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,  &quot;power_manager&quot;: &quot;nova.virt.baremetal.virtual_power_driver.VirtualPowerManager&quot;,  &quot;host-ip&quot;: &quot;192.168.122.1&quot;,  &quot;arch&quot;: &quot;x86_64&quot;,  &quot;nodes&quot;: [    {      &quot;pm_addr&quot;: &quot;192.168.122.1&quot;,      &quot;pm_password&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,      &quot;pm_type&quot;: &quot;pxe_ssh&quot;,      &quot;mac&quot;: [        &quot;$(sed -n 1p /tmp/nodes.txt)&quot;      ],      &quot;cpu&quot;: &quot;4&quot;,      &quot;memory&quot;: &quot;4096&quot;,      &quot;disk&quot;: &quot;60&quot;,      &quot;arch&quot;: &quot;x86_64&quot;,      &quot;pm_user&quot;: &quot;stack&quot;    },    {      &quot;pm_addr&quot;: &quot;192.168.122.1&quot;,      &quot;pm_password&quot;: &quot;$(cat ~/.ssh/id_rsa)&quot;,      &quot;pm_type&quot;: &quot;pxe_ssh&quot;,      &quot;mac&quot;: [        &quot;$(sed -n 2p /tmp/nodes.txt)&quot;      ],      &quot;cpu&quot;: &quot;4&quot;,      &quot;memory&quot;: &quot;4096&quot;,      &quot;disk&quot;: &quot;60&quot;,      &quot;arch&quot;: &quot;x86_64&quot;,      &quot;pm_user&quot;: &quot;stack&quot;    }  ]}EOFValidate JSON file.[stack@undercloud ~]$ curl -O https://raw.githubusercontent.com/rthallisey/clapper/master/instackenv-validator.pypython instackenv-validator.py -f instackenv.jsonINFO:__main__:Checking node 192.168.122.1DEBUG:__main__:Identified virtual nodeINFO:__main__:Checking node 192.168.122.1DEBUG:__main__:Identified virtual nodeDEBUG:__main__:Baremetal IPs are all unique.DEBUG:__main__:MAC addresses are all unique.--------------------SUCCESS: instackenv validator found 0 errorsAdd nodes to Ironic[stack@undercloud ~]$ openstack baremetal import --json instackenv.jsonList newly added baremetal nodes.[stack@undercloud ~]$ openstack baremetal list+--------------------------------------+------+---------------+-------------+-----------------+-------------+| UUID | Name | Instance UUID | Power State | Provision State | Maintenance |+--------------------------------------+------+---------------+-------------+-----------------+-------------+| cd620ad0-4563-44a5-8078-531b7f906188 | None | None | power off | available | False || 44df8163-7381-46a7-b016-a0dd18bfee53 | None | None | power off | available | False |+--------------------------------------+------+---------------+-------------+-----------------+-------------+Enable nodes for baremetal provisioning and inspect ram and kernel images.[stack@undercloud ~]$ openstack baremetal configure boot[stack@undercloud ~]$ ironic node-show cd620ad0-4563-44a5-8078-531b7f906188 | grep -A1 deploy| driver_info | {u&#39;ssh_username&#39;: u&#39;stack&#39;, u&#39;deploy_kernel&#39;: u&#39;50125b15-9de3-4f03-bfbb- || | 76e740741b68&#39;, u&#39;deploy_ramdisk&#39;: u&#39;25b55027-ca57-4f15-babe- || | 6e14ba7d0b0c&#39;, u&#39;ssh_key_contents&#39;: u&#39;-----BEGIN RSA PRIVATE KEY----- |[stack@undercloud ~]$ openstack image show 50125b15-9de3-4f03-bfbb-76e740741b68+------------------+--------------------------------------+| Field | Value |+------------------+--------------------------------------+| checksum | 061e63c269d9c5b9a48a23f118c865de || container_format | aki || created_at | 2015-10-12T10:22:38.000000 || deleted | False || disk_format | aki || id | 50125b15-9de3-4f03-bfbb-76e740741b68 || is_public | True || min_disk | 0 || min_ram | 0 || name | bm-deploy-kernel || owner | 2ad8c320cf7040ef9ec0440e94238f58 || properties | {} || protected | False || size | 5027584 || status | active || updated_at | 2015-10-12T10:22:38.000000 |+------------------+--------------------------------------+[stack@undercloud ~]$ openstack image show 25b55027-ca57-4f15-babe-6e14ba7d0b0c+------------------+--------------------------------------+| Field | Value |+------------------+--------------------------------------+| checksum | eafcb9601b03261a7c608bebcfdff41c || container_format | ari || created_at | 2015-10-12T10:22:38.000000 || deleted | False || disk_format | ari || id | 25b55027-ca57-4f15-babe-6e14ba7d0b0c || is_public | True || min_disk | 0 || min_ram | 0 || name | bm-deploy-ramdisk || owner | 2ad8c320cf7040ef9ec0440e94238f58 || properties | {} || protected | False || size | 56355601 || status | active || updated_at | 2015-10-12T10:22:40.000000 |+------------------+--------------------------------------+/pre&gt;Ironic at this point only supports IPMI booting and since we are using VMs we need to use ssh_pxe. This is a workaround to allow that to work.[stack@undercloud ~]$ sudo su -undercloud# cat &lt;&lt; EOF &gt; /usr/bin/bootif-fix#!/usr/bin/env bashwhile true;        do find /httpboot/ -type f ! -iname &quot;kernel&quot; ! -iname &quot;ramdisk&quot; ! -iname &quot;*.kernel&quot; ! -iname &quot;*.ramdisk&quot; -exec sed -i &#39;s|{mac|{net0/mac|g&#39; {} +;doneEOFundercloud# chmod a+x /usr/bin/bootif-fixundercloud# cat &lt;&lt; EOF &gt; /usr/lib/systemd/system/bootif-fix.service[Unit]Description=Automated fix for incorrect iPXE BOOFIF[Service]Type=simpleExecStart=/usr/bin/bootif-fix[Install]WantedBy=multi-user.targetEOFundercloud# systemctl daemon-reloadundercloud# systemctl enable bootif-fixundercloud# systemctl start bootif-fixundercloud# exitCreate new flavor for the baremetal nodes and set boot option to local.undercloud$ openstack flavor create --id auto --ram 4096 --disk 58 --vcpus 4 baremetalundercloud$ openstack flavor set --property &quot;cpu_arch&quot;=&quot;x86_64&quot; --property &quot;capabilities:boot_option&quot;=&quot;local&quot; baremetalPerform introspection on baremetal nodes. This will discover hardware and configure node roles.[stack@undercloud ~]$ openstack baremetal introspection bulk startSetting available nodes to manageable...Starting introspection of node: 79f2a51c-a0f0-436f-9e8a-c082ee61f938Starting introspection of node: 8ba244fd-5362-45fe-bb6c-5f15f2949912Waiting for discovery to finish...Discovery for UUID 79f2a51c-a0f0-436f-9e8a-c082ee61f938 finished successfully.Discovery for UUID 8ba244fd-5362-45fe-bb6c-5f15f2949912 finished successfully.Setting manageable nodes to available...Node 79f2a51c-a0f0-436f-9e8a-c082ee61f938 has been set to available.Node 8ba244fd-5362-45fe-bb6c-5f15f2949912 has been set to available.To check progress of introspection.[stack@undercloud ~]$ sudo journalctl -f -l -u openstack-ironic-discoverd -u openstack-ironic-discoverd-dnsmasq -f&nbsp;List the Ironic baremetal nodes. Nodes should be available if introspection worked.[stack@undercloud ~]$ ironic node-list +--------------------------------------+------+---------------+-------------+-----------------+-------------+| UUID | Name | Instance UUID | Power State | Provision State | Maintenance |+--------------------------------------+------+---------------+-------------+-----------------+-------------+| cd620ad0-4563-44a5-8078-531b7f906188 | None | None | power on | available | False || 44df8163-7381-46a7-b016-a0dd18bfee53 | None | None | power on | available | False |+--------------------------------------+------+---------------+-------------+-----------------+-------------+Deploy overcloud.[stack@undercloud ~]$ openstack overcloud deploy --templates --control-scale 1 --compute-scale 1 --neutron-tunnel-types vxlan --neutron-network-type vxlanOvercloud Endpoint: http://192.168.126.119:5000/v2.0/Overcloud Deployed Check status of Heat resources to monitor status of overcloud deployment.[stack@undercloud ~]$ heat resource-list -n 5 overcloudOnce the OS install is complete on the baremetal nodes you can follow progress of the OpenStack overcloud configuration.[stack@undercloud ~]$ nova list+--------------------------------------+------------------------+--------+------------+-------------+-------------------------+| ID                                   | Name                   | Status | Task State | Power State | Networks                |+--------------------------------------+------------------------+--------+------------+-------------+-------------------------+| 507d1172-fc73-476b-960f-1d9bf7c1c270 | overcloud-compute-0    | ACTIVE | -          | Running     | ctlplane=192.168.126.103|| ff0e5e15-5bb8-4c77-81c3-651588802ebd | overcloud-controller-0 | ACTIVE | -          | Running     | ctlplane=192.168.126.102|+--------------------------------------+------------------------+--------+------------+-------------+-------------------------+[stack@undercloud ~]$ ssh heat-admin@192.168.126.102overcloud-controller-0$ sudo -iovercloud-controller-0# journalctl -f -u os-collect-configDeploying using the OpenStack Director UIThe overcloud deployment can be done using the UI. You can even do the preliminary configuration using the CLI and run deployment from UI.We can see exactly what OpenStack services will be configured in the overcloud.Deployment status is shown and using the UI it is also to see when baremetal nodes have been completely provisioned.Deployment details are available in the deployment log.Once deployment is complete using the UI, the overcloud must be initialized.Upon completion the overcloud is available and can be accessed.SummaryIn this article we have discussed how OpenStack distributions have a proprietary mindset in regards to their deployment tools. We have discussed the need for a OpenStack community sponsored upstream project responsible for deployment and life-cycle management. That project is TripleO and Red Hat is the first distribution to ship its deployment tool based on TripleO. Using OpenStack to deploy OpenStack not only benefits entire community but also administrators and end-users. Finally we have seen how to deploy both the undercloud as well as overcloud using TripleO and the Red Hat OpenStack Director. Hopefully you found this article informative and useful. I would be very interested in hearing your feedback on this topic, so please share.Happy OpenStacking!(c) 2015 Keith Tenzer">
+    <meta itemprop="datePublished" content="2015-10-14T00:00:00-07:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2015-10-14T00:00:00-07:00">October 14, 2015</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          25 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h3 class="screen"><a href="https://keithtenzer.files.wordpress.com/2015/10/ooo.jpg"><img class="alignnone size-full wp-image-1392" src="/assets/2015/10/ooo.jpg" alt="ooo" width="231" height="218" /></a></h3>
+<h3 class="screen">Overview</h3>
+<p>In this article we will look at how to deploy an OpenStack cloud using TripleO, the upstream project from the Red Hat OpenStack Director. Regardless of what OpenStack distribution you are using OpenStack is essentially OpenStack. Everyone has the same code-base to work with. The main differences between distributions are around what OpenStack projects are part of distribution, how it is supported and the deployment of the distribution. Every distribution has their own OpenStack deployment tool. Clearly deployments differ as they are based on support decisions each distribution makes. However many distributions have created their own proprietary installers. Shouldn't the OpenStack community unite around a common installer? What would be better than using OpenStack to deploy OpenStack? Why should OpenStack administrators have to learn separate proprietary tooling? Why should we be creating unnecessary vendor lock-in for OpenStack's deployment tooling? Installing OpenStack is one thing but what about upgrade and life-cycle management?<br />
+<!--more--><br />
+This is the promise of TripleO! The TripleO (OpenStack on OpenStack) project was started to solve these problems and bring unification around OpenStack deployment as well as eventually life-cycle management. This has taken quite some time and been a journey but finally the first distribution is using TripleO. Red Hat Enterprise OpenStack Platform 7 has shifted away from foreman/puppet and is now based largely on TripleO. Red Hat is bringing its expertise and learning over the past years around OpenStack deployments and contributing heavily to TripleO.</p>
+<h3>TripleO Concepts</h3>
+<p>Before getting into the weeds, we should understand some basic concepts. First TripleO uses OpenStack to deploy OpenStack. It mainly utilizes Ironic for provisioning and Heat for orchestration. Under the hood puppet is used for configuration management. TripleO first deploys an OpenStack cloud used to deploy other OpenStack clouds. This is referred to as the undercloud. The OpenStack cloud environment deployed from undercloud is known as overcloud. The networking requirement is that all systems share a non-routed provisioning network. TripleO also uses PXE to boot and install initial OS image (bootstrap). There are different types of nodes or roles a node can have. In addition to controller and compute you can have nodes for Cinder, CEPH or Swift storage. CEPH storage is also integrated and since most OpenStack deployments use CEPH this is an obvious advantage.</p>
+<h3>Environment</h3>
+<p>In this environment we have the KVM hypervisor host (Laptop), the undercloud (single VM) and overcloud (1 X compute, 1 Xcontroller). The undercloud and overcloud are all VMs running on the KVM hypervisor host (Laptop). The KVM hypervisor host is on the 192.168.122.0/24 network and has IP of 192.168.122.1. The undercloud runs on a single VM on the 192.168.122.0/24 management network and 192.168.126.0/24 (provisioning) netowrk. The undercloud has an IP address of 192.168.122.90 (eth0). The overcloud is on the 192.168.126.0/24 (provisioning) and 192.168.125.0/24 (external) network. This is a very simple network configuration. In a real production environment there will be many more networks used in overcloud.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/osp_7_network_architecture.png"><img class="alignnone wp-image-1397" src="/assets/2015/10/osp_7_network_architecture.png?w=300" alt="OSP_7_Network_Architecture" width="1184" height="758" /></a></p>
+<h3>Deploying Undercloud</h3>
+<p>In this section we will configure the undercloud. Normally you would deploy OpenStack nodes on bare-metal but since this is designed to run on Laptop or in lab, we are using KVM virtualization. Before beginning install RHEL or CentOS 7.1 on your KVM hypervisor.</p>
+<p>Disable NetworkManager.</p>
+<pre style="padding-left:30px;">undercloud# systemctl stop NetworkManager
+undercloud# systemctl disable NetworkManager</pre>
+<p>Enable port forwarding.</p>
+<pre style="padding-left:30px;">undercloud# vi /etc/sysctl.conf
+net.ipv4.ip_forward = 1</pre>
+<pre class="screen" style="padding-left:30px;">undercloud# sysctl -p /etc/sysctl.conf</pre>
+<p class="screen">Ensure hostname is static.</p>
+<pre class="screen" style="padding-left:30px;">undercloud# hostnamectl set-hostname undercloud.lab.com
+undercloud# systemctl restart network</pre>
+<p class="screen">Register to subscription manager and enable appropriate repositories for RHEL.</p>
+<pre class="screen" style="padding-left:30px;">undercloud# subscription-manager register
+undercloud# subscription-manager list --available
+undercloud# subscription-manager attach --pool=8a85f9814f2c669b014f3b872de132b5
+undercloud# subscription-manager repos --disable=*
+undercloud# subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-optional-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-openstack-7.0-rpms --enable=rhel-7-server-openstack-7.0-director-rpms</pre>
+<p>Perform yum update and reboot system.</p>
+<pre style="padding-left:30px;">undercloud# yum update -y &amp;&amp; reboot</pre>
+<p>Install facter and ensure hostname is set properly in /etc/hosts.</p>
+<pre style="padding-left:30px;">undercloud# yum install facter -y
+undercloud# ipaddr=$(facter ipaddress_eth0)
+undercloud# echo -e "$ipaddr\t\tundercloud.lab.com\tundercloud" &gt;&gt; /etc/hosts</pre>
+<p>Install TripleO packages.</p>
+<pre style="padding-left:30px;"><code class="language-none">undercloud# </code><code class="language-none">yum install python-rdomanager-oscplugin -y</code><code class="language-none"> </code></pre>
+<p>Create a stack user.</p>
+<pre style="padding-left:30px;">undercloud# useradd stack
+undercloud# echo "redhat" | passwd stack --stdin
+undercloud# echo "stack ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/stack undercloud# chmod 0440 /etc/sudoers.d/stack
+undercloud# su - stack</pre>
+<p class="screen">Determine network settings for undercloud. At minimum you need two networks. One for provisioning and the other for the overcloud which should be external network. In this case we have two networks. The undercloud provisioning network 192.168.126.0/24 and the overcloud external network 192.168.125.0/24.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ cp /usr/share/instack-undercloud/undercloud.conf.sample ~/undercloud.conf</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ vi ~/undercloud.conf
+ [DEFAULT]
+ local_ip = 192.168.126.1/24
+ undercloud_public_vip = 192.168.126.10
+ undercloud_admin_vip = 192.168.126.11
+ local_interface = eth1
+ masquerade_network = 192.168.126.0/24
+ dhcp_start = 192.168.126.100
+ dhcp_end = 192.168.126.120
+ network_cidr = 192.168.126.0/24
+ network_gateway = 192.168.126.1
+ discovery_iprange = 192.168.126.130,192.168.126.150
+ [auth]</pre>
+<p class="screen">Install the undercloud.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ openstack undercloud install
+#############################################################################
+instack-install-undercloud complete.
+The file containing this installation's passwords is at /home/stack/undercloud-passwords.conf.
+There is also a stackrc file at /home/stack/stackrc.
+These files are needed to interact with the OpenStack services, and should be secured.
+#############################################################################</pre>
+<p class="screen">Verify undercloud.</p>
+<pre class="screen" style="padding-left:30px;"> [stack@undercloud ~]$ source ~/stackrc
+ [stack@undercloud ~]$ openstack catalog show nova
+ +-----------+------------------------------------------------------------------------------+
+ | Field | Value |
+ +-----------+------------------------------------------------------------------------------+
+ | endpoints | regionOne                                                                    |
+ |           | publicURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a     |
+ |           | internalURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a   |
+ |           | adminURL: http://192.168.126.1:8774/v2/e6649719251f40569200fec7fae6988a      |
+ |           |                                                                              |
+ | name      | nova                                                                         |
+ | type      | compute                                                                      |
+ +-----------+------------------------------------------------------------------------------+</pre>
+<h3 class="screen">Deploying Overcloud</h3>
+<p>The overcloud is as mentioned a separate cloud from the undercloud. They are not sharing any resources, other than the provisioning network. Over and under sometimes confuse people into thinking the overcloud is sitting on top of undercloud, from networking perspective. This is of course not the case. In reality the clouds are sitting side-by-side from one another. The term over and under really refers to a logical relationship between both clouds. We will do a minimal deployment for the overcloud, 1 X controller and 1 X compute.</p>
+<p class="screen">Create directory for storing undercloud images. These are the images used by Ironic to provision an OpenStack node.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud]$ mkdir ~/images</pre>
+<p class="screen">Download images from <a href="https://access.redhat.com/downloads/content/191/ver=7/rhel---7/7/x86_64/product-downloads">https://access.redhat.com/downloads/content/191/ver=7/rhel---7/7/x86_64/product-downloads</a> and copy to ~/images.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud images]$ ls -l
+total 2307076
+-rw-r-----. 1 stack stack 61419520 Oct 12 16:11 deploy-ramdisk-ironic-7.1.0-39.tar
+-rw-r-----. 1 stack stack 155238400 Oct 12 16:11 discovery-ramdisk-7.1.0-39.tar
+-rw-r-----. 1 stack stack 964567040 Oct 12 16:12 overcloud-full-7.1.0-39.tar</pre>
+<p class="screen">Extract image tarballs.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ cd ~/images
+[stack@undercloud ~]$ for tarfile in *.tar; do tar -xf $tarfile; done</pre>
+<p class="screen">Upload images to Glance.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ openstack overcloud image upload --image-path /home/stack/images</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ openstack image list
+ +--------------------------------------+------------------------+
+ | ID | Name |
+ +--------------------------------------+------------------------+
+ | 31c01b42-d164-4898-b615-4787c12d3a53 | bm-deploy-ramdisk |
+ | e38057f6-24f2-42d1-afae-bb54dead864d | bm-deploy-kernel |
+ | f1708a15-5b9b-41ac-8363-ffc9932534f3 | overcloud-full |
+ | 318768c2-5300-43cb-939d-44fb7abca7de | overcloud-full-initrd |
+ | 28422b76-c37f-4413-b885-cccb24a4611c | overcloud-full-vmlinuz |
+ +--------------------------------------+------------------------+</pre>
+<p class="screen">Configure DNS for undercloud. The undercloud system is connected to a network 192.168.122.0/24 that provides DNS.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud]$ neutron subnet-list
++--------------------------------------+------+------------------+--------------------------------------------------------+
+| id | name | cidr | allocation_pools |
++--------------------------------------+------+------------------+--------------------------------------------------------+
+| 532f3344-57ed-4a2f-b438-67a5d60c71fc | | 192.168.126.0/24 | {"start": "192.168.126.100", "end": "192.168.126.120"} |
++--------------------------------------+------+------------------+--------------------------------------------------------+</pre>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ neutron subnet-update 532f3344-57ed-4a2f-b438-67a5d60c71fc --dns-nameserver 192.168.122.1</pre>
+<p>Since we are in nested virtual environment it is necessary to tweak timeouts.</p>
+<pre style="padding-left:30px;">undercloud# <code class="language-none">sudo su -
+undercloud# openstack-config --set /etc/nova/nova.conf DEFAULT rpc_response_timeout 600
+undercloud# </code><code class="language-none">openstack-config --set /etc/ironic/ironic.conf DEFAULT rpc_response_timeout 600
+undercloud# </code><code class="language-none">openstack-service restart nova 
+undercloud# openstack-service restart ironic
+undercloud# </code><code class="language-none">exit</code></pre>
+<pre style="padding-left:30px;"></pre>
+<p>Create provisioning and external networks on KVM Hypervisor host. Ensure that NAT forwarding and DHCP is enabled on the external network. The provisioning network should be non-routable and DHCP disabled. The undercloud will handle DHCP services for the provisioning network.</p>
+<pre style="padding-left:30px;">[ktenzer@ktenzer ~]$ cat &gt; /tmp/external.xml &lt;&lt;EOF
+&lt;network&gt;
+   &lt;name&gt;external&lt;/name&gt;
+   &lt;forward mode='nat'&gt;
+      &lt;nat&gt; &lt;port start='1024' end='65535'/&gt;
+      &lt;/nat&gt;
+   &lt;/forward&gt;
+   &lt;ip address='192.168.125.1' netmask='255.255.255.0'&gt;
+      &lt;dhcp&gt; &lt;range start='192.168.125.2' end='192.168.125.254'/&gt;
+      &lt;/dhcp&gt;
+   &lt;/ip&gt;
+&lt;/network&gt;
+</pre>
+<pre style="padding-left:30px;">[ktenzer@ktenzer ~]$ virsh net-define /tmp/external.xml
+[ktenzer@ktenzer ~]$ virsh net-autostart external
+[ktenzer@ktenzer ~]$ virsh net-start external</pre>
+<pre style="padding-left:30px;">[ktenzer@ktenzer ~]$ cat &gt; /tmp/provisioning.xml &lt;&lt;EOF
+&lt;network&gt;
+   &lt;name&gt;provisioning&lt;/name&gt;
+   &lt;ip address='192.168.126.254' netmask='255.255.255.0'&gt;
+   &lt;/ip&gt;
+&lt;/network&gt;</pre>
+<pre style="padding-left:30px;">[ktenzer@ktenzer ~]$ virsh net-define /tmp/provisioning.xml
+[ktenzer@ktenzer ~]$ virsh net-autostart provisioning
+[ktenzer@ktenzer ~]$ virsh net-start provisioning</pre>
+<p>Create VM hulls in KVM using virsh on hypervisor host. You will need to change the disk path to suit your needs.</p>
+<pre style="padding-left:30px;">ktenzer# cd /home/ktenzer/VirtualMachines
+ktenzer# for i in {1..2}; do qemu-img create -f qcow2 -o preallocation=metadata overcloud-node$i.qcow2 60G; done
+ktenzer# for i in {1..2}; do virt-install --ram 4096 --vcpus 4 --os-variant rhel7 --disk path=/home/ktenzer/VirtualMachines/overcloud-node$i.qcow2,device=disk,bus=virtio,format=qcow2 --noautoconsole --vnc --network network:provisioning --network network:overcloud --name overcloud-node$i --cpu SandyBridge,+vmx --dry-run --print-xml &gt; /tmp/overcloud-node$i.xml; virsh define --file /tmp/overcloud-node$i.xml; done</pre>
+<p>Enable access on KVM hypervisor host so that Ironic can control VMs.</p>
+<pre style="padding-left:30px;">ktenzer# cat &lt;&lt; EOF &gt; /etc/polkit-1/localauthority/50-local.d/50-libvirt-user-stack.pkla
+[libvirt Management Access]
+Identity=unix-user:stack
+Action=org.libvirt.unix.manage
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+EOF</pre>
+<p>Copy ssh key from undercloud system to KVM hypervisor host for stack user.</p>
+<pre style="padding-left:30px;">undercloud$ ssh-copy-id -i ~/.ssh/id_rsa.pub stack@192.168.122.1</pre>
+<p>Save the MAC addresses for the provisioning network on the VMs. Ironic needs to know what MAC addresses a node has associated for provisioning network.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ for i in {1..2}; do <code class="language-none">virsh -c qemu+ssh://stack@192.168.122.1/system domiflist overcloud-node$i | awk '$3 == "mgmt" {print $5};'; done &gt; /tmp/nodes.txt</code></pre>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ cat /tmp/nodes.txt
+52:54:00:44:60:2b
+52:54:00:ea:e7:2e</pre>
+<p>Create JSON file for Ironic baremetal node configuration. In this case we are configuring two nodes which are of course the virtual machines we already created. The pm_addr IP is set to IP of the KVM hypervisor host.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ jq . &lt;&lt; EOF &gt; ~/instackenv.json
+{
+  "ssh-user": "stack",
+  "ssh-key": "$(cat ~/.ssh/id_rsa)",
+  "power_manager": "nova.virt.baremetal.virtual_power_driver.VirtualPowerManager",
+  "host-ip": "192.168.122.1",
+  "arch": "x86_64",
+  "nodes": [
+    {
+      "pm_addr": "192.168.122.1",
+      "pm_password": "$(cat ~/.ssh/id_rsa)",
+      "pm_type": "pxe_ssh",
+      "mac": [
+        "$(sed -n 1p /tmp/nodes.txt)"
+      ],
+      "cpu": "4",
+      "memory": "4096",
+      "disk": "60",
+      "arch": "x86_64",
+      "pm_user": "stack"
+    },
+    {
+      "pm_addr": "192.168.122.1",
+      "pm_password": "$(cat ~/.ssh/id_rsa)",
+      "pm_type": "pxe_ssh",
+      "mac": [
+        "$(sed -n 2p /tmp/nodes.txt)"
+      ],
+      "cpu": "4",
+      "memory": "4096",
+      "disk": "60",
+      "arch": "x86_64",
+      "pm_user": "stack"
+    }
+  ]
+}
+EOF</pre>
+<p>Validate JSON file.</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ curl -O https://raw.githubusercontent.com/rthallisey/clapper/master/instackenv-validator.py</pre>
+<pre style="padding-left:30px;">python instackenv-validator.py -f instackenv.json
+INFO:__main__:Checking node 192.168.122.1
+DEBUG:__main__:Identified virtual node
+INFO:__main__:Checking node 192.168.122.1
+DEBUG:__main__:Identified virtual node
+DEBUG:__main__:Baremetal IPs are all unique.
+DEBUG:__main__:MAC addresses are all unique.
+
+--------------------
+SUCCESS: instackenv validator found 0 errors<code class="language-none">
+</code><code class="language-none">
+</code></pre>
+<p>Add nodes to Ironic</p>
+<pre class="screen" style="padding-left:30px;">[stack@undercloud ~]$ openstack baremetal import --json instackenv.json
+</pre>
+<p>List newly added baremetal nodes.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ openstack baremetal list
++--------------------------------------+------+---------------+-------------+-----------------+-------------+
+| UUID | Name | Instance UUID | Power State | Provision State | Maintenance |
++--------------------------------------+------+---------------+-------------+-----------------+-------------+
+| cd620ad0-4563-44a5-8078-531b7f906188 | None | None | power off | available | False |
+| 44df8163-7381-46a7-b016-a0dd18bfee53 | None | None | power off | available | False |
++--------------------------------------+------+---------------+-------------+-----------------+-------------+</pre>
+<p>Enable nodes for baremetal provisioning and inspect ram and kernel images.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ openstack baremetal configure boot</pre>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ ironic node-show cd620ad0-4563-44a5-8078-531b7f906188 | grep -A1 deploy
+
+| driver_info | {u'ssh_username': u'stack', u'deploy_kernel': u'50125b15-9de3-4f03-bfbb- |
+| | 76e740741b68', u'deploy_ramdisk': u'25b55027-ca57-4f15-babe- |
+| | 6e14ba7d0b0c', u'ssh_key_contents': u'-----BEGIN RSA PRIVATE KEY----- |</pre>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ openstack image show 50125b15-9de3-4f03-bfbb-76e740741b68
++------------------+--------------------------------------+
+| Field | Value |
++------------------+--------------------------------------+
+| checksum | 061e63c269d9c5b9a48a23f118c865de |
+| container_format | aki |
+| created_at | 2015-10-12T10:22:38.000000 |
+| deleted | False |
+| disk_format | aki |
+| id | 50125b15-9de3-4f03-bfbb-76e740741b68 |
+| is_public | True |
+| min_disk | 0 |
+| min_ram | 0 |
+| name | bm-deploy-kernel |
+| owner | 2ad8c320cf7040ef9ec0440e94238f58 |
+| properties | {} |
+| protected | False |
+| size | 5027584 |
+| status | active |
+| updated_at | 2015-10-12T10:22:38.000000 |
++------------------+--------------------------------------+</pre>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ openstack image show 25b55027-ca57-4f15-babe-6e14ba7d0b0c
++------------------+--------------------------------------+
+| Field | Value |
++------------------+--------------------------------------+
+| checksum | eafcb9601b03261a7c608bebcfdff41c |
+| container_format | ari |
+| created_at | 2015-10-12T10:22:38.000000 |
+| deleted | False |
+| disk_format | ari |
+| id | 25b55027-ca57-4f15-babe-6e14ba7d0b0c |
+| is_public | True |
+| min_disk | 0 |
+| min_ram | 0 |
+| name | bm-deploy-ramdisk |
+| owner | 2ad8c320cf7040ef9ec0440e94238f58 |
+| properties | {} |
+| protected | False |
+| size | 56355601 |
+| status | active |
+| updated_at | 2015-10-12T10:22:40.000000 |
++------------------+--------------------------------------+
+/pre&gt;
+Ironic at this point only supports IPMI booting and since we are using VMs we need to use ssh_pxe. This is a workaround to allow that to work.
+</pre>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ sudo su -
+undercloud# cat &lt;&lt; EOF &gt; /usr/bin/bootif-fix
+#!/usr/bin/env bash
+
+while true;
+        do find /httpboot/ -type f ! -iname "kernel" ! -iname "ramdisk" ! -iname "*.kernel" ! -iname "*.ramdisk" -exec sed -i 's|{mac|{net0/mac|g' {} +;
+done
+EOF
+
+undercloud# chmod a+x /usr/bin/bootif-fix
+undercloud# cat &lt;&lt; EOF &gt; /usr/lib/systemd/system/bootif-fix.service
+[Unit]
+Description=Automated fix for incorrect iPXE BOOFIF
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/bootif-fix
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+undercloud# systemctl daemon-reload
+undercloud# systemctl enable bootif-fix
+undercloud# systemctl start bootif-fix
+undercloud# exit</pre>
+<p>Create new flavor for the baremetal nodes and set boot option to local.</p>
+<pre style="padding-left:30px;">undercloud$ openstack flavor create --id auto --ram 4096 --disk 58 --vcpus 4 baremetal</pre>
+<pre style="padding-left:30px;">undercloud$ openstack flavor set --property "cpu_arch"="x86_64" --property "capabilities:boot_option"="local" baremetal</pre>
+<p>Perform introspection on baremetal nodes. This will discover hardware and configure node roles.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ openstack baremetal introspection bulk start
+Setting available nodes to manageable...
+Starting introspection of node: 79f2a51c-a0f0-436f-9e8a-c082ee61f938
+Starting introspection of node: 8ba244fd-5362-45fe-bb6c-5f15f2949912
+Waiting for discovery to finish...
+Discovery for UUID 79f2a51c-a0f0-436f-9e8a-c082ee61f938 finished successfully.
+Discovery for UUID 8ba244fd-5362-45fe-bb6c-5f15f2949912 finished successfully.
+Setting manageable nodes to available...
+Node 79f2a51c-a0f0-436f-9e8a-c082ee61f938 has been set to available.
+Node 8ba244fd-5362-45fe-bb6c-5f15f2949912 has been set to available.</pre>
+<p>To check progress of introspection.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ sudo journalctl -f -l -u openstack-ironic-discoverd -u openstack-ironic-discoverd-dnsmasq -f</pre>
+<p>&nbsp;</p>
+<p>List the Ironic baremetal nodes. Nodes should be available if introspection worked.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ ironic node-list 
++--------------------------------------+------+---------------+-------------+-----------------+-------------+
+| UUID | Name | Instance UUID | Power State | Provision State | Maintenance |
++--------------------------------------+------+---------------+-------------+-----------------+-------------+
+| cd620ad0-4563-44a5-8078-531b7f906188 | None | None | power on | available | False |
+| 44df8163-7381-46a7-b016-a0dd18bfee53 | None | None | power on | available | False |
++--------------------------------------+------+---------------+-------------+-----------------+-------------+</pre>
+<p>Deploy overcloud.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ openstack overcloud deploy --templates --control-scale 1 --compute-scale 1 --neutron-tunnel-types vxlan --neutron-network-type vxlan
+Overcloud Endpoint: http://192.168.126.119:5000/v2.0/
+Overcloud Deployed</pre>
+<pre style="padding-left:30px;"><code class="language-none"> </code></pre>
+<p>Check status of Heat resources to monitor status of overcloud deployment.</p>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ heat resource-list -n 5 overcloud</code></pre>
+<p>Once the OS install is complete on the baremetal nodes you can follow progress of the OpenStack overcloud configuration.</p>
+<pre>[stack@undercloud ~]$ nova list
++--------------------------------------+------------------------+--------+------------+-------------+-------------------------+
+| ID                                   | Name                   | Status | Task State | Power State | Networks                |
++--------------------------------------+------------------------+--------+------------+-------------+-------------------------+
+| 507d1172-fc73-476b-960f-1d9bf7c1c270 | overcloud-compute-0    | ACTIVE | -          | Running     | ctlplane=192.168.126.103|
+| ff0e5e15-5bb8-4c77-81c3-651588802ebd | overcloud-controller-0 | ACTIVE | -          | Running     | ctlplane=192.168.126.102|
++--------------------------------------+------------------------+--------+------------+-------------+-------------------------+</pre>
+<pre>[stack@undercloud ~]$ ssh heat-admin@192.168.126.102
+overcloud-controller-0$ sudo -i
+overcloud-controller-0# journalctl -f -u os-collect-config</pre>
+<h3>Deploying using the OpenStack Director UI</h3>
+<p>The overcloud deployment can be done using the UI. You can even do the preliminary configuration using the CLI and run deployment from UI.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/osp_7_director_initialize.png"><img class="alignnone wp-image-1358" src="/assets/2015/10/osp_7_director_initialize.png?w=300" alt="OSP_7_Director_INitialize" width="1203" height="349" /></a></p>
+<p>We can see exactly what OpenStack services will be configured in the overcloud.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/osp_7_director_deploy_2.png"><img class="alignnone wp-image-1363" src="/assets/2015/10/osp_7_director_deploy_2.png?w=300" alt="OSP_7_director_deploy_2" width="1195" height="494" /></a></p>
+<p>Deployment status is shown and using the UI it is also to see when baremetal nodes have been completely provisioned.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/osp_7_director_progress_2.png"><img class="alignnone wp-image-1359" src="/assets/2015/10/osp_7_director_progress_2.png?w=300" alt="OSP_7_DIrector_Progress_2" width="1193" height="362" /></a></p>
+<p>Deployment details are available in the deployment log.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/osp_7_director_deployment_log.png"><img class="alignnone wp-image-1360" src="/assets/2015/10/osp_7_director_deployment_log.png?w=300" alt="OSP_7_DIRECTOR_deployment_log" width="1189" height="317" /></a></p>
+<p>Once deployment is complete using the UI, the overcloud must be initialized.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/osp_director_initialize.png"><img class="alignnone  wp-image-1404" src="/assets/2015/10/osp_director_initialize.png?w=300" alt="OSP_Director_Initialize" width="1193" height="358" /></a></p>
+<p>Upon completion the overcloud is available and can be accessed.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/10/osp_7_director_deploy_complete.png"><img class="alignnone wp-image-1362" src="/assets/2015/10/osp_7_director_deploy_complete.png?w=300" alt="OSP_7_director_deploy_complete" width="1194" height="565" /></a></p>
+<h3><span style="font-family:monospace;">Summary</span></h3>
+<p>In this article we have discussed how OpenStack distributions have a proprietary mindset in regards to their deployment tools. We have discussed the need for a OpenStack community sponsored upstream project responsible for deployment and life-cycle management. That project is TripleO and Red Hat is the first distribution to ship its deployment tool based on TripleO. Using OpenStack to deploy OpenStack not only benefits entire community but also administrators and end-users. Finally we have seen how to deploy both the undercloud as well as overcloud using TripleO and the Red Hat OpenStack Director. Hopefully you found this article informative and useful. I would be very interested in hearing your feedback on this topic, so please share.</p>
+<p>Happy OpenStacking!</p>
+<p>(c) 2015 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#director" class="page__taxonomy-item" rel="tag">Director</a><span class="sep">, </span>
+    
+      <a href="/tags/#heat" class="page__taxonomy-item" rel="tag">Heat</a><span class="sep">, </span>
+    
+      <a href="/tags/#ironic" class="page__taxonomy-item" rel="tag">Ironic</a><span class="sep">, </span>
+    
+      <a href="/tags/#kvm" class="page__taxonomy-item" rel="tag">KVM</a><span class="sep">, </span>
+    
+      <a href="/tags/#openstack" class="page__taxonomy-item" rel="tag">OpenStack</a><span class="sep">, </span>
+    
+      <a href="/tags/#rhel-osp-7" class="page__taxonomy-item" rel="tag">RHEL OSP 7</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openstack" class="page__taxonomy-item" rel="tag">OpenStack</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2015-10-14T00:00:00-07:00">October 14, 2015</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=HOWTO%3A+OpenStack+Deployment+using+TripleO+and+the+Red+Hat+OpenStack+Director%20https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fhowto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fhowto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fhowto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openstack/auto-scaling-applications-with-openstack-heat/" class="pagination--pager" title="Auto Scaling Applications with OpenStack Heat
+">Previous</a>
+    
+    
+      <a href="/openstack/advanced-deployment-with-tripleo-and-openstack-director/" class="pagination--pager" title="Advanced Deployment with TripleO and OpenStack Director
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

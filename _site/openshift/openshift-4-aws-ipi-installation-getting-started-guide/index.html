@@ -1,0 +1,850 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>OpenShift 4 AWS IPI Installation Getting Started Guide - KEITHTENZER.COM</title>
+<meta name="description" content="Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 2021. Please reach out and let me know what topics would be most helpful.  Overview   In this Article we will walk through an OpenShift deployment using the IPI (Installer Provisioned Infrastructure) method on AWS. OpenShift offers two possible deployment methods: IPI (as mentioned) and UPI (User Provisioned Infrastructure). The difference is the degree of automation and customization. IPI will not only deploy OpenShift but also all infrastructure components and configurations. IPI is supported in various environments including AWS, Azure, GCE, VMware Vsphere and even Baremetal. IPI is tightly coupled with the infrastructure layer whereas UPI is not and will allow the most customization and work anywhere.   Ultimately IPI vs UPI is usually dictated by the requirements. My view is unless you have special requirements (like a stretch cluster or specific integrations with infrastructure that require UPI) always default to IPI. It is far better to have the vendor, in this case Red Hat own more of the share of responsibility and ensure proper, tested infrastructure configurations are being deployed as well as maintained throughout the cluster lifecycle.      Create Hosted Zone   Before a cluster can be deployed we need to access AWS console and add a hosted zone to the route53 service. In the diagram below, we are adding the domain rh-southwest.com.      Download and Install CLI Tools   Red Hat provides a CLI tools for deploying and managing OpenShift clusters. The CLI tools wrap kubectl, podman (docker image manipulation) and other tools to provide a single easy-to-use interface. You can of course also use kubectl and individual tooling for manipulating images (docker or podman).   Download CLI Tools   Access&nbsp;https://cloud.redhat.com/openshift/install using your Red Hat account. Select AWS as infrastructure provider and the installer provisioned option. Download both the CLI and OpenShift install.   Copy Pull Secret   The pull secret is used to automatically authenticate to Red Hat content repositories for OpenShift during the install. You will need to provide the pull secret as part of a later step.     Install CLI Tools The CLI tools can be simply extracted into /usr/bin. $ sudo tar xvf openshift-client-linux.tar.gz -C /usr/bin $ sudo tar xvf openshift-install-linux.tar.gz -C /usr/bin Check CLI Version $ openshift-install version openshift-install 4.6.9 Install Configuration Create Install Config When creating an install config you will need to provide the platform, in this case AWS, the domain configured in route53, a name for the OpenShift cluster and of course the pull secret. $ openshift-install create install-config \ --dir=ocp_install ? SSH Public Key /root/.ssh/id_rsa.pub ? Platform aws ? Cloud aws ? Base Domain rh-southwest.com ? Cluster Name ocp4 ? Pull Secret [? for help] ************************************************ Edit Install Config $ vi ocp_install/install-config.yaml ... compute:   architecture: amd64   hyperthreading: Enabled   name: worker   platform:     aws:       type: m5.large       userTags:         Contact: myemail@mydomain.com         AlwaysUp: True         DeleteBy: NEVER   replicas: 3 controlPlane:   architecture: amd64   hyperthreading: Enabled   name: master   platform:     aws:       type: m5.xlarge       userTags:         Contact: myemail@mydomain.com         AlwaysUp: True         DeleteBy: NEVER   replicas: 3 ... User tags allow you to label or tag the AWS VMs. In this case we have some automation that will shutdown any clusters that are not supposed to be always available or delete any clusters that have an expiration date set. Deploy OpenShift Cluster Now that we have adjusted the configuration we can deploy the cluster and grab a coffee. $ [ktenzer@localhost ~]$ time openshift-install create cluster --dir=ocp_install --log-level=debug Verify Cluster Once the deployment has completed successfully we can verify cluster. In order to gain access to cluster we can use the default system account created during deployment by exporting the kubeconfig. $ export KUBECONFIG=ocp_install/auth/kubeconfig $ oc get nodes NAME                                       STATUS ROLES  AGE VERSION ip-10-0-147-102.us-east-2.compute.internal Ready  worker 27m v1.19.0+7070803 ip-10-0-159-222.us-east-2.compute.internal Ready  master 33m v1.19.0+7070803 ip-10-0-161-231.us-east-2.compute.internal Ready  worker 24m v1.19.0+7070803 ip-10-0-178-131.us-east-2.compute.internal Ready  master 33m v1.19.0+7070803 ip-10-0-194-232.us-east-2.compute.internal Ready  worker 24m v1.19.0+7070803 ip-10-0-218-84.us-east-2.compute.internal Ready   master 33m v1.19.0+7070803 Show Cluster Version $ oc get clusterversion NAME    VERSION AVAILABLE PROGRESSING SINCE STATUS version 4.6.9   True      False       7m44s Cluster version is 4.6.9 Configure OAUTH OpenShift supports oauth2, there is a lot of choice with the identification provider. Usually you would integrate with your enterprise LDAP provider. In this case or for test environments you can use the htpasswd provider. Create Htpasswd file $ htpasswd -c -B -b ocp_install/ocp.htpasswd admin pasword123 Create Secret for Htpasswd $ oc create secret generic htpass-secret --from-file=ocp.htpasswd -n openshift-config Configure Htpasswd in Oauth $ vi ocp_install/htpasswd-cr.yaml  apiVersion: config.openshift.io/v1 kind: OAuth metadata:   name: cluster spec:   identityProviders:   - name: my_htpasswd_provider     mappingMethod: claim     type: HTPasswd     htpasswd:       fileData:         name: htpass-secret $ oc apply -f ocp_install/htpasswd-cr.yaml Add Cluster Role Once we have added htpasswd as a oauth provider we need to add cluster-admin role to the admin user we already created. $ oc adm policy add-cluster-role-to-user cluster-admin admin Summary  In this article we discussed the IPI and UPI deployment methods provided by OpenShift. Most organizations will want to choose IPI where possible. It not only simplifies the deployment of OpenShift but also improves the supportability likely leading to a higher SLA or quicker resolution of any potential issues. If not possible, UPI provides all the flexibility needed to deploy OpenShift into any environment albeit with a little more oversight and ownership required. Finally we walked through the IPI deployment of OpenShift on AWS including showing how to configure OAUTH htpasswd provider.   (c) 2021 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="OpenShift 4 AWS IPI Installation Getting Started Guide">
+<meta property="og:url" content="https://keithtenzer.com/openshift/openshift-4-aws-ipi-installation-getting-started-guide/">
+
+
+  <meta property="og:description" content="Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 2021. Please reach out and let me know what topics would be most helpful.  Overview   In this Article we will walk through an OpenShift deployment using the IPI (Installer Provisioned Infrastructure) method on AWS. OpenShift offers two possible deployment methods: IPI (as mentioned) and UPI (User Provisioned Infrastructure). The difference is the degree of automation and customization. IPI will not only deploy OpenShift but also all infrastructure components and configurations. IPI is supported in various environments including AWS, Azure, GCE, VMware Vsphere and even Baremetal. IPI is tightly coupled with the infrastructure layer whereas UPI is not and will allow the most customization and work anywhere.   Ultimately IPI vs UPI is usually dictated by the requirements. My view is unless you have special requirements (like a stretch cluster or specific integrations with infrastructure that require UPI) always default to IPI. It is far better to have the vendor, in this case Red Hat own more of the share of responsibility and ensure proper, tested infrastructure configurations are being deployed as well as maintained throughout the cluster lifecycle.      Create Hosted Zone   Before a cluster can be deployed we need to access AWS console and add a hosted zone to the route53 service. In the diagram below, we are adding the domain rh-southwest.com.      Download and Install CLI Tools   Red Hat provides a CLI tools for deploying and managing OpenShift clusters. The CLI tools wrap kubectl, podman (docker image manipulation) and other tools to provide a single easy-to-use interface. You can of course also use kubectl and individual tooling for manipulating images (docker or podman).   Download CLI Tools   Access&nbsp;https://cloud.redhat.com/openshift/install using your Red Hat account. Select AWS as infrastructure provider and the installer provisioned option. Download both the CLI and OpenShift install.   Copy Pull Secret   The pull secret is used to automatically authenticate to Red Hat content repositories for OpenShift during the install. You will need to provide the pull secret as part of a later step.     Install CLI Tools The CLI tools can be simply extracted into /usr/bin. $ sudo tar xvf openshift-client-linux.tar.gz -C /usr/bin $ sudo tar xvf openshift-install-linux.tar.gz -C /usr/bin Check CLI Version $ openshift-install version openshift-install 4.6.9 Install Configuration Create Install Config When creating an install config you will need to provide the platform, in this case AWS, the domain configured in route53, a name for the OpenShift cluster and of course the pull secret. $ openshift-install create install-config \ --dir=ocp_install ? SSH Public Key /root/.ssh/id_rsa.pub ? Platform aws ? Cloud aws ? Base Domain rh-southwest.com ? Cluster Name ocp4 ? Pull Secret [? for help] ************************************************ Edit Install Config $ vi ocp_install/install-config.yaml ... compute:   architecture: amd64   hyperthreading: Enabled   name: worker   platform:     aws:       type: m5.large       userTags:         Contact: myemail@mydomain.com         AlwaysUp: True         DeleteBy: NEVER   replicas: 3 controlPlane:   architecture: amd64   hyperthreading: Enabled   name: master   platform:     aws:       type: m5.xlarge       userTags:         Contact: myemail@mydomain.com         AlwaysUp: True         DeleteBy: NEVER   replicas: 3 ... User tags allow you to label or tag the AWS VMs. In this case we have some automation that will shutdown any clusters that are not supposed to be always available or delete any clusters that have an expiration date set. Deploy OpenShift Cluster Now that we have adjusted the configuration we can deploy the cluster and grab a coffee. $ [ktenzer@localhost ~]$ time openshift-install create cluster --dir=ocp_install --log-level=debug Verify Cluster Once the deployment has completed successfully we can verify cluster. In order to gain access to cluster we can use the default system account created during deployment by exporting the kubeconfig. $ export KUBECONFIG=ocp_install/auth/kubeconfig $ oc get nodes NAME                                       STATUS ROLES  AGE VERSION ip-10-0-147-102.us-east-2.compute.internal Ready  worker 27m v1.19.0+7070803 ip-10-0-159-222.us-east-2.compute.internal Ready  master 33m v1.19.0+7070803 ip-10-0-161-231.us-east-2.compute.internal Ready  worker 24m v1.19.0+7070803 ip-10-0-178-131.us-east-2.compute.internal Ready  master 33m v1.19.0+7070803 ip-10-0-194-232.us-east-2.compute.internal Ready  worker 24m v1.19.0+7070803 ip-10-0-218-84.us-east-2.compute.internal Ready   master 33m v1.19.0+7070803 Show Cluster Version $ oc get clusterversion NAME    VERSION AVAILABLE PROGRESSING SINCE STATUS version 4.6.9   True      False       7m44s Cluster version is 4.6.9 Configure OAUTH OpenShift supports oauth2, there is a lot of choice with the identification provider. Usually you would integrate with your enterprise LDAP provider. In this case or for test environments you can use the htpasswd provider. Create Htpasswd file $ htpasswd -c -B -b ocp_install/ocp.htpasswd admin pasword123 Create Secret for Htpasswd $ oc create secret generic htpass-secret --from-file=ocp.htpasswd -n openshift-config Configure Htpasswd in Oauth $ vi ocp_install/htpasswd-cr.yaml  apiVersion: config.openshift.io/v1 kind: OAuth metadata:   name: cluster spec:   identityProviders:   - name: my_htpasswd_provider     mappingMethod: claim     type: HTPasswd     htpasswd:       fileData:         name: htpass-secret $ oc apply -f ocp_install/htpasswd-cr.yaml Add Cluster Role Once we have added htpasswd as a oauth provider we need to add cluster-admin role to the admin user we already created. $ oc adm policy add-cluster-role-to-user cluster-admin admin Summary  In this article we discussed the IPI and UPI deployment methods provided by OpenShift. Most organizations will want to choose IPI where possible. It not only simplifies the deployment of OpenShift but also improves the supportability likely leading to a higher SLA or quicker resolution of any potential issues. If not possible, UPI provides all the flexibility needed to deploy OpenShift into any environment albeit with a little more oversight and ownership required. Finally we walked through the IPI deployment of OpenShift on AWS including showing how to configure OAUTH htpasswd provider.   (c) 2021 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="OpenShift 4 AWS IPI Installation Getting Started Guide">
+  <meta name="twitter:description" content="Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 2021. Please reach out and let me know what topics would be most helpful.  Overview   In this Article we will walk through an OpenShift deployment using the IPI (Installer Provisioned Infrastructure) method on AWS. OpenShift offers two possible deployment methods: IPI (as mentioned) and UPI (User Provisioned Infrastructure). The difference is the degree of automation and customization. IPI will not only deploy OpenShift but also all infrastructure components and configurations. IPI is supported in various environments including AWS, Azure, GCE, VMware Vsphere and even Baremetal. IPI is tightly coupled with the infrastructure layer whereas UPI is not and will allow the most customization and work anywhere.   Ultimately IPI vs UPI is usually dictated by the requirements. My view is unless you have special requirements (like a stretch cluster or specific integrations with infrastructure that require UPI) always default to IPI. It is far better to have the vendor, in this case Red Hat own more of the share of responsibility and ensure proper, tested infrastructure configurations are being deployed as well as maintained throughout the cluster lifecycle.      Create Hosted Zone   Before a cluster can be deployed we need to access AWS console and add a hosted zone to the route53 service. In the diagram below, we are adding the domain rh-southwest.com.      Download and Install CLI Tools   Red Hat provides a CLI tools for deploying and managing OpenShift clusters. The CLI tools wrap kubectl, podman (docker image manipulation) and other tools to provide a single easy-to-use interface. You can of course also use kubectl and individual tooling for manipulating images (docker or podman).   Download CLI Tools   Access&nbsp;https://cloud.redhat.com/openshift/install using your Red Hat account. Select AWS as infrastructure provider and the installer provisioned option. Download both the CLI and OpenShift install.   Copy Pull Secret   The pull secret is used to automatically authenticate to Red Hat content repositories for OpenShift during the install. You will need to provide the pull secret as part of a later step.     Install CLI Tools The CLI tools can be simply extracted into /usr/bin. $ sudo tar xvf openshift-client-linux.tar.gz -C /usr/bin $ sudo tar xvf openshift-install-linux.tar.gz -C /usr/bin Check CLI Version $ openshift-install version openshift-install 4.6.9 Install Configuration Create Install Config When creating an install config you will need to provide the platform, in this case AWS, the domain configured in route53, a name for the OpenShift cluster and of course the pull secret. $ openshift-install create install-config \ --dir=ocp_install ? SSH Public Key /root/.ssh/id_rsa.pub ? Platform aws ? Cloud aws ? Base Domain rh-southwest.com ? Cluster Name ocp4 ? Pull Secret [? for help] ************************************************ Edit Install Config $ vi ocp_install/install-config.yaml ... compute:   architecture: amd64   hyperthreading: Enabled   name: worker   platform:     aws:       type: m5.large       userTags:         Contact: myemail@mydomain.com         AlwaysUp: True         DeleteBy: NEVER   replicas: 3 controlPlane:   architecture: amd64   hyperthreading: Enabled   name: master   platform:     aws:       type: m5.xlarge       userTags:         Contact: myemail@mydomain.com         AlwaysUp: True         DeleteBy: NEVER   replicas: 3 ... User tags allow you to label or tag the AWS VMs. In this case we have some automation that will shutdown any clusters that are not supposed to be always available or delete any clusters that have an expiration date set. Deploy OpenShift Cluster Now that we have adjusted the configuration we can deploy the cluster and grab a coffee. $ [ktenzer@localhost ~]$ time openshift-install create cluster --dir=ocp_install --log-level=debug Verify Cluster Once the deployment has completed successfully we can verify cluster. In order to gain access to cluster we can use the default system account created during deployment by exporting the kubeconfig. $ export KUBECONFIG=ocp_install/auth/kubeconfig $ oc get nodes NAME                                       STATUS ROLES  AGE VERSION ip-10-0-147-102.us-east-2.compute.internal Ready  worker 27m v1.19.0+7070803 ip-10-0-159-222.us-east-2.compute.internal Ready  master 33m v1.19.0+7070803 ip-10-0-161-231.us-east-2.compute.internal Ready  worker 24m v1.19.0+7070803 ip-10-0-178-131.us-east-2.compute.internal Ready  master 33m v1.19.0+7070803 ip-10-0-194-232.us-east-2.compute.internal Ready  worker 24m v1.19.0+7070803 ip-10-0-218-84.us-east-2.compute.internal Ready   master 33m v1.19.0+7070803 Show Cluster Version $ oc get clusterversion NAME    VERSION AVAILABLE PROGRESSING SINCE STATUS version 4.6.9   True      False       7m44s Cluster version is 4.6.9 Configure OAUTH OpenShift supports oauth2, there is a lot of choice with the identification provider. Usually you would integrate with your enterprise LDAP provider. In this case or for test environments you can use the htpasswd provider. Create Htpasswd file $ htpasswd -c -B -b ocp_install/ocp.htpasswd admin pasword123 Create Secret for Htpasswd $ oc create secret generic htpass-secret --from-file=ocp.htpasswd -n openshift-config Configure Htpasswd in Oauth $ vi ocp_install/htpasswd-cr.yaml  apiVersion: config.openshift.io/v1 kind: OAuth metadata:   name: cluster spec:   identityProviders:   - name: my_htpasswd_provider     mappingMethod: claim     type: HTPasswd     htpasswd:       fileData:         name: htpass-secret $ oc apply -f ocp_install/htpasswd-cr.yaml Add Cluster Role Once we have added htpasswd as a oauth provider we need to add cluster-admin role to the admin user we already created. $ oc adm policy add-cluster-role-to-user cluster-admin admin Summary  In this article we discussed the IPI and UPI deployment methods provided by OpenShift. Most organizations will want to choose IPI where possible. It not only simplifies the deployment of OpenShift but also improves the supportability likely leading to a higher SLA or quicker resolution of any potential issues. If not possible, UPI provides all the flexibility needed to deploy OpenShift into any environment albeit with a little more oversight and ownership required. Finally we walked through the IPI deployment of OpenShift on AWS including showing how to configure OAUTH htpasswd provider.   (c) 2021 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/openshift/openshift-4-aws-ipi-installation-getting-started-guide/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2021-01-18T00:00:00-08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openshift/openshift-4-aws-ipi-installation-getting-started-guide/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openshift" itemprop="item"><span itemprop="name">Openshift</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">OpenShift 4 AWS IPI Installation Getting Started Guide</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="OpenShift 4 AWS IPI Installation Getting Started Guide">
+    <meta itemprop="description" content="Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 2021. Please reach out and let me know what topics would be most helpful.OverviewIn this Article we will walk through an OpenShift deployment using the IPI (Installer Provisioned Infrastructure) method on AWS. OpenShift offers two possible deployment methods: IPI (as mentioned) and UPI (User Provisioned Infrastructure). The difference is the degree of automation and customization. IPI will not only deploy OpenShift but also all infrastructure components and configurations. IPI is supported in various environments including AWS, Azure, GCE, VMware Vsphere and even Baremetal. IPI is tightly coupled with the infrastructure layer whereas UPI is not and will allow the most customization and work anywhere.Ultimately IPI vs UPI is usually dictated by the requirements. My view is unless you have special requirements (like a stretch cluster or specific integrations with infrastructure that require UPI) always default to IPI. It is far better to have the vendor, in this case Red Hat own more of the share of responsibility and ensure proper, tested infrastructure configurations are being deployed as well as maintained throughout the cluster lifecycle.Create Hosted ZoneBefore a cluster can be deployed we need to access AWS console and add a hosted zone to the route53 service. In the diagram below, we are adding the domain rh-southwest.com.Download and Install CLI ToolsRed Hat provides a CLI tools for deploying and managing OpenShift clusters. The CLI tools wrap kubectl, podman (docker image manipulation) and other tools to provide a single easy-to-use interface. You can of course also use kubectl and individual tooling for manipulating images (docker or podman).Download CLI ToolsAccess&nbsp;https://cloud.redhat.com/openshift/install using your Red Hat account. Select AWS as infrastructure provider and the installer provisioned option. Download both the CLI and OpenShift install.Copy Pull SecretThe pull secret is used to automatically authenticate to Red Hat content repositories for OpenShift during the install. You will need to provide the pull secret as part of a later step.Install CLI ToolsThe CLI tools can be simply extracted into /usr/bin.$ sudo tar xvf openshift-client-linux.tar.gz -C /usr/bin $ sudo tar xvf openshift-install-linux.tar.gz -C /usr/binCheck CLI Version$ openshift-install version openshift-install 4.6.9Install ConfigurationCreate Install ConfigWhen creating an install config you will need to provide the platform, in this case AWS, the domain configured in route53, a name for the OpenShift cluster and of course the pull secret.$ openshift-install create install-config \--dir=ocp_install? SSH Public Key /root/.ssh/id_rsa.pub? Platform aws? Cloud aws? Base Domain rh-southwest.com? Cluster Name ocp4? Pull Secret [? for help] ************************************************Edit Install Config$ vi ocp_install/install-config.yaml ... compute:   architecture: amd64   hyperthreading: Enabled   name: worker   platform:     aws:       type: m5.large       userTags:         Contact: myemail@mydomain.com         AlwaysUp: True         DeleteBy: NEVER   replicas: 3 controlPlane:   architecture: amd64   hyperthreading: Enabled   name: master   platform:     aws:       type: m5.xlarge       userTags:         Contact: myemail@mydomain.com         AlwaysUp: True         DeleteBy: NEVER   replicas: 3 ...User tags allow you to label or tag the AWS VMs. In this case we have some automation that will shutdown any clusters that are not supposed to be always available or delete any clusters that have an expiration date set.Deploy OpenShift ClusterNow that we have adjusted the configuration we can deploy the cluster and grab a coffee.$ [ktenzer@localhost ~]$ time openshift-install create cluster --dir=ocp_install --log-level=debugVerify ClusterOnce the deployment has completed successfully we can verify cluster. In order to gain access to cluster we can use the default system account created during deployment by exporting the kubeconfig.$ export KUBECONFIG=ocp_install/auth/kubeconfig $ oc get nodes NAME                                       STATUS ROLES  AGE VERSION ip-10-0-147-102.us-east-2.compute.internal Ready  worker 27m v1.19.0+7070803 ip-10-0-159-222.us-east-2.compute.internal Ready  master 33m v1.19.0+7070803 ip-10-0-161-231.us-east-2.compute.internal Ready  worker 24m v1.19.0+7070803 ip-10-0-178-131.us-east-2.compute.internal Ready  master 33m v1.19.0+7070803 ip-10-0-194-232.us-east-2.compute.internal Ready  worker 24m v1.19.0+7070803 ip-10-0-218-84.us-east-2.compute.internal Ready   master 33m v1.19.0+7070803Show Cluster Version$ oc get clusterversion NAME    VERSION AVAILABLE PROGRESSING SINCE STATUS version 4.6.9   True      False       7m44s Cluster version is 4.6.9Configure OAUTHOpenShift supports oauth2, there is a lot of choice with the identification provider. Usually you would integrate with your enterprise LDAP provider. In this case or for test environments you can use the htpasswd provider.Create Htpasswd file$ htpasswd -c -B -b ocp_install/ocp.htpasswd admin pasword123Create Secret for Htpasswd$ oc create secret generic htpass-secret --from-file=ocp.htpasswd -n openshift-configConfigure Htpasswd in Oauth$ vi ocp_install/htpasswd-cr.yaml apiVersion: config.openshift.io/v1kind: OAuthmetadata:  name: clusterspec:  identityProviders:  - name: my_htpasswd_provider    mappingMethod: claim    type: HTPasswd    htpasswd:      fileData:        name: htpass-secret$ oc apply -f ocp_install/htpasswd-cr.yamlAdd Cluster RoleOnce we have added htpasswd as a oauth provider we need to add cluster-admin role to the admin user we already created.$ oc adm policy add-cluster-role-to-user cluster-admin adminSummaryIn this article we discussed the IPI and UPI deployment methods provided by OpenShift. Most organizations will want to choose IPI where possible. It not only simplifies the deployment of OpenShift but also improves the supportability likely leading to a higher SLA or quicker resolution of any potential issues. If not possible, UPI provides all the flexibility needed to deploy OpenShift into any environment albeit with a little more oversight and ownership required. Finally we walked through the IPI deployment of OpenShift on AWS including showing how to configure OAUTH htpasswd provider.(c) 2021 Keith Tenzer ">
+    <meta itemprop="datePublished" content="2021-01-18T00:00:00-08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">OpenShift 4 AWS IPI Installation Getting Started Guide
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <p><!-- wp:gallery {"ids":[5513,5506,14709],"imageCrop":false,"linkTo":"file","sizeSlug":"medium"} --></p>
+<h2><img class="alignnone  wp-image-2609" style="color:var(--color-text);font-size:16px;font-weight:400;" src="/assets/2021/01/aws-logo-1280x720-2.png?w=300" alt="ansible_2" width="100" height="100" /><img class="alignnone size-full wp-image-12472" style="color:var(--color-text);font-size:16px;font-weight:400;" src="/assets/2021/01/plus_sign.gif?w=300" alt="plus_sign" width="80" height="80" /><img class="alignnone  wp-image-14629" src="/assets/2021/01/openshiftlogo.png?w=170" alt="cropped-Windows-logo1" width="100" height="100" /></h2>
+<p><!-- /wp:gallery --></p>
+<p>Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 2021. Please reach out and let me know what topics would be most helpful.</p>
+<p><!-- wp:heading {"className":"has-large-font-size"} --></p>
+<h2 class="has-large-font-size">Overview</h2>
+<p><!-- /wp:heading --></p>
+<p><!-- wp:paragraph --></p>
+<p>In this Article we will walk through an OpenShift deployment using the IPI (Installer Provisioned Infrastructure) method on AWS. OpenShift offers two possible deployment methods: IPI (as mentioned) and UPI (User Provisioned Infrastructure). The difference is the degree of automation and customization. IPI will not only deploy OpenShift but also all infrastructure components and configurations. IPI is supported in various environments including AWS, Azure, GCE, VMware Vsphere and even Baremetal. IPI is tightly coupled with the infrastructure layer whereas UPI is not and will allow the most customization and work anywhere.</p>
+<p><!-- /wp:paragraph --></p>
+<p><!-- wp:paragraph --></p>
+<p>Ultimately IPI vs UPI is usually dictated by the requirements. My view is unless you have special requirements (like a stretch cluster or specific integrations with infrastructure that require UPI) always default to IPI. It is far better to have the vendor, in this case Red Hat own more of the share of responsibility and ensure proper, tested infrastructure configurations are being deployed as well as maintained throughout the cluster lifecycle.</p>
+<p><!-- /wp:paragraph --></p>
+<p><!-- wp:more --><br />
+<!--more--><br />
+<!-- /wp:more --></p>
+<p><!-- wp:heading {"className":"has-large-font-size"} --></p>
+<h2 class="has-large-font-size">Create Hosted Zone</h2>
+<p><!-- /wp:heading --></p>
+<p><!-- wp:paragraph --></p>
+<p>Before a cluster can be deployed we need to access AWS console and add a hosted zone to the route53 service. In the diagram below, we are adding the domain rh-southwest.com.</p>
+<p><!-- /wp:paragraph --></p>
+<p><!-- wp:image {"id":14686,"linkDestination":"custom","className":"size-large"} --></p>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/01/route53new-2.png"><img src="/assets/2021/01/route53new-2.png?w=1024" alt="" class="wp-image-14686" /></a></figure>
+<p><!-- /wp:image --></p>
+<p><!-- wp:heading {"className":"has-large-font-size"} --></p>
+<h2 class="has-large-font-size">Download and Install CLI Tools</h2>
+<p><!-- /wp:heading --></p>
+<p><!-- wp:paragraph --></p>
+<p>Red Hat provides a CLI tools for deploying and managing OpenShift clusters. The CLI tools wrap kubectl, podman (docker image manipulation) and other tools to provide a single easy-to-use interface. You can of course also use kubectl and individual tooling for manipulating images (docker or podman).</p>
+<p><!-- /wp:paragraph --></p>
+<p><!-- wp:paragraph --></p>
+<p><strong>Download CLI Tools</strong></p>
+<p><!-- /wp:paragraph --></p>
+<p><!-- wp:paragraph --></p>
+<p>Access&nbsp;<a href="https://cloud.redhat.com/openshift/install">https://cloud.redhat.com/openshift/install</a> using your Red Hat account. Select AWS as infrastructure provider and the installer provisioned option. Download both the CLI and OpenShift install.</p>
+<p><!-- /wp:paragraph --></p>
+<p><!-- wp:paragraph --></p>
+<p><strong>Copy Pull Secret</strong></p>
+<p><!-- /wp:paragraph --></p>
+<p><!-- wp:paragraph --></p>
+<p>The pull secret is used to automatically authenticate to Red Hat content repositories for OpenShift during the install. You will need to provide the pull secret as part of a later step.</p>
+<p><!-- /wp:paragraph --></p>
+<p><!-- wp:image {"id":14696,"sizeSlug":"large","linkDestination":"media"} --></p>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/01/aws_setup-2.png"><img src="/assets/2021/01/aws_setup-2.png?w=1024" alt="" class="wp-image-14696" /></a></figure>
+<p><!-- /wp:image --></p>
+<p><strong>Install CLI Tools</strong></p>
+<p>The CLI tools can be simply extracted into /usr/bin.</p>
+<pre class="wp-block-preformatted">$ sudo tar xvf openshift-client-linux.tar.gz -C /usr/bin <br />$ sudo tar xvf openshift-install-linux.tar.gz -C /usr/bin</pre>
+<p><strong>Check CLI Version</strong></p>
+<pre class="wp-block-preformatted">$ openshift-install version openshift-install 4.6.9</pre>
+<h2>Install Configuration</h2>
+<p><strong>Create Install Config</strong></p>
+<p>When creating an install config you will need to provide the platform, in this case AWS, the domain configured in route53, a name for the OpenShift cluster and of course the pull secret.</p>
+<pre>$ openshift-install create install-config \
+--dir=ocp_install
+? SSH Public Key /root/.ssh/id_rsa.pub
+? Platform aws
+? Cloud aws
+? Base Domain rh-southwest.com
+? Cluster Name ocp4
+? Pull Secret [? for help] ************************************************</pre>
+<p><strong>Edit Install Config</strong></p>
+<pre class="wp-block-preformatted">$ vi ocp_install/install-config.yaml <br />... <br />compute: <br />  architecture: amd64 <br />  hyperthreading: Enabled <br />  name: worker <br />  platform: <br />    aws: <br />      type: m5.large <br />      userTags: <br />        Contact: myemail@mydomain.com <br />        AlwaysUp: True <br />        DeleteBy: NEVER <br />  replicas: 3 <br />controlPlane: <br />  architecture: amd64 <br />  hyperthreading: Enabled <br />  name: master <br />  platform: <br />    aws: <br />      type: m5.xlarge <br />      userTags: <br />        Contact: myemail@mydomain.com <br />        AlwaysUp: True <br />        DeleteBy: NEVER <br />  replicas: 3 <br />...</pre>
+<p>User tags allow you to label or tag the AWS VMs. In this case we have some automation that will shutdown any clusters that are not supposed to be always available or delete any clusters that have an expiration date set.</p>
+<h2>Deploy OpenShift Cluster</h2>
+<p>Now that we have adjusted the configuration we can deploy the cluster and grab a coffee.</p>
+<pre class="wp-block-preformatted">$ [ktenzer@localhost ~]$ time openshift-install create cluster --dir=ocp_install --log-level=debug</pre>
+<p><strong>Verify Cluster</strong></p>
+<p>Once the deployment has completed successfully we can verify cluster. In order to gain access to cluster we can use the default system account created during deployment by exporting the kubeconfig.</p>
+<pre class="wp-block-preformatted">$ export KUBECONFIG=ocp_install/auth/kubeconfig <br />$ oc get nodes <br />NAME                                       STATUS ROLES  AGE VERSION <br />ip-10-0-147-102.us-east-2.compute.internal Ready  worker 27m v1.19.0+7070803 <br />ip-10-0-159-222.us-east-2.compute.internal Ready  master 33m v1.19.0+7070803 <br />ip-10-0-161-231.us-east-2.compute.internal Ready  worker 24m v1.19.0+7070803 <br />ip-10-0-178-131.us-east-2.compute.internal Ready  master 33m v1.19.0+7070803 <br />ip-10-0-194-232.us-east-2.compute.internal Ready  worker 24m v1.19.0+7070803 <br />ip-10-0-218-84.us-east-2.compute.internal Ready   master 33m v1.19.0+7070803</pre>
+<p><strong>Show Cluster Version</strong></p>
+<pre class="wp-block-preformatted">$ oc get clusterversion <br />NAME    VERSION AVAILABLE PROGRESSING SINCE STATUS <br />version 4.6.9   True      False       7m44s Cluster version is 4.6.9</pre>
+<h2>Configure OAUTH</h2>
+<p>OpenShift supports oauth2, there is a lot of choice with the identification provider. Usually you would integrate with your enterprise LDAP provider. In this case or for test environments you can use the htpasswd provider.</p>
+<p><strong>Create Htpasswd file</strong></p>
+<pre class="wp-block-preformatted">$ htpasswd -c -B -b ocp_install/ocp.htpasswd admin pasword123</pre>
+<p><strong>Create Secret for Htpasswd</strong></p>
+<pre class="wp-block-preformatted">$ oc create secret generic htpass-secret --from-file=ocp.htpasswd -n openshift-config</pre>
+<p><strong>Configure Htpasswd in Oauth</strong></p>
+<pre class="wp-block-preformatted">$ vi ocp_install/htpasswd-cr.yaml </pre>
+<pre>apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  identityProviders:
+  - name: my_htpasswd_provider
+    mappingMethod: claim
+    type: HTPasswd
+    htpasswd:
+      fileData:
+        name: htpass-secret</pre>
+<pre class="wp-block-preformatted">$ oc apply -f ocp_install/htpasswd-cr.yaml</pre>
+<p><strong>Add Cluster Role</strong></p>
+<p>Once we have added htpasswd as a oauth provider we need to add cluster-admin role to the admin user we already created.</p>
+<pre class="wp-block-preformatted">$ oc adm policy add-cluster-role-to-user cluster-admin admin</pre>
+<h2>Summary</h2>
+<p><!-- wp:paragraph --></p>
+<p>In this article we discussed the IPI and UPI deployment methods provided by OpenShift. Most organizations will want to choose IPI where possible. It not only simplifies the deployment of OpenShift but also improves the supportability likely leading to a higher SLA or quicker resolution of any potential issues. If not possible, UPI provides all the flexibility needed to deploy OpenShift into any environment albeit with a little more oversight and ownership required. Finally we walked through the IPI deployment of OpenShift on AWS including showing how to configure OAUTH htpasswd provider.</p>
+<p><!-- /wp:paragraph --></p>
+<p><!-- wp:paragraph --></p>
+<p>(c) 2021 Keith Tenzer </p>
+<p><!-- /wp:paragraph --></p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#aws" class="page__taxonomy-item" rel="tag">AWS</a><span class="sep">, </span>
+    
+      <a href="/tags/#kubernetes" class="page__taxonomy-item" rel="tag">Kubernetes</a><span class="sep">, </span>
+    
+      <a href="/tags/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenShift+4+AWS+IPI+Installation+Getting+Started+Guide%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-4-aws-ipi-installation-getting-started-guide%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-4-aws-ipi-installation-getting-started-guide%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-4-aws-ipi-installation-getting-started-guide%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" class="pagination--pager" title="Windows Automation with Ansible: Getting Started Guide
+">Previous</a>
+    
+    
+      <a href="/openshift/openshift-service-mesh-getting-started-guide/" class="pagination--pager" title="OpenShift Service Mesh Getting Started Guide
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/" rel="permalink">OpenShift Operator SDK: Ansible Getting Started Guide Part III
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-04-23T00:00:00-07:00">April 23, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will provide a hands-on guide to building your very first operator in Ansible. Using the Operator SDK we will learn how to creat...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

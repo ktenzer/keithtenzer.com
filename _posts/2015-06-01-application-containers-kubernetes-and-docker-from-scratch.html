@@ -1,34 +1,12 @@
 ---
-layout: post
+layout: single 
 title: 'Application Containers: Kubernetes and Docker from Scratch'
-date: 2015-06-01 13:51:39.000000000 -07:00
-type: post
-parent_id: '0'
-published: true
-password: ''
-status: publish
 categories:
 - Containers
 tags:
 - Docker
 - Kubernetes
 - LXC
-meta:
-  _edit_last: '63054820'
-  geo_public: '0'
-  _wpas_skip_9542380: '1'
-  _publicize_job_id: '11224849260'
-  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=6011136828390809601&type=U&a=Z2Sv
-  _publicize_done_9423386: '1'
-  _wpas_done_9468659: '1'
-  _wpas_skip_9468659: '1'
-author:
-  login: ktenzer1
-  email: keith.tenzer@gmail.com
-  display_name: ktenzer
-  first_name: ''
-  last_name: ''
-permalink: "/2015/06/01/application-containers-kubernetes-and-docker-from-scratch/"
 ---
 <h3>Overview</h3>
 <p>In this article we will look at how to configure a Kubernetes cluster using the Docker container format on CentOS or RHEL 7.1. For a detailed overview on Kubernetes and Docker take a look at this <a href="http://keithtenzer.com/2015/04/15/containers-at-scale-with-kubernetes-on-openstack/">article</a>. A Kubernetes cluster is comprised of a master and N nodes. The master acts as a control plane for the cluster and in this case also exposes a private Docker registry. A Kubernetes node runs Docker container images.</p>

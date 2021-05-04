@@ -1,0 +1,1066 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>OpenShift Enterprise 3.1 Lab Setup - KEITHTENZER.COM</title>
+<meta name="description" content="Overview OpenShift Enterprise is a PaaS platform that enables digital transformation. It lets you build and run traditional (mode 1) as well as cloud-native (mode 2) applications. OpenShift is built on two key technology components: Docker and Kubernetes. Docker provides a standard, consistent application packaging format. It enables OpenShift to easily move applications across the hybrid cloud. Kubernetes provides container orchestration and allows multiple container nodes running Docker to be clustered. Kubernetes provides scheduling for application containers. OpenShift of course provides a lot on top of Docker and Kubernetes. This includes image registry, routing, SDN, developer experience, data persistence, enterprise-grade container runtime, build / deployment blueprints and much more.  OpenShift has two server roles: master and node. The master is the control plane and is responsible for Kubernetes, ETCD, Interfaces (API|GUI|CLI), build/deployments configs and the image registry. The node is where containers are instantiated and run. The node is running Kubernetes services, ETCD and of course Docker. In OpenShift you can use either Red Hat Enterprise Linux (RHEL) or RHEL Atomic as the operating system. Prerequisites One can of course install OpenShift enterprise on a single VM but even for a lab setup it is a good idea to separate the role of master and node. For this lab configuration we need two VMs both with Red Hat Enterprise Linux 7.2. One node will be the OpenShift master and the other OpenShift node. Ensure both have an additional 10GB disk, this will be used for Docker storage. On both nodes follow the below steps: Ensure hostnames are configured in /etc/hosts. #vi /etc/hosts 192.168.122.60 ose3-master.lab.com ose3-master 192.168.122.61 ose3-node1.lab.com ose3-node1 Register systems with subscription management and ensure appropriate repositories are configured. #subscription-manager register #subscription-manager list --available #subscription-manager attach --pool=8a85f9814f2c669b01343948398938932 #subscription-manager repos --disable=&quot;*&quot; #subscription-manager repos --enable=&quot;rhel-7-server-rpms&quot; --enable=&quot;rhel-7-server-extras-rpms&quot; --enable=&quot;rhel-7-server-ose-3.1-rpms&quot; Disable Network Manager. #systemctl disable NetworkManager #systemctl stop NetworkManager Install necessary software. #yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion #yum update -y #yum install -y atomic-openshift-utils Reboot. #systemctl reboot Install and configure Docker. #yum install docker-1.8.2 #vi /etc/sysconfig/docker OPTIONS=&#39;--insecure-registry=172.30.0.0/16 --selinux-enabled&#39; # cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF #docker-storage-setup  #systemctl enable docker  #systemctl start docker Setup ssh keys, this is required by Ansible. #ssh-keygen #ssh-copy-id -i ~/.ssh/id_rsa.pub ose3-node1.lab.com DNS is also a requirement. A colleague Ivan Mckinely was nice enough to create an ansible playbook for deploying a DNS server that supports OpenShift. To deploy DNS run following steps on a separate system running RHEL. #yum install -y git #wget http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm #rpm -ivh epel-release-7-5.noarch.rpm #yum install -y ansible #git clone https://github.com/ivanthelad/ansible-aos-scripts/tree/master/playbooks/roles #cd ansible-aos-scripts Edit inventory file and set dns to IP of the system that should be providing DNS. Also ensure nodes and masters have correct IPs for your OpenShift servers. In our case 192.168.122.100 is dns, 192.168.122.60 master and 192.168.122.61 node. #vi inventory [dns] 192.168.122.100 [nodes] 192.168.122.61 [masters] 192.168.122.60 Configure ssh on DNS host #ssh-keygen #ssh-copy-id -i ~/.ssh/id_rsa.pub localhost Run Ansible. #ansible-playbook -i inventory playbooks/install_dnsmas.yml Install OpenShift Enterprise 3.1 There are two different installations, the quick and advanced installation. The quick installation provides a interactive menu that guides you through a basic install. The advanced installation allows you to directly configure the install yaml files used by Ansible and perform an unattended install. Things like enabling the OVS Multi-tenant SDN would be done using advanced deployment. A template for deploying an advanced installation of OpenShift is available here. For the purpose of our lab setup, the basic install is enough. In addition since OpenShift Enterprise uses Ansible you can easily change things later and re-run Ansible. Ansible rocks! Start basic installer. #atomic-openshift-installer install Welcome to the OpenShift Enterprise 3 installation. Please confirm that following prerequisites have been met: * All systems where OpenShift will be installed are running Red Hat Enterprise  Linux 7. * All systems are properly subscribed to the required OpenShift Enterprise 3  repositories. * All systems have run docker-storage-setup (part of the Red Hat docker RPM). * All systems have working DNS that resolves not only from the perspective of  the installer but also from within the cluster. When the process completes you will have a default configuration for Masters and Nodes. For ongoing environment maintenance it&#39;s recommended that the official Ansible playbooks be used. For more information on installation prerequisites please see: https://docs.openshift.com/enterprise/latest/admin_guide/install/prerequisites.html Are you ready to continue? [y/N]: Choose OpenShift version to isntall. This installation process will involve connecting to remote hosts via ssh. Any account may be used however if a non-root account is used it must have passwordless sudo access. User for ssh access [root]: &nbsp; Which variant would you like to install? (1) OpenShift Enterprise 3.1 (2) OpenShift Enterprise 3.0 (3) Atomic Enterprise Platform 3.1 Choose a variant from above: [1]: Configure OpenShift master. *** Host Configuration *** You must now specify the hosts that will compose your OpenShift cluster. Please enter an IP or hostname to connect to for each system in the cluster. You will then be prompted to identify what role you would like this system to serve in the cluster. OpenShift Masters serve the API and web console and coordinate the jobs to run across the environment. If desired you can specify multiple Master systems for an HA deployment, in which case you will be prompted to identify a *separate* system to act as the load balancer for your cluster after all Masters and Nodes are defined. If only one Master is specified, an etcd instance embedded within the OpenShift Master service will be used as the datastore. This can be later replaced with a separate etcd instance if desired. If multiple Masters are specified, a separate etcd cluster will be configured with each Master serving as a member. Any Masters configured as part of this installation process will also be configured as Nodes. This is so that the Master will be able to proxy to Pods from the API. By default this Node will be unschedulable but this can be changed after installation with &#39;oadm manage-node&#39;. OpenShift Nodes provide the runtime environments for containers. They will host the required services to be managed by the Master. http://docs.openshift.com/enterprise/latest/architecture/infrastructure_components/kubernetes_infrastructure.html#master http://docs.openshift.com/enterprise/latest/architecture/infrastructure_components/kubernetes_infrastructure.html#node   Enter hostname or IP address: ose3-master.lab.com Will this host be an OpenShift Master? [y/N]: y Will this host be RPM or Container based (rpm/container)? [rpm]: Configure OpenShift node. *** Installation Summary *** Hosts: - ose3-master.lab.com  - OpenShift Master  - OpenShift Node  - Etcd (Embedded) Total OpenShift Masters: 1 Total OpenShift Nodes: 1 NOTE: Add a total of 3 or more Masters to perform an HA installation. Do you want to add additional hosts? [y/N]: y Enter hostname or IP address: ose3-node1.lab.com Will this host be an OpenShift Master? [y/N]: n Will this host be RPM or Container based (rpm/container)? [rpm]: Review installation summary. *** Installation Summary *** Hosts: - ose3-master.lab.com  - OpenShift Master  - OpenShift Node (Unscheduled)  - Etcd (Embedded) - ose3-node1.lab.com  - OpenShift Node (Dedicated) Total OpenShift Masters: 1 Total OpenShift Nodes: 2 NOTE: Add a total of 3 or more Masters to perform an HA installation. Do you want to add additional hosts? [y/N]: y You might want to override the default subdomain uses for exposed routes. If you don&#39;t know what this is, use the default value. New default subdomain (ENTER for none) []: apps.lab.com Check the installation details and proceed if everything looks right. A list of the facts gathered from the provided hosts follows. Because it is often the case that the hostname for a system inside the cluster is different from the hostname that is resolveable from command line or web clients these settings cannot be validated automatically. For some cloud providers the installer is able to gather metadata exposed in the instance so reasonable defaults will be provided. Plese confirm that they are correct before moving forward. ose3-master.lab.com,192.168.122.60,192.168.122.60,ose3-master.lab.com,ose3-master.lab.com ose3-node1.lab.com,192.168.122.61,192.168.122.61,ose3-node1.lab.com,ose3-node1.lab.com Format: connect_to,IP,public IP,hostname,public hostname Notes:  * The installation host is the hostname from the installer&#39;s perspective.  * The IP of the host should be the internal IP of the instance.  * The public IP should be the externally accessible IP associated with the instance  * The hostname should resolve to the internal IP from the instances  themselves.  * The public hostname should resolve to the external ip from hosts outside of  the cloud. Do the above facts look correct? [y/N]: y Configure OpenShift One of the advantages of using the advanced install is you can configure everything at install time. Since we went with basic install there are a few things that need to be done after installation is complete. Authentication By default authentication is set to deny all. There are various identity providers but for a lab setup it is easiest to use HTpassword. #yum install -y httpd-tools #vi /etc/origin/master/master-config.yaml identityProviders:  - name: my_htpasswd_provider  challenge: true  login: true  mappingMethod: claim  provider:  apiVersion: v1  kind: HTPasswdPasswordIdentityProvider  file: /root/users.htpasswd #htpasswd -c /root/users.htpasswd admin Give the new admin user role cluster-admin in OpenShift #oadm policy add-cluster-role-to-user cluster-admin admin Deploy Registry The registry stores docker images that are used for OpenShift builds and deployments. For lab environment it is appropriate to use local disk but for production make sure you are using production grade storage and the --mount-host option. #oadm registry --service-account=registry \     --config=/etc/origin/master/admin.kubeconfig \     --credentials=/etc/origin/master/openshift-registry.kubeconfig \     --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39; Deploy Router The router in OpenShift is responsible for connecting external services to the correct pod running containers for given service. External service has a DNS record and the router maps this to the pod/container IP which of course is very dynamic. oadm router router --replicas=1 \  --credentials=&#39;/etc/origin/master/openshift-router.kubeconfig&#39; \  --service-account=router Once both the registry and router are running you are ready to rock with Op enShift Enterprise!  Aggregate Logging OpenShift Enterprise supports Kibana and the ELK Stack for log aggregation. Any pod and container that log to STDOUT will have all their log messages aggregated. This provides centralized logging for all application components. Logging is completely integrated within OpenShift and the ELK Stack runs of course containerized within OpenShift. #oc new-project logging #oc secrets new logging-deployer nothing=/dev/null #oc create -f - &lt;&lt;API apiVersion: v1 kind: ServiceAccount metadata:   name: logging-deployer secrets:    -name: logging -deployer API #oc policy add-role-to-user edit --serviceaccount logging-deployer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="OpenShift Enterprise 3.1 Lab Setup">
+<meta property="og:url" content="https://keithtenzer.com/openshift/openshift-enterprise-3-1-lab-setup/">
+
+
+  <meta property="og:description" content="Overview OpenShift Enterprise is a PaaS platform that enables digital transformation. It lets you build and run traditional (mode 1) as well as cloud-native (mode 2) applications. OpenShift is built on two key technology components: Docker and Kubernetes. Docker provides a standard, consistent application packaging format. It enables OpenShift to easily move applications across the hybrid cloud. Kubernetes provides container orchestration and allows multiple container nodes running Docker to be clustered. Kubernetes provides scheduling for application containers. OpenShift of course provides a lot on top of Docker and Kubernetes. This includes image registry, routing, SDN, developer experience, data persistence, enterprise-grade container runtime, build / deployment blueprints and much more.  OpenShift has two server roles: master and node. The master is the control plane and is responsible for Kubernetes, ETCD, Interfaces (API|GUI|CLI), build/deployments configs and the image registry. The node is where containers are instantiated and run. The node is running Kubernetes services, ETCD and of course Docker. In OpenShift you can use either Red Hat Enterprise Linux (RHEL) or RHEL Atomic as the operating system. Prerequisites One can of course install OpenShift enterprise on a single VM but even for a lab setup it is a good idea to separate the role of master and node. For this lab configuration we need two VMs both with Red Hat Enterprise Linux 7.2. One node will be the OpenShift master and the other OpenShift node. Ensure both have an additional 10GB disk, this will be used for Docker storage. On both nodes follow the below steps: Ensure hostnames are configured in /etc/hosts. #vi /etc/hosts 192.168.122.60 ose3-master.lab.com ose3-master 192.168.122.61 ose3-node1.lab.com ose3-node1 Register systems with subscription management and ensure appropriate repositories are configured. #subscription-manager register #subscription-manager list --available #subscription-manager attach --pool=8a85f9814f2c669b01343948398938932 #subscription-manager repos --disable=&quot;*&quot; #subscription-manager repos --enable=&quot;rhel-7-server-rpms&quot; --enable=&quot;rhel-7-server-extras-rpms&quot; --enable=&quot;rhel-7-server-ose-3.1-rpms&quot; Disable Network Manager. #systemctl disable NetworkManager #systemctl stop NetworkManager Install necessary software. #yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion #yum update -y #yum install -y atomic-openshift-utils Reboot. #systemctl reboot Install and configure Docker. #yum install docker-1.8.2 #vi /etc/sysconfig/docker OPTIONS=&#39;--insecure-registry=172.30.0.0/16 --selinux-enabled&#39; # cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF #docker-storage-setup  #systemctl enable docker  #systemctl start docker Setup ssh keys, this is required by Ansible. #ssh-keygen #ssh-copy-id -i ~/.ssh/id_rsa.pub ose3-node1.lab.com DNS is also a requirement. A colleague Ivan Mckinely was nice enough to create an ansible playbook for deploying a DNS server that supports OpenShift. To deploy DNS run following steps on a separate system running RHEL. #yum install -y git #wget http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm #rpm -ivh epel-release-7-5.noarch.rpm #yum install -y ansible #git clone https://github.com/ivanthelad/ansible-aos-scripts/tree/master/playbooks/roles #cd ansible-aos-scripts Edit inventory file and set dns to IP of the system that should be providing DNS. Also ensure nodes and masters have correct IPs for your OpenShift servers. In our case 192.168.122.100 is dns, 192.168.122.60 master and 192.168.122.61 node. #vi inventory [dns] 192.168.122.100 [nodes] 192.168.122.61 [masters] 192.168.122.60 Configure ssh on DNS host #ssh-keygen #ssh-copy-id -i ~/.ssh/id_rsa.pub localhost Run Ansible. #ansible-playbook -i inventory playbooks/install_dnsmas.yml Install OpenShift Enterprise 3.1 There are two different installations, the quick and advanced installation. The quick installation provides a interactive menu that guides you through a basic install. The advanced installation allows you to directly configure the install yaml files used by Ansible and perform an unattended install. Things like enabling the OVS Multi-tenant SDN would be done using advanced deployment. A template for deploying an advanced installation of OpenShift is available here. For the purpose of our lab setup, the basic install is enough. In addition since OpenShift Enterprise uses Ansible you can easily change things later and re-run Ansible. Ansible rocks! Start basic installer. #atomic-openshift-installer install Welcome to the OpenShift Enterprise 3 installation. Please confirm that following prerequisites have been met: * All systems where OpenShift will be installed are running Red Hat Enterprise  Linux 7. * All systems are properly subscribed to the required OpenShift Enterprise 3  repositories. * All systems have run docker-storage-setup (part of the Red Hat docker RPM). * All systems have working DNS that resolves not only from the perspective of  the installer but also from within the cluster. When the process completes you will have a default configuration for Masters and Nodes. For ongoing environment maintenance it&#39;s recommended that the official Ansible playbooks be used. For more information on installation prerequisites please see: https://docs.openshift.com/enterprise/latest/admin_guide/install/prerequisites.html Are you ready to continue? [y/N]: Choose OpenShift version to isntall. This installation process will involve connecting to remote hosts via ssh. Any account may be used however if a non-root account is used it must have passwordless sudo access. User for ssh access [root]: &nbsp; Which variant would you like to install? (1) OpenShift Enterprise 3.1 (2) OpenShift Enterprise 3.0 (3) Atomic Enterprise Platform 3.1 Choose a variant from above: [1]: Configure OpenShift master. *** Host Configuration *** You must now specify the hosts that will compose your OpenShift cluster. Please enter an IP or hostname to connect to for each system in the cluster. You will then be prompted to identify what role you would like this system to serve in the cluster. OpenShift Masters serve the API and web console and coordinate the jobs to run across the environment. If desired you can specify multiple Master systems for an HA deployment, in which case you will be prompted to identify a *separate* system to act as the load balancer for your cluster after all Masters and Nodes are defined. If only one Master is specified, an etcd instance embedded within the OpenShift Master service will be used as the datastore. This can be later replaced with a separate etcd instance if desired. If multiple Masters are specified, a separate etcd cluster will be configured with each Master serving as a member. Any Masters configured as part of this installation process will also be configured as Nodes. This is so that the Master will be able to proxy to Pods from the API. By default this Node will be unschedulable but this can be changed after installation with &#39;oadm manage-node&#39;. OpenShift Nodes provide the runtime environments for containers. They will host the required services to be managed by the Master. http://docs.openshift.com/enterprise/latest/architecture/infrastructure_components/kubernetes_infrastructure.html#master http://docs.openshift.com/enterprise/latest/architecture/infrastructure_components/kubernetes_infrastructure.html#node   Enter hostname or IP address: ose3-master.lab.com Will this host be an OpenShift Master? [y/N]: y Will this host be RPM or Container based (rpm/container)? [rpm]: Configure OpenShift node. *** Installation Summary *** Hosts: - ose3-master.lab.com  - OpenShift Master  - OpenShift Node  - Etcd (Embedded) Total OpenShift Masters: 1 Total OpenShift Nodes: 1 NOTE: Add a total of 3 or more Masters to perform an HA installation. Do you want to add additional hosts? [y/N]: y Enter hostname or IP address: ose3-node1.lab.com Will this host be an OpenShift Master? [y/N]: n Will this host be RPM or Container based (rpm/container)? [rpm]: Review installation summary. *** Installation Summary *** Hosts: - ose3-master.lab.com  - OpenShift Master  - OpenShift Node (Unscheduled)  - Etcd (Embedded) - ose3-node1.lab.com  - OpenShift Node (Dedicated) Total OpenShift Masters: 1 Total OpenShift Nodes: 2 NOTE: Add a total of 3 or more Masters to perform an HA installation. Do you want to add additional hosts? [y/N]: y You might want to override the default subdomain uses for exposed routes. If you don&#39;t know what this is, use the default value. New default subdomain (ENTER for none) []: apps.lab.com Check the installation details and proceed if everything looks right. A list of the facts gathered from the provided hosts follows. Because it is often the case that the hostname for a system inside the cluster is different from the hostname that is resolveable from command line or web clients these settings cannot be validated automatically. For some cloud providers the installer is able to gather metadata exposed in the instance so reasonable defaults will be provided. Plese confirm that they are correct before moving forward. ose3-master.lab.com,192.168.122.60,192.168.122.60,ose3-master.lab.com,ose3-master.lab.com ose3-node1.lab.com,192.168.122.61,192.168.122.61,ose3-node1.lab.com,ose3-node1.lab.com Format: connect_to,IP,public IP,hostname,public hostname Notes:  * The installation host is the hostname from the installer&#39;s perspective.  * The IP of the host should be the internal IP of the instance.  * The public IP should be the externally accessible IP associated with the instance  * The hostname should resolve to the internal IP from the instances  themselves.  * The public hostname should resolve to the external ip from hosts outside of  the cloud. Do the above facts look correct? [y/N]: y Configure OpenShift One of the advantages of using the advanced install is you can configure everything at install time. Since we went with basic install there are a few things that need to be done after installation is complete. Authentication By default authentication is set to deny all. There are various identity providers but for a lab setup it is easiest to use HTpassword. #yum install -y httpd-tools #vi /etc/origin/master/master-config.yaml identityProviders:  - name: my_htpasswd_provider  challenge: true  login: true  mappingMethod: claim  provider:  apiVersion: v1  kind: HTPasswdPasswordIdentityProvider  file: /root/users.htpasswd #htpasswd -c /root/users.htpasswd admin Give the new admin user role cluster-admin in OpenShift #oadm policy add-cluster-role-to-user cluster-admin admin Deploy Registry The registry stores docker images that are used for OpenShift builds and deployments. For lab environment it is appropriate to use local disk but for production make sure you are using production grade storage and the --mount-host option. #oadm registry --service-account=registry \     --config=/etc/origin/master/admin.kubeconfig \     --credentials=/etc/origin/master/openshift-registry.kubeconfig \     --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39; Deploy Router The router in OpenShift is responsible for connecting external services to the correct pod running containers for given service. External service has a DNS record and the router maps this to the pod/container IP which of course is very dynamic. oadm router router --replicas=1 \  --credentials=&#39;/etc/origin/master/openshift-router.kubeconfig&#39; \  --service-account=router Once both the registry and router are running you are ready to rock with Op enShift Enterprise!  Aggregate Logging OpenShift Enterprise supports Kibana and the ELK Stack for log aggregation. Any pod and container that log to STDOUT will have all their log messages aggregated. This provides centralized logging for all application components. Logging is completely integrated within OpenShift and the ELK Stack runs of course containerized within OpenShift. #oc new-project logging #oc secrets new logging-deployer nothing=/dev/null #oc create -f - &lt;&lt;API apiVersion: v1 kind: ServiceAccount metadata:   name: logging-deployer secrets:    -name: logging -deployer API #oc policy add-role-to-user edit --serviceaccount logging-deployer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="OpenShift Enterprise 3.1 Lab Setup">
+  <meta name="twitter:description" content="Overview OpenShift Enterprise is a PaaS platform that enables digital transformation. It lets you build and run traditional (mode 1) as well as cloud-native (mode 2) applications. OpenShift is built on two key technology components: Docker and Kubernetes. Docker provides a standard, consistent application packaging format. It enables OpenShift to easily move applications across the hybrid cloud. Kubernetes provides container orchestration and allows multiple container nodes running Docker to be clustered. Kubernetes provides scheduling for application containers. OpenShift of course provides a lot on top of Docker and Kubernetes. This includes image registry, routing, SDN, developer experience, data persistence, enterprise-grade container runtime, build / deployment blueprints and much more.  OpenShift has two server roles: master and node. The master is the control plane and is responsible for Kubernetes, ETCD, Interfaces (API|GUI|CLI), build/deployments configs and the image registry. The node is where containers are instantiated and run. The node is running Kubernetes services, ETCD and of course Docker. In OpenShift you can use either Red Hat Enterprise Linux (RHEL) or RHEL Atomic as the operating system. Prerequisites One can of course install OpenShift enterprise on a single VM but even for a lab setup it is a good idea to separate the role of master and node. For this lab configuration we need two VMs both with Red Hat Enterprise Linux 7.2. One node will be the OpenShift master and the other OpenShift node. Ensure both have an additional 10GB disk, this will be used for Docker storage. On both nodes follow the below steps: Ensure hostnames are configured in /etc/hosts. #vi /etc/hosts 192.168.122.60 ose3-master.lab.com ose3-master 192.168.122.61 ose3-node1.lab.com ose3-node1 Register systems with subscription management and ensure appropriate repositories are configured. #subscription-manager register #subscription-manager list --available #subscription-manager attach --pool=8a85f9814f2c669b01343948398938932 #subscription-manager repos --disable=&quot;*&quot; #subscription-manager repos --enable=&quot;rhel-7-server-rpms&quot; --enable=&quot;rhel-7-server-extras-rpms&quot; --enable=&quot;rhel-7-server-ose-3.1-rpms&quot; Disable Network Manager. #systemctl disable NetworkManager #systemctl stop NetworkManager Install necessary software. #yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion #yum update -y #yum install -y atomic-openshift-utils Reboot. #systemctl reboot Install and configure Docker. #yum install docker-1.8.2 #vi /etc/sysconfig/docker OPTIONS=&#39;--insecure-registry=172.30.0.0/16 --selinux-enabled&#39; # cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF #docker-storage-setup  #systemctl enable docker  #systemctl start docker Setup ssh keys, this is required by Ansible. #ssh-keygen #ssh-copy-id -i ~/.ssh/id_rsa.pub ose3-node1.lab.com DNS is also a requirement. A colleague Ivan Mckinely was nice enough to create an ansible playbook for deploying a DNS server that supports OpenShift. To deploy DNS run following steps on a separate system running RHEL. #yum install -y git #wget http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm #rpm -ivh epel-release-7-5.noarch.rpm #yum install -y ansible #git clone https://github.com/ivanthelad/ansible-aos-scripts/tree/master/playbooks/roles #cd ansible-aos-scripts Edit inventory file and set dns to IP of the system that should be providing DNS. Also ensure nodes and masters have correct IPs for your OpenShift servers. In our case 192.168.122.100 is dns, 192.168.122.60 master and 192.168.122.61 node. #vi inventory [dns] 192.168.122.100 [nodes] 192.168.122.61 [masters] 192.168.122.60 Configure ssh on DNS host #ssh-keygen #ssh-copy-id -i ~/.ssh/id_rsa.pub localhost Run Ansible. #ansible-playbook -i inventory playbooks/install_dnsmas.yml Install OpenShift Enterprise 3.1 There are two different installations, the quick and advanced installation. The quick installation provides a interactive menu that guides you through a basic install. The advanced installation allows you to directly configure the install yaml files used by Ansible and perform an unattended install. Things like enabling the OVS Multi-tenant SDN would be done using advanced deployment. A template for deploying an advanced installation of OpenShift is available here. For the purpose of our lab setup, the basic install is enough. In addition since OpenShift Enterprise uses Ansible you can easily change things later and re-run Ansible. Ansible rocks! Start basic installer. #atomic-openshift-installer install Welcome to the OpenShift Enterprise 3 installation. Please confirm that following prerequisites have been met: * All systems where OpenShift will be installed are running Red Hat Enterprise  Linux 7. * All systems are properly subscribed to the required OpenShift Enterprise 3  repositories. * All systems have run docker-storage-setup (part of the Red Hat docker RPM). * All systems have working DNS that resolves not only from the perspective of  the installer but also from within the cluster. When the process completes you will have a default configuration for Masters and Nodes. For ongoing environment maintenance it&#39;s recommended that the official Ansible playbooks be used. For more information on installation prerequisites please see: https://docs.openshift.com/enterprise/latest/admin_guide/install/prerequisites.html Are you ready to continue? [y/N]: Choose OpenShift version to isntall. This installation process will involve connecting to remote hosts via ssh. Any account may be used however if a non-root account is used it must have passwordless sudo access. User for ssh access [root]: &nbsp; Which variant would you like to install? (1) OpenShift Enterprise 3.1 (2) OpenShift Enterprise 3.0 (3) Atomic Enterprise Platform 3.1 Choose a variant from above: [1]: Configure OpenShift master. *** Host Configuration *** You must now specify the hosts that will compose your OpenShift cluster. Please enter an IP or hostname to connect to for each system in the cluster. You will then be prompted to identify what role you would like this system to serve in the cluster. OpenShift Masters serve the API and web console and coordinate the jobs to run across the environment. If desired you can specify multiple Master systems for an HA deployment, in which case you will be prompted to identify a *separate* system to act as the load balancer for your cluster after all Masters and Nodes are defined. If only one Master is specified, an etcd instance embedded within the OpenShift Master service will be used as the datastore. This can be later replaced with a separate etcd instance if desired. If multiple Masters are specified, a separate etcd cluster will be configured with each Master serving as a member. Any Masters configured as part of this installation process will also be configured as Nodes. This is so that the Master will be able to proxy to Pods from the API. By default this Node will be unschedulable but this can be changed after installation with &#39;oadm manage-node&#39;. OpenShift Nodes provide the runtime environments for containers. They will host the required services to be managed by the Master. http://docs.openshift.com/enterprise/latest/architecture/infrastructure_components/kubernetes_infrastructure.html#master http://docs.openshift.com/enterprise/latest/architecture/infrastructure_components/kubernetes_infrastructure.html#node   Enter hostname or IP address: ose3-master.lab.com Will this host be an OpenShift Master? [y/N]: y Will this host be RPM or Container based (rpm/container)? [rpm]: Configure OpenShift node. *** Installation Summary *** Hosts: - ose3-master.lab.com  - OpenShift Master  - OpenShift Node  - Etcd (Embedded) Total OpenShift Masters: 1 Total OpenShift Nodes: 1 NOTE: Add a total of 3 or more Masters to perform an HA installation. Do you want to add additional hosts? [y/N]: y Enter hostname or IP address: ose3-node1.lab.com Will this host be an OpenShift Master? [y/N]: n Will this host be RPM or Container based (rpm/container)? [rpm]: Review installation summary. *** Installation Summary *** Hosts: - ose3-master.lab.com  - OpenShift Master  - OpenShift Node (Unscheduled)  - Etcd (Embedded) - ose3-node1.lab.com  - OpenShift Node (Dedicated) Total OpenShift Masters: 1 Total OpenShift Nodes: 2 NOTE: Add a total of 3 or more Masters to perform an HA installation. Do you want to add additional hosts? [y/N]: y You might want to override the default subdomain uses for exposed routes. If you don&#39;t know what this is, use the default value. New default subdomain (ENTER for none) []: apps.lab.com Check the installation details and proceed if everything looks right. A list of the facts gathered from the provided hosts follows. Because it is often the case that the hostname for a system inside the cluster is different from the hostname that is resolveable from command line or web clients these settings cannot be validated automatically. For some cloud providers the installer is able to gather metadata exposed in the instance so reasonable defaults will be provided. Plese confirm that they are correct before moving forward. ose3-master.lab.com,192.168.122.60,192.168.122.60,ose3-master.lab.com,ose3-master.lab.com ose3-node1.lab.com,192.168.122.61,192.168.122.61,ose3-node1.lab.com,ose3-node1.lab.com Format: connect_to,IP,public IP,hostname,public hostname Notes:  * The installation host is the hostname from the installer&#39;s perspective.  * The IP of the host should be the internal IP of the instance.  * The public IP should be the externally accessible IP associated with the instance  * The hostname should resolve to the internal IP from the instances  themselves.  * The public hostname should resolve to the external ip from hosts outside of  the cloud. Do the above facts look correct? [y/N]: y Configure OpenShift One of the advantages of using the advanced install is you can configure everything at install time. Since we went with basic install there are a few things that need to be done after installation is complete. Authentication By default authentication is set to deny all. There are various identity providers but for a lab setup it is easiest to use HTpassword. #yum install -y httpd-tools #vi /etc/origin/master/master-config.yaml identityProviders:  - name: my_htpasswd_provider  challenge: true  login: true  mappingMethod: claim  provider:  apiVersion: v1  kind: HTPasswdPasswordIdentityProvider  file: /root/users.htpasswd #htpasswd -c /root/users.htpasswd admin Give the new admin user role cluster-admin in OpenShift #oadm policy add-cluster-role-to-user cluster-admin admin Deploy Registry The registry stores docker images that are used for OpenShift builds and deployments. For lab environment it is appropriate to use local disk but for production make sure you are using production grade storage and the --mount-host option. #oadm registry --service-account=registry \     --config=/etc/origin/master/admin.kubeconfig \     --credentials=/etc/origin/master/openshift-registry.kubeconfig \     --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39; Deploy Router The router in OpenShift is responsible for connecting external services to the correct pod running containers for given service. External service has a DNS record and the router maps this to the pod/container IP which of course is very dynamic. oadm router router --replicas=1 \  --credentials=&#39;/etc/origin/master/openshift-router.kubeconfig&#39; \  --service-account=router Once both the registry and router are running you are ready to rock with Op enShift Enterprise!  Aggregate Logging OpenShift Enterprise supports Kibana and the ELK Stack for log aggregation. Any pod and container that log to STDOUT will have all their log messages aggregated. This provides centralized logging for all application components. Logging is completely integrated within OpenShift and the ELK Stack runs of course containerized within OpenShift. #oc new-project logging #oc secrets new logging-deployer nothing=/dev/null #oc create -f - &lt;&lt;API apiVersion: v1 kind: ServiceAccount metadata:   name: logging-deployer secrets:    -name: logging -deployer API #oc policy add-role-to-user edit --serviceaccount logging-deployer">
+  <meta name="twitter:url" content="https://keithtenzer.com/openshift/openshift-enterprise-3-1-lab-setup/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2016-04-11T00:00:00-07:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openshift/openshift-enterprise-3-1-lab-setup/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openshift" itemprop="item"><span itemprop="name">Openshift</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">OpenShift Enterprise 3.1 Lab Setup</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="OpenShift Enterprise 3.1 Lab Setup">
+    <meta itemprop="description" content="OverviewOpenShift Enterprise is a PaaS platform that enables digital transformation. It lets you build and run traditional (mode 1) as well as cloud-native (mode 2) applications. OpenShift is built on two key technology components: Docker and Kubernetes. Docker provides a standard, consistent application packaging format. It enables OpenShift to easily move applications across the hybrid cloud. Kubernetes provides container orchestration and allows multiple container nodes running Docker to be clustered. Kubernetes provides scheduling for application containers.OpenShift of course provides a lot on top of Docker and Kubernetes. This includes image registry, routing, SDN, developer experience, data persistence, enterprise-grade container runtime, build / deployment blueprints and much more.OpenShift has two server roles: master and node. The master is the control plane and is responsible for Kubernetes, ETCD, Interfaces (API|GUI|CLI), build/deployments configs and the image registry. The node is where containers are instantiated and run. The node is running Kubernetes services, ETCD and of course Docker. In OpenShift you can use either Red Hat Enterprise Linux (RHEL) or RHEL Atomic as the operating system.PrerequisitesOne can of course install OpenShift enterprise on a single VM but even for a lab setup it is a good idea to separate the role of master and node. For this lab configuration we need two VMs both with Red Hat Enterprise Linux 7.2. One node will be the OpenShift master and the other OpenShift node. Ensure both have an additional 10GB disk, this will be used for Docker storage. On both nodes follow the below steps:Ensure hostnames are configured in /etc/hosts.#vi /etc/hosts192.168.122.60 ose3-master.lab.com ose3-master192.168.122.61 ose3-node1.lab.com ose3-node1Register systems with subscription management and ensure appropriate repositories are configured.#subscription-manager register#subscription-manager list --available#subscription-manager attach --pool=8a85f9814f2c669b01343948398938932#subscription-manager repos --disable=&quot;*&quot;#subscription-manager repos --enable=&quot;rhel-7-server-rpms&quot; --enable=&quot;rhel-7-server-extras-rpms&quot; --enable=&quot;rhel-7-server-ose-3.1-rpms&quot;Disable Network Manager.#systemctl disable NetworkManager#systemctl stop NetworkManagerInstall necessary software.#yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion#yum update -y#yum install -y atomic-openshift-utilsReboot.#systemctl rebootInstall and configure Docker.#yum install docker-1.8.2#vi /etc/sysconfig/dockerOPTIONS=&#39;--insecure-registry=172.30.0.0/16 --selinux-enabled&#39;# cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setupDEVS=/dev/vdbVG=docker-vgEOF#docker-storage-setup #systemctl enable docker #systemctl start dockerSetup ssh keys, this is required by Ansible.#ssh-keygen#ssh-copy-id -i ~/.ssh/id_rsa.pub ose3-node1.lab.comDNS is also a requirement. A colleague Ivan Mckinely was nice enough to create an ansible playbook for deploying a DNS server that supports OpenShift. To deploy DNS run following steps on a separate system running RHEL.#yum install -y git#wget http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm#rpm -ivh epel-release-7-5.noarch.rpm#yum install -y ansible#git clone https://github.com/ivanthelad/ansible-aos-scripts/tree/master/playbooks/roles#cd ansible-aos-scriptsEdit inventory file and set dns to IP of the system that should be providing DNS. Also ensure nodes and masters have correct IPs for your OpenShift servers. In our case 192.168.122.100 is dns, 192.168.122.60 master and 192.168.122.61 node.#vi inventory[dns]192.168.122.100[nodes]192.168.122.61[masters]192.168.122.60Configure ssh on DNS host#ssh-keygen#ssh-copy-id -i ~/.ssh/id_rsa.pub localhostRun Ansible.#ansible-playbook -i inventory playbooks/install_dnsmas.ymlInstall OpenShift Enterprise 3.1There are two different installations, the quick and advanced installation. The quick installation provides a interactive menu that guides you through a basic install. The advanced installation allows you to directly configure the install yaml files used by Ansible and perform an unattended install. Things like enabling the OVS Multi-tenant SDN would be done using advanced deployment. A template for deploying an advanced installation of OpenShift is available here.For the purpose of our lab setup, the basic install is enough. In addition since OpenShift Enterprise uses Ansible you can easily change things later and re-run Ansible. Ansible rocks!Start basic installer.#atomic-openshift-installer installWelcome to the OpenShift Enterprise 3 installation.Please confirm that following prerequisites have been met:* All systems where OpenShift will be installed are running Red Hat Enterprise Linux 7.* All systems are properly subscribed to the required OpenShift Enterprise 3 repositories.* All systems have run docker-storage-setup (part of the Red Hat docker RPM).* All systems have working DNS that resolves not only from the perspective of the installer but also from within the cluster.When the process completes you will have a default configuration for Mastersand Nodes. For ongoing environment maintenance it&#39;s recommended that theofficial Ansible playbooks be used.For more information on installation prerequisites please see:https://docs.openshift.com/enterprise/latest/admin_guide/install/prerequisites.htmlAre you ready to continue? [y/N]:Choose OpenShift version to isntall.This installation process will involve connecting to remote hosts via ssh. Anyaccount may be used however if a non-root account is used it must havepasswordless sudo access.User for ssh access [root]:&nbsp;Which variant would you like to install?(1) OpenShift Enterprise 3.1(2) OpenShift Enterprise 3.0(3) Atomic Enterprise Platform 3.1Choose a variant from above: [1]:Configure OpenShift master.*** Host Configuration ***You must now specify the hosts that will compose your OpenShift cluster.Please enter an IP or hostname to connect to for each system in the cluster.You will then be prompted to identify what role you would like this system toserve in the cluster.OpenShift Masters serve the API and web console and coordinate the jobs to runacross the environment. If desired you can specify multiple Master systems foran HA deployment, in which case you will be prompted to identify a *separate*system to act as the load balancer for your cluster after all Masters and Nodesare defined.If only one Master is specified, an etcd instance embedded within the OpenShiftMaster service will be used as the datastore. This can be later replaced with aseparate etcd instance if desired. If multiple Masters are specified, aseparate etcd cluster will be configured with each Master serving as a member.Any Masters configured as part of this installation process will also beconfigured as Nodes. This is so that the Master will be able to proxy to Podsfrom the API. By default this Node will be unschedulable but this can be changedafter installation with &#39;oadm manage-node&#39;.OpenShift Nodes provide the runtime environments for containers. They willhost the required services to be managed by the Master.http://docs.openshift.com/enterprise/latest/architecture/infrastructure_components/kubernetes_infrastructure.html#masterhttp://docs.openshift.com/enterprise/latest/architecture/infrastructure_components/kubernetes_infrastructure.html#node Enter hostname or IP address: ose3-master.lab.comWill this host be an OpenShift Master? [y/N]: yWill this host be RPM or Container based (rpm/container)? [rpm]:Configure OpenShift node.*** Installation Summary ***Hosts:- ose3-master.lab.com - OpenShift Master - OpenShift Node - Etcd (Embedded)Total OpenShift Masters: 1Total OpenShift Nodes: 1NOTE: Add a total of 3 or more Masters to perform an HA installation.Do you want to add additional hosts? [y/N]: yEnter hostname or IP address: ose3-node1.lab.comWill this host be an OpenShift Master? [y/N]: nWill this host be RPM or Container based (rpm/container)? [rpm]:Review installation summary.*** Installation Summary ***Hosts:- ose3-master.lab.com - OpenShift Master - OpenShift Node (Unscheduled) - Etcd (Embedded)- ose3-node1.lab.com - OpenShift Node (Dedicated)Total OpenShift Masters: 1Total OpenShift Nodes: 2NOTE: Add a total of 3 or more Masters to perform an HA installation.Do you want to add additional hosts? [y/N]: yYou might want to override the default subdomain uses for exposed routes. If you don&#39;t know whatthis is, use the default value.New default subdomain (ENTER for none) []: apps.lab.comCheck the installation details and proceed if everything looks right.A list of the facts gathered from the provided hosts follows. Because it isoften the case that the hostname for a system inside the cluster is differentfrom the hostname that is resolveable from command line or web clientsthese settings cannot be validated automatically.For some cloud providers the installer is able to gather metadata exposed inthe instance so reasonable defaults will be provided.Plese confirm that they are correct before moving forward.ose3-master.lab.com,192.168.122.60,192.168.122.60,ose3-master.lab.com,ose3-master.lab.comose3-node1.lab.com,192.168.122.61,192.168.122.61,ose3-node1.lab.com,ose3-node1.lab.comFormat:connect_to,IP,public IP,hostname,public hostnameNotes: * The installation host is the hostname from the installer&#39;s perspective. * The IP of the host should be the internal IP of the instance. * The public IP should be the externally accessible IP associated with the instance * The hostname should resolve to the internal IP from the instances themselves. * The public hostname should resolve to the external ip from hosts outside of the cloud.Do the above facts look correct? [y/N]: yConfigure OpenShiftOne of the advantages of using the advanced install is you can configure everything at install time. Since we went with basic install there are a few things that need to be done after installation is complete.AuthenticationBy default authentication is set to deny all. There are various identity providers but for a lab setup it is easiest to use HTpassword.#yum install -y httpd-tools#vi /etc/origin/master/master-config.yamlidentityProviders: - name: my_htpasswd_provider challenge: true login: true mappingMethod: claim provider: apiVersion: v1 kind: HTPasswdPasswordIdentityProvider file: /root/users.htpasswd#htpasswd -c /root/users.htpasswd adminGive the new admin user role cluster-admin in OpenShift#oadm policy add-cluster-role-to-user cluster-admin adminDeploy RegistryThe registry stores docker images that are used for OpenShift builds and deployments. For lab environment it is appropriate to use local disk but for production make sure you are using production grade storage and the --mount-host option.#oadm registry --service-account=registry \    --config=/etc/origin/master/admin.kubeconfig \    --credentials=/etc/origin/master/openshift-registry.kubeconfig \    --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39;Deploy RouterThe router in OpenShift is responsible for connecting external services to the correct pod running containers for given service. External service has a DNS record and the router maps this to the pod/container IP which of course is very dynamic.oadm router router --replicas=1 \ --credentials=&#39;/etc/origin/master/openshift-router.kubeconfig&#39; \ --service-account=routerOnce both the registry and router are running you are ready to rock with OpenShift Enterprise!Aggregate LoggingOpenShift Enterprise supports Kibana and the ELK Stack for log aggregation. Any pod and container that log to STDOUT will have all their log messages aggregated. This provides centralized logging for all application components. Logging is completely integrated within OpenShift and the ELK Stack runs of course containerized within OpenShift.#oc new-project logging#oc secrets new logging-deployer nothing=/dev/null#oc create -f - &lt;&lt;APIapiVersion: v1kind: ServiceAccountmetadata:  name: logging-deployersecrets:   -name: logging-deployerAPI#oc policy add-role-to-user edit --serviceaccount logging-deployer">
+    <meta itemprop="datePublished" content="2016-04-11T00:00:00-07:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">OpenShift Enterprise 3.1 Lab Setup
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2016-04-11T00:00:00-07:00">April 11, 2016</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h3><img class="alignnone size-full wp-image-1984" src="/assets/2016/04/logotype_rh_openshiftenterprise_wlogo_rgb_gray-300x75.png" alt="Logotype_RH_OpenShiftEnterprise_wLogo_RGB_Gray-300x75" width="300" height="75" /></h3>
+<h3>Overview</h3>
+<p>OpenShift Enterprise is a PaaS platform that enables digital transformation. It lets you build and run traditional (mode 1) as well as cloud-native (mode 2) applications. OpenShift is built on two key technology components: Docker and Kubernetes. Docker provides a standard, consistent application packaging format. It enables OpenShift to easily move applications across the hybrid cloud. Kubernetes provides container orchestration and allows multiple container nodes running Docker to be clustered. Kubernetes provides scheduling for application containers.</p>
+<p>OpenShift of course provides a lot on top of Docker and Kubernetes. This includes image registry, routing, SDN, developer experience, data persistence, enterprise-grade container runtime, build / deployment blueprints and much more.<br />
+<!--more--><br />
+OpenShift has two server roles: master and node. The master is the control plane and is responsible for Kubernetes, ETCD, Interfaces (API|GUI|CLI), build/deployments configs and the image registry. The node is where containers are instantiated and run. The node is running Kubernetes services, ETCD and of course Docker. In OpenShift you can use either Red Hat Enterprise Linux (RHEL) or RHEL Atomic as the operating system.</p>
+<h3>Prerequisites</h3>
+<p>One can of course install OpenShift enterprise on a single VM but even for a lab setup it is a good idea to separate the role of master and node. For this lab configuration we need two VMs both with Red Hat Enterprise Linux 7.2. One node will be the OpenShift master and the other OpenShift node. Ensure both have an additional 10GB disk, this will be used for Docker storage. On both nodes follow the below steps:</p>
+<p>Ensure hostnames are configured in /etc/hosts.</p>
+<pre style="padding-left:30px;">#vi /etc/hosts</pre>
+<pre style="padding-left:30px;">192.168.122.60 ose3-master.lab.com ose3-master
+192.168.122.61 ose3-node1.lab.com ose3-node1</pre>
+<p>Register systems with subscription management and ensure appropriate repositories are configured.</p>
+<pre style="padding-left:30px;">#subscription-manager register
+#subscription-manager list --available
+#subscription-manager attach --pool=8a85f9814f2c669b01343948398938932
+#subscription-manager repos --disable="*"
+#subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.1-rpms"</pre>
+<p>Disable Network Manager.</p>
+<pre style="padding-left:30px;">#systemctl disable NetworkManager
+#systemctl stop NetworkManager</pre>
+<p>Install necessary software.</p>
+<pre style="padding-left:30px;">#yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion
+#yum update -y
+#yum install -y atomic-openshift-utils</pre>
+<p>Reboot.</p>
+<pre style="padding-left:30px;">#systemctl reboot</pre>
+<p>Install and configure Docker.</p>
+<pre style="padding-left:30px;">#yum install docker-1.8.2
+#vi /etc/sysconfig/docker
+OPTIONS='--insecure-registry=172.30.0.0/16 --selinux-enabled'</pre>
+<pre class="nowrap" style="padding-left:30px;"># cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup
+DEVS=/dev/vdb
+VG=docker-vg
+EOF</pre>
+<pre style="padding-left:30px;">#docker-storage-setup 
+#systemctl enable docker 
+#systemctl start docker</pre>
+<p>Setup ssh keys, this is required by Ansible.</p>
+<pre style="padding-left:30px;">#ssh-keygen
+#ssh-copy-id -i ~/.ssh/id_rsa.pub ose3-node1.lab.com</pre>
+<p>DNS is also a requirement. A colleague Ivan Mckinely was nice enough to create an ansible playbook for deploying a DNS server that supports OpenShift. To deploy DNS run following steps on a separate system running RHEL.</p>
+<pre style="padding-left:30px;">#yum install -y git</pre>
+<pre style="padding-left:30px;">#wget http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm</pre>
+<pre style="padding-left:30px;">#rpm -ivh epel-release-7-5.noarch.rpm</pre>
+<pre style="padding-left:30px;">#yum install -y ansible</pre>
+<pre style="padding-left:30px;">#git clone https://github.com/ivanthelad/ansible-aos-scripts/tree/master/playbooks/roles</pre>
+<pre style="padding-left:30px;">#cd ansible-aos-scripts</pre>
+<p>Edit inventory file and set dns to IP of the system that should be providing DNS. Also ensure nodes and masters have correct IPs for your OpenShift servers. In our case 192.168.122.100 is dns, 192.168.122.60 master and 192.168.122.61 node.</p>
+<pre style="padding-left:30px;">#vi inventory</pre>
+<pre style="padding-left:30px;">[dns]
+192.168.122.100</pre>
+<pre style="padding-left:30px;">[nodes]
+192.168.122.61</pre>
+<pre style="padding-left:30px;">[masters]
+192.168.122.60</pre>
+<p>Configure ssh on DNS host</p>
+<pre style="padding-left:30px;">#ssh-keygen</pre>
+<pre style="padding-left:30px;">#ssh-copy-id -i ~/.ssh/id_rsa.pub localhost</pre>
+<p>Run Ansible.</p>
+<pre style="padding-left:30px;">#ansible-playbook -i inventory playbooks/install_dnsmas.yml</pre>
+<h3>Install OpenShift Enterprise 3.1</h3>
+<p>There are two different installations, the quick and advanced installation. The quick installation provides a interactive menu that guides you through a basic install. The advanced installation allows you to directly configure the install yaml files used by Ansible and perform an unattended install. Things like enabling the OVS Multi-tenant SDN would be done using advanced deployment. A template for deploying an advanced installation of OpenShift is available <a href="https://raw.githubusercontent.com/openshift/openshift-ansible/master/inventory/byo/hosts.ose.example">here</a>.</p>
+<p>For the purpose of our lab setup, the basic install is enough. In addition since OpenShift Enterprise uses Ansible you can easily change things later and re-run Ansible. Ansible rocks!</p>
+<p>Start basic installer.</p>
+<pre style="padding-left:30px;">#atomic-openshift-installer install</pre>
+<pre style="padding-left:30px;">Welcome to the OpenShift Enterprise 3 installation.</pre>
+<pre style="padding-left:30px;">Please confirm that following prerequisites have been met:</pre>
+<pre style="padding-left:30px;">* All systems where OpenShift will be installed are running Red Hat Enterprise
+ Linux 7.
+* All systems are properly subscribed to the required OpenShift Enterprise 3
+ repositories.
+* All systems have run docker-storage-setup (part of the Red Hat docker RPM).
+* All systems have working DNS that resolves not only from the perspective of
+ the installer but also from within the cluster.</pre>
+<pre style="padding-left:30px;">When the process completes you will have a default configuration for Masters
+and Nodes. For ongoing environment maintenance it's recommended that the
+official Ansible playbooks be used.</pre>
+<pre style="padding-left:30px;">For more information on installation prerequisites please see:
+https://docs.openshift.com/enterprise/latest/admin_guide/install/prerequisites.html</pre>
+<pre style="padding-left:30px;">Are you ready to continue? [y/N]:</pre>
+<p>Choose OpenShift version to isntall.</p>
+<pre style="padding-left:30px;">This installation process will involve connecting to remote hosts via ssh. Any
+account may be used however if a non-root account is used it must have
+passwordless sudo access.</pre>
+<pre style="padding-left:30px;">User for ssh access [root]:</pre>
+<p>&nbsp;</p>
+<pre style="padding-left:30px;">Which variant would you like to install?</pre>
+<pre style="padding-left:30px;">(1) OpenShift Enterprise 3.1
+(2) OpenShift Enterprise 3.0
+(3) Atomic Enterprise Platform 3.1</pre>
+<pre style="padding-left:30px;">Choose a variant from above: [1]:</pre>
+<p>Configure OpenShift master.</p>
+<pre style="padding-left:30px;">*** Host Configuration ***</pre>
+<pre style="padding-left:30px;">You must now specify the hosts that will compose your OpenShift cluster.</pre>
+<pre style="padding-left:30px;">Please enter an IP or hostname to connect to for each system in the cluster.
+You will then be prompted to identify what role you would like this system to
+serve in the cluster.</pre>
+<pre style="padding-left:30px;">OpenShift Masters serve the API and web console and coordinate the jobs to run
+across the environment. If desired you can specify multiple Master systems for
+an HA deployment, in which case you will be prompted to identify a *separate*
+system to act as the load balancer for your cluster after all Masters and Nodes
+are defined.</pre>
+<pre style="padding-left:30px;">If only one Master is specified, an etcd instance embedded within the OpenShift
+Master service will be used as the datastore. This can be later replaced with a
+separate etcd instance if desired. If multiple Masters are specified, a
+separate etcd cluster will be configured with each Master serving as a member.</pre>
+<pre style="padding-left:30px;">Any Masters configured as part of this installation process will also be
+configured as Nodes. This is so that the Master will be able to proxy to Pods
+from the API. By default this Node will be unschedulable but this can be changed
+after installation with 'oadm manage-node'.</pre>
+<pre style="padding-left:30px;">OpenShift Nodes provide the runtime environments for containers. They will
+host the required services to be managed by the Master.</pre>
+<pre style="padding-left:30px;">http://docs.openshift.com/enterprise/latest/architecture/infrastructure_components/kubernetes_infrastructure.html#master
+http://docs.openshift.com/enterprise/latest/architecture/infrastructure_components/kubernetes_infrastructure.html#node
+ 
+Enter hostname or IP address: ose3-master.lab.com
+Will this host be an OpenShift Master? [y/N]: y
+Will this host be RPM or Container based (rpm/container)? [rpm]:</pre>
+<p>Configure OpenShift node.</p>
+<pre style="padding-left:30px;">*** Installation Summary ***</pre>
+<pre style="padding-left:30px;">Hosts:
+- ose3-master.lab.com
+ - OpenShift Master
+ - OpenShift Node
+ - Etcd (Embedded)</pre>
+<pre style="padding-left:30px;">Total OpenShift Masters: 1
+Total OpenShift Nodes: 1</pre>
+<pre style="padding-left:30px;">NOTE: Add a total of 3 or more Masters to perform an HA installation.</pre>
+<pre style="padding-left:30px;">Do you want to add additional hosts? [y/N]: y
+Enter hostname or IP address: ose3-node1.lab.com
+Will this host be an OpenShift Master? [y/N]: n
+Will this host be RPM or Container based (rpm/container)? [rpm]:</pre>
+<p>Review installation summary.</p>
+<pre style="padding-left:30px;">*** Installation Summary ***</pre>
+<pre style="padding-left:30px;">Hosts:
+- ose3-master.lab.com
+ - OpenShift Master
+ - OpenShift Node (Unscheduled)
+ - Etcd (Embedded)
+- ose3-node1.lab.com
+ - OpenShift Node (Dedicated)</pre>
+<pre style="padding-left:30px;">Total OpenShift Masters: 1
+Total OpenShift Nodes: 2</pre>
+<pre style="padding-left:30px;">NOTE: Add a total of 3 or more Masters to perform an HA installation.</pre>
+<pre style="padding-left:30px;">Do you want to add additional hosts? [y/N]: y</pre>
+<pre style="padding-left:30px;">You might want to override the default subdomain uses for exposed routes. If you don't know what
+this is, use the default value.</pre>
+<pre style="padding-left:30px;">New default subdomain (ENTER for none) []: apps.lab.com</pre>
+<p>Check the installation details and proceed if everything looks right.</p>
+<pre style="padding-left:30px;">A list of the facts gathered from the provided hosts follows. Because it is
+often the case that the hostname for a system inside the cluster is different
+from the hostname that is resolveable from command line or web clients
+these settings cannot be validated automatically.</pre>
+<pre style="padding-left:30px;">For some cloud providers the installer is able to gather metadata exposed in
+the instance so reasonable defaults will be provided.</pre>
+<pre style="padding-left:30px;">Plese confirm that they are correct before moving forward.</pre>
+<pre style="padding-left:30px;">ose3-master.lab.com,192.168.122.60,192.168.122.60,ose3-master.lab.com,ose3-master.lab.com
+ose3-node1.lab.com,192.168.122.61,192.168.122.61,ose3-node1.lab.com,ose3-node1.lab.com</pre>
+<pre style="padding-left:30px;">Format:</pre>
+<pre style="padding-left:30px;">connect_to,IP,public IP,hostname,public hostname</pre>
+<pre style="padding-left:30px;">Notes:
+ * The installation host is the hostname from the installer's perspective.
+ * The IP of the host should be the internal IP of the instance.
+ * The public IP should be the externally accessible IP associated with the instance
+ * The hostname should resolve to the internal IP from the instances
+ themselves.
+ * The public hostname should resolve to the external ip from hosts outside of
+ the cloud.</pre>
+<pre style="padding-left:30px;">Do the above facts look correct? [y/N]: y</pre>
+<h3>Configure OpenShift</h3>
+<p>One of the advantages of using the advanced install is you can configure everything at install time. Since we went with basic install there are a few things that need to be done after installation is complete.</p>
+<h4>Authentication</h4>
+<p>By default authentication is set to deny all. There are various identity providers but for a lab setup it is easiest to use HTpassword.</p>
+<pre style="padding-left:30px;">#yum install -y httpd-tools</pre>
+<pre style="padding-left:30px;">#vi /etc/origin/master/master-config.yaml</pre>
+<pre style="padding-left:30px;">identityProviders:
+ - name: my_htpasswd_provider
+ challenge: true
+ login: true
+ mappingMethod: claim
+ provider:
+ apiVersion: v1
+ kind: HTPasswdPasswordIdentityProvider
+ file: /root/users.htpasswd</pre>
+<pre style="padding-left:30px;">#htpasswd -c /root/users.htpasswd admin</pre>
+<p>Give the new admin user role cluster-admin in OpenShift</p>
+<pre style="padding-left:30px;">#oadm policy add-cluster-role-to-user cluster-admin admin</pre>
+<h4>Deploy Registry</h4>
+<p class="nowrap">The registry stores docker images that are used for OpenShift builds and deployments. For lab environment it is appropriate to use local disk but for production make sure you are using production grade storage and the --mount-host option.</p>
+<pre class="nowrap" style="padding-left:30px;">#oadm registry --service-account=registry \
+    --config=/etc/origin/master/admin.kubeconfig \
+    --credentials=/etc/origin/master/openshift-registry.kubeconfig \
+    --images='registry.access.redhat.com/openshift3/ose-${component}:${version}'</pre>
+<h4>Deploy Router</h4>
+<p>The router in OpenShift is responsible for connecting external services to the correct pod running containers for given service. External service has a DNS record and the router maps this to the pod/container IP which of course is very dynamic.</p>
+<pre style="padding-left:30px;">oadm router router --replicas=1 \ 
+--credentials='/etc/origin/master/openshift-router.kubeconfig' \ 
+--service-account=router</pre>
+<p>Once both the registry and router are running you are ready to rock with Op<br />
+enShift Enterprise!</p>
+<p><img class="alignnone size-full wp-image-1987" src="/assets/2016/04/screenshot-from-2016-04-11-165244.png" alt="Screenshot from 2016-04-11 16:52:44" width="1896" height="875" /></p>
+<h3>Aggregate Logging</h3>
+<p>OpenShift Enterprise supports Kibana and the ELK Stack for log aggregation. Any pod and container that log to STDOUT will have all their log messages aggregated. This provides centralized logging for all application components. Logging is completely integrated within OpenShift and the ELK Stack runs of course containerized within OpenShift.</p>
+<pre style="padding-left:30px;">#oc new-project logging</pre>
+<pre style="padding-left:30px;">#oc secrets new logging-deployer nothing=/dev/null</pre>
+<pre style="padding-left:30px;">#oc create -f - &lt;&lt;API
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: logging-deployer
+secrets: 
+  -name: logging
+-deployer
+API</pre>
+<pre style="padding-left:30px;">#oc policy add-role-to-user edit --serviceaccount logging-deployer
+
+#oadm policy add-scc-to-user  \
+    privileged system:serviceaccount:logging:aggregated-logging-fluentd
+
+#oadm policy add-cluster-role-to-user cluster-reader \
+    system:serviceaccount:logging:aggregated-logging-fluentd
+
+#oc process logging-deployer-template -n openshift -v KIBANA_OPS_HOSTNAME=kibana-ops.lab.com,KIBANA_HOSTNAME=kibana.lab.com,ES_CLUSTER_SIZE=1,PUBLIC_MASTER_URL=https://ose3-master.lab.com:8443 | oc create -f -</pre>
+<pre style="padding-left:30px;"># oc get pods
+NAME READY STATUS RESTARTS AGE
+logging-deployer-9lqkt 0/1 Completed 0 15m</pre>
+<p>When deployer is complete than create deployment templates</p>
+<pre style="padding-left:30px;">#oc process logging-support-template | oc create -f -
+
+# oc get pods
+NAME READY STATUS RESTARTS AGE
+logging-deployer-9lqkt 0/1 Completed 0 15m
+logging-es-pm7uamdy-2-rdflo 1/1 Running 0 8m
+logging-kibana-1-e13r3 2/2 Running 0 13m</pre>
+<p>Once ELK Stack is running update deployment so that persistent storage is used</p>
+<pre style="padding-left:30px;">#vi pvc.json
+
+{ 
+    "apiVersion": "v1",
+    "kind": "PersistentVolumeClaim",
+    "metadata": {
+         "name": "logging-es-1"
+    },
+    "spec": {
+        "accessModes": [ "ReadWriteOnce" ],
+            "resources": {
+                "requests": {
+                    "storage": "10Gi"
+                }
+            }
+     }
+}</pre>
+<pre style="padding-left:30px;">#oc create -f pvc.json</pre>
+<pre style="padding-left:30px;"># oc get dc
+NAME TRIGGERS LATEST
+logging-es-pm7uamdy ConfigChange, ImageChange 2</pre>
+<pre style="padding-left:30px;">#oc volume dc/logging-es-pm7uamdy --add --overwrite --name=elasticsearch-storage --type=persistentVolumeClaim --claim-name=logging-es-1</pre>
+<h3>Enable Multi-tenant network</h3>
+<p>OpenShift Enterprise supports an OVS multi-tenant network configuration. By default OpenShift will configure ovs-subnet plugin. In subnet mode all pods and as such containers can access all other pods and containers within the Kubernetes cluster. In order to support isolation between projects the ovs-multitenant plugin is required. This steps are for switching from ovs-subnet to ovs-multitenant plugins.</p>
+<h4>Delete Registry and Router (if exist)</h4>
+<pre style="padding-left:30px;">#oc project default
+#oc delete dc/docker-registry svc/docker-registry
+#oc delete dc/router svc/router</pre>
+<h4>On Master</h4>
+<p>Change network plugin to ovs-multitenant.</p>
+<pre style="padding-left:30px;">#vi /etc/origin/master/master-config.yaml
+networkConfig:
+ clusterNetworkCIDR: 10.1.0.0/16
+ hostSubnetLength: 8
+# networkPluginName: redhat/openshift-ovs-subnet
+ networkPluginName: redhat/openshift-ovs-multitenant</pre>
+<h4>On Node</h4>
+<p>Change network plugin to ovs-multitenant. Note: Only change second iteration of networkPluginName.</p>
+<pre style="padding-left:30px;">#vi /etc/origin/node/node-config.yaml
+networkConfig:
+ mtu: 1450
+# networkPluginName: redhat/openshift-ovs-subnet
+ networkPluginName: redhat/openshift-ovs-multitenant</pre>
+<h4>On All Nodes</h4>
+<p>#systemctl reboot</p>
+<p>After reboot you will need to recreate the registry and router in the default project using the above steps. The default project has VNID 0 so all pods and containers can reach registry and router.  You can also enable network access between projects if desired.</p>
+<h4>Testing</h4>
+<p>In order to test multi-tenant network create two projects, you should not be able to access pods across projects.</p>
+<pre style="padding-left:30px;">#oc new-project project1
+
+#oc new-app centos/ruby-22-centos7~https://github.com/openshift/ruby-hello-world.git
+
+#oc new-project project2
+
+#oc new-app centos/ruby-22-centos7~https://github.com/openshift/ruby-hello-world.git</pre>
+<p>Get the pod id.</p>
+<pre style="padding-left:30px;"># oc get pods
+NAME READY STATUS RESTARTS AGE
+ruby-hello-world-1-build 0/1 Completed 0 33m
+ruby-hello-world-2-xde1a 1/1 Running 0 27m</pre>
+<p>Get ip of pod.</p>
+<pre style="padding-left:30px;"># oc describe pod ruby-hello-world-2-xde1a
+Name: ruby-hello-world-2-xde1a
+Namespace: sandbox
+Image(s): 172.30.186.116:5000/sandbox/ruby-hello-world@sha256:c8339364954812a20061d3a97403af30837deacaa134cc611c5cc12279df6685
+Node: ose3-node1.lab.com/192.168.122.61
+Start Time: Wed, 13 Apr 2016 20:42:44 +0200
+Labels: app=ruby-hello-world,deployment=ruby-hello-world-2,deploymentconfig=ruby-hello-world
+Status: Running
+Reason: 
+Message: 
+IP: 10.1.0.11</pre>
+<p>Switch to other project</p>
+<pre style="padding-left:30px;">#oc project project1</pre>
+<p>Try and use curl to access the ruby application in project 1 from project 2</p>
+<pre style="padding-left:30px;">#oc exec ruby-hello-world-2-xde1a -i -t bash
+
+bash-4.2$ curl http://10.1.0.11:8080</pre>
+<h3>Conclusion</h3>
+<p>In this article we deployed on an OpenShift Enterprise 3.1 environment for lab purpose. This is a perfect way to get your feet wet and start experimenting with your applications running on OpenShift. Unlike other PaaS solutions OpenShift supports running not only cloud-native (mode 2) applications but also traditional (mode 1) applications. Let's face it we aren't going to re-write 20+ years of application architecture overnight.</p>
+<p>Another added bonus, anything that runs as a docker container can run within OpenShift. You don't need to inject code or change your application in order to make it work on OpenShift and that is why it can support already existing mode 1 traditional applications so well. It is time to see how container technology can be leveraged to improve the way we build and run all applications. OpenShift is the way!</p>
+<p>Happy Openshifting!</p>
+<p>(c) 2016 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#containers" class="page__taxonomy-item" rel="tag">Containers</a><span class="sep">, </span>
+    
+      <a href="/tags/#kubernetes" class="page__taxonomy-item" rel="tag">Kubernetes</a><span class="sep">, </span>
+    
+      <a href="/tags/#linux" class="page__taxonomy-item" rel="tag">Linux</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2016-04-11T00:00:00-07:00">April 11, 2016</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenShift+Enterprise+3.1+Lab+Setup%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-enterprise-3-1-lab-setup%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-enterprise-3-1-lab-setup%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-enterprise-3-1-lab-setup%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openstack/openstack-keystone-integrating-ldap-with-ipa/" class="pagination--pager" title="OpenStack Keystone: Integrating LDAP with IPA
+">Previous</a>
+    
+    
+      <a href="/openstack/openstack-neutron-configuring-l3-ha/" class="pagination--pager" title="OpenStack Neutron: Configuring L3 HA
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

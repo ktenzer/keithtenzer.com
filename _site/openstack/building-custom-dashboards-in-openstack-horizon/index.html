@@ -1,0 +1,1188 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Building Custom Dashboards in OpenStack Horizon - KEITHTENZER.COM</title>
+<meta name="description" content="Overview Horizon is an OpenStack project responsible for providing a dashboard. It brings together all OpenStack projects in a single-pane-of-glass. The below diagram illustrates the connectivity between the Horizon dashboard and other OpenStack services.   Administrators typically don&#39;t like to have many different management interfaces and Horizon provides a framework for extending its dashboard services. By building custom dashboards it is possible to seamlessly integrate external components or services with OpenStack. I have been working on integrating a powerful automation framework called Integra in OpenStack Horizon to allow tighter coupling of OpenStack and enterprise infrastructure. Integra takes automation to a new level by providing a powerful workflow engine that consumes provider exposed actions and allows users to automate without creating any technical debt. If you are interested in Integra you can read more about it at http://integra.emitrom.com. Horizon Components Horizon is built on Django which is a web application framework in Python. Django&#39;s primary goal is to ease creation of complex database-driven websites. Django emphasizes reusability and pluggability . Before getting into more detail about the code it is important to understand some basic terminology within the Horizon framework. Terminology Dashboard - This is the top level UI component, dashboards contains panel groups and panels. They are configured using the dasboard.py file. Panel Groups - In Horizon panel groups organize similar panels together and provide a top-level drop-down. Panel groups are configured in the dashboard.py file. Panel - The main UI component, each panel has its own directory and standardized directory structure. Panels are configured in the dashboard/panel/panel.py file. Tab Groups - A tab group contains one or more tabs. A tab group can be configured per panel using the tabs.py file. Tabs - Tabs are units within a tab group. It represents one view of the data. Workflows - A workflow is a series of steps that allow for collecting user inputs. Workflows are created under dashboard/panel/workflows/workflow.py. Workflow Steps - A workflow consists of one or more steps. A step is a wrapper around an action that understands its context within a workflow. Using workflows and steps we can build multiple input forms that guide a user through a complex configuration process. Actions - An action allows us to spawn a workflow step. Actions are typically called from within a data table. Two of the most common actions are the DeleteAction and LinkAction. Tables - Horizon includes a componetized API for dynamically creating tables in the UI. Every table renders correctly and consistently. Data tables are used for displaying information to the user. Tables are configured per panel in the tables.py file. URLs - In Horizon URLs are needed to track context. At minimum a URL is required to display the main view but any LinkAction or actions that leave the main view will also require a URL. URLs are configured in the urls.py file. Views - A view displays a data table and encompasses the main panel frame. Views are configured per panel in the views.py file. Horizon Dashboard Directory Structure Horizon requires a standard directory structure and strict file naming conventions. Below is an example of the directory structure for a dashboard called Integra that has five panels (actions, jobs, providers, workflows and schedules). As you can see each panel has its own sub-directory.  Below is an example of the directory structure for a panel called providers that belongs to dashboard Integra.  Note: the static and templates directories are always the same you just need to change name of the directory e.g. &quot;providers&quot; and update path in the _scripts.html, base.html as well as index.html. The __init__.py and models.py are never changed, just leave them as is. Setup Development Environment Since coding in &quot;vim&quot; is not very fun with Python, it is important to setup an IDE. In addition leveraging devstack provides an OpenStack development environment for Horizon that makes testing Horizon code much simpler. In fact Horizon provides some tools that not only help with mundane tasks but also provide a lightweight Django server for testing. You can use either Fedora or Ubuntu for your development environment, I went with Fedora.  Install Java 7 #yum install -y openjdk-7-jre   Java is required to run PyCharm Python IDE  Download and install PyCharm    https://www.jetbrains.com/pycharm/   Note: PyCharm is a good IDE but feel free to use a different IDE if you desire.  Install git #yum install -y git  Clone the devStack git repository #git clone https://github.com/openstack-dev/devstack.git  Run stack.sh #cd devstack;./stack.sh   You will be prompted for several passwords. To make things easy just use the same password for each component. The installation will take 5 - 10 minutes and when it completes you should see the below message.   Horizon is now available at http://192.168.2.211/ Keystone is serving at http://192.168.2.211:5000/v2.0/ Examples on using novaclient command line is in exercise.sh The default users are: admin and demo The password: integra This is your host ip: 192.168.2.211 2015-02-14 18:06:31.434 | stack.sh completed in 387 seconds.   Note: each time you want to shutdown devstack you run unstack.sh and each time you want to start devstack stack.sh. Horizon Development Tool One of the great things about devstack is that it includes an important development tool for Horizon. The run_tests.sh script located under /opt/stack/horizon starts the development server and creates default directory structure for a dashboard/panel.  Running the development server #./run_tests.sh --runserver 0.0.0.0:8877    Creating default dashboard and panel directory structure #mkdir openstack_dashboard/dashboards/mydashboard #./run_tests.sh -m startdash mydashboard --target openstack_dashboard/dashboards/mydashboard #mkdir openstack_dashboard/dashboards/mydashboard/mypanel #./run_tests.sh -m startpanel mypanel --dashboard=openstack_dashboard.dashboards.mydashboard --target=openstack_dashboard/dashboards/mydashboard/mypanel   Horizon Start Scripts Dashboards are loaded through start scripts located under the horizon/openstack_dashboard/enabled directory. In this case I created a _50_integra.py. The number has to do with the order in which dashboards are loaded and rendered. It is similar to the pre-systemd concept of init scripts.   #vi /opt/stack/horizon/openstack_dashboard/enabled/_50_integra.py     DASHBOARD = &#39;integra&#39;   DISABLED = False   ADD_INSTALLED_APPS = [ &#39;openstack_dashboard.dashboards.integra&#39;, ]   Code Examples At this point let us dissect the code behind the dashboard itself and one of the dashboard panels. The code examples are derived from a project (Integra OpenStack UI ) that I am currently working on and are available in Github. This code is changing and influx so you might want to fork the repository from a known state. Dashboard Below is an example of a dashboard called Integra that contains four panels (Providers, Workflows, Schedules and Jobs). [code language=&quot;python&quot;] from django.utils.translation import ugettext_lazy as _ import horizon class Providers(horizon.PanelGroup):     slug = &quot;providers&quot;     name = _(&quot;Providers&quot;)     panels = (&#39;providers&#39;,) class Workflows(horizon.PanelGroup):     slug = &quot;workflows&quot;     name = _(&quot;Workflows&quot;)     panels = (&#39;workflows&#39;,) class Schedules(horizon.PanelGroup):     slug = &quot;schedules&quot;     name = _(&quot;Schedules&quot;)     panels = (&#39;schedules&#39;,) class Jobs(horizon.PanelGroup):     slug = &quot;jobs&quot;     name = _(&quot;Jobs&quot;)     panels = (&#39;jobs&#39;,) class Integra(horizon.Dashboard):     name = _(&quot;Integra&quot;)     slug = &quot;integra&quot;     panels = (Providers, Workflows, Schedules, Jobs)     default_panel = &#39;providers&#39; horizon.register(Integra) [/code] The code is pretty straight forward. You have panel groups, panels and the horizon dashboard. Panels are organized under panel groups and then attached to the dashboard. The above code will create the following dashboard and panel structure in Horizon. The providers table is generated from code we will discuss next.  Panel Now lets dive into the panel &quot;providers&quot; that we have displayed above. In this case both the panel group and panel itself have the same name, but they don&#39;t have to and you can also of course have many panels. The providers panel renders a data table from a REST API endpoint. If we look closely at the image above we can not only see a list of providers from Integra but we can take actions such as deleting a provider or adding a new provider. panel.py The panel.py defines the panel and registers it with the dashboard, in this case Integra. [code language=&quot;python&quot;] from django.utils.translation import ugettext_lazy as _ import horizon from openstack_dashboard.dashboards.integra import dashboard class Providers(horizon.Panel):     name = _(&quot;Providers&quot;)     slug = &quot;providers&quot; dashboard.Integra.register(Providers) [/code] views.py The views.py is responsible for dynamically rendering the panel frame. It is also responsible for rendering any actions that spawn a new frame. In this case we have the default view ProvidersIndexView that loads a table ProviderTable. The table then is defined in the tables.py. We also have an action in order to add a new provider that spawns a new frame. When the view AddProviderView is invoked, a workflow instead of a table class will be called. The workflow is defined under integra/providers/workflows/add_provider.py. [code language=&quot;python&quot;] from horizon import exceptions, tables, workflows, forms, tabs from openstack_dashboard.dashboards.integra.providers.tables import ProviderTable from openstack_dashboard.dashboards.integra.providers import utils from openstack_dashboard.dashboards.integra.providers.workflows.add_provider import AddProvider class ProvidersIndexView(tables.DataTableView):     table_class = ProviderTable     template_name = &#39;integra/providers/index.html&#39;     def get_data(self):         return utils.getProviders(self) class AddProviderView(workflows.WorkflowView):     workflow_class = AddProvider     def get_initial(self):         initial = super(AddProviderView, self).get_initial()         return initial [/code] urls.py The urls.py defines context URLs. A URL is required for the main panel frame and any new frames that are launching workflows. In our case we have two, the INDEX AND ADD_PROVIDER URLs. Notice that each URL is correlated with a view that is defined in the views.py. [code language=&quot;python&quot;] from django.conf.urls import patterns, url from openstack_dashboard.dashboards.integra.providers import views INDEX_URL = r&#39;^$&#39; ADD_PROVIDER_URL = r&#39;^add&#39; urlpatterns = patterns(&#39;openstack_dashboard.dashboards.integra.providers.views&#39;,     url(INDEX_URL, views.ProvidersIndexView.as_view(), name=&#39;index&#39;),     url(ADD_PROVIDR_URL, views.AddProviderView.as_view(), name=&#39;add&#39;), ) [/code] tables.py The tables.py is responsible for the data table and providing user outputs. Our table displays Integra providers and allows for a couple of actions. It lets us add and delete a provider. It also lets us filter the provider list that is displayed. The AddTableData and DeleteTableData classes are both LinkActions. The AddTableData will launch a workflow that gathers user inputs. This is how we can add a new provider. The DeleteTableData class removes a provider from the provider table. Here we use the DeleteAction and call a method in the utils class. This method in turn makes a REST call to Integra in order to delete the specified provider. At the bottom the table structure is created and the actions are embedded into the providers table. The meta class is a special inner-class for Django data tables that allow us to configure various table options. Finally notice how the filter is added to the table, this is pretty standard and found in many places within Horizon. [code language=&quot;python&quot;] from django.utils.translation import ugettext_lazy as _ from horizon import tables from openstack_dashboard.dashboards.integra.providers import utils class AddTableData(tables.LinkAction):     name = &quot;add&quot;     verbose_name = _(&quot;Add Provider&quot;)     url = &quot;horizon:integra:providers:add&quot;     classes = (&quot;btn-launch&quot;, &quot;ajax-modal&quot;) class DeleteTableData(tables.DeleteAction):     data_type_singular = _(&quot;Provider&quot;)     data_type_plural = _(&quot;Providers&quot;)     def delete(self, request, obj_id):         utils.deleteProvider(self, obj_id) class FilterAction(tables.FilterAction):     def filter(self, table, providers, filter_string):         filterString = filter_string.lower()         return [provider for provider in providers                 if filterString in provider.title.lower()] class UpdateRow(tables.Row):     ajax = True     def get_data(self, request, post_id):         pass class ProviderTable(tables.DataTable):     id = tables.Column(&quot;id&quot;,                           verbose_name=_(&quot;Id&quot;))     name = tables.Column(&quot;name&quot;,                           verbose_name=_(&quot;Name&quot;))     description = tables.Column(&quot;description&quot;,                           verbose_name=_(&quot;Description&quot;))     hostname = tables.Column(&quot;hostname&quot;,                           verbose_name=_(&quot;Hostname&quot;))     port = tables.Column(&quot;port&quot;,                           verbose_name=_(&quot;Port&quot;))     timeout = tables.Column(&quot;timeout&quot;,                           verbose_name=_(&quot;Timeout&quot;))     secured = tables.Column(&quot;secured&quot;,                           verbose_name=_(&quot;Secured&quot;))     class Meta:         name = &quot;integra&quot;         verbose_name = _(&quot;Providers&quot;)         row_class = UpdateRow         table_actions = (AddTableData,                          FilterAction)         row_actions = (DeleteTableData,) [/code] utils.py The utils.py is a utility class. You can call it whatever you want, it is not required but in this case it is nice to separate the Integra REST calls from the rest of our Horizon application. Three methods are defined in order to delete a provider, add a provider and get a list of all providers. We have already talked about adding and deleting a provider. The getProviders method returns a list of providers from Integra through the REST API. We have created a Provider model class that understands the structure of a provider object. One really nice thing about Python is that it natively handles JSON marshaling and since Integra returns JSON things are in this case quite simple. [code language=&quot;python&quot;] import traceback import time from time import mktime from datetime import datetime from requests.auth import HTTPBasicAuth from django.template.defaultfilters import register from django.utils.translation import ugettext_lazy as _ import requests from horizon import exceptions requests.packages.urllib3.disable_warnings() integra_url = &quot;https://localhost:8443/rest&quot; json_headers = {&#39;Accept&#39;: &#39;application/json&#39;} class Provider:     &quot;&quot;&quot;     Provider data     &quot;&quot;&quot;     def __init__(self, id, name, description, hostname, port, timeout, secured):         self.id = id         self.name = name         self.description = description         self.hostname = hostname         self.port = port         self.timeout = timeout         self.secured = secured def getProviders(self):     try:         r = requests.get(integra_url + &quot;/providers&quot;, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)         providers = []         for provider in r.json()[&#39;providers&#39;]:             providers.append(Provider(provider[u&#39;id&#39;], provider[u&#39;name&#39;], provider[u&#39;description&#39;], provider[u&#39;hostname&#39;], provider[u&#39;port&#39;], provider[u&#39;timeout&#39;], provider[u&#39;secured&#39;]))         return providers     except:         exceptions.handle(self.request,                           _(&#39;Unable to get providers&#39;))         return [] # request - horizon environment settings # context - user inputs from form def addProvider(self, request, context):     try:         name = context.get(&#39;name&#39;)         description = context.get(&#39;description&#39;)         hostname = context.get(&#39;hostname&#39;)         port = context.get(&#39;port&#39;)         timeout = context.get(&#39;timeout&#39;)         secured = context.get(&#39;secured&#39;)         payload = {&#39;name&#39;: name, &#39;description&#39;: description, &#39;hostname&#39;: hostname, &#39;port&#39;: port, &#39;timeout&#39;: timeout, &#39;secured&#39;: secured}         requests.post(integra_url + &quot;/providers&quot;, json=payload, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)     except:         print &quot;Exception inside utils.addProvider&quot;         print traceback.format_exc()         exceptions.handle(self.request,                           _(&#39;Unable to add provider&#39;))         return [] # id is required for table def deleteProvider(self, id):     try:         requests.delete(integra_url + &quot;/providers/&quot; + id, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)     except:         print &quot;Exception inside utils.deleteProvider&quot;         print traceback.format_exc()         exceptions.handle(self.request,                           _(&#39;Unable to delete provider&#39;))         return False [/code] add_provider.py The add_provider.py is a workflow that contains a single workflow step. This is the workflow that is called when we add a new provider. It is responsible for getting user input. The AddProvider class executes when the workflow is called. It calls the SetAddProviderDetails class which then calls the SetAddProviderDetailsAction class and returns the user inputs within the context object. [code language=&quot;python&quot;] import traceback from horizon import workflows, forms, exceptions from django.utils.translation import ugettext_lazy as _ from openstack_dashboard.dashboards.integra.providers import utils class SetAddProviderDetailsAction(workflows.Action):     name = forms.CharField(         label=_(&quot;Name&quot;),         required=True,         max_length=80,         help_text=_(&quot;Name&quot;))     description = forms.CharField(         label=_(&quot;Description&quot;),         required=True,         max_length=120,         help_text=_(&quot;Description&quot;))     hostname = forms.CharField(         label=_(&quot;Hostname&quot;),         required=True,         max_length=120,         help_text=_(&quot;Hostname&quot;))     port = forms.IntegerField(         label=_(&quot;Port&quot;),         required=True,         min_value=1,         max_value=65535,         help_text=_(&quot;Port&quot;))     timeout = forms.IntegerField(         label=_(&quot;Timeout&quot;),         required=True,         min_value=1,         max_value=100000,         help_text=_(&quot;Timeout&quot;))     secured = forms.BooleanField(         label=_(&quot;Secured&quot;),         required=False,         help_text=_(&quot;Secured&quot;))     class Meta:         name = _(&quot;Details&quot;)     def __init__(self, request, context, *args, **kwargs):         self.request = request         self.context = context         super(SetProviderDetailsAction, self).__init__(             request, context, *args, **kwargs) class SetAddProviderDetails(workflows.Step):     action_class = SetAddProviderDetailsAction     contributes = (&quot;name&quot;, &quot;description&quot;, &quot;hostname&quot;, &quot;port&quot;, &quot;timeout&quot;, &quot;secured&quot;)     def contribute(self, data, context):         if data:             context[&#39;name&#39;] = data.get(&quot;name&quot;, &quot;&quot;)             context[&#39;description&#39;] = data.get(&quot;description&quot;, &quot;&quot;)             context[&#39;hostname&#39;] = data.get(&quot;hostname&quot;, &quot;&quot;)             context[&#39;port&#39;] = data.get(&quot;port&quot;, &quot;&quot;)             context[&#39;timeout&#39;] = data.get(&quot;timeout&quot;, &quot;&quot;)             context[&#39;secured&#39;] = data.get(&quot;secured&quot;, &quot;&quot;)         return context class AddProvider(workflows.Workflow):     slug = &quot;add&quot;     name = _(&quot;Add&quot;)     finalize_button_name = _(&quot;Add&quot;)     success_message = _(&#39;Added provider &quot;%s&quot;.&#39;)     failure_message = _(&#39;Unable to add provider &quot;%s&quot;.&#39;)     success_url = &quot;horizon:integra:providers:index&quot;     failure_url = &quot;horizon:integra:providers:index&quot;     default_steps = (SetAddProviderDetails,)     def format_status_message(self, message):          return message % self.context.get(&#39;name&#39;, &#39;unknown provider&#39;)     def handle(self, request, context):         try:             utils.addProvider(self, request, context)             return True         except Exception:             print traceback.format_exc()             exceptions.handle(request, _(&quot;Unable to add provider&quot;))             return False [/code] Below we can see the above code in action.  Dynamic Inputs So far we have seen how we can build static input forms using CharField, IntegerChield or BooleanField. Next lets look at how to create dynamic inputs within workflows using ChoiceField. In our utils.py we already have an method getProviders that returns a list of provider objects. In addition we will add a new method for returning a list of provider actions. utils.py [code language=&quot;python&quot;] def getProviders(self):     try:         r = requests.get(integra_url + &quot;/providers&quot;, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)         providers = []         for provider in r.json()[&#39;providers&#39;]:             providers.append(ProviderAction(provider[u&#39;id&#39;], provider[u&#39;name&#39;], provider[u&#39;description&#39;]))         return providers     except:         exceptions.handle(self.request,                           _(&#39;Unable to retrieve list of posts.&#39;))         return [] def getProviderActions(self):     try:         r = requests.get(integra_url + &quot;/provider_actions/&quot; + id, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)         providerActions = []         for providerAction in r.json()[&#39;providerActions&#39;]:             providerActions.append(ProviderAction(providerAction[u&#39;id&#39;], providerAction[u&#39;name&#39;], providerAction[u&#39;description&#39;]))         return providerActions     except:         exceptions.handle(self.request,                           _(&#39;Unable to retrieve list of posts.&#39;))         return [] [/code] In our workflow action we can get a list of provider action objects and display them to the user using a ChoiceField. Notice the ChoiceField requires the id and name. Only the name is displayed but the id is required for mapping purposes. add_workflow_action.py [code language=&quot;python&quot;] class SetAddDetailsAction(workflows.Action):     providerActionsChoices = [(providerAction.id, providerAction.name) for providerAction in providerActions]     providerChoices = [(provider.id, provider.name) for provider in providers]     name = forms.CharField(         label=_(&quot;Name&quot;),         required=True,         max_length=80,         help_text=_(&quot;Name&quot;))     description = forms.CharField(         label=_(&quot;Description&quot;),         required=True,         max_length=120,         help_text=_(&quot;Description&quot;))     provider = forms.ChoiceField(         label=_(&quot;Providers&quot;),         choices=providerChoices,         required=True,         help_text=_(&quot;Providers&quot;))     action = forms.ChoiceField(         label=_(&quot;Provider Actions&quot;),         choices=providerActionsChoices,         required=True,         help_text=_(&quot;Provider Actions&quot;)) [/code] Below we can see two dynamic fields being generated. Both populate the ChoiceField from dynamic data that is recieved from the Integra REST API.  Conclusion OpenStack Horizon is a powerful web-framework built on Django that is easily extended and Integra is a powerful provider based automation framework. We have seen how easy it is to create our own Horizon dashboard and interface with services outside of OpenStack through RESTful APIs. The above examples can be followed to accomplish virtually anything. Horizon is a glimpse into the future of infrastructure single-pane-of-glass management. This has been something we have been promised for years from the proprietary vendors and only now with OpenStack Horizon do we have some real hope. If you are working on Horizon dashboards or have feedback I would love to hear about it? Happy Stacking! (c) 2015 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Building Custom Dashboards in OpenStack Horizon">
+<meta property="og:url" content="https://keithtenzer.com/openstack/building-custom-dashboards-in-openstack-horizon/">
+
+
+  <meta property="og:description" content="Overview Horizon is an OpenStack project responsible for providing a dashboard. It brings together all OpenStack projects in a single-pane-of-glass. The below diagram illustrates the connectivity between the Horizon dashboard and other OpenStack services.   Administrators typically don&#39;t like to have many different management interfaces and Horizon provides a framework for extending its dashboard services. By building custom dashboards it is possible to seamlessly integrate external components or services with OpenStack. I have been working on integrating a powerful automation framework called Integra in OpenStack Horizon to allow tighter coupling of OpenStack and enterprise infrastructure. Integra takes automation to a new level by providing a powerful workflow engine that consumes provider exposed actions and allows users to automate without creating any technical debt. If you are interested in Integra you can read more about it at http://integra.emitrom.com. Horizon Components Horizon is built on Django which is a web application framework in Python. Django&#39;s primary goal is to ease creation of complex database-driven websites. Django emphasizes reusability and pluggability . Before getting into more detail about the code it is important to understand some basic terminology within the Horizon framework. Terminology Dashboard - This is the top level UI component, dashboards contains panel groups and panels. They are configured using the dasboard.py file. Panel Groups - In Horizon panel groups organize similar panels together and provide a top-level drop-down. Panel groups are configured in the dashboard.py file. Panel - The main UI component, each panel has its own directory and standardized directory structure. Panels are configured in the dashboard/panel/panel.py file. Tab Groups - A tab group contains one or more tabs. A tab group can be configured per panel using the tabs.py file. Tabs - Tabs are units within a tab group. It represents one view of the data. Workflows - A workflow is a series of steps that allow for collecting user inputs. Workflows are created under dashboard/panel/workflows/workflow.py. Workflow Steps - A workflow consists of one or more steps. A step is a wrapper around an action that understands its context within a workflow. Using workflows and steps we can build multiple input forms that guide a user through a complex configuration process. Actions - An action allows us to spawn a workflow step. Actions are typically called from within a data table. Two of the most common actions are the DeleteAction and LinkAction. Tables - Horizon includes a componetized API for dynamically creating tables in the UI. Every table renders correctly and consistently. Data tables are used for displaying information to the user. Tables are configured per panel in the tables.py file. URLs - In Horizon URLs are needed to track context. At minimum a URL is required to display the main view but any LinkAction or actions that leave the main view will also require a URL. URLs are configured in the urls.py file. Views - A view displays a data table and encompasses the main panel frame. Views are configured per panel in the views.py file. Horizon Dashboard Directory Structure Horizon requires a standard directory structure and strict file naming conventions. Below is an example of the directory structure for a dashboard called Integra that has five panels (actions, jobs, providers, workflows and schedules). As you can see each panel has its own sub-directory.  Below is an example of the directory structure for a panel called providers that belongs to dashboard Integra.  Note: the static and templates directories are always the same you just need to change name of the directory e.g. &quot;providers&quot; and update path in the _scripts.html, base.html as well as index.html. The __init__.py and models.py are never changed, just leave them as is. Setup Development Environment Since coding in &quot;vim&quot; is not very fun with Python, it is important to setup an IDE. In addition leveraging devstack provides an OpenStack development environment for Horizon that makes testing Horizon code much simpler. In fact Horizon provides some tools that not only help with mundane tasks but also provide a lightweight Django server for testing. You can use either Fedora or Ubuntu for your development environment, I went with Fedora.  Install Java 7 #yum install -y openjdk-7-jre   Java is required to run PyCharm Python IDE  Download and install PyCharm    https://www.jetbrains.com/pycharm/   Note: PyCharm is a good IDE but feel free to use a different IDE if you desire.  Install git #yum install -y git  Clone the devStack git repository #git clone https://github.com/openstack-dev/devstack.git  Run stack.sh #cd devstack;./stack.sh   You will be prompted for several passwords. To make things easy just use the same password for each component. The installation will take 5 - 10 minutes and when it completes you should see the below message.   Horizon is now available at http://192.168.2.211/ Keystone is serving at http://192.168.2.211:5000/v2.0/ Examples on using novaclient command line is in exercise.sh The default users are: admin and demo The password: integra This is your host ip: 192.168.2.211 2015-02-14 18:06:31.434 | stack.sh completed in 387 seconds.   Note: each time you want to shutdown devstack you run unstack.sh and each time you want to start devstack stack.sh. Horizon Development Tool One of the great things about devstack is that it includes an important development tool for Horizon. The run_tests.sh script located under /opt/stack/horizon starts the development server and creates default directory structure for a dashboard/panel.  Running the development server #./run_tests.sh --runserver 0.0.0.0:8877    Creating default dashboard and panel directory structure #mkdir openstack_dashboard/dashboards/mydashboard #./run_tests.sh -m startdash mydashboard --target openstack_dashboard/dashboards/mydashboard #mkdir openstack_dashboard/dashboards/mydashboard/mypanel #./run_tests.sh -m startpanel mypanel --dashboard=openstack_dashboard.dashboards.mydashboard --target=openstack_dashboard/dashboards/mydashboard/mypanel   Horizon Start Scripts Dashboards are loaded through start scripts located under the horizon/openstack_dashboard/enabled directory. In this case I created a _50_integra.py. The number has to do with the order in which dashboards are loaded and rendered. It is similar to the pre-systemd concept of init scripts.   #vi /opt/stack/horizon/openstack_dashboard/enabled/_50_integra.py     DASHBOARD = &#39;integra&#39;   DISABLED = False   ADD_INSTALLED_APPS = [ &#39;openstack_dashboard.dashboards.integra&#39;, ]   Code Examples At this point let us dissect the code behind the dashboard itself and one of the dashboard panels. The code examples are derived from a project (Integra OpenStack UI ) that I am currently working on and are available in Github. This code is changing and influx so you might want to fork the repository from a known state. Dashboard Below is an example of a dashboard called Integra that contains four panels (Providers, Workflows, Schedules and Jobs). [code language=&quot;python&quot;] from django.utils.translation import ugettext_lazy as _ import horizon class Providers(horizon.PanelGroup):     slug = &quot;providers&quot;     name = _(&quot;Providers&quot;)     panels = (&#39;providers&#39;,) class Workflows(horizon.PanelGroup):     slug = &quot;workflows&quot;     name = _(&quot;Workflows&quot;)     panels = (&#39;workflows&#39;,) class Schedules(horizon.PanelGroup):     slug = &quot;schedules&quot;     name = _(&quot;Schedules&quot;)     panels = (&#39;schedules&#39;,) class Jobs(horizon.PanelGroup):     slug = &quot;jobs&quot;     name = _(&quot;Jobs&quot;)     panels = (&#39;jobs&#39;,) class Integra(horizon.Dashboard):     name = _(&quot;Integra&quot;)     slug = &quot;integra&quot;     panels = (Providers, Workflows, Schedules, Jobs)     default_panel = &#39;providers&#39; horizon.register(Integra) [/code] The code is pretty straight forward. You have panel groups, panels and the horizon dashboard. Panels are organized under panel groups and then attached to the dashboard. The above code will create the following dashboard and panel structure in Horizon. The providers table is generated from code we will discuss next.  Panel Now lets dive into the panel &quot;providers&quot; that we have displayed above. In this case both the panel group and panel itself have the same name, but they don&#39;t have to and you can also of course have many panels. The providers panel renders a data table from a REST API endpoint. If we look closely at the image above we can not only see a list of providers from Integra but we can take actions such as deleting a provider or adding a new provider. panel.py The panel.py defines the panel and registers it with the dashboard, in this case Integra. [code language=&quot;python&quot;] from django.utils.translation import ugettext_lazy as _ import horizon from openstack_dashboard.dashboards.integra import dashboard class Providers(horizon.Panel):     name = _(&quot;Providers&quot;)     slug = &quot;providers&quot; dashboard.Integra.register(Providers) [/code] views.py The views.py is responsible for dynamically rendering the panel frame. It is also responsible for rendering any actions that spawn a new frame. In this case we have the default view ProvidersIndexView that loads a table ProviderTable. The table then is defined in the tables.py. We also have an action in order to add a new provider that spawns a new frame. When the view AddProviderView is invoked, a workflow instead of a table class will be called. The workflow is defined under integra/providers/workflows/add_provider.py. [code language=&quot;python&quot;] from horizon import exceptions, tables, workflows, forms, tabs from openstack_dashboard.dashboards.integra.providers.tables import ProviderTable from openstack_dashboard.dashboards.integra.providers import utils from openstack_dashboard.dashboards.integra.providers.workflows.add_provider import AddProvider class ProvidersIndexView(tables.DataTableView):     table_class = ProviderTable     template_name = &#39;integra/providers/index.html&#39;     def get_data(self):         return utils.getProviders(self) class AddProviderView(workflows.WorkflowView):     workflow_class = AddProvider     def get_initial(self):         initial = super(AddProviderView, self).get_initial()         return initial [/code] urls.py The urls.py defines context URLs. A URL is required for the main panel frame and any new frames that are launching workflows. In our case we have two, the INDEX AND ADD_PROVIDER URLs. Notice that each URL is correlated with a view that is defined in the views.py. [code language=&quot;python&quot;] from django.conf.urls import patterns, url from openstack_dashboard.dashboards.integra.providers import views INDEX_URL = r&#39;^$&#39; ADD_PROVIDER_URL = r&#39;^add&#39; urlpatterns = patterns(&#39;openstack_dashboard.dashboards.integra.providers.views&#39;,     url(INDEX_URL, views.ProvidersIndexView.as_view(), name=&#39;index&#39;),     url(ADD_PROVIDR_URL, views.AddProviderView.as_view(), name=&#39;add&#39;), ) [/code] tables.py The tables.py is responsible for the data table and providing user outputs. Our table displays Integra providers and allows for a couple of actions. It lets us add and delete a provider. It also lets us filter the provider list that is displayed. The AddTableData and DeleteTableData classes are both LinkActions. The AddTableData will launch a workflow that gathers user inputs. This is how we can add a new provider. The DeleteTableData class removes a provider from the provider table. Here we use the DeleteAction and call a method in the utils class. This method in turn makes a REST call to Integra in order to delete the specified provider. At the bottom the table structure is created and the actions are embedded into the providers table. The meta class is a special inner-class for Django data tables that allow us to configure various table options. Finally notice how the filter is added to the table, this is pretty standard and found in many places within Horizon. [code language=&quot;python&quot;] from django.utils.translation import ugettext_lazy as _ from horizon import tables from openstack_dashboard.dashboards.integra.providers import utils class AddTableData(tables.LinkAction):     name = &quot;add&quot;     verbose_name = _(&quot;Add Provider&quot;)     url = &quot;horizon:integra:providers:add&quot;     classes = (&quot;btn-launch&quot;, &quot;ajax-modal&quot;) class DeleteTableData(tables.DeleteAction):     data_type_singular = _(&quot;Provider&quot;)     data_type_plural = _(&quot;Providers&quot;)     def delete(self, request, obj_id):         utils.deleteProvider(self, obj_id) class FilterAction(tables.FilterAction):     def filter(self, table, providers, filter_string):         filterString = filter_string.lower()         return [provider for provider in providers                 if filterString in provider.title.lower()] class UpdateRow(tables.Row):     ajax = True     def get_data(self, request, post_id):         pass class ProviderTable(tables.DataTable):     id = tables.Column(&quot;id&quot;,                           verbose_name=_(&quot;Id&quot;))     name = tables.Column(&quot;name&quot;,                           verbose_name=_(&quot;Name&quot;))     description = tables.Column(&quot;description&quot;,                           verbose_name=_(&quot;Description&quot;))     hostname = tables.Column(&quot;hostname&quot;,                           verbose_name=_(&quot;Hostname&quot;))     port = tables.Column(&quot;port&quot;,                           verbose_name=_(&quot;Port&quot;))     timeout = tables.Column(&quot;timeout&quot;,                           verbose_name=_(&quot;Timeout&quot;))     secured = tables.Column(&quot;secured&quot;,                           verbose_name=_(&quot;Secured&quot;))     class Meta:         name = &quot;integra&quot;         verbose_name = _(&quot;Providers&quot;)         row_class = UpdateRow         table_actions = (AddTableData,                          FilterAction)         row_actions = (DeleteTableData,) [/code] utils.py The utils.py is a utility class. You can call it whatever you want, it is not required but in this case it is nice to separate the Integra REST calls from the rest of our Horizon application. Three methods are defined in order to delete a provider, add a provider and get a list of all providers. We have already talked about adding and deleting a provider. The getProviders method returns a list of providers from Integra through the REST API. We have created a Provider model class that understands the structure of a provider object. One really nice thing about Python is that it natively handles JSON marshaling and since Integra returns JSON things are in this case quite simple. [code language=&quot;python&quot;] import traceback import time from time import mktime from datetime import datetime from requests.auth import HTTPBasicAuth from django.template.defaultfilters import register from django.utils.translation import ugettext_lazy as _ import requests from horizon import exceptions requests.packages.urllib3.disable_warnings() integra_url = &quot;https://localhost:8443/rest&quot; json_headers = {&#39;Accept&#39;: &#39;application/json&#39;} class Provider:     &quot;&quot;&quot;     Provider data     &quot;&quot;&quot;     def __init__(self, id, name, description, hostname, port, timeout, secured):         self.id = id         self.name = name         self.description = description         self.hostname = hostname         self.port = port         self.timeout = timeout         self.secured = secured def getProviders(self):     try:         r = requests.get(integra_url + &quot;/providers&quot;, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)         providers = []         for provider in r.json()[&#39;providers&#39;]:             providers.append(Provider(provider[u&#39;id&#39;], provider[u&#39;name&#39;], provider[u&#39;description&#39;], provider[u&#39;hostname&#39;], provider[u&#39;port&#39;], provider[u&#39;timeout&#39;], provider[u&#39;secured&#39;]))         return providers     except:         exceptions.handle(self.request,                           _(&#39;Unable to get providers&#39;))         return [] # request - horizon environment settings # context - user inputs from form def addProvider(self, request, context):     try:         name = context.get(&#39;name&#39;)         description = context.get(&#39;description&#39;)         hostname = context.get(&#39;hostname&#39;)         port = context.get(&#39;port&#39;)         timeout = context.get(&#39;timeout&#39;)         secured = context.get(&#39;secured&#39;)         payload = {&#39;name&#39;: name, &#39;description&#39;: description, &#39;hostname&#39;: hostname, &#39;port&#39;: port, &#39;timeout&#39;: timeout, &#39;secured&#39;: secured}         requests.post(integra_url + &quot;/providers&quot;, json=payload, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)     except:         print &quot;Exception inside utils.addProvider&quot;         print traceback.format_exc()         exceptions.handle(self.request,                           _(&#39;Unable to add provider&#39;))         return [] # id is required for table def deleteProvider(self, id):     try:         requests.delete(integra_url + &quot;/providers/&quot; + id, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)     except:         print &quot;Exception inside utils.deleteProvider&quot;         print traceback.format_exc()         exceptions.handle(self.request,                           _(&#39;Unable to delete provider&#39;))         return False [/code] add_provider.py The add_provider.py is a workflow that contains a single workflow step. This is the workflow that is called when we add a new provider. It is responsible for getting user input. The AddProvider class executes when the workflow is called. It calls the SetAddProviderDetails class which then calls the SetAddProviderDetailsAction class and returns the user inputs within the context object. [code language=&quot;python&quot;] import traceback from horizon import workflows, forms, exceptions from django.utils.translation import ugettext_lazy as _ from openstack_dashboard.dashboards.integra.providers import utils class SetAddProviderDetailsAction(workflows.Action):     name = forms.CharField(         label=_(&quot;Name&quot;),         required=True,         max_length=80,         help_text=_(&quot;Name&quot;))     description = forms.CharField(         label=_(&quot;Description&quot;),         required=True,         max_length=120,         help_text=_(&quot;Description&quot;))     hostname = forms.CharField(         label=_(&quot;Hostname&quot;),         required=True,         max_length=120,         help_text=_(&quot;Hostname&quot;))     port = forms.IntegerField(         label=_(&quot;Port&quot;),         required=True,         min_value=1,         max_value=65535,         help_text=_(&quot;Port&quot;))     timeout = forms.IntegerField(         label=_(&quot;Timeout&quot;),         required=True,         min_value=1,         max_value=100000,         help_text=_(&quot;Timeout&quot;))     secured = forms.BooleanField(         label=_(&quot;Secured&quot;),         required=False,         help_text=_(&quot;Secured&quot;))     class Meta:         name = _(&quot;Details&quot;)     def __init__(self, request, context, *args, **kwargs):         self.request = request         self.context = context         super(SetProviderDetailsAction, self).__init__(             request, context, *args, **kwargs) class SetAddProviderDetails(workflows.Step):     action_class = SetAddProviderDetailsAction     contributes = (&quot;name&quot;, &quot;description&quot;, &quot;hostname&quot;, &quot;port&quot;, &quot;timeout&quot;, &quot;secured&quot;)     def contribute(self, data, context):         if data:             context[&#39;name&#39;] = data.get(&quot;name&quot;, &quot;&quot;)             context[&#39;description&#39;] = data.get(&quot;description&quot;, &quot;&quot;)             context[&#39;hostname&#39;] = data.get(&quot;hostname&quot;, &quot;&quot;)             context[&#39;port&#39;] = data.get(&quot;port&quot;, &quot;&quot;)             context[&#39;timeout&#39;] = data.get(&quot;timeout&quot;, &quot;&quot;)             context[&#39;secured&#39;] = data.get(&quot;secured&quot;, &quot;&quot;)         return context class AddProvider(workflows.Workflow):     slug = &quot;add&quot;     name = _(&quot;Add&quot;)     finalize_button_name = _(&quot;Add&quot;)     success_message = _(&#39;Added provider &quot;%s&quot;.&#39;)     failure_message = _(&#39;Unable to add provider &quot;%s&quot;.&#39;)     success_url = &quot;horizon:integra:providers:index&quot;     failure_url = &quot;horizon:integra:providers:index&quot;     default_steps = (SetAddProviderDetails,)     def format_status_message(self, message):          return message % self.context.get(&#39;name&#39;, &#39;unknown provider&#39;)     def handle(self, request, context):         try:             utils.addProvider(self, request, context)             return True         except Exception:             print traceback.format_exc()             exceptions.handle(request, _(&quot;Unable to add provider&quot;))             return False [/code] Below we can see the above code in action.  Dynamic Inputs So far we have seen how we can build static input forms using CharField, IntegerChield or BooleanField. Next lets look at how to create dynamic inputs within workflows using ChoiceField. In our utils.py we already have an method getProviders that returns a list of provider objects. In addition we will add a new method for returning a list of provider actions. utils.py [code language=&quot;python&quot;] def getProviders(self):     try:         r = requests.get(integra_url + &quot;/providers&quot;, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)         providers = []         for provider in r.json()[&#39;providers&#39;]:             providers.append(ProviderAction(provider[u&#39;id&#39;], provider[u&#39;name&#39;], provider[u&#39;description&#39;]))         return providers     except:         exceptions.handle(self.request,                           _(&#39;Unable to retrieve list of posts.&#39;))         return [] def getProviderActions(self):     try:         r = requests.get(integra_url + &quot;/provider_actions/&quot; + id, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)         providerActions = []         for providerAction in r.json()[&#39;providerActions&#39;]:             providerActions.append(ProviderAction(providerAction[u&#39;id&#39;], providerAction[u&#39;name&#39;], providerAction[u&#39;description&#39;]))         return providerActions     except:         exceptions.handle(self.request,                           _(&#39;Unable to retrieve list of posts.&#39;))         return [] [/code] In our workflow action we can get a list of provider action objects and display them to the user using a ChoiceField. Notice the ChoiceField requires the id and name. Only the name is displayed but the id is required for mapping purposes. add_workflow_action.py [code language=&quot;python&quot;] class SetAddDetailsAction(workflows.Action):     providerActionsChoices = [(providerAction.id, providerAction.name) for providerAction in providerActions]     providerChoices = [(provider.id, provider.name) for provider in providers]     name = forms.CharField(         label=_(&quot;Name&quot;),         required=True,         max_length=80,         help_text=_(&quot;Name&quot;))     description = forms.CharField(         label=_(&quot;Description&quot;),         required=True,         max_length=120,         help_text=_(&quot;Description&quot;))     provider = forms.ChoiceField(         label=_(&quot;Providers&quot;),         choices=providerChoices,         required=True,         help_text=_(&quot;Providers&quot;))     action = forms.ChoiceField(         label=_(&quot;Provider Actions&quot;),         choices=providerActionsChoices,         required=True,         help_text=_(&quot;Provider Actions&quot;)) [/code] Below we can see two dynamic fields being generated. Both populate the ChoiceField from dynamic data that is recieved from the Integra REST API.  Conclusion OpenStack Horizon is a powerful web-framework built on Django that is easily extended and Integra is a powerful provider based automation framework. We have seen how easy it is to create our own Horizon dashboard and interface with services outside of OpenStack through RESTful APIs. The above examples can be followed to accomplish virtually anything. Horizon is a glimpse into the future of infrastructure single-pane-of-glass management. This has been something we have been promised for years from the proprietary vendors and only now with OpenStack Horizon do we have some real hope. If you are working on Horizon dashboards or have feedback I would love to hear about it? Happy Stacking! (c) 2015 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Building Custom Dashboards in OpenStack Horizon">
+  <meta name="twitter:description" content="Overview Horizon is an OpenStack project responsible for providing a dashboard. It brings together all OpenStack projects in a single-pane-of-glass. The below diagram illustrates the connectivity between the Horizon dashboard and other OpenStack services.   Administrators typically don&#39;t like to have many different management interfaces and Horizon provides a framework for extending its dashboard services. By building custom dashboards it is possible to seamlessly integrate external components or services with OpenStack. I have been working on integrating a powerful automation framework called Integra in OpenStack Horizon to allow tighter coupling of OpenStack and enterprise infrastructure. Integra takes automation to a new level by providing a powerful workflow engine that consumes provider exposed actions and allows users to automate without creating any technical debt. If you are interested in Integra you can read more about it at http://integra.emitrom.com. Horizon Components Horizon is built on Django which is a web application framework in Python. Django&#39;s primary goal is to ease creation of complex database-driven websites. Django emphasizes reusability and pluggability . Before getting into more detail about the code it is important to understand some basic terminology within the Horizon framework. Terminology Dashboard - This is the top level UI component, dashboards contains panel groups and panels. They are configured using the dasboard.py file. Panel Groups - In Horizon panel groups organize similar panels together and provide a top-level drop-down. Panel groups are configured in the dashboard.py file. Panel - The main UI component, each panel has its own directory and standardized directory structure. Panels are configured in the dashboard/panel/panel.py file. Tab Groups - A tab group contains one or more tabs. A tab group can be configured per panel using the tabs.py file. Tabs - Tabs are units within a tab group. It represents one view of the data. Workflows - A workflow is a series of steps that allow for collecting user inputs. Workflows are created under dashboard/panel/workflows/workflow.py. Workflow Steps - A workflow consists of one or more steps. A step is a wrapper around an action that understands its context within a workflow. Using workflows and steps we can build multiple input forms that guide a user through a complex configuration process. Actions - An action allows us to spawn a workflow step. Actions are typically called from within a data table. Two of the most common actions are the DeleteAction and LinkAction. Tables - Horizon includes a componetized API for dynamically creating tables in the UI. Every table renders correctly and consistently. Data tables are used for displaying information to the user. Tables are configured per panel in the tables.py file. URLs - In Horizon URLs are needed to track context. At minimum a URL is required to display the main view but any LinkAction or actions that leave the main view will also require a URL. URLs are configured in the urls.py file. Views - A view displays a data table and encompasses the main panel frame. Views are configured per panel in the views.py file. Horizon Dashboard Directory Structure Horizon requires a standard directory structure and strict file naming conventions. Below is an example of the directory structure for a dashboard called Integra that has five panels (actions, jobs, providers, workflows and schedules). As you can see each panel has its own sub-directory.  Below is an example of the directory structure for a panel called providers that belongs to dashboard Integra.  Note: the static and templates directories are always the same you just need to change name of the directory e.g. &quot;providers&quot; and update path in the _scripts.html, base.html as well as index.html. The __init__.py and models.py are never changed, just leave them as is. Setup Development Environment Since coding in &quot;vim&quot; is not very fun with Python, it is important to setup an IDE. In addition leveraging devstack provides an OpenStack development environment for Horizon that makes testing Horizon code much simpler. In fact Horizon provides some tools that not only help with mundane tasks but also provide a lightweight Django server for testing. You can use either Fedora or Ubuntu for your development environment, I went with Fedora.  Install Java 7 #yum install -y openjdk-7-jre   Java is required to run PyCharm Python IDE  Download and install PyCharm    https://www.jetbrains.com/pycharm/   Note: PyCharm is a good IDE but feel free to use a different IDE if you desire.  Install git #yum install -y git  Clone the devStack git repository #git clone https://github.com/openstack-dev/devstack.git  Run stack.sh #cd devstack;./stack.sh   You will be prompted for several passwords. To make things easy just use the same password for each component. The installation will take 5 - 10 minutes and when it completes you should see the below message.   Horizon is now available at http://192.168.2.211/ Keystone is serving at http://192.168.2.211:5000/v2.0/ Examples on using novaclient command line is in exercise.sh The default users are: admin and demo The password: integra This is your host ip: 192.168.2.211 2015-02-14 18:06:31.434 | stack.sh completed in 387 seconds.   Note: each time you want to shutdown devstack you run unstack.sh and each time you want to start devstack stack.sh. Horizon Development Tool One of the great things about devstack is that it includes an important development tool for Horizon. The run_tests.sh script located under /opt/stack/horizon starts the development server and creates default directory structure for a dashboard/panel.  Running the development server #./run_tests.sh --runserver 0.0.0.0:8877    Creating default dashboard and panel directory structure #mkdir openstack_dashboard/dashboards/mydashboard #./run_tests.sh -m startdash mydashboard --target openstack_dashboard/dashboards/mydashboard #mkdir openstack_dashboard/dashboards/mydashboard/mypanel #./run_tests.sh -m startpanel mypanel --dashboard=openstack_dashboard.dashboards.mydashboard --target=openstack_dashboard/dashboards/mydashboard/mypanel   Horizon Start Scripts Dashboards are loaded through start scripts located under the horizon/openstack_dashboard/enabled directory. In this case I created a _50_integra.py. The number has to do with the order in which dashboards are loaded and rendered. It is similar to the pre-systemd concept of init scripts.   #vi /opt/stack/horizon/openstack_dashboard/enabled/_50_integra.py     DASHBOARD = &#39;integra&#39;   DISABLED = False   ADD_INSTALLED_APPS = [ &#39;openstack_dashboard.dashboards.integra&#39;, ]   Code Examples At this point let us dissect the code behind the dashboard itself and one of the dashboard panels. The code examples are derived from a project (Integra OpenStack UI ) that I am currently working on and are available in Github. This code is changing and influx so you might want to fork the repository from a known state. Dashboard Below is an example of a dashboard called Integra that contains four panels (Providers, Workflows, Schedules and Jobs). [code language=&quot;python&quot;] from django.utils.translation import ugettext_lazy as _ import horizon class Providers(horizon.PanelGroup):     slug = &quot;providers&quot;     name = _(&quot;Providers&quot;)     panels = (&#39;providers&#39;,) class Workflows(horizon.PanelGroup):     slug = &quot;workflows&quot;     name = _(&quot;Workflows&quot;)     panels = (&#39;workflows&#39;,) class Schedules(horizon.PanelGroup):     slug = &quot;schedules&quot;     name = _(&quot;Schedules&quot;)     panels = (&#39;schedules&#39;,) class Jobs(horizon.PanelGroup):     slug = &quot;jobs&quot;     name = _(&quot;Jobs&quot;)     panels = (&#39;jobs&#39;,) class Integra(horizon.Dashboard):     name = _(&quot;Integra&quot;)     slug = &quot;integra&quot;     panels = (Providers, Workflows, Schedules, Jobs)     default_panel = &#39;providers&#39; horizon.register(Integra) [/code] The code is pretty straight forward. You have panel groups, panels and the horizon dashboard. Panels are organized under panel groups and then attached to the dashboard. The above code will create the following dashboard and panel structure in Horizon. The providers table is generated from code we will discuss next.  Panel Now lets dive into the panel &quot;providers&quot; that we have displayed above. In this case both the panel group and panel itself have the same name, but they don&#39;t have to and you can also of course have many panels. The providers panel renders a data table from a REST API endpoint. If we look closely at the image above we can not only see a list of providers from Integra but we can take actions such as deleting a provider or adding a new provider. panel.py The panel.py defines the panel and registers it with the dashboard, in this case Integra. [code language=&quot;python&quot;] from django.utils.translation import ugettext_lazy as _ import horizon from openstack_dashboard.dashboards.integra import dashboard class Providers(horizon.Panel):     name = _(&quot;Providers&quot;)     slug = &quot;providers&quot; dashboard.Integra.register(Providers) [/code] views.py The views.py is responsible for dynamically rendering the panel frame. It is also responsible for rendering any actions that spawn a new frame. In this case we have the default view ProvidersIndexView that loads a table ProviderTable. The table then is defined in the tables.py. We also have an action in order to add a new provider that spawns a new frame. When the view AddProviderView is invoked, a workflow instead of a table class will be called. The workflow is defined under integra/providers/workflows/add_provider.py. [code language=&quot;python&quot;] from horizon import exceptions, tables, workflows, forms, tabs from openstack_dashboard.dashboards.integra.providers.tables import ProviderTable from openstack_dashboard.dashboards.integra.providers import utils from openstack_dashboard.dashboards.integra.providers.workflows.add_provider import AddProvider class ProvidersIndexView(tables.DataTableView):     table_class = ProviderTable     template_name = &#39;integra/providers/index.html&#39;     def get_data(self):         return utils.getProviders(self) class AddProviderView(workflows.WorkflowView):     workflow_class = AddProvider     def get_initial(self):         initial = super(AddProviderView, self).get_initial()         return initial [/code] urls.py The urls.py defines context URLs. A URL is required for the main panel frame and any new frames that are launching workflows. In our case we have two, the INDEX AND ADD_PROVIDER URLs. Notice that each URL is correlated with a view that is defined in the views.py. [code language=&quot;python&quot;] from django.conf.urls import patterns, url from openstack_dashboard.dashboards.integra.providers import views INDEX_URL = r&#39;^$&#39; ADD_PROVIDER_URL = r&#39;^add&#39; urlpatterns = patterns(&#39;openstack_dashboard.dashboards.integra.providers.views&#39;,     url(INDEX_URL, views.ProvidersIndexView.as_view(), name=&#39;index&#39;),     url(ADD_PROVIDR_URL, views.AddProviderView.as_view(), name=&#39;add&#39;), ) [/code] tables.py The tables.py is responsible for the data table and providing user outputs. Our table displays Integra providers and allows for a couple of actions. It lets us add and delete a provider. It also lets us filter the provider list that is displayed. The AddTableData and DeleteTableData classes are both LinkActions. The AddTableData will launch a workflow that gathers user inputs. This is how we can add a new provider. The DeleteTableData class removes a provider from the provider table. Here we use the DeleteAction and call a method in the utils class. This method in turn makes a REST call to Integra in order to delete the specified provider. At the bottom the table structure is created and the actions are embedded into the providers table. The meta class is a special inner-class for Django data tables that allow us to configure various table options. Finally notice how the filter is added to the table, this is pretty standard and found in many places within Horizon. [code language=&quot;python&quot;] from django.utils.translation import ugettext_lazy as _ from horizon import tables from openstack_dashboard.dashboards.integra.providers import utils class AddTableData(tables.LinkAction):     name = &quot;add&quot;     verbose_name = _(&quot;Add Provider&quot;)     url = &quot;horizon:integra:providers:add&quot;     classes = (&quot;btn-launch&quot;, &quot;ajax-modal&quot;) class DeleteTableData(tables.DeleteAction):     data_type_singular = _(&quot;Provider&quot;)     data_type_plural = _(&quot;Providers&quot;)     def delete(self, request, obj_id):         utils.deleteProvider(self, obj_id) class FilterAction(tables.FilterAction):     def filter(self, table, providers, filter_string):         filterString = filter_string.lower()         return [provider for provider in providers                 if filterString in provider.title.lower()] class UpdateRow(tables.Row):     ajax = True     def get_data(self, request, post_id):         pass class ProviderTable(tables.DataTable):     id = tables.Column(&quot;id&quot;,                           verbose_name=_(&quot;Id&quot;))     name = tables.Column(&quot;name&quot;,                           verbose_name=_(&quot;Name&quot;))     description = tables.Column(&quot;description&quot;,                           verbose_name=_(&quot;Description&quot;))     hostname = tables.Column(&quot;hostname&quot;,                           verbose_name=_(&quot;Hostname&quot;))     port = tables.Column(&quot;port&quot;,                           verbose_name=_(&quot;Port&quot;))     timeout = tables.Column(&quot;timeout&quot;,                           verbose_name=_(&quot;Timeout&quot;))     secured = tables.Column(&quot;secured&quot;,                           verbose_name=_(&quot;Secured&quot;))     class Meta:         name = &quot;integra&quot;         verbose_name = _(&quot;Providers&quot;)         row_class = UpdateRow         table_actions = (AddTableData,                          FilterAction)         row_actions = (DeleteTableData,) [/code] utils.py The utils.py is a utility class. You can call it whatever you want, it is not required but in this case it is nice to separate the Integra REST calls from the rest of our Horizon application. Three methods are defined in order to delete a provider, add a provider and get a list of all providers. We have already talked about adding and deleting a provider. The getProviders method returns a list of providers from Integra through the REST API. We have created a Provider model class that understands the structure of a provider object. One really nice thing about Python is that it natively handles JSON marshaling and since Integra returns JSON things are in this case quite simple. [code language=&quot;python&quot;] import traceback import time from time import mktime from datetime import datetime from requests.auth import HTTPBasicAuth from django.template.defaultfilters import register from django.utils.translation import ugettext_lazy as _ import requests from horizon import exceptions requests.packages.urllib3.disable_warnings() integra_url = &quot;https://localhost:8443/rest&quot; json_headers = {&#39;Accept&#39;: &#39;application/json&#39;} class Provider:     &quot;&quot;&quot;     Provider data     &quot;&quot;&quot;     def __init__(self, id, name, description, hostname, port, timeout, secured):         self.id = id         self.name = name         self.description = description         self.hostname = hostname         self.port = port         self.timeout = timeout         self.secured = secured def getProviders(self):     try:         r = requests.get(integra_url + &quot;/providers&quot;, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)         providers = []         for provider in r.json()[&#39;providers&#39;]:             providers.append(Provider(provider[u&#39;id&#39;], provider[u&#39;name&#39;], provider[u&#39;description&#39;], provider[u&#39;hostname&#39;], provider[u&#39;port&#39;], provider[u&#39;timeout&#39;], provider[u&#39;secured&#39;]))         return providers     except:         exceptions.handle(self.request,                           _(&#39;Unable to get providers&#39;))         return [] # request - horizon environment settings # context - user inputs from form def addProvider(self, request, context):     try:         name = context.get(&#39;name&#39;)         description = context.get(&#39;description&#39;)         hostname = context.get(&#39;hostname&#39;)         port = context.get(&#39;port&#39;)         timeout = context.get(&#39;timeout&#39;)         secured = context.get(&#39;secured&#39;)         payload = {&#39;name&#39;: name, &#39;description&#39;: description, &#39;hostname&#39;: hostname, &#39;port&#39;: port, &#39;timeout&#39;: timeout, &#39;secured&#39;: secured}         requests.post(integra_url + &quot;/providers&quot;, json=payload, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)     except:         print &quot;Exception inside utils.addProvider&quot;         print traceback.format_exc()         exceptions.handle(self.request,                           _(&#39;Unable to add provider&#39;))         return [] # id is required for table def deleteProvider(self, id):     try:         requests.delete(integra_url + &quot;/providers/&quot; + id, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)     except:         print &quot;Exception inside utils.deleteProvider&quot;         print traceback.format_exc()         exceptions.handle(self.request,                           _(&#39;Unable to delete provider&#39;))         return False [/code] add_provider.py The add_provider.py is a workflow that contains a single workflow step. This is the workflow that is called when we add a new provider. It is responsible for getting user input. The AddProvider class executes when the workflow is called. It calls the SetAddProviderDetails class which then calls the SetAddProviderDetailsAction class and returns the user inputs within the context object. [code language=&quot;python&quot;] import traceback from horizon import workflows, forms, exceptions from django.utils.translation import ugettext_lazy as _ from openstack_dashboard.dashboards.integra.providers import utils class SetAddProviderDetailsAction(workflows.Action):     name = forms.CharField(         label=_(&quot;Name&quot;),         required=True,         max_length=80,         help_text=_(&quot;Name&quot;))     description = forms.CharField(         label=_(&quot;Description&quot;),         required=True,         max_length=120,         help_text=_(&quot;Description&quot;))     hostname = forms.CharField(         label=_(&quot;Hostname&quot;),         required=True,         max_length=120,         help_text=_(&quot;Hostname&quot;))     port = forms.IntegerField(         label=_(&quot;Port&quot;),         required=True,         min_value=1,         max_value=65535,         help_text=_(&quot;Port&quot;))     timeout = forms.IntegerField(         label=_(&quot;Timeout&quot;),         required=True,         min_value=1,         max_value=100000,         help_text=_(&quot;Timeout&quot;))     secured = forms.BooleanField(         label=_(&quot;Secured&quot;),         required=False,         help_text=_(&quot;Secured&quot;))     class Meta:         name = _(&quot;Details&quot;)     def __init__(self, request, context, *args, **kwargs):         self.request = request         self.context = context         super(SetProviderDetailsAction, self).__init__(             request, context, *args, **kwargs) class SetAddProviderDetails(workflows.Step):     action_class = SetAddProviderDetailsAction     contributes = (&quot;name&quot;, &quot;description&quot;, &quot;hostname&quot;, &quot;port&quot;, &quot;timeout&quot;, &quot;secured&quot;)     def contribute(self, data, context):         if data:             context[&#39;name&#39;] = data.get(&quot;name&quot;, &quot;&quot;)             context[&#39;description&#39;] = data.get(&quot;description&quot;, &quot;&quot;)             context[&#39;hostname&#39;] = data.get(&quot;hostname&quot;, &quot;&quot;)             context[&#39;port&#39;] = data.get(&quot;port&quot;, &quot;&quot;)             context[&#39;timeout&#39;] = data.get(&quot;timeout&quot;, &quot;&quot;)             context[&#39;secured&#39;] = data.get(&quot;secured&quot;, &quot;&quot;)         return context class AddProvider(workflows.Workflow):     slug = &quot;add&quot;     name = _(&quot;Add&quot;)     finalize_button_name = _(&quot;Add&quot;)     success_message = _(&#39;Added provider &quot;%s&quot;.&#39;)     failure_message = _(&#39;Unable to add provider &quot;%s&quot;.&#39;)     success_url = &quot;horizon:integra:providers:index&quot;     failure_url = &quot;horizon:integra:providers:index&quot;     default_steps = (SetAddProviderDetails,)     def format_status_message(self, message):          return message % self.context.get(&#39;name&#39;, &#39;unknown provider&#39;)     def handle(self, request, context):         try:             utils.addProvider(self, request, context)             return True         except Exception:             print traceback.format_exc()             exceptions.handle(request, _(&quot;Unable to add provider&quot;))             return False [/code] Below we can see the above code in action.  Dynamic Inputs So far we have seen how we can build static input forms using CharField, IntegerChield or BooleanField. Next lets look at how to create dynamic inputs within workflows using ChoiceField. In our utils.py we already have an method getProviders that returns a list of provider objects. In addition we will add a new method for returning a list of provider actions. utils.py [code language=&quot;python&quot;] def getProviders(self):     try:         r = requests.get(integra_url + &quot;/providers&quot;, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)         providers = []         for provider in r.json()[&#39;providers&#39;]:             providers.append(ProviderAction(provider[u&#39;id&#39;], provider[u&#39;name&#39;], provider[u&#39;description&#39;]))         return providers     except:         exceptions.handle(self.request,                           _(&#39;Unable to retrieve list of posts.&#39;))         return [] def getProviderActions(self):     try:         r = requests.get(integra_url + &quot;/provider_actions/&quot; + id, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)         providerActions = []         for providerAction in r.json()[&#39;providerActions&#39;]:             providerActions.append(ProviderAction(providerAction[u&#39;id&#39;], providerAction[u&#39;name&#39;], providerAction[u&#39;description&#39;]))         return providerActions     except:         exceptions.handle(self.request,                           _(&#39;Unable to retrieve list of posts.&#39;))         return [] [/code] In our workflow action we can get a list of provider action objects and display them to the user using a ChoiceField. Notice the ChoiceField requires the id and name. Only the name is displayed but the id is required for mapping purposes. add_workflow_action.py [code language=&quot;python&quot;] class SetAddDetailsAction(workflows.Action):     providerActionsChoices = [(providerAction.id, providerAction.name) for providerAction in providerActions]     providerChoices = [(provider.id, provider.name) for provider in providers]     name = forms.CharField(         label=_(&quot;Name&quot;),         required=True,         max_length=80,         help_text=_(&quot;Name&quot;))     description = forms.CharField(         label=_(&quot;Description&quot;),         required=True,         max_length=120,         help_text=_(&quot;Description&quot;))     provider = forms.ChoiceField(         label=_(&quot;Providers&quot;),         choices=providerChoices,         required=True,         help_text=_(&quot;Providers&quot;))     action = forms.ChoiceField(         label=_(&quot;Provider Actions&quot;),         choices=providerActionsChoices,         required=True,         help_text=_(&quot;Provider Actions&quot;)) [/code] Below we can see two dynamic fields being generated. Both populate the ChoiceField from dynamic data that is recieved from the Integra REST API.  Conclusion OpenStack Horizon is a powerful web-framework built on Django that is easily extended and Integra is a powerful provider based automation framework. We have seen how easy it is to create our own Horizon dashboard and interface with services outside of OpenStack through RESTful APIs. The above examples can be followed to accomplish virtually anything. Horizon is a glimpse into the future of infrastructure single-pane-of-glass management. This has been something we have been promised for years from the proprietary vendors and only now with OpenStack Horizon do we have some real hope. If you are working on Horizon dashboards or have feedback I would love to hear about it? Happy Stacking! (c) 2015 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/openstack/building-custom-dashboards-in-openstack-horizon/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2015-02-16T00:00:00-08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openstack/building-custom-dashboards-in-openstack-horizon/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openstack" itemprop="item"><span itemprop="name">Openstack</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Building Custom Dashboards in OpenStack Horizon</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Building Custom Dashboards in OpenStack Horizon">
+    <meta itemprop="description" content="OverviewHorizon is an OpenStack project responsible for providing a dashboard. It brings together all OpenStack projects in a single-pane-of-glass. The below diagram illustrates the connectivity between the Horizon dashboard and other OpenStack services.Administrators typically don&#39;t like to have many different management interfaces and Horizon provides a framework for extending its dashboard services. By building custom dashboards it is possible to seamlessly integrate external components or services with OpenStack.I have been working on integrating a powerful automation framework called Integra in OpenStack Horizon to allow tighter coupling of OpenStack and enterprise infrastructure. Integra takes automation to a new level by providing a powerful workflow engine that consumes provider exposed actions and allows users to automate without creating any technical debt. If you are interested in Integra you can read more about it at http://integra.emitrom.com.Horizon ComponentsHorizon is built on Django which is a web application framework in Python. Django&#39;s primary goal is to ease creation of complex database-driven websites. Django emphasizes reusability and pluggability . Before getting into more detail about the code it is important to understand some basic terminology within the Horizon framework.TerminologyDashboard - This is the top level UI component, dashboards contains panel groups and panels. They are configured using the dasboard.py file.Panel Groups - In Horizon panel groups organize similar panels together and provide a top-level drop-down. Panel groups are configured in the dashboard.py file.Panel - The main UI component, each panel has its own directory and standardized directory structure. Panels are configured in the dashboard/panel/panel.py file.Tab Groups - A tab group contains one or more tabs. A tab group can be configured per panel using the tabs.py file.Tabs - Tabs are units within a tab group. It represents one view of the data.Workflows - A workflow is a series of steps that allow for collecting user inputs. Workflows are created under dashboard/panel/workflows/workflow.py.Workflow Steps - A workflow consists of one or more steps. A step is a wrapper around an action that understands its context within a workflow. Using workflows and steps we can build multiple input forms that guide a user through a complex configuration process.Actions - An action allows us to spawn a workflow step. Actions are typically called from within a data table. Two of the most common actions are the DeleteAction and LinkAction.Tables - Horizon includes a componetized API for dynamically creating tables in the UI. Every table renders correctly and consistently. Data tables are used for displaying information to the user. Tables are configured per panel in the tables.py file.URLs - In Horizon URLs are needed to track context. At minimum a URL is required to display the main view but any LinkAction or actions that leave the main view will also require a URL. URLs are configured in the urls.py file.Views - A view displays a data table and encompasses the main panel frame. Views are configured per panel in the views.py file.Horizon Dashboard Directory StructureHorizon requires a standard directory structure and strict file naming conventions. Below is an example of the directory structure for a dashboard called Integra that has five panels (actions, jobs, providers, workflows and schedules). As you can see each panel has its own sub-directory.Below is an example of the directory structure for a panel called providers that belongs to dashboard Integra.Note: the static and templates directories are always the same you just need to change name of the directory e.g. &quot;providers&quot; and update path in the _scripts.html, base.html as well as index.html. The __init__.py and models.py are never changed, just leave them as is.Setup Development EnvironmentSince coding in &quot;vim&quot; is not very fun with Python, it is important to setup an IDE. In addition leveraging devstack provides an OpenStack development environment for Horizon that makes testing Horizon code much simpler. In fact Horizon provides some tools that not only help with mundane tasks but also provide a lightweight Django server for testing. You can use either Fedora or Ubuntu for your development environment, I went with Fedora.Install Java 7#yum install -y openjdk-7-jreJava is required to run PyCharm Python IDEDownload and install PyCharmhttps://www.jetbrains.com/pycharm/Note: PyCharm is a good IDE but feel free to use a different IDE if you desire.Install git#yum install -y gitClone the devStack git repository#git clone https://github.com/openstack-dev/devstack.gitRun stack.sh#cd devstack;./stack.shYou will be prompted for several passwords. To make things easy just use the same password for each component. The installation will take 5 - 10 minutes and when it completes you should see the below message.Horizon is now available at http://192.168.2.211/Keystone is serving at http://192.168.2.211:5000/v2.0/Examples on using novaclient command line is in exercise.shThe default users are: admin and demoThe password: integraThis is your host ip: 192.168.2.2112015-02-14 18:06:31.434 | stack.sh completed in 387 seconds.Note: each time you want to shutdown devstack you run unstack.sh and each time you want to start devstack stack.sh.Horizon Development ToolOne of the great things about devstack is that it includes an important development tool for Horizon. The run_tests.sh script located under /opt/stack/horizon starts the development server and creates default directory structure for a dashboard/panel.Running the development server#./run_tests.sh --runserver 0.0.0.0:8877Creating default dashboard and panel directory structure#mkdir openstack_dashboard/dashboards/mydashboard#./run_tests.sh -m startdash mydashboard --target openstack_dashboard/dashboards/mydashboard#mkdir openstack_dashboard/dashboards/mydashboard/mypanel#./run_tests.sh -m startpanel mypanel --dashboard=openstack_dashboard.dashboards.mydashboard --target=openstack_dashboard/dashboards/mydashboard/mypanelHorizon Start ScriptsDashboards are loaded through start scripts located under the horizon/openstack_dashboard/enabled directory. In this case I created a _50_integra.py. The number has to do with the order in which dashboards are loaded and rendered. It is similar to the pre-systemd concept of init scripts.#vi /opt/stack/horizon/openstack_dashboard/enabled/_50_integra.pyDASHBOARD = &#39;integra&#39;DISABLED = FalseADD_INSTALLED_APPS = [ &#39;openstack_dashboard.dashboards.integra&#39;, ]Code ExamplesAt this point let us dissect the code behind the dashboard itself and one of the dashboard panels. The code examples are derived from a project (Integra OpenStack UI ) that I am currently working on and are available in Github. This code is changing and influx so you might want to fork the repository from a known state.DashboardBelow is an example of a dashboard called Integra that contains four panels (Providers, Workflows, Schedules and Jobs).[code language=&quot;python&quot;]from django.utils.translation import ugettext_lazy as _import horizonclass Providers(horizon.PanelGroup):    slug = &quot;providers&quot;    name = _(&quot;Providers&quot;)    panels = (&#39;providers&#39;,)class Workflows(horizon.PanelGroup):    slug = &quot;workflows&quot;    name = _(&quot;Workflows&quot;)    panels = (&#39;workflows&#39;,)class Schedules(horizon.PanelGroup):    slug = &quot;schedules&quot;    name = _(&quot;Schedules&quot;)    panels = (&#39;schedules&#39;,)class Jobs(horizon.PanelGroup):    slug = &quot;jobs&quot;    name = _(&quot;Jobs&quot;)    panels = (&#39;jobs&#39;,)class Integra(horizon.Dashboard):    name = _(&quot;Integra&quot;)    slug = &quot;integra&quot;    panels = (Providers, Workflows, Schedules, Jobs)    default_panel = &#39;providers&#39;horizon.register(Integra)[/code]The code is pretty straight forward. You have panel groups, panels and the horizon dashboard. Panels are organized under panel groups and then attached to the dashboard.The above code will create the following dashboard and panel structure in Horizon. The providers table is generated from code we will discuss next.PanelNow lets dive into the panel &quot;providers&quot; that we have displayed above. In this case both the panel group and panel itself have the same name, but they don&#39;t have to and you can also of course have many panels.The providers panel renders a data table from a REST API endpoint. If we look closely at the image above we can not only see a list of providers from Integra but we can take actions such as deleting a provider or adding a new provider.panel.pyThe panel.py defines the panel and registers it with the dashboard, in this case Integra.[code language=&quot;python&quot;]from django.utils.translation import ugettext_lazy as _import horizonfrom openstack_dashboard.dashboards.integra import dashboardclass Providers(horizon.Panel):    name = _(&quot;Providers&quot;)    slug = &quot;providers&quot;dashboard.Integra.register(Providers)[/code]views.pyThe views.py is responsible for dynamically rendering the panel frame. It is also responsible for rendering any actions that spawn a new frame. In this case we have the default view ProvidersIndexView that loads a table ProviderTable. The table then is defined in the tables.py.We also have an action in order to add a new provider that spawns a new frame. When the view AddProviderView is invoked, a workflow instead of a table class will be called. The workflow is defined under integra/providers/workflows/add_provider.py.[code language=&quot;python&quot;]from horizon import exceptions, tables, workflows, forms, tabsfrom openstack_dashboard.dashboards.integra.providers.tables import ProviderTablefrom openstack_dashboard.dashboards.integra.providers import utilsfrom openstack_dashboard.dashboards.integra.providers.workflows.add_provider import AddProviderclass ProvidersIndexView(tables.DataTableView):    table_class = ProviderTable    template_name = &#39;integra/providers/index.html&#39;    def get_data(self):        return utils.getProviders(self)class AddProviderView(workflows.WorkflowView):    workflow_class = AddProvider    def get_initial(self):        initial = super(AddProviderView, self).get_initial()        return initial[/code]urls.pyThe urls.py defines context URLs. A URL is required for the main panel frame and any new frames that are launching workflows. In our case we have two, the INDEX AND ADD_PROVIDER URLs. Notice that each URL is correlated with a view that is defined in the views.py.[code language=&quot;python&quot;]from django.conf.urls import patterns, urlfrom openstack_dashboard.dashboards.integra.providers import viewsINDEX_URL = r&#39;^$&#39;ADD_PROVIDER_URL = r&#39;^add&#39;urlpatterns = patterns(&#39;openstack_dashboard.dashboards.integra.providers.views&#39;,    url(INDEX_URL, views.ProvidersIndexView.as_view(), name=&#39;index&#39;),    url(ADD_PROVIDR_URL, views.AddProviderView.as_view(), name=&#39;add&#39;),)[/code]tables.pyThe tables.py is responsible for the data table and providing user outputs. Our table displays Integra providers and allows for a couple of actions. It lets us add and delete a provider. It also lets us filter the provider list that is displayed.The AddTableData and DeleteTableData classes are both LinkActions. The AddTableData will launch a workflow that gathers user inputs. This is how we can add a new provider.The DeleteTableData class removes a provider from the provider table. Here we use the DeleteAction and call a method in the utils class. This method in turn makes a REST call to Integra in order to delete the specified provider.At the bottom the table structure is created and the actions are embedded into the providers table. The meta class is a special inner-class for Django data tables that allow us to configure various table options. Finally notice how the filter is added to the table, this is pretty standard and found in many places within Horizon.[code language=&quot;python&quot;]from django.utils.translation import ugettext_lazy as _from horizon import tablesfrom openstack_dashboard.dashboards.integra.providers import utilsclass AddTableData(tables.LinkAction):    name = &quot;add&quot;    verbose_name = _(&quot;Add Provider&quot;)    url = &quot;horizon:integra:providers:add&quot;    classes = (&quot;btn-launch&quot;, &quot;ajax-modal&quot;)class DeleteTableData(tables.DeleteAction):    data_type_singular = _(&quot;Provider&quot;)    data_type_plural = _(&quot;Providers&quot;)    def delete(self, request, obj_id):        utils.deleteProvider(self, obj_id)class FilterAction(tables.FilterAction):    def filter(self, table, providers, filter_string):        filterString = filter_string.lower()        return [provider for provider in providers                if filterString in provider.title.lower()]class UpdateRow(tables.Row):    ajax = True    def get_data(self, request, post_id):        passclass ProviderTable(tables.DataTable):    id = tables.Column(&quot;id&quot;,                          verbose_name=_(&quot;Id&quot;))    name = tables.Column(&quot;name&quot;,                          verbose_name=_(&quot;Name&quot;))    description = tables.Column(&quot;description&quot;,                          verbose_name=_(&quot;Description&quot;))    hostname = tables.Column(&quot;hostname&quot;,                          verbose_name=_(&quot;Hostname&quot;))    port = tables.Column(&quot;port&quot;,                          verbose_name=_(&quot;Port&quot;))    timeout = tables.Column(&quot;timeout&quot;,                          verbose_name=_(&quot;Timeout&quot;))    secured = tables.Column(&quot;secured&quot;,                          verbose_name=_(&quot;Secured&quot;))    class Meta:        name = &quot;integra&quot;        verbose_name = _(&quot;Providers&quot;)        row_class = UpdateRow        table_actions = (AddTableData,                         FilterAction)        row_actions = (DeleteTableData,)[/code]utils.pyThe utils.py is a utility class. You can call it whatever you want, it is not required but in this case it is nice to separate the Integra REST calls from the rest of our Horizon application.Three methods are defined in order to delete a provider, add a provider and get a list of all providers. We have already talked about adding and deleting a provider. The getProviders method returns a list of providers from Integra through the REST API. We have created a Provider model class that understands the structure of a provider object. One really nice thing about Python is that it natively handles JSON marshaling and since Integra returns JSON things are in this case quite simple.[code language=&quot;python&quot;]import tracebackimport timefrom time import mktimefrom datetime import datetimefrom requests.auth import HTTPBasicAuthfrom django.template.defaultfilters import registerfrom django.utils.translation import ugettext_lazy as _import requestsfrom horizon import exceptionsrequests.packages.urllib3.disable_warnings()integra_url = &quot;https://localhost:8443/rest&quot;json_headers = {&#39;Accept&#39;: &#39;application/json&#39;}class Provider:    &quot;&quot;&quot;    Provider data    &quot;&quot;&quot;    def __init__(self, id, name, description, hostname, port, timeout, secured):        self.id = id        self.name = name        self.description = description        self.hostname = hostname        self.port = port        self.timeout = timeout        self.secured = secureddef getProviders(self):    try:        r = requests.get(integra_url + &quot;/providers&quot;, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)        providers = []        for provider in r.json()[&#39;providers&#39;]:            providers.append(Provider(provider[u&#39;id&#39;], provider[u&#39;name&#39;], provider[u&#39;description&#39;], provider[u&#39;hostname&#39;], provider[u&#39;port&#39;], provider[u&#39;timeout&#39;], provider[u&#39;secured&#39;]))        return providers    except:        exceptions.handle(self.request,                          _(&#39;Unable to get providers&#39;))        return []# request - horizon environment settings# context - user inputs from formdef addProvider(self, request, context):    try:        name = context.get(&#39;name&#39;)        description = context.get(&#39;description&#39;)        hostname = context.get(&#39;hostname&#39;)        port = context.get(&#39;port&#39;)        timeout = context.get(&#39;timeout&#39;)        secured = context.get(&#39;secured&#39;)        payload = {&#39;name&#39;: name, &#39;description&#39;: description, &#39;hostname&#39;: hostname, &#39;port&#39;: port, &#39;timeout&#39;: timeout, &#39;secured&#39;: secured}        requests.post(integra_url + &quot;/providers&quot;, json=payload, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)    except:        print &quot;Exception inside utils.addProvider&quot;        print traceback.format_exc()        exceptions.handle(self.request,                          _(&#39;Unable to add provider&#39;))        return []# id is required for tabledef deleteProvider(self, id):    try:        requests.delete(integra_url + &quot;/providers/&quot; + id, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)    except:        print &quot;Exception inside utils.deleteProvider&quot;        print traceback.format_exc()        exceptions.handle(self.request,                          _(&#39;Unable to delete provider&#39;))        return False[/code]add_provider.pyThe add_provider.py is a workflow that contains a single workflow step. This is the workflow that is called when we add a new provider. It is responsible for getting user input.The AddProvider class executes when the workflow is called. It calls the SetAddProviderDetails class which then calls the SetAddProviderDetailsAction class and returns the user inputs within the context object.[code language=&quot;python&quot;]import tracebackfrom horizon import workflows, forms, exceptionsfrom django.utils.translation import ugettext_lazy as _from openstack_dashboard.dashboards.integra.providers import utilsclass SetAddProviderDetailsAction(workflows.Action):    name = forms.CharField(        label=_(&quot;Name&quot;),        required=True,        max_length=80,        help_text=_(&quot;Name&quot;))    description = forms.CharField(        label=_(&quot;Description&quot;),        required=True,        max_length=120,        help_text=_(&quot;Description&quot;))    hostname = forms.CharField(        label=_(&quot;Hostname&quot;),        required=True,        max_length=120,        help_text=_(&quot;Hostname&quot;))    port = forms.IntegerField(        label=_(&quot;Port&quot;),        required=True,        min_value=1,        max_value=65535,        help_text=_(&quot;Port&quot;))    timeout = forms.IntegerField(        label=_(&quot;Timeout&quot;),        required=True,        min_value=1,        max_value=100000,        help_text=_(&quot;Timeout&quot;))    secured = forms.BooleanField(        label=_(&quot;Secured&quot;),        required=False,        help_text=_(&quot;Secured&quot;))    class Meta:        name = _(&quot;Details&quot;)    def __init__(self, request, context, *args, **kwargs):        self.request = request        self.context = context        super(SetProviderDetailsAction, self).__init__(            request, context, *args, **kwargs)class SetAddProviderDetails(workflows.Step):    action_class = SetAddProviderDetailsAction    contributes = (&quot;name&quot;, &quot;description&quot;, &quot;hostname&quot;, &quot;port&quot;, &quot;timeout&quot;, &quot;secured&quot;)    def contribute(self, data, context):        if data:            context[&#39;name&#39;] = data.get(&quot;name&quot;, &quot;&quot;)            context[&#39;description&#39;] = data.get(&quot;description&quot;, &quot;&quot;)            context[&#39;hostname&#39;] = data.get(&quot;hostname&quot;, &quot;&quot;)            context[&#39;port&#39;] = data.get(&quot;port&quot;, &quot;&quot;)            context[&#39;timeout&#39;] = data.get(&quot;timeout&quot;, &quot;&quot;)            context[&#39;secured&#39;] = data.get(&quot;secured&quot;, &quot;&quot;)        return contextclass AddProvider(workflows.Workflow):    slug = &quot;add&quot;    name = _(&quot;Add&quot;)    finalize_button_name = _(&quot;Add&quot;)    success_message = _(&#39;Added provider &quot;%s&quot;.&#39;)    failure_message = _(&#39;Unable to add provider &quot;%s&quot;.&#39;)    success_url = &quot;horizon:integra:providers:index&quot;    failure_url = &quot;horizon:integra:providers:index&quot;    default_steps = (SetAddProviderDetails,)    def format_status_message(self, message):         return message % self.context.get(&#39;name&#39;, &#39;unknown provider&#39;)    def handle(self, request, context):        try:            utils.addProvider(self, request, context)            return True        except Exception:            print traceback.format_exc()            exceptions.handle(request, _(&quot;Unable to add provider&quot;))            return False[/code]Below we can see the above code in action.Dynamic InputsSo far we have seen how we can build static input forms using CharField, IntegerChield or BooleanField. Next lets look at how to create dynamic inputs within workflows using ChoiceField. In our utils.py we already have an method getProviders that returns a list of provider objects. In addition we will add a new method for returning a list of provider actions.utils.py[code language=&quot;python&quot;]def getProviders(self):    try:        r = requests.get(integra_url + &quot;/providers&quot;, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)        providers = []        for provider in r.json()[&#39;providers&#39;]:            providers.append(ProviderAction(provider[u&#39;id&#39;], provider[u&#39;name&#39;], provider[u&#39;description&#39;]))        return providers    except:        exceptions.handle(self.request,                          _(&#39;Unable to retrieve list of posts.&#39;))        return []def getProviderActions(self):    try:        r = requests.get(integra_url + &quot;/provider_actions/&quot; + id, verify=False, auth=HTTPBasicAuth(&#39;admin&#39;, &#39;integra&#39;), headers=json_headers)        providerActions = []        for providerAction in r.json()[&#39;providerActions&#39;]:            providerActions.append(ProviderAction(providerAction[u&#39;id&#39;], providerAction[u&#39;name&#39;], providerAction[u&#39;description&#39;]))        return providerActions    except:        exceptions.handle(self.request,                          _(&#39;Unable to retrieve list of posts.&#39;))        return [][/code]In our workflow action we can get a list of provider action objects and display them to the user using a ChoiceField. Notice the ChoiceField requires the id and name. Only the name is displayed but the id is required for mapping purposes.add_workflow_action.py[code language=&quot;python&quot;]class SetAddDetailsAction(workflows.Action):    providerActionsChoices = [(providerAction.id, providerAction.name) for providerAction in providerActions]    providerChoices = [(provider.id, provider.name) for provider in providers]    name = forms.CharField(        label=_(&quot;Name&quot;),        required=True,        max_length=80,        help_text=_(&quot;Name&quot;))    description = forms.CharField(        label=_(&quot;Description&quot;),        required=True,        max_length=120,        help_text=_(&quot;Description&quot;))    provider = forms.ChoiceField(        label=_(&quot;Providers&quot;),        choices=providerChoices,        required=True,        help_text=_(&quot;Providers&quot;))    action = forms.ChoiceField(        label=_(&quot;Provider Actions&quot;),        choices=providerActionsChoices,        required=True,        help_text=_(&quot;Provider Actions&quot;))[/code]Below we can see two dynamic fields being generated. Both populate the ChoiceField from dynamic data that is recieved from the Integra REST API.ConclusionOpenStack Horizon is a powerful web-framework built on Django that is easily extended and Integra is a powerful provider based automation framework. We have seen how easy it is to create our own Horizon dashboard and interface with services outside of OpenStack through RESTful APIs. The above examples can be followed to accomplish virtually anything. Horizon is a glimpse into the future of infrastructure single-pane-of-glass management. This has been something we have been promised for years from the proprietary vendors and only now with OpenStack Horizon do we have some real hope.If you are working on Horizon dashboards or have feedback I would love to hear about it?Happy Stacking!(c) 2015 Keith Tenzer">
+    <meta itemprop="datePublished" content="2015-02-16T00:00:00-08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Building Custom Dashboards in OpenStack Horizon
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2015-02-16T00:00:00-08:00">February 16, 2015</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          27 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h3>Overview</h3>
+<p>Horizon is an OpenStack project responsible for providing a dashboard. It brings together all OpenStack projects in a single-pane-of-glass. The below diagram illustrates the connectivity between the Horizon dashboard and other OpenStack services.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/02/openstack_services_architecture.png"><img class="  wp-image-705 alignleft" src="/assets/2015/02/openstack_services_architecture.png?w=300" alt="OpenStack_Services_Architecture" width="1373" height="531" /></a></p>
+<p><!--more--><br />
+Administrators typically don't like to have many different management interfaces and Horizon provides a framework for extending its dashboard services. By building custom dashboards it is possible to seamlessly integrate external components or services with OpenStack.</p>
+<p>I have been working on integrating a powerful automation framework called Integra in OpenStack Horizon to allow tighter coupling of OpenStack and enterprise infrastructure. Integra takes automation to a new level by providing a powerful workflow engine that consumes provider exposed actions and allows users to automate without creating any technical debt. If you are interested in Integra you can read more about it at <a href="http://integra.emitrom.com">http://integra.emitrom.com</a>.</p>
+<h3>Horizon Components</h3>
+<p>Horizon is built on Django which is a web application framework in Python. Django's primary goal is to ease creation of complex database-driven websites. Django emphasizes reusability and pluggability . Before getting into more detail about the code it is important to understand some basic terminology within the Horizon framework.</p>
+<h4>Terminology</h4>
+<p><strong>Dashboard</strong> - This is the top level UI component, dashboards contains panel groups and panels. They are configured using the dasboard.py file.</p>
+<p><strong>Panel Groups</strong> - In Horizon panel groups organize similar panels together and provide a top-level drop-down. Panel groups are configured in the dashboard.py file.</p>
+<p><strong>Panel</strong> - The main UI component, each panel has its own directory and standardized directory structure. Panels are configured in the dashboard/panel/panel.py file.</p>
+<p><strong>Tab Groups</strong> - A tab group contains one or more tabs. A tab group can be configured per panel using the tabs.py file.</p>
+<p><strong>Tabs </strong>- Tabs are units within a tab group. It represents one view of the data.</p>
+<p><strong>Workflows </strong>- A workflow is a series of steps that allow for collecting user inputs. Workflows are created under dashboard/panel/workflows/workflow.py.</p>
+<p><strong>Workflow Steps</strong> - A workflow consists of one or more steps. A step is a wrapper around an action that understands its context within a workflow. Using workflows and steps we can build multiple input forms that guide a user through a complex configuration process.</p>
+<p><strong>Actions</strong> - An action allows us to spawn a workflow step. Actions are typically called from within a data table. Two of the most common actions are the DeleteAction and LinkAction.</p>
+<p><strong>Tables</strong> - Horizon includes a componetized API for dynamically creating tables in the UI. Every table renders correctly and consistently. Data tables are used for displaying information to the user. Tables are configured per panel in the tables.py file.</p>
+<p><strong>URLs</strong> - In Horizon URLs are needed to track context. At minimum a URL is required to display the main view but any LinkAction or actions that leave the main view will also require a URL. URLs are configured in the urls.py file.</p>
+<p><strong>Views</strong> - A view displays a data table and encompasses the main panel frame. Views are configured per panel in the views.py file.</p>
+<h3>Horizon Dashboard Directory Structure</h3>
+<p>Horizon requires a standard directory structure and strict file naming conventions. Below is an example of the directory structure for a dashboard called Integra that has five panels (actions, jobs, providers, workflows and schedules). As you can see each panel has its own sub-directory.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/02/openstack_horizon_directory_structure_dashboard1.jpg"><img class="  wp-image-619 alignleft" src="/assets/2015/02/openstack_horizon_directory_structure_dashboard1.jpg?w=300" alt="OpenStack_Horizon_Directory_Structure_Dashboard" width="1318" height="786" /></a></p>
+<p>Below is an example of the directory structure for a panel called providers that belongs to dashboard Integra.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/02/openstack_horizon_directory_structure1.jpg"><img class="  wp-image-628 alignleft" src="/assets/2015/02/openstack_horizon_directory_structure1.jpg?w=300" alt="OpenStack_Horizon_Directory_Structure" width="1340" height="1138" /></a></p>
+<p>Note: the static and templates directories are always the same you just need to change name of the directory e.g. "providers" and update path in the _scripts.html, base.html as well as index.html. The __init__.py and models.py are never changed, just leave them as is.</p>
+<h3>Setup Development Environment</h3>
+<p>Since coding in "vim" is not very fun with Python, it is important to setup an IDE. In addition leveraging devstack provides an OpenStack development environment for Horizon that makes testing Horizon code much simpler. In fact Horizon provides some tools that not only help with mundane tasks but also provide a lightweight Django server for testing. You can use either Fedora or Ubuntu for your development environment, I went with Fedora.</p>
+<ul>
+<li>Install Java 7
+<pre>#yum install -y openjdk-7-jre</pre>
+</li>
+</ul>
+<p>Java is required to run PyCharm Python IDE</p>
+<ul>
+<li>Download and install PyCharm</li>
+</ul>
+<ul>
+<li>
+<pre>https://www.jetbrains.com/pycharm/</pre>
+</li>
+</ul>
+<p>Note: PyCharm is a good IDE but feel free to use a different IDE if you desire.</p>
+<ul>
+<li>Install git
+<pre>#yum install -y git</pre>
+</li>
+<li>Clone the devStack git repository
+<pre>#git clone https://github.com/openstack-dev/devstack.git</pre>
+</li>
+<li>Run stack.sh
+<pre>#cd devstack;./stack.sh</pre>
+</li>
+</ul>
+<p>You will be prompted for several passwords. To make things easy just use the same password for each component. The installation will take 5 - 10 minutes and when it completes you should see the below message.</p>
+<ul>
+<li>
+<pre>Horizon is now available at http://192.168.2.211/
+Keystone is serving at http://192.168.2.211:5000/v2.0/
+Examples on using novaclient command line is in exercise.sh
+The default users are: admin and demo
+The password: integra
+This is your host ip: 192.168.2.211
+2015-02-14 18:06:31.434 | stack.sh completed in 387 seconds.</pre>
+</li>
+</ul>
+<p>Note: each time you want to shutdown devstack you run unstack.sh and each time you want to start devstack stack.sh.</p>
+<h3>Horizon Development Tool</h3>
+<p>One of the great things about devstack is that it includes an important development tool for Horizon. The run_tests.sh script located under /opt/stack/horizon starts the development server and creates default directory structure for a dashboard/panel.</p>
+<ul>
+<li>Running the development server
+<pre>#./run_tests.sh --runserver 0.0.0.0:8877</pre>
+</li>
+</ul>
+<ul>
+<li>Creating default dashboard and panel directory structure
+<pre>#mkdir openstack_dashboard/dashboards/mydashboard</pre>
+<pre>#./run_tests.sh -m startdash mydashboard --target openstack_dashboard/dashboards/mydashboard</pre>
+<pre>#mkdir openstack_dashboard/dashboards/mydashboard/mypanel</pre>
+<pre>#./run_tests.sh -m startpanel mypanel --dashboard=openstack_dashboard.dashboards.mydashboard --target=openstack_dashboard/dashboards/mydashboard/mypanel</pre>
+</li>
+</ul>
+<h3>Horizon Start Scripts</h3>
+<p>Dashboards are loaded through start scripts located under the horizon/openstack_dashboard/enabled directory. In this case I created a _50_integra.py. The number has to do with the order in which dashboards are loaded and rendered. It is similar to the pre-systemd concept of init scripts.</p>
+<ul>
+<li>
+<pre>#vi /opt/stack/horizon/openstack_dashboard/enabled/_50_integra.py</pre>
+</li>
+</ul>
+<ul>
+<li>
+<pre>DASHBOARD = 'integra'</pre>
+</li>
+<li>
+<pre>DISABLED = False</pre>
+</li>
+<li>
+<pre>ADD_INSTALLED_APPS = [ 'openstack_dashboard.dashboards.integra', ]</pre>
+</li>
+</ul>
+<h3>Code Examples</h3>
+<p>At this point let us dissect the code behind the dashboard itself and one of the dashboard panels. The code examples are derived from a project (Integra OpenStack UI ) that I am currently working on and are available in <a href="https://github.com/emitrom/integra-openstack-ui">Github</a>. This code is changing and influx so you might want to fork the repository from a known state.</p>
+<h4>Dashboard</h4>
+<p>Below is an example of a dashboard called Integra that contains four panels (Providers, Workflows, Schedules and Jobs).</p>
+<p>[code language="python"]<br />
+from django.utils.translation import ugettext_lazy as _</p>
+<p>import horizon</p>
+<p>class Providers(horizon.PanelGroup):<br />
+    slug = &quot;providers&quot;<br />
+    name = _(&quot;Providers&quot;)<br />
+    panels = ('providers',)</p>
+<p>class Workflows(horizon.PanelGroup):<br />
+    slug = &quot;workflows&quot;<br />
+    name = _(&quot;Workflows&quot;)<br />
+    panels = ('workflows',)</p>
+<p>class Schedules(horizon.PanelGroup):<br />
+    slug = &quot;schedules&quot;<br />
+    name = _(&quot;Schedules&quot;)<br />
+    panels = ('schedules',)</p>
+<p>class Jobs(horizon.PanelGroup):<br />
+    slug = &quot;jobs&quot;<br />
+    name = _(&quot;Jobs&quot;)<br />
+    panels = ('jobs',)</p>
+<p>class Integra(horizon.Dashboard):<br />
+    name = _(&quot;Integra&quot;)<br />
+    slug = &quot;integra&quot;<br />
+    panels = (Providers, Workflows, Schedules, Jobs)<br />
+    default_panel = 'providers'</p>
+<p>horizon.register(Integra)<br />
+[/code]</p>
+<p>The code is pretty straight forward. You have panel groups, panels and the horizon dashboard. Panels are organized under panel groups and then attached to the dashboard.</p>
+<p>The above code will create the following dashboard and panel structure in Horizon. The providers table is generated from code we will discuss next.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/02/openstack_horizon_dashboard_provider_view.jpg"><img class="alignnone  wp-image-626" src="/assets/2015/02/openstack_horizon_dashboard_provider_view.jpg?w=300" alt="OpenStack_Horizon_Dashboard_Provider_View" width="1354" height="307" /></a></p>
+<h4>Panel</h4>
+<p>Now lets dive into the panel "providers" that we have displayed above. In this case both the panel group and panel itself have the same name, but they don't have to and you can also of course have many panels.</p>
+<p>The providers panel renders a data table from a REST API endpoint. If we look closely at the image above we can not only see a list of providers from Integra but we can take actions such as deleting a provider or adding a new provider.</p>
+<p><strong>panel.py</strong></p>
+<p>The panel.py defines the panel and registers it with the dashboard, in this case Integra.</p>
+<p>[code language="python"]<br />
+from django.utils.translation import ugettext_lazy as _</p>
+<p>import horizon<br />
+from openstack_dashboard.dashboards.integra import dashboard</p>
+<p>class Providers(horizon.Panel):<br />
+    name = _(&quot;Providers&quot;)<br />
+    slug = &quot;providers&quot;</p>
+<p>dashboard.Integra.register(Providers)<br />
+[/code]</p>
+<p><strong>views.py</strong></p>
+<p>The views.py is responsible for dynamically rendering the panel frame. It is also responsible for rendering any actions that spawn a new frame. In this case we have the default view ProvidersIndexView that loads a table ProviderTable. The table then is defined in the tables.py.</p>
+<p>We also have an action in order to add a new provider that spawns a new frame. When the view AddProviderView is invoked, a workflow instead of a table class will be called. The workflow is defined under integra/providers/workflows/add_provider.py.</p>
+<p>[code language="python"]<br />
+from horizon import exceptions, tables, workflows, forms, tabs</p>
+<p>from openstack_dashboard.dashboards.integra.providers.tables import ProviderTable<br />
+from openstack_dashboard.dashboards.integra.providers import utils<br />
+from openstack_dashboard.dashboards.integra.providers.workflows.add_provider import AddProvider</p>
+<p>class ProvidersIndexView(tables.DataTableView):<br />
+    table_class = ProviderTable<br />
+    template_name = 'integra/providers/index.html'</p>
+<p>    def get_data(self):<br />
+        return utils.getProviders(self)</p>
+<p>class AddProviderView(workflows.WorkflowView):<br />
+    workflow_class = AddProvider</p>
+<p>    def get_initial(self):<br />
+        initial = super(AddProviderView, self).get_initial()<br />
+        return initial<br />
+[/code]</p>
+<p><strong>urls.py</strong></p>
+<p>The urls.py defines context URLs. A URL is required for the main panel frame and any new frames that are launching workflows. In our case we have two, the INDEX AND ADD_PROVIDER URLs. Notice that each URL is correlated with a view that is defined in the views.py.</p>
+<p>[code language="python"]<br />
+from django.conf.urls import patterns, url<br />
+from openstack_dashboard.dashboards.integra.providers import views</p>
+<p>INDEX_URL = r'^$'<br />
+ADD_PROVIDER_URL = r'^add'</p>
+<p>urlpatterns = patterns('openstack_dashboard.dashboards.integra.providers.views',<br />
+    url(INDEX_URL, views.ProvidersIndexView.as_view(), name='index'),<br />
+    url(ADD_PROVIDR_URL, views.AddProviderView.as_view(), name='add'),<br />
+)<br />
+[/code]</p>
+<p><strong>tables.py</strong></p>
+<p>The tables.py is responsible for the data table and providing user outputs. Our table displays Integra providers and allows for a couple of actions. It lets us add and delete a provider. It also lets us filter the provider list that is displayed.</p>
+<p>The AddTableData and DeleteTableData classes are both LinkActions. The AddTableData will launch a workflow that gathers user inputs. This is how we can add a new provider.</p>
+<p>The DeleteTableData class removes a provider from the provider table. Here we use the DeleteAction and call a method in the utils class. This method in turn makes a REST call to Integra in order to delete the specified provider.</p>
+<p>At the bottom the table structure is created and the actions are embedded into the providers table. The meta class is a special inner-class for Django data tables that allow us to configure various table options. Finally notice how the filter is added to the table, this is pretty standard and found in many places within Horizon.</p>
+<p>[code language="python"]<br />
+from django.utils.translation import ugettext_lazy as _</p>
+<p>from horizon import tables</p>
+<p>from openstack_dashboard.dashboards.integra.providers import utils</p>
+<p>class AddTableData(tables.LinkAction):<br />
+    name = &quot;add&quot;<br />
+    verbose_name = _(&quot;Add Provider&quot;)<br />
+    url = &quot;horizon:integra:providers:add&quot;<br />
+    classes = (&quot;btn-launch&quot;, &quot;ajax-modal&quot;)</p>
+<p>class DeleteTableData(tables.DeleteAction):<br />
+    data_type_singular = _(&quot;Provider&quot;)<br />
+    data_type_plural = _(&quot;Providers&quot;)</p>
+<p>    def delete(self, request, obj_id):<br />
+        utils.deleteProvider(self, obj_id)</p>
+<p>class FilterAction(tables.FilterAction):<br />
+    def filter(self, table, providers, filter_string):<br />
+        filterString = filter_string.lower()<br />
+        return [provider for provider in providers<br />
+                if filterString in provider.title.lower()]</p>
+<p>class UpdateRow(tables.Row):<br />
+    ajax = True</p>
+<p>    def get_data(self, request, post_id):<br />
+        pass</p>
+<p>class ProviderTable(tables.DataTable):<br />
+    id = tables.Column(&quot;id&quot;,<br />
+                          verbose_name=_(&quot;Id&quot;))</p>
+<p>    name = tables.Column(&quot;name&quot;,<br />
+                          verbose_name=_(&quot;Name&quot;))</p>
+<p>    description = tables.Column(&quot;description&quot;,<br />
+                          verbose_name=_(&quot;Description&quot;))</p>
+<p>    hostname = tables.Column(&quot;hostname&quot;,<br />
+                          verbose_name=_(&quot;Hostname&quot;))</p>
+<p>    port = tables.Column(&quot;port&quot;,<br />
+                          verbose_name=_(&quot;Port&quot;))</p>
+<p>    timeout = tables.Column(&quot;timeout&quot;,<br />
+                          verbose_name=_(&quot;Timeout&quot;))</p>
+<p>    secured = tables.Column(&quot;secured&quot;,<br />
+                          verbose_name=_(&quot;Secured&quot;))</p>
+<p>    class Meta:<br />
+        name = &quot;integra&quot;<br />
+        verbose_name = _(&quot;Providers&quot;)<br />
+        row_class = UpdateRow<br />
+        table_actions = (AddTableData,<br />
+                         FilterAction)<br />
+        row_actions = (DeleteTableData,)<br />
+[/code]</p>
+<p><strong>utils.py</strong></p>
+<p>The utils.py is a utility class. You can call it whatever you want, it is not required but in this case it is nice to separate the Integra REST calls from the rest of our Horizon application.</p>
+<p>Three methods are defined in order to delete a provider, add a provider and get a list of all providers. We have already talked about adding and deleting a provider. The getProviders method returns a list of providers from Integra through the REST API. We have created a Provider model class that understands the structure of a provider object. One really nice thing about Python is that it natively handles JSON marshaling and since Integra returns JSON things are in this case quite simple.</p>
+<p>[code language="python"]<br />
+import traceback<br />
+import time<br />
+from time import mktime<br />
+from datetime import datetime<br />
+from requests.auth import HTTPBasicAuth</p>
+<p>from django.template.defaultfilters import register<br />
+from django.utils.translation import ugettext_lazy as _<br />
+import requests</p>
+<p>from horizon import exceptions</p>
+<p>requests.packages.urllib3.disable_warnings()</p>
+<p>integra_url = &quot;https://localhost:8443/rest&quot;<br />
+json_headers = {'Accept': 'application/json'}</p>
+<p>class Provider:<br />
+    &quot;&quot;&quot;<br />
+    Provider data<br />
+    &quot;&quot;&quot;</p>
+<p>    def __init__(self, id, name, description, hostname, port, timeout, secured):<br />
+        self.id = id<br />
+        self.name = name<br />
+        self.description = description<br />
+        self.hostname = hostname<br />
+        self.port = port<br />
+        self.timeout = timeout<br />
+        self.secured = secured</p>
+<p>def getProviders(self):<br />
+    try:<br />
+        r = requests.get(integra_url + &quot;/providers&quot;, verify=False, auth=HTTPBasicAuth('admin', 'integra'), headers=json_headers)</p>
+<p>        providers = []<br />
+        for provider in r.json()['providers']:<br />
+            providers.append(Provider(provider[u'id'], provider[u'name'], provider[u'description'], provider[u'hostname'], provider[u'port'], provider[u'timeout'], provider[u'secured']))</p>
+<p>        return providers</p>
+<p>    except:<br />
+        exceptions.handle(self.request,<br />
+                          _('Unable to get providers'))<br />
+        return []</p>
+<p># request - horizon environment settings<br />
+# context - user inputs from form<br />
+def addProvider(self, request, context):<br />
+    try:</p>
+<p>        name = context.get('name')<br />
+        description = context.get('description')<br />
+        hostname = context.get('hostname')<br />
+        port = context.get('port')<br />
+        timeout = context.get('timeout')<br />
+        secured = context.get('secured')</p>
+<p>        payload = {'name': name, 'description': description, 'hostname': hostname, 'port': port, 'timeout': timeout, 'secured': secured}<br />
+        requests.post(integra_url + &quot;/providers&quot;, json=payload, verify=False, auth=HTTPBasicAuth('admin', 'integra'), headers=json_headers)</p>
+<p>    except:<br />
+        print &quot;Exception inside utils.addProvider&quot;<br />
+        print traceback.format_exc()<br />
+        exceptions.handle(self.request,<br />
+                          _('Unable to add provider'))<br />
+        return []</p>
+<p># id is required for table<br />
+def deleteProvider(self, id):<br />
+    try:</p>
+<p>        requests.delete(integra_url + &quot;/providers/&quot; + id, verify=False, auth=HTTPBasicAuth('admin', 'integra'), headers=json_headers)</p>
+<p>    except:<br />
+        print &quot;Exception inside utils.deleteProvider&quot;<br />
+        print traceback.format_exc()<br />
+        exceptions.handle(self.request,<br />
+                          _('Unable to delete provider'))<br />
+        return False<br />
+[/code]</p>
+<p><strong>add_provider.py</strong></p>
+<p>The add_provider.py is a workflow that contains a single workflow step. This is the workflow that is called when we add a new provider. It is responsible for getting user input.</p>
+<p>The AddProvider class executes when the workflow is called. It calls the SetAddProviderDetails class which then calls the SetAddProviderDetailsAction class and returns the user inputs within the context object.</p>
+<p>[code language="python"]<br />
+import traceback</p>
+<p>from horizon import workflows, forms, exceptions<br />
+from django.utils.translation import ugettext_lazy as _</p>
+<p>from openstack_dashboard.dashboards.integra.providers import utils</p>
+<p>class SetAddProviderDetailsAction(workflows.Action):</p>
+<p>    name = forms.CharField(<br />
+        label=_(&quot;Name&quot;),<br />
+        required=True,<br />
+        max_length=80,<br />
+        help_text=_(&quot;Name&quot;))</p>
+<p>    description = forms.CharField(<br />
+        label=_(&quot;Description&quot;),<br />
+        required=True,<br />
+        max_length=120,<br />
+        help_text=_(&quot;Description&quot;))</p>
+<p>    hostname = forms.CharField(<br />
+        label=_(&quot;Hostname&quot;),<br />
+        required=True,<br />
+        max_length=120,<br />
+        help_text=_(&quot;Hostname&quot;))</p>
+<p>    port = forms.IntegerField(<br />
+        label=_(&quot;Port&quot;),<br />
+        required=True,<br />
+        min_value=1,<br />
+        max_value=65535,<br />
+        help_text=_(&quot;Port&quot;))</p>
+<p>    timeout = forms.IntegerField(<br />
+        label=_(&quot;Timeout&quot;),<br />
+        required=True,<br />
+        min_value=1,<br />
+        max_value=100000,<br />
+        help_text=_(&quot;Timeout&quot;))</p>
+<p>    secured = forms.BooleanField(<br />
+        label=_(&quot;Secured&quot;),<br />
+        required=False,<br />
+        help_text=_(&quot;Secured&quot;))</p>
+<p>    class Meta:<br />
+        name = _(&quot;Details&quot;)</p>
+<p>    def __init__(self, request, context, *args, **kwargs):<br />
+        self.request = request<br />
+        self.context = context<br />
+        super(SetProviderDetailsAction, self).__init__(<br />
+            request, context, *args, **kwargs)</p>
+<p>class SetAddProviderDetails(workflows.Step):<br />
+    action_class = SetAddProviderDetailsAction<br />
+    contributes = (&quot;name&quot;, &quot;description&quot;, &quot;hostname&quot;, &quot;port&quot;, &quot;timeout&quot;, &quot;secured&quot;)</p>
+<p>    def contribute(self, data, context):<br />
+        if data:<br />
+            context['name'] = data.get(&quot;name&quot;, &quot;&quot;)<br />
+            context['description'] = data.get(&quot;description&quot;, &quot;&quot;)<br />
+            context['hostname'] = data.get(&quot;hostname&quot;, &quot;&quot;)<br />
+            context['port'] = data.get(&quot;port&quot;, &quot;&quot;)<br />
+            context['timeout'] = data.get(&quot;timeout&quot;, &quot;&quot;)<br />
+            context['secured'] = data.get(&quot;secured&quot;, &quot;&quot;)<br />
+        return context</p>
+<p>class AddProvider(workflows.Workflow):<br />
+    slug = &quot;add&quot;<br />
+    name = _(&quot;Add&quot;)<br />
+    finalize_button_name = _(&quot;Add&quot;)<br />
+    success_message = _('Added provider &quot;%s&quot;.')<br />
+    failure_message = _('Unable to add provider &quot;%s&quot;.')<br />
+    success_url = &quot;horizon:integra:providers:index&quot;<br />
+    failure_url = &quot;horizon:integra:providers:index&quot;<br />
+    default_steps = (SetAddProviderDetails,)</p>
+<p>    def format_status_message(self, message):<br />
+         return message % self.context.get('name', 'unknown provider')</p>
+<p>    def handle(self, request, context):<br />
+        try:<br />
+            utils.addProvider(self, request, context)<br />
+            return True<br />
+        except Exception:<br />
+            print traceback.format_exc()<br />
+            exceptions.handle(request, _(&quot;Unable to add provider&quot;))<br />
+            return False<br />
+[/code]</p>
+<p>Below we can see the above code in action.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/02/openstack_horizon_dashboard_add_provider.jpg"><img class="alignnone  wp-image-632" src="/assets/2015/02/openstack_horizon_dashboard_add_provider.jpg?w=300" alt="OpenStack_Horizon_Dashboard_Add_Provider" width="714" height="276" /></a></p>
+<h4>Dynamic Inputs</h4>
+<p>So far we have seen how we can build static input forms using CharField, IntegerChield or BooleanField. Next lets look at how to create dynamic inputs within workflows using ChoiceField. In our utils.py we already have an method getProviders that returns a list of provider objects. In addition we will add a new method for returning a list of provider actions.</p>
+<p><strong>utils.py</strong></p>
+<p>[code language="python"]<br />
+def getProviders(self):<br />
+    try:</p>
+<p>        r = requests.get(integra_url + &quot;/providers&quot;, verify=False, auth=HTTPBasicAuth('admin', 'integra'), headers=json_headers)</p>
+<p>        providers = []<br />
+        for provider in r.json()['providers']:<br />
+            providers.append(ProviderAction(provider[u'id'], provider[u'name'], provider[u'description']))</p>
+<p>        return providers</p>
+<p>    except:<br />
+        exceptions.handle(self.request,<br />
+                          _('Unable to retrieve list of posts.'))<br />
+        return []</p>
+<p>def getProviderActions(self):<br />
+    try:</p>
+<p>        r = requests.get(integra_url + &quot;/provider_actions/&quot; + id, verify=False, auth=HTTPBasicAuth('admin', 'integra'), headers=json_headers)</p>
+<p>        providerActions = []<br />
+        for providerAction in r.json()['providerActions']:<br />
+            providerActions.append(ProviderAction(providerAction[u'id'], providerAction[u'name'], providerAction[u'description']))</p>
+<p>        return providerActions</p>
+<p>    except:<br />
+        exceptions.handle(self.request,<br />
+                          _('Unable to retrieve list of posts.'))<br />
+        return []<br />
+[/code]</p>
+<p>In our workflow action we can get a list of provider action objects and display them to the user using a ChoiceField. Notice the ChoiceField requires the id and name. Only the name is displayed but the id is required for mapping purposes.</p>
+<p><strong>add_workflow_action.py</strong></p>
+<p>[code language="python"]</p>
+<p>class SetAddDetailsAction(workflows.Action):</p>
+<p>    providerActionsChoices = [(providerAction.id, providerAction.name) for providerAction in providerActions]<br />
+    providerChoices = [(provider.id, provider.name) for provider in providers]</p>
+<p>    name = forms.CharField(<br />
+        label=_(&quot;Name&quot;),<br />
+        required=True,<br />
+        max_length=80,<br />
+        help_text=_(&quot;Name&quot;))</p>
+<p>    description = forms.CharField(<br />
+        label=_(&quot;Description&quot;),<br />
+        required=True,<br />
+        max_length=120,<br />
+        help_text=_(&quot;Description&quot;))</p>
+<p>    provider = forms.ChoiceField(<br />
+        label=_(&quot;Providers&quot;),<br />
+        choices=providerChoices,<br />
+        required=True,<br />
+        help_text=_(&quot;Providers&quot;))</p>
+<p>    action = forms.ChoiceField(<br />
+        label=_(&quot;Provider Actions&quot;),<br />
+        choices=providerActionsChoices,<br />
+        required=True,<br />
+        help_text=_(&quot;Provider Actions&quot;))<br />
+[/code]</p>
+<p>Below we can see two dynamic fields being generated. Both populate the ChoiceField from dynamic data that is recieved from the Integra REST API.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/02/openstack_horizon_provider_actions.jpg"><img class="alignnone  wp-image-702" src="/assets/2015/02/openstack_horizon_provider_actions.jpg?w=300" alt="OpenStack_Horizon_Provider_Actions" width="1377" height="505" /></a></p>
+<h3>Conclusion</h3>
+<p>OpenStack Horizon is a powerful web-framework built on Django that is easily extended and Integra is a powerful provider based automation framework. We have seen how easy it is to create our own Horizon dashboard and interface with services outside of OpenStack through RESTful APIs. The above examples can be followed to accomplish virtually anything. Horizon is a glimpse into the future of infrastructure single-pane-of-glass management. This has been something we have been promised for years from the proprietary vendors and only now with OpenStack Horizon do we have some real hope.</p>
+<p>If you are working on Horizon dashboards or have feedback I would love to hear about it?</p>
+<p>Happy Stacking!</p>
+<p>(c) 2015 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#dashboard" class="page__taxonomy-item" rel="tag">Dashboard</a><span class="sep">, </span>
+    
+      <a href="/tags/#horizon" class="page__taxonomy-item" rel="tag">Horizon</a><span class="sep">, </span>
+    
+      <a href="/tags/#openstack" class="page__taxonomy-item" rel="tag">OpenStack</a><span class="sep">, </span>
+    
+      <a href="/tags/#python" class="page__taxonomy-item" rel="tag">Python</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openstack" class="page__taxonomy-item" rel="tag">OpenStack</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2015-02-16T00:00:00-08:00">February 16, 2015</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Building+Custom+Dashboards+in+OpenStack+Horizon%20https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fbuilding-custom-dashboards-in-openstack-horizon%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fbuilding-custom-dashboards-in-openstack-horizon%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fbuilding-custom-dashboards-in-openstack-horizon%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openstack/openstack-multiple-node-configurations/" class="pagination--pager" title="OpenStack Multiple Node Configurations
+">Previous</a>
+    
+    
+      <a href="/openstack/enterprise-openstack-rhel-osp/" class="pagination--pager" title="Enterprise OpenStack: RHEL OSP
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

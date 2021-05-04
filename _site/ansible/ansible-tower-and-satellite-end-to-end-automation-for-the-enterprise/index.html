@@ -1,0 +1,848 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Ansible Tower and Satellite: End to End Automation for the Enterprise - KEITHTENZER.COM</title>
+<meta name="description" content="Overview In this article we will look at how Ansible Tower and Red Hat Satellite 6 integrate with one another, providing end-to-end automation for the enterprise. Satellite is a systems management tool that combines several popular opensource projects: Foreman (provisioning), Katello (content repository), Pulp (database), Candlepin (subscription management) and Puppet (configuration management). While puppet is directly integrated into Satellite, many organizations would rather use Ansible because of its power, simplicity and ease-of-use. Ansible Tower integrates with Satellite, allowing organizations to run playbooks against the hierarchy and groups of servers defined in Satellite. Additionally, Ansible Tower can dynamically update its inventories with hosts and their updated facts from Satellite at anytime. Hosts show up in Ansible Tower under the groups defined by Satellite. This allows organizations to use Satellite to define their infrastructure, provision hosts, provide patch management while leveraging Ansible to deploy and manage software configuration. It also allows other teams the ability to run playbooks and automation against the infrastructure defined by Satellite. Personally I am a huge fan of this loose coupling and find this solution much more advantageous than a direct coupling of Ansible in Satellite.  Prerequisites In order to get up and running, Satellite and Ansible Tower are required. Below are guide to get you going in case you don&#39;t have environments.  Satellite 6 Configuration Guide Ansible Tower Configuration Guide  For those that are just using foreman and not Satellite, I haven&#39;t tried it but let me know if it works. If not there is a Foreman Ansible dynamic inventory that can be added into Ansible Tower. Satellite Configuration In Satellite we need to provision a host or bootstrap an existing host. In this example I have simply setup a host with RHEL 7.3 and then connected it to Satellite environment via bootstrapping. [On RHEL Host] Install Katello package from Satellite server. # rpm -Uvh http://sat6.lab.com/pub/katello-ca-consumer-latest.noarch.rpm  Subscribe using activation key. # subscription-manager register --org=&quot;Default_Organization&quot; --activationkey=&quot;DEV_CORE&quot; Enable Satellite tools repository and install katello agent. # yum -y install --enablerepo rhel-7-server-satellite-tools-6.2-rpms katello-agent Once bootstrapping is complete, the host should show up under Hosts-&gt;All Hosts in Satellite. In this case the host in question is called &#39;soetest.lab&#39;. Note the list of hosts as when we do an inventory in Ansible we will automagically see them, their groups and facts, all from Satellite.  Ansible Tower Configuration Now that we have a few hosts configured in Satellite and our example host &#39;soetest.lab&#39;, we can setup Ansible Tower. Again the idea is to use Satellite for provisioning and patch management, then Ansible for everything else while taking advantage of the hierarchy as well as host facts from Satellite. [Ansible Tower] Create a new project A project in tower points to source code management (in this case Git) and provides various options. In this case we checked &quot;Update on Launch&quot;. This means if a playbook is launched from project (Git repository), Ansible Tower will do SCM update and get latest version of playbook (git pull). Also note a branch can be provided, it is left blank which for Git defaults to the main branch.  Once project is added we can see last update and also the revision.  Add Credentials Ansible Tower allows for securely storing credentials. There are three different types of credentials: machine, cloud and network. In this case we need machine credentials to connect to our host &#39;soetest.lab&#39; in order to run playbooks. In addition to dynamically get inventory of hosts from Satellite, including host facts such as IP (which is required), cloud credentials are needed to connect to Satellite. For those of you used to defining static inventories with IPs, the light should now being going on. Add Machine Credential Ansible Tower can store either user/password or ssh private key. Most likely you would want to use private key but here I chose to use user/password.  Add Cloud Credential In order to communicate with Satellite and dynamically inventory hosts from Satellite, cloud credentials for Satellite are required. Ansible Tower supports many cloud platforms out-of-box (VMware, AWS, GCE, Azure, OpenStack, CloudForms and Rackspace).  Once credentials have been defined we can create inventories. Create Inventory An inventory is a hierarchy and you can have groups that have sub-groups, it is really flexibly. In this example we create an inventory called Datacenter. Under Datacenter a group is created for all hosts that are part of Satellite environment. Windows systems could be inventoried in a separate group from Satellite servers under Datacenter for example. Create Datacenter Inventory  Create Satellite Inventory Group under Datacenter When adding Satellite inventory we would select source &quot;Red Hat Satellite 6&quot; and our cloud credential for Satellite. In addition we select &quot;Update on Launch&quot;. This ensures when a playbook is run against Satellite inventory that the hosts are dynamically updated prior to execution of playbook. Let&#39;s say hosts are using DHCP and IPs of our hosts changed. Normally this would be an issue but with dynamic inventory, host IP is updated and Ansible playbook runs without issues.  Once Satellite inventory is added we can click the sync button next to &quot;Satellite Hosts&quot;. Doing so will manually sync hosts. On the right we then see the hosts, the same hosts we saw under &quot;All Hosts&quot; in Satellite.  In addition if we click on host, the facts provided by Satellite are also displayed in YAML or JSON. Any host facts in Satellite can be used directly in our playbooks or as limit rules as we will see. Limit rules allow you to limit hosts within an inventory. In this example we limit the playbook to the Satellite hostgroup &quot;RHEL_7_Dev_Servers&quot; which is a parameter provided by the host facts.  If we look under Satellite group we see the groups and hierarchy imported from Satellite. Not just hostgroups but lifecycle environments are also imported.  If we click on &quot;foreman_hostgroup_rhel_7_dev_servers&quot; (hostgroup), we see just the one host soetest.lab that is associated to that hostgroup in Satellite. Again these relationships are all defined in Satellite and automatically imported into Ansible Tower.  Create Job Template In Ansible Tower a job template brings together a playbook located within a project with an inventory and credentials. Here we have selected the playbook http_simple. This playbook will setup a webserver and use information from satellite to setup website (more on this later). In this example we have also set a limit rule to limit the run of the playbook to hosts that are part of the Satellite hostgroup &quot;RHEL 7 Dev Servers&quot;.  Create Survey Survey&#39;s in Ansible Tower are optional but provide opportunity to ask the user for input. In this example we ask for a username. The username will then be displayed in the website dynamically to show how to use survey parameters inside playbooks.  Run Job Template By clicking on the rocket, a job template can be manually started. Job templates can also be scheduled and Ansible Tower offers an integrated scheduler that can even balance jobs across multiple Tower servers in HA setup.  After launching job we are prompted for limit. The default is our satellite hostgroup. You can decide if you want to prompt and allow users to change limits.  Once we accept limit we are prompted with our survey. Here we need to enter username. The username has a variable associated &quot;survey_username&quot; and we can use this to display or use the input in our playbook.  Once job is started we are brought to the job status. On the left we can see our limit and survey username as extra variables. On the right we see the tasks that were executed in our playbook. We also see summary of tasks where something changed, failed or was unreachable. We see the hosts where the playbook was run, we had just one host since our hostgroup (limit rule) only defined one host. The reports are available for all jobs and we can trace them back to user who ran them. Users running jobs don&#39;t need to have access to systems or even have credentials. This is a huge advantage for compliance and auditing.  If we look at jobs, we will see three jobs. Our SCM (Git) was updated, then our host inventory (Satellite) was dynamically updated and finally the playbook ran.  After playbook run completes we can view our website. Here we see the hostname and IP. These are coming from the foreman facts in Satellite. In addition we see our username from the survey.  The implementation for this dynamic web page can be found here or below. &lt;html&gt;  &lt;head&gt;  &lt;title&gt;Ansible Application&lt;/title&gt;  &lt;/head&gt;  &lt;body&gt;  &lt;/br&gt;  &lt;a href=http:///index.html&gt;Homepage&lt;/a&gt;  &lt;/br&gt; &lt;?php   Print &quot;Hello, World! I am a web server configured using Ansible and I am : &quot;;  echo exec(&#39;hostname&#39;);  Print &quot;&lt;/BR&gt;&quot;;  Print &quot;My ip address imported from foreman facts is : &quot;;  echo &quot;&#39;&#39;&quot;;  Print &quot;&lt;/BR&gt;&quot;;  Print &quot;My username from survey is : &quot;;  echo &quot;&#39;&#39;&quot;;  Print &quot;&lt;/BR&gt;&quot;; ?&gt; &lt;/body&gt; &lt;/html&gt; Summary In this article we have discussed the value for integrating Satellite and Ansible Tower. We have seen how to configure a basic host in Satellite for patch management. Using Ansible Tower we were able to dynamically get not only hosts and their associated groups from Satellite but also the host facts. We were able to run a playbook against a group of hosts in Satellite using a limit rule. Finally using survey and facts we observed how to easily reuse external parameters withing our playbooks. Happy Automating with Ansible Tower and Satellite! (c) 2017 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Ansible Tower and Satellite: End to End Automation for the Enterprise">
+<meta property="og:url" content="https://keithtenzer.com/ansible/ansible-tower-and-satellite-end-to-end-automation-for-the-enterprise/">
+
+
+  <meta property="og:description" content="Overview In this article we will look at how Ansible Tower and Red Hat Satellite 6 integrate with one another, providing end-to-end automation for the enterprise. Satellite is a systems management tool that combines several popular opensource projects: Foreman (provisioning), Katello (content repository), Pulp (database), Candlepin (subscription management) and Puppet (configuration management). While puppet is directly integrated into Satellite, many organizations would rather use Ansible because of its power, simplicity and ease-of-use. Ansible Tower integrates with Satellite, allowing organizations to run playbooks against the hierarchy and groups of servers defined in Satellite. Additionally, Ansible Tower can dynamically update its inventories with hosts and their updated facts from Satellite at anytime. Hosts show up in Ansible Tower under the groups defined by Satellite. This allows organizations to use Satellite to define their infrastructure, provision hosts, provide patch management while leveraging Ansible to deploy and manage software configuration. It also allows other teams the ability to run playbooks and automation against the infrastructure defined by Satellite. Personally I am a huge fan of this loose coupling and find this solution much more advantageous than a direct coupling of Ansible in Satellite.  Prerequisites In order to get up and running, Satellite and Ansible Tower are required. Below are guide to get you going in case you don&#39;t have environments.  Satellite 6 Configuration Guide Ansible Tower Configuration Guide  For those that are just using foreman and not Satellite, I haven&#39;t tried it but let me know if it works. If not there is a Foreman Ansible dynamic inventory that can be added into Ansible Tower. Satellite Configuration In Satellite we need to provision a host or bootstrap an existing host. In this example I have simply setup a host with RHEL 7.3 and then connected it to Satellite environment via bootstrapping. [On RHEL Host] Install Katello package from Satellite server. # rpm -Uvh http://sat6.lab.com/pub/katello-ca-consumer-latest.noarch.rpm  Subscribe using activation key. # subscription-manager register --org=&quot;Default_Organization&quot; --activationkey=&quot;DEV_CORE&quot; Enable Satellite tools repository and install katello agent. # yum -y install --enablerepo rhel-7-server-satellite-tools-6.2-rpms katello-agent Once bootstrapping is complete, the host should show up under Hosts-&gt;All Hosts in Satellite. In this case the host in question is called &#39;soetest.lab&#39;. Note the list of hosts as when we do an inventory in Ansible we will automagically see them, their groups and facts, all from Satellite.  Ansible Tower Configuration Now that we have a few hosts configured in Satellite and our example host &#39;soetest.lab&#39;, we can setup Ansible Tower. Again the idea is to use Satellite for provisioning and patch management, then Ansible for everything else while taking advantage of the hierarchy as well as host facts from Satellite. [Ansible Tower] Create a new project A project in tower points to source code management (in this case Git) and provides various options. In this case we checked &quot;Update on Launch&quot;. This means if a playbook is launched from project (Git repository), Ansible Tower will do SCM update and get latest version of playbook (git pull). Also note a branch can be provided, it is left blank which for Git defaults to the main branch.  Once project is added we can see last update and also the revision.  Add Credentials Ansible Tower allows for securely storing credentials. There are three different types of credentials: machine, cloud and network. In this case we need machine credentials to connect to our host &#39;soetest.lab&#39; in order to run playbooks. In addition to dynamically get inventory of hosts from Satellite, including host facts such as IP (which is required), cloud credentials are needed to connect to Satellite. For those of you used to defining static inventories with IPs, the light should now being going on. Add Machine Credential Ansible Tower can store either user/password or ssh private key. Most likely you would want to use private key but here I chose to use user/password.  Add Cloud Credential In order to communicate with Satellite and dynamically inventory hosts from Satellite, cloud credentials for Satellite are required. Ansible Tower supports many cloud platforms out-of-box (VMware, AWS, GCE, Azure, OpenStack, CloudForms and Rackspace).  Once credentials have been defined we can create inventories. Create Inventory An inventory is a hierarchy and you can have groups that have sub-groups, it is really flexibly. In this example we create an inventory called Datacenter. Under Datacenter a group is created for all hosts that are part of Satellite environment. Windows systems could be inventoried in a separate group from Satellite servers under Datacenter for example. Create Datacenter Inventory  Create Satellite Inventory Group under Datacenter When adding Satellite inventory we would select source &quot;Red Hat Satellite 6&quot; and our cloud credential for Satellite. In addition we select &quot;Update on Launch&quot;. This ensures when a playbook is run against Satellite inventory that the hosts are dynamically updated prior to execution of playbook. Let&#39;s say hosts are using DHCP and IPs of our hosts changed. Normally this would be an issue but with dynamic inventory, host IP is updated and Ansible playbook runs without issues.  Once Satellite inventory is added we can click the sync button next to &quot;Satellite Hosts&quot;. Doing so will manually sync hosts. On the right we then see the hosts, the same hosts we saw under &quot;All Hosts&quot; in Satellite.  In addition if we click on host, the facts provided by Satellite are also displayed in YAML or JSON. Any host facts in Satellite can be used directly in our playbooks or as limit rules as we will see. Limit rules allow you to limit hosts within an inventory. In this example we limit the playbook to the Satellite hostgroup &quot;RHEL_7_Dev_Servers&quot; which is a parameter provided by the host facts.  If we look under Satellite group we see the groups and hierarchy imported from Satellite. Not just hostgroups but lifecycle environments are also imported.  If we click on &quot;foreman_hostgroup_rhel_7_dev_servers&quot; (hostgroup), we see just the one host soetest.lab that is associated to that hostgroup in Satellite. Again these relationships are all defined in Satellite and automatically imported into Ansible Tower.  Create Job Template In Ansible Tower a job template brings together a playbook located within a project with an inventory and credentials. Here we have selected the playbook http_simple. This playbook will setup a webserver and use information from satellite to setup website (more on this later). In this example we have also set a limit rule to limit the run of the playbook to hosts that are part of the Satellite hostgroup &quot;RHEL 7 Dev Servers&quot;.  Create Survey Survey&#39;s in Ansible Tower are optional but provide opportunity to ask the user for input. In this example we ask for a username. The username will then be displayed in the website dynamically to show how to use survey parameters inside playbooks.  Run Job Template By clicking on the rocket, a job template can be manually started. Job templates can also be scheduled and Ansible Tower offers an integrated scheduler that can even balance jobs across multiple Tower servers in HA setup.  After launching job we are prompted for limit. The default is our satellite hostgroup. You can decide if you want to prompt and allow users to change limits.  Once we accept limit we are prompted with our survey. Here we need to enter username. The username has a variable associated &quot;survey_username&quot; and we can use this to display or use the input in our playbook.  Once job is started we are brought to the job status. On the left we can see our limit and survey username as extra variables. On the right we see the tasks that were executed in our playbook. We also see summary of tasks where something changed, failed or was unreachable. We see the hosts where the playbook was run, we had just one host since our hostgroup (limit rule) only defined one host. The reports are available for all jobs and we can trace them back to user who ran them. Users running jobs don&#39;t need to have access to systems or even have credentials. This is a huge advantage for compliance and auditing.  If we look at jobs, we will see three jobs. Our SCM (Git) was updated, then our host inventory (Satellite) was dynamically updated and finally the playbook ran.  After playbook run completes we can view our website. Here we see the hostname and IP. These are coming from the foreman facts in Satellite. In addition we see our username from the survey.  The implementation for this dynamic web page can be found here or below. &lt;html&gt;  &lt;head&gt;  &lt;title&gt;Ansible Application&lt;/title&gt;  &lt;/head&gt;  &lt;body&gt;  &lt;/br&gt;  &lt;a href=http:///index.html&gt;Homepage&lt;/a&gt;  &lt;/br&gt; &lt;?php   Print &quot;Hello, World! I am a web server configured using Ansible and I am : &quot;;  echo exec(&#39;hostname&#39;);  Print &quot;&lt;/BR&gt;&quot;;  Print &quot;My ip address imported from foreman facts is : &quot;;  echo &quot;&#39;&#39;&quot;;  Print &quot;&lt;/BR&gt;&quot;;  Print &quot;My username from survey is : &quot;;  echo &quot;&#39;&#39;&quot;;  Print &quot;&lt;/BR&gt;&quot;; ?&gt; &lt;/body&gt; &lt;/html&gt; Summary In this article we have discussed the value for integrating Satellite and Ansible Tower. We have seen how to configure a basic host in Satellite for patch management. Using Ansible Tower we were able to dynamically get not only hosts and their associated groups from Satellite but also the host facts. We were able to run a playbook against a group of hosts in Satellite using a limit rule. Finally using survey and facts we observed how to easily reuse external parameters withing our playbooks. Happy Automating with Ansible Tower and Satellite! (c) 2017 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Ansible Tower and Satellite: End to End Automation for the Enterprise">
+  <meta name="twitter:description" content="Overview In this article we will look at how Ansible Tower and Red Hat Satellite 6 integrate with one another, providing end-to-end automation for the enterprise. Satellite is a systems management tool that combines several popular opensource projects: Foreman (provisioning), Katello (content repository), Pulp (database), Candlepin (subscription management) and Puppet (configuration management). While puppet is directly integrated into Satellite, many organizations would rather use Ansible because of its power, simplicity and ease-of-use. Ansible Tower integrates with Satellite, allowing organizations to run playbooks against the hierarchy and groups of servers defined in Satellite. Additionally, Ansible Tower can dynamically update its inventories with hosts and their updated facts from Satellite at anytime. Hosts show up in Ansible Tower under the groups defined by Satellite. This allows organizations to use Satellite to define their infrastructure, provision hosts, provide patch management while leveraging Ansible to deploy and manage software configuration. It also allows other teams the ability to run playbooks and automation against the infrastructure defined by Satellite. Personally I am a huge fan of this loose coupling and find this solution much more advantageous than a direct coupling of Ansible in Satellite.  Prerequisites In order to get up and running, Satellite and Ansible Tower are required. Below are guide to get you going in case you don&#39;t have environments.  Satellite 6 Configuration Guide Ansible Tower Configuration Guide  For those that are just using foreman and not Satellite, I haven&#39;t tried it but let me know if it works. If not there is a Foreman Ansible dynamic inventory that can be added into Ansible Tower. Satellite Configuration In Satellite we need to provision a host or bootstrap an existing host. In this example I have simply setup a host with RHEL 7.3 and then connected it to Satellite environment via bootstrapping. [On RHEL Host] Install Katello package from Satellite server. # rpm -Uvh http://sat6.lab.com/pub/katello-ca-consumer-latest.noarch.rpm  Subscribe using activation key. # subscription-manager register --org=&quot;Default_Organization&quot; --activationkey=&quot;DEV_CORE&quot; Enable Satellite tools repository and install katello agent. # yum -y install --enablerepo rhel-7-server-satellite-tools-6.2-rpms katello-agent Once bootstrapping is complete, the host should show up under Hosts-&gt;All Hosts in Satellite. In this case the host in question is called &#39;soetest.lab&#39;. Note the list of hosts as when we do an inventory in Ansible we will automagically see them, their groups and facts, all from Satellite.  Ansible Tower Configuration Now that we have a few hosts configured in Satellite and our example host &#39;soetest.lab&#39;, we can setup Ansible Tower. Again the idea is to use Satellite for provisioning and patch management, then Ansible for everything else while taking advantage of the hierarchy as well as host facts from Satellite. [Ansible Tower] Create a new project A project in tower points to source code management (in this case Git) and provides various options. In this case we checked &quot;Update on Launch&quot;. This means if a playbook is launched from project (Git repository), Ansible Tower will do SCM update and get latest version of playbook (git pull). Also note a branch can be provided, it is left blank which for Git defaults to the main branch.  Once project is added we can see last update and also the revision.  Add Credentials Ansible Tower allows for securely storing credentials. There are three different types of credentials: machine, cloud and network. In this case we need machine credentials to connect to our host &#39;soetest.lab&#39; in order to run playbooks. In addition to dynamically get inventory of hosts from Satellite, including host facts such as IP (which is required), cloud credentials are needed to connect to Satellite. For those of you used to defining static inventories with IPs, the light should now being going on. Add Machine Credential Ansible Tower can store either user/password or ssh private key. Most likely you would want to use private key but here I chose to use user/password.  Add Cloud Credential In order to communicate with Satellite and dynamically inventory hosts from Satellite, cloud credentials for Satellite are required. Ansible Tower supports many cloud platforms out-of-box (VMware, AWS, GCE, Azure, OpenStack, CloudForms and Rackspace).  Once credentials have been defined we can create inventories. Create Inventory An inventory is a hierarchy and you can have groups that have sub-groups, it is really flexibly. In this example we create an inventory called Datacenter. Under Datacenter a group is created for all hosts that are part of Satellite environment. Windows systems could be inventoried in a separate group from Satellite servers under Datacenter for example. Create Datacenter Inventory  Create Satellite Inventory Group under Datacenter When adding Satellite inventory we would select source &quot;Red Hat Satellite 6&quot; and our cloud credential for Satellite. In addition we select &quot;Update on Launch&quot;. This ensures when a playbook is run against Satellite inventory that the hosts are dynamically updated prior to execution of playbook. Let&#39;s say hosts are using DHCP and IPs of our hosts changed. Normally this would be an issue but with dynamic inventory, host IP is updated and Ansible playbook runs without issues.  Once Satellite inventory is added we can click the sync button next to &quot;Satellite Hosts&quot;. Doing so will manually sync hosts. On the right we then see the hosts, the same hosts we saw under &quot;All Hosts&quot; in Satellite.  In addition if we click on host, the facts provided by Satellite are also displayed in YAML or JSON. Any host facts in Satellite can be used directly in our playbooks or as limit rules as we will see. Limit rules allow you to limit hosts within an inventory. In this example we limit the playbook to the Satellite hostgroup &quot;RHEL_7_Dev_Servers&quot; which is a parameter provided by the host facts.  If we look under Satellite group we see the groups and hierarchy imported from Satellite. Not just hostgroups but lifecycle environments are also imported.  If we click on &quot;foreman_hostgroup_rhel_7_dev_servers&quot; (hostgroup), we see just the one host soetest.lab that is associated to that hostgroup in Satellite. Again these relationships are all defined in Satellite and automatically imported into Ansible Tower.  Create Job Template In Ansible Tower a job template brings together a playbook located within a project with an inventory and credentials. Here we have selected the playbook http_simple. This playbook will setup a webserver and use information from satellite to setup website (more on this later). In this example we have also set a limit rule to limit the run of the playbook to hosts that are part of the Satellite hostgroup &quot;RHEL 7 Dev Servers&quot;.  Create Survey Survey&#39;s in Ansible Tower are optional but provide opportunity to ask the user for input. In this example we ask for a username. The username will then be displayed in the website dynamically to show how to use survey parameters inside playbooks.  Run Job Template By clicking on the rocket, a job template can be manually started. Job templates can also be scheduled and Ansible Tower offers an integrated scheduler that can even balance jobs across multiple Tower servers in HA setup.  After launching job we are prompted for limit. The default is our satellite hostgroup. You can decide if you want to prompt and allow users to change limits.  Once we accept limit we are prompted with our survey. Here we need to enter username. The username has a variable associated &quot;survey_username&quot; and we can use this to display or use the input in our playbook.  Once job is started we are brought to the job status. On the left we can see our limit and survey username as extra variables. On the right we see the tasks that were executed in our playbook. We also see summary of tasks where something changed, failed or was unreachable. We see the hosts where the playbook was run, we had just one host since our hostgroup (limit rule) only defined one host. The reports are available for all jobs and we can trace them back to user who ran them. Users running jobs don&#39;t need to have access to systems or even have credentials. This is a huge advantage for compliance and auditing.  If we look at jobs, we will see three jobs. Our SCM (Git) was updated, then our host inventory (Satellite) was dynamically updated and finally the playbook ran.  After playbook run completes we can view our website. Here we see the hostname and IP. These are coming from the foreman facts in Satellite. In addition we see our username from the survey.  The implementation for this dynamic web page can be found here or below. &lt;html&gt;  &lt;head&gt;  &lt;title&gt;Ansible Application&lt;/title&gt;  &lt;/head&gt;  &lt;body&gt;  &lt;/br&gt;  &lt;a href=http:///index.html&gt;Homepage&lt;/a&gt;  &lt;/br&gt; &lt;?php   Print &quot;Hello, World! I am a web server configured using Ansible and I am : &quot;;  echo exec(&#39;hostname&#39;);  Print &quot;&lt;/BR&gt;&quot;;  Print &quot;My ip address imported from foreman facts is : &quot;;  echo &quot;&#39;&#39;&quot;;  Print &quot;&lt;/BR&gt;&quot;;  Print &quot;My username from survey is : &quot;;  echo &quot;&#39;&#39;&quot;;  Print &quot;&lt;/BR&gt;&quot;; ?&gt; &lt;/body&gt; &lt;/html&gt; Summary In this article we have discussed the value for integrating Satellite and Ansible Tower. We have seen how to configure a basic host in Satellite for patch management. Using Ansible Tower we were able to dynamically get not only hosts and their associated groups from Satellite but also the host facts. We were able to run a playbook against a group of hosts in Satellite using a limit rule. Finally using survey and facts we observed how to easily reuse external parameters withing our playbooks. Happy Automating with Ansible Tower and Satellite! (c) 2017 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/ansible/ansible-tower-and-satellite-end-to-end-automation-for-the-enterprise/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2017-07-06T00:00:00-07:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/ansible/ansible-tower-and-satellite-end-to-end-automation-for-the-enterprise/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#ansible" itemprop="item"><span itemprop="name">Ansible</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Ansible Tower and Satellite: End to End Automation for the Enterprise</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Ansible Tower and Satellite: End to End Automation for the Enterprise">
+    <meta itemprop="description" content="OverviewIn this article we will look at how Ansible Tower and Red Hat Satellite 6 integrate with one another, providing end-to-end automation for the enterprise. Satellite is a systems management tool that combines several popular opensource projects: Foreman (provisioning), Katello (content repository), Pulp (database), Candlepin (subscription management) and Puppet (configuration management). While puppet is directly integrated into Satellite, many organizations would rather use Ansible because of its power, simplicity and ease-of-use.Ansible Tower integrates with Satellite, allowing organizations to run playbooks against the hierarchy and groups of servers defined in Satellite. Additionally, Ansible Tower can dynamically update its inventories with hosts and their updated facts from Satellite at anytime. Hosts show up in Ansible Tower under the groups defined by Satellite. This allows organizations to use Satellite to define their infrastructure, provision hosts, provide patch management while leveraging Ansible to deploy and manage software configuration. It also allows other teams the ability to run playbooks and automation against the infrastructure defined by Satellite. Personally I am a huge fan of this loose coupling and find this solution much more advantageous than a direct coupling of Ansible in Satellite.PrerequisitesIn order to get up and running, Satellite and Ansible Tower are required. Below are guide to get you going in case you don&#39;t have environments.Satellite 6 Configuration GuideAnsible Tower Configuration GuideFor those that are just using foreman and not Satellite, I haven&#39;t tried it but let me know if it works. If not there is a Foreman Ansible dynamic inventory that can be added into Ansible Tower.Satellite ConfigurationIn Satellite we need to provision a host or bootstrap an existing host. In this example I have simply setup a host with RHEL 7.3 and then connected it to Satellite environment via bootstrapping.[On RHEL Host]Install Katello package from Satellite server.# rpm -Uvh http://sat6.lab.com/pub/katello-ca-consumer-latest.noarch.rpmSubscribe using activation key.# subscription-manager register --org=&quot;Default_Organization&quot; --activationkey=&quot;DEV_CORE&quot;Enable Satellite tools repository and install katello agent.# yum -y install --enablerepo rhel-7-server-satellite-tools-6.2-rpms katello-agentOnce bootstrapping is complete, the host should show up under Hosts-&gt;All Hosts in Satellite. In this case the host in question is called &#39;soetest.lab&#39;. Note the list of hosts as when we do an inventory in Ansible we will automagically see them, their groups and facts, all from Satellite.Ansible Tower ConfigurationNow that we have a few hosts configured in Satellite and our example host &#39;soetest.lab&#39;, we can setup Ansible Tower. Again the idea is to use Satellite for provisioning and patch management, then Ansible for everything else while taking advantage of the hierarchy as well as host facts from Satellite.[Ansible Tower]Create a new projectA project in tower points to source code management (in this case Git) and provides various options. In this case we checked &quot;Update on Launch&quot;. This means if a playbook is launched from project (Git repository), Ansible Tower will do SCM update and get latest version of playbook (git pull). Also note a branch can be provided, it is left blank which for Git defaults to the main branch.Once project is added we can see last update and also the revision.Add CredentialsAnsible Tower allows for securely storing credentials. There are three different types of credentials: machine, cloud and network. In this case we need machine credentials to connect to our host &#39;soetest.lab&#39; in order to run playbooks. In addition to dynamically get inventory of hosts from Satellite, including host facts such as IP (which is required), cloud credentials are needed to connect to Satellite. For those of you used to defining static inventories with IPs, the light should now being going on.Add Machine CredentialAnsible Tower can store either user/password or ssh private key. Most likely you would want to use private key but here I chose to use user/password.Add Cloud CredentialIn order to communicate with Satellite and dynamically inventory hosts from Satellite, cloud credentials for Satellite are required. Ansible Tower supports many cloud platforms out-of-box (VMware, AWS, GCE, Azure, OpenStack, CloudForms and Rackspace).Once credentials have been defined we can create inventories.Create InventoryAn inventory is a hierarchy and you can have groups that have sub-groups, it is really flexibly. In this example we create an inventory called Datacenter. Under Datacenter a group is created for all hosts that are part of Satellite environment. Windows systems could be inventoried in a separate group from Satellite servers under Datacenter for example.Create Datacenter InventoryCreate Satellite Inventory Group under DatacenterWhen adding Satellite inventory we would select source &quot;Red Hat Satellite 6&quot; and our cloud credential for Satellite. In addition we select &quot;Update on Launch&quot;. This ensures when a playbook is run against Satellite inventory that the hosts are dynamically updated prior to execution of playbook. Let&#39;s say hosts are using DHCP and IPs of our hosts changed. Normally this would be an issue but with dynamic inventory, host IP is updated and Ansible playbook runs without issues.Once Satellite inventory is added we can click the sync button next to &quot;Satellite Hosts&quot;. Doing so will manually sync hosts. On the right we then see the hosts, the same hosts we saw under &quot;All Hosts&quot; in Satellite.In addition if we click on host, the facts provided by Satellite are also displayed in YAML or JSON. Any host facts in Satellite can be used directly in our playbooks or as limit rules as we will see. Limit rules allow you to limit hosts within an inventory. In this example we limit the playbook to the Satellite hostgroup &quot;RHEL_7_Dev_Servers&quot; which is a parameter provided by the host facts.If we look under Satellite group we see the groups and hierarchy imported from Satellite. Not just hostgroups but lifecycle environments are also imported.If we click on &quot;foreman_hostgroup_rhel_7_dev_servers&quot; (hostgroup), we see just the one host soetest.lab that is associated to that hostgroup in Satellite. Again these relationships are all defined in Satellite and automatically imported into Ansible Tower.Create Job TemplateIn Ansible Tower a job template brings together a playbook located within a project with an inventory and credentials. Here we have selected the playbook http_simple. This playbook will setup a webserver and use information from satellite to setup website (more on this later). In this example we have also set a limit rule to limit the run of the playbook to hosts that are part of the Satellite hostgroup &quot;RHEL 7 Dev Servers&quot;.Create SurveySurvey&#39;s in Ansible Tower are optional but provide opportunity to ask the user for input. In this example we ask for a username. The username will then be displayed in the website dynamically to show how to use survey parameters inside playbooks.Run Job TemplateBy clicking on the rocket, a job template can be manually started. Job templates can also be scheduled and Ansible Tower offers an integrated scheduler that can even balance jobs across multiple Tower servers in HA setup.After launching job we are prompted for limit. The default is our satellite hostgroup. You can decide if you want to prompt and allow users to change limits.Once we accept limit we are prompted with our survey. Here we need to enter username. The username has a variable associated &quot;survey_username&quot; and we can use this to display or use the input in our playbook.Once job is started we are brought to the job status. On the left we can see our limit and survey username as extra variables. On the right we see the tasks that were executed in our playbook. We also see summary of tasks where something changed, failed or was unreachable. We see the hosts where the playbook was run, we had just one host since our hostgroup (limit rule) only defined one host. The reports are available for all jobs and we can trace them back to user who ran them. Users running jobs don&#39;t need to have access to systems or even have credentials. This is a huge advantage for compliance and auditing.If we look at jobs, we will see three jobs. Our SCM (Git) was updated, then our host inventory (Satellite) was dynamically updated and finally the playbook ran.After playbook run completes we can view our website. Here we see the hostname and IP. These are coming from the foreman facts in Satellite. In addition we see our username from the survey.The implementation for this dynamic web page can be found here or below.&lt;html&gt; &lt;head&gt; &lt;title&gt;Ansible Application&lt;/title&gt; &lt;/head&gt; &lt;body&gt; &lt;/br&gt; &lt;a href=http:///index.html&gt;Homepage&lt;/a&gt; &lt;/br&gt;&lt;?php  Print &quot;Hello, World! I am a web server configured using Ansible and I am : &quot;; echo exec(&#39;hostname&#39;); Print &quot;&lt;/BR&gt;&quot;; Print &quot;My ip address imported from foreman facts is : &quot;; echo &quot;&#39;&#39;&quot;; Print &quot;&lt;/BR&gt;&quot;; Print &quot;My username from survey is : &quot;; echo &quot;&#39;&#39;&quot;; Print &quot;&lt;/BR&gt;&quot;;?&gt;&lt;/body&gt;&lt;/html&gt;SummaryIn this article we have discussed the value for integrating Satellite and Ansible Tower. We have seen how to configure a basic host in Satellite for patch management. Using Ansible Tower we were able to dynamically get not only hosts and their associated groups from Satellite but also the host facts. We were able to run a playbook against a group of hosts in Satellite using a limit rule. Finally using survey and facts we observed how to easily reuse external parameters withing our playbooks.Happy Automating with Ansible Tower and Satellite!(c) 2017 Keith Tenzer">
+    <meta itemprop="datePublished" content="2017-07-06T00:00:00-07:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Ansible Tower and Satellite: End to End Automation for the Enterprise
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2017-07-06T00:00:00-07:00">July 6, 2017</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h2><img class="alignnone  wp-image-10393" src="/assets/2017/07/ansible-tower-logotype-large-rgb-fullgrey-300x124_0.png" alt="Ansible-Tower-Logotype-Large-RGB-FullGrey-300x124_0" width="247" height="102" /><img class="alignnone  wp-image-5506" src="/assets/2017/07/plus_sign.gif" alt="plus_sign" width="131" height="131" /><img class="alignnone  wp-image-10396" src="/assets/2017/07/satellite_logo.jpg" alt="satellite_logo" width="170" height="122" /><img class="alignnone  wp-image-10399" src="/assets/2017/07/real-time-satellite-clipart-17.png" alt="real-time-satellite-clipart-17" width="88" height="88" /></h2>
+<h2>Overview</h2>
+<p>In this article we will look at how Ansible Tower and Red Hat Satellite 6 integrate with one another, providing end-to-end automation for the enterprise. Satellite is a systems management tool that combines several popular opensource projects: Foreman (provisioning), Katello (content repository), Pulp (database), Candlepin (subscription management) and Puppet (configuration management). While puppet is directly integrated into Satellite, many organizations would rather use Ansible because of its power, simplicity and ease-of-use.</p>
+<p>Ansible Tower integrates with Satellite, allowing organizations to run playbooks against the hierarchy and groups of servers defined in Satellite. Additionally, Ansible Tower can dynamically update its inventories with hosts and their updated facts from Satellite at anytime. Hosts show up in Ansible Tower under the groups defined by Satellite. This allows organizations to use Satellite to define their infrastructure, provision hosts, provide patch management while leveraging Ansible to deploy and manage software configuration. It also allows other teams the ability to run playbooks and automation against the infrastructure defined by Satellite. Personally I am a huge fan of this loose coupling and find this solution much more advantageous than a direct coupling of Ansible in Satellite.</p>
+<p><!--more--></p>
+<h2>Prerequisites</h2>
+<p>In order to get up and running, Satellite and Ansible Tower are required. Below are guide to get you going in case you don't have environments.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2016/08/23/cloud-systems-management-satellite-6-2-getting-started-guide/">Satellite 6 Configuration Guide</a></li>
+<li><a href="https://keithtenzer.com/2017/07/06/ansible-tower-installation-and-configuration-guide/">Ansible Tower Configuration Guide</a></li>
+</ul>
+<p>For those that are just using foreman and not Satellite, I haven't tried it but let me know if it works. If not there is a Foreman Ansible dynamic inventory that can be added into Ansible Tower.</p>
+<h2>Satellite Configuration</h2>
+<p>In Satellite we need to provision a host or bootstrap an existing host. In this example I have simply setup a host with RHEL 7.3 and then connected it to Satellite environment via bootstrapping.</p>
+<p>[On RHEL Host]</p>
+<p>Install Katello package from Satellite server.</p>
+<pre><code># rpm -Uvh http://sat6.lab.com/pub/katello-ca-consumer-latest.noarch.rpm
+</code></pre>
+<p>Subscribe using activation key.</p>
+<pre><code># subscription-manager register --org="Default_Organization" --activationkey="DEV_CORE"</code></pre>
+<p>Enable Satellite tools repository and install katello agent.</p>
+<pre class="screen"># yum -y install --enablerepo rhel-7-server-satellite-tools-6.2-rpms katello-agent</pre>
+<p>Once bootstrapping is complete, the host should show up under Hosts-&gt;All Hosts in Satellite. In this case the host in question is called 'soetest.lab'. Note the list of hosts as when we do an inventory in Ansible we will automagically see them, their groups and facts, all from Satellite.</p>
+<p><img class="alignnone size-full wp-image-10305" src="/assets/2017/07/satellite_hosts.png" alt="satellite_hosts" width="1630" height="530" /></p>
+<h2>Ansible Tower Configuration</h2>
+<p>Now that we have a few hosts configured in Satellite and our example host 'soetest.lab', we can setup Ansible Tower. Again the idea is to use Satellite for provisioning and patch management, then Ansible for everything else while taking advantage of the hierarchy as well as host facts from Satellite.</p>
+<p>[Ansible Tower]</p>
+<p><strong>Create a new project</strong></p>
+<p>A project in tower points to source code management (in this case Git) and provides various options. In this case we checked "Update on Launch". This means if a playbook is launched from project (Git repository), Ansible Tower will do SCM update and get latest version of playbook (git pull). Also note a branch can be provided, it is left blank which for Git defaults to the main branch.</p>
+<p><img class="alignnone size-full wp-image-10242" src="/assets/2017/07/ansible_new_project.png" alt="ansible_new_project" width="1628" height="909" /></p>
+<p>Once project is added we can see last update and also the revision.</p>
+<p><img class="alignnone size-full wp-image-10244" src="/assets/2017/07/ansible_new_project_2.png" alt="ansible_new_project_2" width="1638" height="389" /></p>
+<p><strong>Add Credentials</strong></p>
+<p>Ansible Tower allows for securely storing credentials. There are three different types of credentials: machine, cloud and network. In this case we need machine credentials to connect to our host 'soetest.lab' in order to run playbooks. In addition to dynamically get inventory of hosts from Satellite, including host facts such as IP (which is required), cloud credentials are needed to connect to Satellite. For those of you used to defining static inventories with IPs, the light should now being going on.</p>
+<p><strong>Add Machine Credential</strong></p>
+<p>Ansible Tower can store either user/password or ssh private key. Most likely you would want to use private key but here I chose to use user/password.</p>
+<p><img class="alignnone size-full wp-image-10246" src="/assets/2017/07/ansible_machine_cred.png" alt="ansible_machine_cred" width="1645" height="895" /></p>
+<p><strong>Add Cloud Credential</strong></p>
+<p>In order to communicate with Satellite and dynamically inventory hosts from Satellite, cloud credentials for Satellite are required. Ansible Tower supports many cloud platforms out-of-box (VMware, AWS, GCE, Azure, OpenStack, CloudForms and Rackspace).</p>
+<p><img class="alignnone size-full wp-image-10272" src="/assets/2017/07/ansible_satellite_cred1.png" alt="ansible_satellite_cred" width="1637" height="834" /></p>
+<p>Once credentials have been defined we can create inventories.</p>
+<p><strong>Create Inventory</strong></p>
+<p>An inventory is a hierarchy and you can have groups that have sub-groups, it is really flexibly. In this example we create an inventory called Datacenter. Under Datacenter a group is created for all hosts that are part of Satellite environment. Windows systems could be inventoried in a separate group from Satellite servers under Datacenter for example.</p>
+<p><strong>Create Datacenter Inventory</strong></p>
+<p><img class="alignnone size-full wp-image-10250" src="/assets/2017/07/ansible_inventory1.png" alt="ansible_inventory1" width="1637" height="830" /></p>
+<p><strong>Create Satellite Inventory Group under Datacenter</strong></p>
+<p>When adding Satellite inventory we would select source "Red Hat Satellite 6" and our cloud credential for Satellite. In addition we select "Update on Launch". This ensures when a playbook is run against Satellite inventory that the hosts are dynamically updated prior to execution of playbook. Let's say hosts are using DHCP and IPs of our hosts changed. Normally this would be an issue but with dynamic inventory, host IP is updated and Ansible playbook runs without issues.</p>
+<p><img class="alignnone size-full wp-image-10274" src="/assets/2017/07/ansible_inventory21.png" alt="ansible_inventory2" width="1682" height="840" /></p>
+<p>Once Satellite inventory is added we can click the sync button next to "Satellite Hosts". Doing so will manually sync hosts. On the right we then see the hosts, the same hosts we saw under "All Hosts" in Satellite.</p>
+<p><img class="alignnone size-full wp-image-10253" src="/assets/2017/07/ansible_inventory3.png" alt="ansible_inventory3" width="1661" height="691" /></p>
+<p>In addition if we click on host, the facts provided by Satellite are also displayed in YAML or JSON. Any host facts in Satellite can be used directly in our playbooks or as limit rules as we will see. Limit rules allow you to limit hosts within an inventory. In this example we limit the playbook to the Satellite hostgroup "RHEL_7_Dev_Servers" which is a parameter provided by the host facts.</p>
+<p><img class="alignnone size-full wp-image-10339" src="/assets/2017/07/ansible_host_facts.png" alt="ansible_host_facts" width="1685" height="656" /></p>
+<p>If we look under Satellite group we see the groups and hierarchy imported from Satellite. Not just hostgroups but lifecycle environments are also imported.</p>
+<p><img class="alignnone size-full wp-image-10343" src="/assets/2017/07/ansible_sat_groups.png" alt="ansible_sat_groups" width="825" height="809" /></p>
+<p>If we click on "foreman_hostgroup_rhel_7_dev_servers" (hostgroup), we see just the one host soetest.lab that is associated to that hostgroup in Satellite. Again these relationships are all defined in Satellite and automatically imported into Ansible Tower.</p>
+<p><img class="alignnone size-full wp-image-10346" src="/assets/2017/07/ansible_soetest.png" alt="ansible_soetest" width="1707" height="593" /></p>
+<p><strong>Create Job Template</strong></p>
+<p>In Ansible Tower a job template brings together a playbook located within a project with an inventory and credentials. Here we have selected the playbook http_simple. This playbook will setup a webserver and use information from satellite to setup website (more on this later). In this example we have also set a limit rule to limit the run of the playbook to hosts that are part of the Satellite hostgroup "RHEL 7 Dev Servers".</p>
+<p><img class="alignnone size-full wp-image-10255" src="/assets/2017/07/ansible_job_template_1.png" alt="ansible_job_template_1" width="1621" height="900" /></p>
+<p><strong>Create Survey</strong></p>
+<p>Survey's in Ansible Tower are optional but provide opportunity to ask the user for input. In this example we ask for a username. The username will then be displayed in the website dynamically to show how to use survey parameters inside playbooks.</p>
+<p><img class="alignnone size-full wp-image-10257" src="/assets/2017/07/ansible_survey.png" alt="ansible_survey" width="1250" height="857" /></p>
+<p><strong>Run Job Template</strong></p>
+<p>By clicking on the rocket, a job template can be manually started. Job templates can also be scheduled and Ansible Tower offers an integrated scheduler that can even balance jobs across multiple Tower servers in HA setup.</p>
+<p><img class="alignnone size-full wp-image-10260" src="/assets/2017/07/ansible_run_template.png" alt="ansible_run_template" width="1654" height="637" /></p>
+<p>After launching job we are prompted for limit. The default is our satellite hostgroup. You can decide if you want to prompt and allow users to change limits.</p>
+<p><img class="alignnone size-full wp-image-10262" src="/assets/2017/07/ansible_run_limit.png" alt="ansible_run_limit" width="1163" height="562" /></p>
+<p>Once we accept limit we are prompted with our survey. Here we need to enter username. The username has a variable associated "survey_username" and we can use this to display or use the input in our playbook.</p>
+<p><img class="alignnone size-full wp-image-10263" src="/assets/2017/07/ansible_run_survey.png" alt="ansible_run_survey" width="1169" height="564" /></p>
+<p>Once job is started we are brought to the job status. On the left we can see our limit and survey username as extra variables. On the right we see the tasks that were executed in our playbook. We also see summary of tasks where something changed, failed or was unreachable. We see the hosts where the playbook was run, we had just one host since our hostgroup (limit rule) only defined one host. The reports are available for all jobs and we can trace them back to user who ran them. Users running jobs don't need to have access to systems or even have credentials. This is a huge advantage for compliance and auditing.</p>
+<p><img class="alignnone size-full wp-image-10268" src="/assets/2017/07/ansible_job_results.png" alt="ansible_job_results" width="1665" height="864" /></p>
+<p>If we look at jobs, we will see three jobs. Our SCM (Git) was updated, then our host inventory (Satellite) was dynamically updated and finally the playbook ran.</p>
+<p><img class="alignnone size-full wp-image-10266" src="/assets/2017/07/ansible_jobs.png" alt="ansible_jobs" width="1692" height="485" /></p>
+<p>After playbook run completes we can view our website. Here we see the hostname and IP. These are coming from the foreman facts in Satellite. In addition we see our username from the survey.</p>
+<p><img class="alignnone size-full wp-image-10269" src="/assets/2017/07/ansible_web_page_final.png" alt="ansible_web_page_final" width="668" height="195" /></p>
+<p>The implementation for this dynamic web page can be found <a href="https://github.com/ktenzer/ansible-examples/blob/master/http_simple/roles/web/templates/index.php.j2">here</a> or below.</p>
+<pre>&lt;html&gt;
+ &lt;head&gt;
+ &lt;title&gt;Ansible Application&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt;
+ &lt;/br&gt;
+ &lt;a href=http://<strong></strong>/index.html&gt;Homepage&lt;/a&gt;
+ &lt;/br&gt;
+&lt;?php 
+ Print "Hello, World! I am a web server configured using Ansible and I am : ";
+ echo exec('hostname');
+ Print "&lt;/BR&gt;";
+ Print "My ip address imported from foreman facts is : ";
+ echo "'<strong></strong>'";
+ Print "&lt;/BR&gt;";
+ Print "My username from survey is : ";
+ echo "'<strong></strong>'";
+ Print "&lt;/BR&gt;";
+?&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+<h2>Summary</h2>
+<p>In this article we have discussed the value for integrating Satellite and Ansible Tower. We have seen how to configure a basic host in Satellite for patch management. Using Ansible Tower we were able to dynamically get not only hosts and their associated groups from Satellite but also the host facts. We were able to run a playbook against a group of hosts in Satellite using a limit rule. Finally using survey and facts we observed how to easily reuse external parameters withing our playbooks.</p>
+<p>Happy Automating with Ansible Tower and Satellite!</p>
+<p>(c) 2017 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#ansible-tower" class="page__taxonomy-item" rel="tag">Ansible Tower</a><span class="sep">, </span>
+    
+      <a href="/tags/#automation" class="page__taxonomy-item" rel="tag">Automation</a><span class="sep">, </span>
+    
+      <a href="/tags/#satellite-6" class="page__taxonomy-item" rel="tag">Satellite 6</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#ansible" class="page__taxonomy-item" rel="tag">Ansible</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2017-07-06T00:00:00-07:00">July 6, 2017</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Ansible+Tower+and+Satellite%3A+End+to+End+Automation+for+the+Enterprise%20https%3A%2F%2Fkeithtenzer.com%2Fansible%2Fansible-tower-and-satellite-end-to-end-automation-for-the-enterprise%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fansible%2Fansible-tower-and-satellite-end-to-end-automation-for-the-enterprise%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fansible%2Fansible-tower-and-satellite-end-to-end-automation-for-the-enterprise%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openstack/explaining-openstack-cinder-types-and-scheduler/" class="pagination--pager" title="Explaining OpenStack Cinder Types and Scheduler
+">Previous</a>
+    
+    
+      <a href="/ansible/ansible-tower-installation-and-configuration-guide/" class="pagination--pager" title="Ansible Tower Installation and Configuration Guide
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

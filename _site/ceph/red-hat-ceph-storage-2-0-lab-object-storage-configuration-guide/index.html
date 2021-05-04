@@ -1,0 +1,1143 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide - KEITHTENZER.COM</title>
+<meta name="description" content="Overview Ceph has become the defacto standard for software-defined storage. Ceph is 100% opensource, built on open standards and as such is offered by many vendors not just Red Hat. If you are new to Ceph or software-defined storage, I would recommend the following article before proceeding to understand some high-level concepts: Ceph - the future of storage In this article we will configure a Red Hat Ceph 2.0 cluster and set it up for object storage. We will configure RADOS Gateway (RGW), Red Hat Storage Console (RHCS) and show how to configure the S3 and Swift interfaces of the RGW. Using python we will access both the S3 and Swift interfaces. If you are interested in configuring Ceph for OpenStack see the following article: OpenStack - Integrating Ceph as Storage Backend  Prerequisites Ceph has a few different components to be aware of: monitors (mons), storage or osd nodes (osds), Red Hat Storage Console (RHSC), RHSC agents, Calamari, clients and gateways. Monitors - maintain maps (crush, pg, osd, etc) and cluster state. Monitors use Paxos to establish consensus. Storage or OSD Node - Provides one or more OSDs. Each OSD represents a disk and has a running daemon process controlled by systemctl. There are two types of disks in Ceph: data and journal. The journal enable Ceph to commit small writes quickly and guarantees atomic compound operations. Journals can be collocated with data on same disks or separate. Splitting journals out to SSDs provides higher performance for certain use cases such as block. Red Hat Storage Console (optional) - UI and dashboard that can monitor multiple clusters and monitor not only Ceph but Gluster as well. RHSC Agents (optional) - Each monitor and osd node runs an agent that reports to the RHSC. Calamari (optional) - Runs on one of the monitors to get statistics on ceph cluster and provides rest endpoint. RHSC talks to calamari. Clients - Ceph provides an RBD (RADOS Block Device) client for block storage, CephFS for file storage and a fuse client as well. The RADOS GW itself can be viewed as a Ceph client. Each client requires authentication if cephx is enabled. Cephx is based on kerberos. Gateways (optional) - Ceph is based on RADOS (Reliable Atomic Distributed Object Store). The RADOS Gateway is a web server that provides s3 and swift endpoints and sends those requests to Ceph via RADOS. Similarily there is an ISCSI Gateway that provides ISCSI target to clients and talks to Ceph via RADOS. Ceph itself is of course an object store that supports not only object but file and block clients as well. Red Hat recommends at minimum three monitors and 10 storage nodes. All of which should be physical not virtual machines. For the gateways and RHSC, VMs can be used. Since the purpose of this article is about building a lab environment we are doing everything on just three VMs. The VMs should be configured as follows with Red Hat Enterprise Linux (7.2 or 7.3):  ceph1: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.81/24. ceph2: 4096 MB RAM, 2 Cores, 30GB root disk , 2 X 100 GB data disk, 192.168.122.82/24. ceph3: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.83/24.  Note: this entire environment runs on my 12GB thinkpad laptop. If memory is tight you can cut ceph2 down to 2048MB RAM. The roles will be devided across the nodes as follows:  Ceph1: RHSC, Rados Gateway, Monitor and OSD Ceph2: Calamari, Monitor and OSD Ceph3: Monitor and OSD   Install Ceph Cluster Register subscription and enable repositories. # subscription-manager register # subscription-manager list --available # subscription-manager attach --pool=8a85f981weuweu63628333293829 # subscription-manager repos --disable=* # subscription-manager repos --enable=rhel-7-server-rpms # subscription-manager repos --enable=rhel-7-server-rhceph-2-mon-rpms # subscription-manager repos --enable=rhel-7-server-rhceph-2-osd-rpms # subscription-manager repos --enable=rhel-7-server-rhscon-2-agent-rpms Note: If you are using centos you will need to install ansible and get the ceph-ansible playbooks from github. Disable firewall Since this is a lab environment we can make life a bit easier. If you are interested in enabling firewall then follow official documentation here. #systemctl stop firewalld #systemctl disable firewalld Configure NTP Time synchronization is absolutely critical for Ceph. Make sure it is reliable. # yum install -y ntp # systemctl enable ntpd # systemctl start ntpd Test to ensure ntp is working properly. # ntpq -p Update hosts file If dns is working you can skip this step. #vi /etc/hosts 192.168.122.81 ceph1.lab.com ceph1 192.168.122.82 ceph2.lab.com ceph2 192.168.122.83 ceph3.lab.com ceph3 Create Ansible User Ceph 2.0 now uses ansible to deploy, configure and update. A user is required that has sudo permissions. # useradd ansible # passwd ansible #cat &lt;&lt; EOF &gt; /etc/sudoers.d/ansible ansible ALL = (root) NOPASSWD:ALL Defaults:ansible !requiretty EOF Enable repositories for RHSC # subscription-manager repos --enable=rhel-7-server-rhscon-2-installer-rpms # subscription-manager repos --enable=rhel-7-server-rhscon-2-main-rpms Install Ceph-Ansible # yum install -y ceph-ansible Setup ssh keys for ansible user # su - ansible $ ssh-keygen $ ssh-copy-id ceph1 $ ssh-copy-id ceph2 $ ssh-copy-id ceph3 $ mkdir ~/ceph-ansible-keys Update Ansible Hosts file $ sudo vi /etc/ansible/hosts">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide">
+<meta property="og:url" content="https://keithtenzer.com/ceph/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">
+
+
+  <meta property="og:description" content="Overview Ceph has become the defacto standard for software-defined storage. Ceph is 100% opensource, built on open standards and as such is offered by many vendors not just Red Hat. If you are new to Ceph or software-defined storage, I would recommend the following article before proceeding to understand some high-level concepts: Ceph - the future of storage In this article we will configure a Red Hat Ceph 2.0 cluster and set it up for object storage. We will configure RADOS Gateway (RGW), Red Hat Storage Console (RHCS) and show how to configure the S3 and Swift interfaces of the RGW. Using python we will access both the S3 and Swift interfaces. If you are interested in configuring Ceph for OpenStack see the following article: OpenStack - Integrating Ceph as Storage Backend  Prerequisites Ceph has a few different components to be aware of: monitors (mons), storage or osd nodes (osds), Red Hat Storage Console (RHSC), RHSC agents, Calamari, clients and gateways. Monitors - maintain maps (crush, pg, osd, etc) and cluster state. Monitors use Paxos to establish consensus. Storage or OSD Node - Provides one or more OSDs. Each OSD represents a disk and has a running daemon process controlled by systemctl. There are two types of disks in Ceph: data and journal. The journal enable Ceph to commit small writes quickly and guarantees atomic compound operations. Journals can be collocated with data on same disks or separate. Splitting journals out to SSDs provides higher performance for certain use cases such as block. Red Hat Storage Console (optional) - UI and dashboard that can monitor multiple clusters and monitor not only Ceph but Gluster as well. RHSC Agents (optional) - Each monitor and osd node runs an agent that reports to the RHSC. Calamari (optional) - Runs on one of the monitors to get statistics on ceph cluster and provides rest endpoint. RHSC talks to calamari. Clients - Ceph provides an RBD (RADOS Block Device) client for block storage, CephFS for file storage and a fuse client as well. The RADOS GW itself can be viewed as a Ceph client. Each client requires authentication if cephx is enabled. Cephx is based on kerberos. Gateways (optional) - Ceph is based on RADOS (Reliable Atomic Distributed Object Store). The RADOS Gateway is a web server that provides s3 and swift endpoints and sends those requests to Ceph via RADOS. Similarily there is an ISCSI Gateway that provides ISCSI target to clients and talks to Ceph via RADOS. Ceph itself is of course an object store that supports not only object but file and block clients as well. Red Hat recommends at minimum three monitors and 10 storage nodes. All of which should be physical not virtual machines. For the gateways and RHSC, VMs can be used. Since the purpose of this article is about building a lab environment we are doing everything on just three VMs. The VMs should be configured as follows with Red Hat Enterprise Linux (7.2 or 7.3):  ceph1: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.81/24. ceph2: 4096 MB RAM, 2 Cores, 30GB root disk , 2 X 100 GB data disk, 192.168.122.82/24. ceph3: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.83/24.  Note: this entire environment runs on my 12GB thinkpad laptop. If memory is tight you can cut ceph2 down to 2048MB RAM. The roles will be devided across the nodes as follows:  Ceph1: RHSC, Rados Gateway, Monitor and OSD Ceph2: Calamari, Monitor and OSD Ceph3: Monitor and OSD   Install Ceph Cluster Register subscription and enable repositories. # subscription-manager register # subscription-manager list --available # subscription-manager attach --pool=8a85f981weuweu63628333293829 # subscription-manager repos --disable=* # subscription-manager repos --enable=rhel-7-server-rpms # subscription-manager repos --enable=rhel-7-server-rhceph-2-mon-rpms # subscription-manager repos --enable=rhel-7-server-rhceph-2-osd-rpms # subscription-manager repos --enable=rhel-7-server-rhscon-2-agent-rpms Note: If you are using centos you will need to install ansible and get the ceph-ansible playbooks from github. Disable firewall Since this is a lab environment we can make life a bit easier. If you are interested in enabling firewall then follow official documentation here. #systemctl stop firewalld #systemctl disable firewalld Configure NTP Time synchronization is absolutely critical for Ceph. Make sure it is reliable. # yum install -y ntp # systemctl enable ntpd # systemctl start ntpd Test to ensure ntp is working properly. # ntpq -p Update hosts file If dns is working you can skip this step. #vi /etc/hosts 192.168.122.81 ceph1.lab.com ceph1 192.168.122.82 ceph2.lab.com ceph2 192.168.122.83 ceph3.lab.com ceph3 Create Ansible User Ceph 2.0 now uses ansible to deploy, configure and update. A user is required that has sudo permissions. # useradd ansible # passwd ansible #cat &lt;&lt; EOF &gt; /etc/sudoers.d/ansible ansible ALL = (root) NOPASSWD:ALL Defaults:ansible !requiretty EOF Enable repositories for RHSC # subscription-manager repos --enable=rhel-7-server-rhscon-2-installer-rpms # subscription-manager repos --enable=rhel-7-server-rhscon-2-main-rpms Install Ceph-Ansible # yum install -y ceph-ansible Setup ssh keys for ansible user # su - ansible $ ssh-keygen $ ssh-copy-id ceph1 $ ssh-copy-id ceph2 $ ssh-copy-id ceph3 $ mkdir ~/ceph-ansible-keys Update Ansible Hosts file $ sudo vi /etc/ansible/hosts">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide">
+  <meta name="twitter:description" content="Overview Ceph has become the defacto standard for software-defined storage. Ceph is 100% opensource, built on open standards and as such is offered by many vendors not just Red Hat. If you are new to Ceph or software-defined storage, I would recommend the following article before proceeding to understand some high-level concepts: Ceph - the future of storage In this article we will configure a Red Hat Ceph 2.0 cluster and set it up for object storage. We will configure RADOS Gateway (RGW), Red Hat Storage Console (RHCS) and show how to configure the S3 and Swift interfaces of the RGW. Using python we will access both the S3 and Swift interfaces. If you are interested in configuring Ceph for OpenStack see the following article: OpenStack - Integrating Ceph as Storage Backend  Prerequisites Ceph has a few different components to be aware of: monitors (mons), storage or osd nodes (osds), Red Hat Storage Console (RHSC), RHSC agents, Calamari, clients and gateways. Monitors - maintain maps (crush, pg, osd, etc) and cluster state. Monitors use Paxos to establish consensus. Storage or OSD Node - Provides one or more OSDs. Each OSD represents a disk and has a running daemon process controlled by systemctl. There are two types of disks in Ceph: data and journal. The journal enable Ceph to commit small writes quickly and guarantees atomic compound operations. Journals can be collocated with data on same disks or separate. Splitting journals out to SSDs provides higher performance for certain use cases such as block. Red Hat Storage Console (optional) - UI and dashboard that can monitor multiple clusters and monitor not only Ceph but Gluster as well. RHSC Agents (optional) - Each monitor and osd node runs an agent that reports to the RHSC. Calamari (optional) - Runs on one of the monitors to get statistics on ceph cluster and provides rest endpoint. RHSC talks to calamari. Clients - Ceph provides an RBD (RADOS Block Device) client for block storage, CephFS for file storage and a fuse client as well. The RADOS GW itself can be viewed as a Ceph client. Each client requires authentication if cephx is enabled. Cephx is based on kerberos. Gateways (optional) - Ceph is based on RADOS (Reliable Atomic Distributed Object Store). The RADOS Gateway is a web server that provides s3 and swift endpoints and sends those requests to Ceph via RADOS. Similarily there is an ISCSI Gateway that provides ISCSI target to clients and talks to Ceph via RADOS. Ceph itself is of course an object store that supports not only object but file and block clients as well. Red Hat recommends at minimum three monitors and 10 storage nodes. All of which should be physical not virtual machines. For the gateways and RHSC, VMs can be used. Since the purpose of this article is about building a lab environment we are doing everything on just three VMs. The VMs should be configured as follows with Red Hat Enterprise Linux (7.2 or 7.3):  ceph1: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.81/24. ceph2: 4096 MB RAM, 2 Cores, 30GB root disk , 2 X 100 GB data disk, 192.168.122.82/24. ceph3: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.83/24.  Note: this entire environment runs on my 12GB thinkpad laptop. If memory is tight you can cut ceph2 down to 2048MB RAM. The roles will be devided across the nodes as follows:  Ceph1: RHSC, Rados Gateway, Monitor and OSD Ceph2: Calamari, Monitor and OSD Ceph3: Monitor and OSD   Install Ceph Cluster Register subscription and enable repositories. # subscription-manager register # subscription-manager list --available # subscription-manager attach --pool=8a85f981weuweu63628333293829 # subscription-manager repos --disable=* # subscription-manager repos --enable=rhel-7-server-rpms # subscription-manager repos --enable=rhel-7-server-rhceph-2-mon-rpms # subscription-manager repos --enable=rhel-7-server-rhceph-2-osd-rpms # subscription-manager repos --enable=rhel-7-server-rhscon-2-agent-rpms Note: If you are using centos you will need to install ansible and get the ceph-ansible playbooks from github. Disable firewall Since this is a lab environment we can make life a bit easier. If you are interested in enabling firewall then follow official documentation here. #systemctl stop firewalld #systemctl disable firewalld Configure NTP Time synchronization is absolutely critical for Ceph. Make sure it is reliable. # yum install -y ntp # systemctl enable ntpd # systemctl start ntpd Test to ensure ntp is working properly. # ntpq -p Update hosts file If dns is working you can skip this step. #vi /etc/hosts 192.168.122.81 ceph1.lab.com ceph1 192.168.122.82 ceph2.lab.com ceph2 192.168.122.83 ceph3.lab.com ceph3 Create Ansible User Ceph 2.0 now uses ansible to deploy, configure and update. A user is required that has sudo permissions. # useradd ansible # passwd ansible #cat &lt;&lt; EOF &gt; /etc/sudoers.d/ansible ansible ALL = (root) NOPASSWD:ALL Defaults:ansible !requiretty EOF Enable repositories for RHSC # subscription-manager repos --enable=rhel-7-server-rhscon-2-installer-rpms # subscription-manager repos --enable=rhel-7-server-rhscon-2-main-rpms Install Ceph-Ansible # yum install -y ceph-ansible Setup ssh keys for ansible user # su - ansible $ ssh-keygen $ ssh-copy-id ceph1 $ ssh-copy-id ceph2 $ ssh-copy-id ceph3 $ mkdir ~/ceph-ansible-keys Update Ansible Hosts file $ sudo vi /etc/ansible/hosts">
+  <meta name="twitter:url" content="https://keithtenzer.com/ceph/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2017-02-03T00:00:00-08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/ceph/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#ceph" itemprop="item"><span itemprop="name">Ceph</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide">
+    <meta itemprop="description" content="OverviewCeph has become the defacto standard for software-defined storage. Ceph is 100% opensource, built on open standards and as such is offered by many vendors not just Red Hat. If you are new to Ceph or software-defined storage, I would recommend the following article before proceeding to understand some high-level concepts:Ceph - the future of storageIn this article we will configure a Red Hat Ceph 2.0 cluster and set it up for object storage. We will configure RADOS Gateway (RGW), Red Hat Storage Console (RHCS) and show how to configure the S3 and Swift interfaces of the RGW. Using python we will access both the S3 and Swift interfaces.If you are interested in configuring Ceph for OpenStack see the following article:OpenStack - Integrating Ceph as Storage BackendPrerequisitesCeph has a few different components to be aware of: monitors (mons), storage or osd nodes (osds), Red Hat Storage Console (RHSC), RHSC agents, Calamari, clients and gateways.Monitors - maintain maps (crush, pg, osd, etc) and cluster state. Monitors use Paxos to establish consensus.Storage or OSD Node - Provides one or more OSDs. Each OSD represents a disk and has a running daemon process controlled by systemctl. There are two types of disks in Ceph: data and journal. The journal enable Ceph to commit small writes quickly and guarantees atomic compound operations. Journals can be collocated with data on same disks or separate. Splitting journals out to SSDs provides higher performance for certain use cases such as block.Red Hat Storage Console (optional) - UI and dashboard that can monitor multiple clusters and monitor not only Ceph but Gluster as well.RHSC Agents (optional) - Each monitor and osd node runs an agent that reports to the RHSC.Calamari (optional) - Runs on one of the monitors to get statistics on ceph cluster and provides rest endpoint. RHSC talks to calamari.Clients - Ceph provides an RBD (RADOS Block Device) client for block storage, CephFS for file storage and a fuse client as well. The RADOS GW itself can be viewed as a Ceph client. Each client requires authentication if cephx is enabled. Cephx is based on kerberos.Gateways (optional) - Ceph is based on RADOS (Reliable Atomic Distributed Object Store). The RADOS Gateway is a web server that provides s3 and swift endpoints and sends those requests to Ceph via RADOS. Similarily there is an ISCSI Gateway that provides ISCSI target to clients and talks to Ceph via RADOS. Ceph itself is of course an object store that supports not only object but file and block clients as well.Red Hat recommends at minimum three monitors and 10 storage nodes. All of which should be physical not virtual machines. For the gateways and RHSC, VMs can be used. Since the purpose of this article is about building a lab environment we are doing everything on just three VMs. The VMs should be configured as follows with Red Hat Enterprise Linux (7.2 or 7.3):ceph1: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.81/24.ceph2: 4096 MB RAM, 2 Cores, 30GB root disk , 2 X 100 GB data disk, 192.168.122.82/24.ceph3: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.83/24.Note: this entire environment runs on my 12GB thinkpad laptop. If memory is tight you can cut ceph2 down to 2048MB RAM.The roles will be devided across the nodes as follows:Ceph1: RHSC, Rados Gateway, Monitor and OSDCeph2: Calamari, Monitor and OSDCeph3: Monitor and OSDInstall Ceph ClusterRegister subscription and enable repositories.# subscription-manager register# subscription-manager list --available# subscription-manager attach --pool=8a85f981weuweu63628333293829# subscription-manager repos --disable=*# subscription-manager repos --enable=rhel-7-server-rpms# subscription-manager repos --enable=rhel-7-server-rhceph-2-mon-rpms# subscription-manager repos --enable=rhel-7-server-rhceph-2-osd-rpms# subscription-manager repos --enable=rhel-7-server-rhscon-2-agent-rpmsNote: If you are using centos you will need to install ansible and get the ceph-ansible playbooks from github.Disable firewallSince this is a lab environment we can make life a bit easier. If you are interested in enabling firewall then follow official documentation here.#systemctl stop firewalld#systemctl disable firewalldConfigure NTPTime synchronization is absolutely critical for Ceph. Make sure it is reliable.# yum install -y ntp# systemctl enable ntpd# systemctl start ntpdTest to ensure ntp is working properly.# ntpq -pUpdate hosts fileIf dns is working you can skip this step.#vi /etc/hosts192.168.122.81 ceph1.lab.com ceph1192.168.122.82 ceph2.lab.com ceph2192.168.122.83 ceph3.lab.com ceph3Create Ansible UserCeph 2.0 now uses ansible to deploy, configure and update. A user is required that has sudo permissions.# useradd ansible# passwd ansible#cat &lt;&lt; EOF &gt; /etc/sudoers.d/ansibleansible ALL = (root) NOPASSWD:ALLDefaults:ansible !requirettyEOFEnable repositories for RHSC# subscription-manager repos --enable=rhel-7-server-rhscon-2-installer-rpms# subscription-manager repos --enable=rhel-7-server-rhscon-2-main-rpmsInstall Ceph-Ansible# yum install -y ceph-ansibleSetup ssh keys for ansible user# su - ansible$ ssh-keygen$ ssh-copy-id ceph1$ ssh-copy-id ceph2$ ssh-copy-id ceph3$ mkdir ~/ceph-ansible-keysUpdate Ansible Hosts file$ sudo vi /etc/ansible/hosts">
+    <meta itemprop="datePublished" content="2017-02-03T00:00:00-08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2017-02-03T00:00:00-08:00">February 3, 2017</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h3><img class="alignnone  wp-image-5052" src="/assets/2017/02/1015767.png" alt="1015767" width="309" height="309" /></h3>
+<h3>Overview</h3>
+<p>Ceph has become the defacto standard for software-defined storage. Ceph is 100% opensource, built on open standards and as such is offered by many vendors not just Red Hat. If you are new to Ceph or software-defined storage, I would recommend the following article before proceeding to understand some high-level concepts:</p>
+<p><a href="https://keithtenzer.com/2016/09/09/ceph-the-future-of-storage/">Ceph - the future of storage</a></p>
+<p>In this article we will configure a Red Hat Ceph 2.0 cluster and set it up for object storage. We will configure RADOS Gateway (RGW), Red Hat Storage Console (RHCS) and show how to configure the S3 and Swift interfaces of the RGW. Using python we will access both the S3 and Swift interfaces.</p>
+<p>If you are interested in configuring Ceph for OpenStack see the following article:</p>
+<p><a href="https://keithtenzer.com/2016/09/12/openstack-integrating-ceph-as-storage-backend/">OpenStack - Integrating Ceph as Storage Backend</a><br />
+<!--more--></p>
+<h3>Prerequisites</h3>
+<p>Ceph has a few different components to be aware of: monitors (mons), storage or osd nodes (osds), Red Hat Storage Console (RHSC), RHSC agents, Calamari, clients and gateways.</p>
+<p><strong>Monitors</strong> - maintain maps (crush, pg, osd, etc) and cluster state. Monitors use <a href="https://en.wikipedia.org/wiki/Paxos_(computer_science)">Paxos</a> to establish consensus.</p>
+<p><strong>Storage or OSD Node</strong> - Provides one or more OSDs. Each OSD represents a disk and has a running daemon process controlled by systemctl. There are two types of disks in Ceph: data and journal. The journal enable Ceph to commit small writes quickly and guarantees atomic compound operations. Journals can be collocated with data on same disks or separate. Splitting journals out to SSDs provides higher performance for certain use cases such as block.</p>
+<p><strong>Red Hat Storage Console (optional)</strong> - UI and dashboard that can monitor multiple clusters and monitor not only Ceph but Gluster as well.</p>
+<p><strong>RHSC Agents (optional)</strong> - Each monitor and osd node runs an agent that reports to the RHSC.</p>
+<p><strong>Calamari (optional)</strong> - Runs on one of the monitors to get statistics on ceph cluster and provides rest endpoint. RHSC talks to calamari.</p>
+<p><strong>Clients</strong> - Ceph provides an RBD (RADOS Block Device) client for block storage, CephFS for file storage and a fuse client as well. The RADOS GW itself can be viewed as a Ceph client. Each client requires authentication if cephx is enabled. Cephx is based on kerberos.</p>
+<p><strong>Gateways (optional)</strong> - Ceph is based on RADOS (Reliable Atomic Distributed Object Store). The RADOS Gateway is a web server that provides s3 and swift endpoints and sends those requests to Ceph via RADOS. Similarily there is an ISCSI Gateway that provides ISCSI target to clients and talks to Ceph via RADOS. Ceph itself is of course an object store that supports not only object but file and block clients as well.</p>
+<p>Red Hat recommends at minimum three monitors and 10 storage nodes. All of which should be physical not virtual machines. For the gateways and RHSC, VMs can be used. Since the purpose of this article is about building a lab environment we are doing everything on just three VMs. The VMs should be configured as follows with Red Hat Enterprise Linux (7.2 or 7.3):</p>
+<ul>
+<li>ceph1: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.81/24.</li>
+<li>ceph2: 4096 MB RAM, 2 Cores, 30GB root disk , 2 X 100 GB data disk, 192.168.122.82/24.</li>
+<li>ceph3: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.83/24.</li>
+</ul>
+<p>Note: this entire environment runs on my 12GB thinkpad laptop. If memory is tight you can cut ceph2 down to 2048MB RAM.</p>
+<p>The roles will be devided across the nodes as follows:</p>
+<ul>
+<li>Ceph1: RHSC, Rados Gateway, Monitor and OSD</li>
+<li>Ceph2: Calamari, Monitor and OSD</li>
+<li>Ceph3: Monitor and OSD</li>
+</ul>
+<p><img class="alignnone size-full wp-image-6489" src="/assets/2017/02/ceph_lab_setup1.png" alt="ceph_lab_setup" width="580" height="287" /></p>
+<h3>Install Ceph Cluster</h3>
+<p>Register subscription and enable repositories.</p>
+<pre># subscription-manager register
+# subscription-manager list --available
+# subscription-manager attach --pool=8a85f981weuweu63628333293829
+# subscription-manager repos --disable=*
+# subscription-manager repos --enable=rhel-7-server-rpms
+# subscription-manager repos --enable=rhel-7-server-rhceph-2-mon-rpms
+# subscription-manager repos --enable=rhel-7-server-rhceph-2-osd-rpms
+# subscription-manager repos --enable=rhel-7-server-rhscon-2-agent-rpms</pre>
+<p>Note: If you are using centos you will need to install ansible and get the ceph-ansible playbooks from <a href="https://github.com/ceph/ceph-ansible.git">github</a>.</p>
+<p><strong>Disable firewall</strong></p>
+<p>Since this is a lab environment we can make life a bit easier. If you are interested in enabling firewall then follow official documentation <a href="https://access.redhat.com/webassets/avalon/d/Red_Hat_Ceph_Storage-2-Installation_Guide_for_Red_Hat_Enterprise_Linux-en-US/Red_Hat_Ceph_Storage-2-Installation_Guide_for_Red_Hat_Enterprise_Linux-en-US.pdf">here</a>.</p>
+<pre>#systemctl stop firewalld
+#systemctl disable firewalld</pre>
+<p><strong>Configure NTP</strong></p>
+<p>Time synchronization is absolutely critical for Ceph. Make sure it is reliable.</p>
+<pre># yum install -y ntp
+# systemctl enable ntpd
+# systemctl start ntpd</pre>
+<p>Test to ensure ntp is working properly.</p>
+<pre># ntpq -p</pre>
+<p><strong>Update hosts file</strong></p>
+<p>If dns is working you can skip this step.</p>
+<pre>#vi /etc/hosts
+192.168.122.81 ceph1.lab.com ceph1
+192.168.122.82 ceph2.lab.com ceph2
+192.168.122.83 ceph3.lab.com ceph3</pre>
+<p><strong>Create Ansible User</strong></p>
+<p>Ceph 2.0 now uses ansible to deploy, configure and update. A user is required that has sudo permissions.</p>
+<pre># useradd ansible
+# passwd ansible</pre>
+<pre><span style="font-weight:400;">#cat &lt;&lt; EOF &gt; /etc/sudoers.d/ansible</span>
+<span style="font-weight:400;">ansible ALL = (root) NOPASSWD:ALL</span>
+<span style="font-weight:400;">Defaults:ansible !requiretty
+EOF</span></pre>
+<p><strong>Enable repositories for RHSC</strong></p>
+<pre class="screen"># subscription-manager repos --enable=rhel-7-server-rhscon-2-installer-rpms</pre>
+<pre class="screen"># subscription-manager repos --enable=rhel-7-server-rhscon-2-main-rpms</pre>
+<p>Install Ceph-Ansible</p>
+<pre><span style="font-weight:400;"># yum install -y ceph-ansible</span></pre>
+<p><strong>Setup ssh keys for ansible user</strong></p>
+<pre># su - ansible
+$ ssh-keygen
+$ ssh-copy-id ceph1
+$ ssh-copy-id ceph2
+$ ssh-copy-id ceph3
+$ <span style="font-weight:400;">mkdir ~/ceph-ansible-keys</span></pre>
+<p><strong>Update Ansible Hosts file</strong></p>
+<pre>$ sudo vi /etc/ansible/hosts
+
+[mons]
+ceph1
+ceph2
+ceph3
+
+[osds]
+ceph1
+ceph2
+ceph3
+
+[rgws]
+ceph1
+ceph3</pre>
+<p><strong>Update Ansible Group Vars</strong></p>
+<p>The ceph configuration is maintained by group vars. By default samples are provided. We need to copy these and then update them. For this deployment we need to update group vars for all, mons and osds.</p>
+<p>You can find these group var files in <a href="https://github.com/ktenzer/ceph/tree/master/2.0/group_vars">github</a>.</p>
+<pre><span style="font-weight:400;">$ cd /usr/share/ceph-ansible/group_vars</span></pre>
+<p><strong>Update general group vars</strong></p>
+<pre>$ cp all.sample all</pre>
+<pre>$ vi all
+fetch_directory: /home/ansible/ceph-ansible-keys
+cluster: ceph
+ceph_stable_rh_storage: true
+ceph_stable_rh_storage_cdn_install: true
+generate_fsid: true
+cephx: true
+monitor_interface: eth0
+journal_size: 1024
+public_network: 192.168.122.0/24
+cluster_network: ""
+osd_mkfs_type: xfs
+osd_mkfs_options_xfs: -f -i size=2048
+radosgw_frontend: civetweb
+radosgw_civetweb_port: 8080
+radosgw_keystone: false</pre>
+<p><strong>Update monitor group vars</strong></p>
+<pre>$ cp mons.sample mons</pre>
+<p><strong>Update osd group vars</strong></p>
+<pre>$ cp osds.sample osds</pre>
+<pre>$ vi osds
+osd_auto_discovery: true
+journal_collocation: true</pre>
+<p><strong>Update rados gateway group vars</strong></p>
+<p>We are just going with defaults here so no changes.</p>
+<pre>$ cp rgws.sample rgws</pre>
+<p><strong>Run Ansible playbook</strong></p>
+<pre>$ cd /usr/share/ceph-ansible
+$ sudo cp site.yml.sample site.yml
+$ ansible-playbook site.yml -vvvv</pre>
+<p>If everything is successful you should see message similar to below. If something fails simple fix problem and re-run playbook till it succeeds.</p>
+<pre>PLAY RECAP ********************************************************************
+ ceph1 : ok=370 changed=17 unreachable=0 failed=0
+ ceph2 : ok=286 changed=14 unreachable=0 failed=0
+ ceph3 : ok=286 changed=13 unreachable=0 failed=0</pre>
+<p><strong>Check Ceph Health</strong></p>
+<p>You should see HEALTH_OK. If it is not ok then you can run "ceph health detail" to get more information.</p>
+<pre>$ sudo ceph -s
+cluster 1e0c9c34-901d-4b46-8001-0d1f93ca5f4d
+health HEALTH_OK
+monmap e1: 3 mons at {ceph1=192.168.122.81:6789/0,ceph2=192.168.122.82:6789/0,ceph3=192.168.122.83:6789/0}
+election epoch 6, quorum 0,1,2 ceph1,ceph2,ceph3
+osdmap e14: 3 osds: 3 up, 3 in
+flags sortbitwise
+pgmap v26: 104 pgs, 6 pools, 1636 bytes data, 171 objects
+103 MB used, 296 GB / 296 GB avail
+104 active+clean</pre>
+<h3>Configure erasure coded pool for RADOSGW</h3>
+<p>By default the pool default.rgw.data.root contains data for a RADOSGW and it is configured for replication not erasure coding. In order to change to erasure coding you need to delete the pool and re-create it. For object storage we usually recommend erasure coding as it is much more efficient and brings down costs.</p>
+<pre># ceph osd pool delete default.rgw.data.root default.rgw.data.root --yes-i-really-really-mean-it</pre>
+<p>Ceph supports many different erasure coding schemes.</p>
+<pre># ceph osd erasure-code-profile ls
+default
+k4m2
+k6m3
+k8m4</pre>
+<p>The default profile is 2+1. Since we only have three nodes this is the only profile that could actually work so we will use that.</p>
+<pre># ceph osd erasure-code-profile get default
+k=2
+m=1
+plugin=jerasure
+technique=reed_sol_van</pre>
+<p>Create new erasure coded pool using 2+1.</p>
+<pre># ceph osd pool create default.rgw.data.root 128 128 erasure default</pre>
+<p>Here we are creating 128 placement groups for the pool. This was calculated using the pg calculation tool: <a href="https://access.redhat.com/labs/cephpgc/">https://access.redhat.com/labs/cephpgc/</a></p>
+<h3><strong>Configure rados gateway s3 user</strong></h3>
+<p>The rados gateway was installed and configured on ceph1 per ansible however a user needs to be created for s3. This is not part of Ansible installation by default.</p>
+<pre>#radosgw-admin user create --uid="s3user" --display-name="S3user"
+ {
+ "user_id": "s3user",
+ "display_name": "S3user",
+ "email": "",
+ "suspended": 0,
+ "max_buckets": 1000,
+ "auid": 0,
+ "subusers": [],
+ "keys": [
+ {
+ "user": "s3user",
+ "access_key": "PYVPOGO2ODDQU24NXPXZ",
+ "secret_key": "pM1QULv2YgAEbvzFr9zHRwdQwpQiT9uJ8hG6JUZK"
+ }
+ ],
+ "swift_keys": [],
+ "caps": [],
+ "op_mask": "read, write, delete",
+ "default_placement": "",
+ "placement_tags": [],
+ "bucket_quota": {
+ "enabled": false,
+ "max_size_kb": -1,
+ "max_objects": -1
+ },
+ "user_quota": {
+ "enabled": false,
+ "max_size_kb": -1,
+ "max_objects": -1
+ },
+ "temp_url_keys": []
+ }</pre>
+<p><strong>Test S3 Access</strong></p>
+<p>In order to test s3 access we will use a basic python script that uses the boto library.</p>
+<pre># pip install boto</pre>
+<p>Create script and update with information from above. The script is located in <a href="https://github.com/ktenzer/ceph/blob/master/2.0/scripts/s3upload.py">github</a>.</p>
+<pre># cd /root
+# vi s3upload.py</pre>
+<pre>#!/usr/bin/python
+
+import sys
+
+import boto
+import boto.s3.connection
+from boto.s3.key import Key
+
+access_key = 'PYVPOGO2ODDQU24NXPXZ'
+secret_key = 'pM1QULv2YgAEbvzFr9zHRwdQwpQiT9uJ8hG6JUZK'
+rgw_hostname = 'ceph1'
+rgw_port = 8080
+local_testfile = '/tmp/testfile'
+bucketname = 'mybucket'
+
+
+conn = boto.connect_s3(
+	aws_access_key_id = access_key,
+	aws_secret_access_key = secret_key,
+	host = rgw_hostname,
+	port = rgw_port,
+	is_secure=False,
+	calling_format = boto.s3.connection.OrdinaryCallingFormat(),
+	)
+
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '#'):
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix))
+    if iteration == total: 
+        print()
+
+def percent_cb(complete, total):
+    printProgressBar(complete, total)
+
+bucket = conn.create_bucket('mybucket')
+for bucket in conn.get_all_buckets():
+	print "{name}\t{created}".format( name = bucket.name, created = bucket.creation_date,)
+
+bucket = conn.get_bucket(bucketname) 
+
+k = Key(bucket)
+k.key = 'my test file'
+k.set_contents_from_filename(local_testfile, cb=percent_cb, num_cb=20)
+</pre>
+<p><strong>Change permissions and run script</strong></p>
+<pre># chmod 755 s3upload.py</pre>
+<pre>#./s3upload.py</pre>
+<p>Watch the 'ceph -s' command.</p>
+<pre># watch ceph -s
+Every 2.0s: ceph -s Thu Feb 2 19:09:58 2017
+
+cluster 1e0c9c34-901d-4b46-8001-0d1f93ca5f4d
+ health HEALTH_OK
+ monmap e1: 3 mons at {ceph1=192.168.122.81:6789/0,ceph2=192.168.122.82:6789/0,ceph3=192.168.122.83:6789/0}
+ election epoch 36, quorum 0,1,2 ceph1,ceph2,ceph3
+ osdmap e102: 3 osds: 3 up, 3 in
+ flags sortbitwise
+ pgmap v1543: 272 pgs, 12 pools, 2707 MB data, 871 objects
+ 9102 MB used, 287 GB / 296 GB avail
+ 272 active+clean
+ client io 14706 kB/s wr, 0 op/s rd, 32 op/s wr</pre>
+<h3><strong>Configure rados gateway swift user</strong></h3>
+<p>In order to enable access to object store using swift you need to create a sub-user or nested user for swift access. This user is created under already existing user. We will use the s3user already created. From outside the swift user is it's own user.</p>
+<pre># radosgw-admin subuser create --uid=s3user --subuser=s3user:swift --access=full</pre>
+<pre>{
+"user_id": "s3user",
+"display_name": "S3user",
+"email": "",
+"suspended": 0,
+"max_buckets": 1000,
+"auid": 0,
+"subusers": [
+{
+"id": "s3user:swift",
+"permissions": "full-control"
+}
+],
+"keys": [
+{
+"user": "s3user",
+"access_key": "PYVPOGO2ODDQU24NXPXZ",
+"secret_key": "pM1QULv2YgAEbvzFr9zHRwdQwpQiT9uJ8hG6JUZK"
+}
+],
+"swift_keys": [
+{
+"user": "s3user:swift",
+"secret_key": "vzo0KErmx5I9zaE3Y7bIOGGbJaECpJmNtNikFEYh"
+}
+],
+"caps": [],
+"op_mask": "read, write, delete",
+"default_placement": "",
+"placement_tags": [],
+"bucket_quota": {
+"enabled": false,
+"max_size_kb": -1,
+"max_objects": -1
+},
+"user_quota": {
+"enabled": false,
+"max_size_kb": -1,
+"max_objects": -1
+},
+"temp_url_keys": []
+}</pre>
+<p><strong>Generate keys</strong></p>
+<p>This is done by default but in case you want to generate keys you can do so at anytime.</p>
+<pre># radosgw-admin key create --subuser=s3user:swift --key-type=swift --gen-secret</pre>
+<p><strong>Test swift access</strong></p>
+<p>We will use python again but this time for swift cli which is written in python.</p>
+<pre># pip install --upgrade setuptools
+# pip install python-swiftclient</pre>
+<p><strong>List buckets using swift</strong></p>
+<pre># swift -A http://192.168.122.81:8080/auth/1.0 -U s3user:swift -K 'DvvYI2uzd9phjHNTa4gag6VkWCrX29M17A0mATRg' list</pre>
+<p>If things worked then you should see bucket called 'mybucket'.</p>
+<h3><strong>Configure Red Hat Storage Console (RHSC)</strong></h3>
+<p>Next we will configure the storage console and import the existing cluster. Ansible does not take care of setting up RHSC.</p>
+<p><strong>Install RHSC</strong></p>
+<pre># yum install -y rhscon-core rhscon-ceph rhscon-ui</pre>
+<p><strong>Configure RHSC</strong></p>
+<pre class="screen"># skyring-setup</pre>
+<pre>Would you like to create one now? (yes/no): yes
+ Username (leave blank to use 'root'):
+ Email address:
+ Password:
+ Password (again):
+ Superuser created successfully.
+ Installing custom SQL ...
+ Installing indexes ...
+ Installed 0 object(s) from 0 fixture(s)
+ ValueError: Type carbon_var_lib_t is invalid, must be a file or device type
+ Created symlink from /etc/systemd/system/multi-user.target.wants/carbon-cache.service to /usr/lib/systemd/system/carbon-cache.service.
+ Job for httpd.service failed because the control process exited with error code. See "systemctl status httpd.service" and "journalctl -xe" for details.
+ Please enter the FQDN of server [ceph1.lab.com]:
+ Skyring uses HTTPS to secure the web interface.
+ Do you wish to generate and use a self-signed certificate? (Y/N): y
+
+-------------------------------------------------------
+ Now the skyring setup is ready!
+ You can start/stop/restart the server by executing the command
+ systemctl start/stop/restart skyring
+ Skyring log directory: /var/log/skyring
+ URLs to access skyring services
+ - http://ceph1.lab.com/skyring
+ - http://ceph1.lab.com/graphite-web
+ -------------------------------------------------------
+ Done!</pre>
+<p>Once installation is complete you can access RHSC via web browser.</p>
+<pre>https://192.168.122.81
+user: admin password: admin</pre>
+<p><strong>Configure RHSC Agent</strong></p>
+<p>Each ceph monitor and osd node requires an RHSC agent.</p>
+<p><strong>Install agent</strong></p>
+<p>Likely ansible took care of this but doesn't hurt to check.</p>
+<pre># yum install -y rhscon-agent</pre>
+<pre># curl 192.168.122.81:8181/setup/agent/ | bash</pre>
+<p><strong>Setup calamari server</strong></p>
+<p>The calamari server runs on one of the monitor nodes. It's purpose is to collect cluster health, events and statistics. In this case we will run the calamari server on ceph2.</p>
+<pre># yum install calamari-server</pre>
+<pre># calamari-ctl clear --yes-i-am-sure</pre>
+<p>Gotta love the --yes-i-am-sure flags.</p>
+<pre># calamari-ctl initialize --admin-username admin --admin-password admin --admin-email ktenzer@redhat.com</pre>
+<p><strong>Accept nodes in RHSC</strong></p>
+<p>https://</p>
+<p>Click on tasks icon at top right and accept all hosts.</p>
+<p><img class="alignnone size-full wp-image-6223" src="/assets/2017/02/ceph_accept_hosts.png" alt="ceph_accept_hosts" width="1669" height="522" /></p>
+<p>Once accepting hosts you should see them available.</p>
+<p><img class="alignnone size-full wp-image-6225" src="/assets/2017/02/ceph_hosts.png" alt="ceph_hosts" width="1670" height="571" /></p>
+<p><strong>Import cluster in RHSC</strong></p>
+<p>Go to cluster and import a cluster, ensure to select the monitor node running the calamari server. In this case ceph 2.</p>
+<p>Note: we could have also deployed Ceph using RHSC that is what new cluster does but that is no fun,</p>
+<p><img class="alignnone size-full wp-image-6231" src="/assets/2017/02/ceph_import_cluster.png" alt="ceph_import_cluster" width="1668" height="335" /></p>
+<p>Click import to start the import process.</p>
+<p><img class="alignnone size-full wp-image-6234" src="/assets/2017/02/ceph_import_cluster_2.png" alt="ceph_import_cluster_2" width="1659" height="424" /></p>
+<p>Cluster now should be visible in RHSC.</p>
+<p><img class="alignnone size-full wp-image-6237" src="/assets/2017/02/ceph_cluster_complete.png" alt="ceph_cluster_complete" width="1682" height="290" /></p>
+<p>RHSC dashboard shows a high-level glimpse of ceph cluster.</p>
+<p><img class="alignnone size-full wp-image-6241" src="/assets/2017/02/ceph_dashboard.png" alt="ceph_dashboard" width="1662" height="804" /></p>
+<h3>Summary</h3>
+<p>In this article we saw how to deploy a ceph 2.0 cluster from scratch using VMs that can run on your laptop. We enabled object storage through ragosgw and configured both s3 as well as swift access. Finally we setup the Red Hat Storage Console (RHSC) to provide insight into our ceph cluster. This article provides you a good starting point for your journey into ceph and the future of storage which is software-defined as well as object based. Unlike all other storage systems ceph is the only one that is opensource, built on open standards and truly unified (object, block, file). Ceph is supported by many vendors and can run on any x86 hardware, even commodity. What else is the more to say?</p>
+<p>Happy Cephing!</p>
+<p>(c) 2017 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#ceph" class="page__taxonomy-item" rel="tag">Ceph</a><span class="sep">, </span>
+    
+      <a href="/tags/#ceph-ansible" class="page__taxonomy-item" rel="tag">ceph-ansible</a><span class="sep">, </span>
+    
+      <a href="/tags/#object-storage" class="page__taxonomy-item" rel="tag">object storage</a><span class="sep">, </span>
+    
+      <a href="/tags/#radosgw" class="page__taxonomy-item" rel="tag">radosgw</a><span class="sep">, </span>
+    
+      <a href="/tags/#software-defined-storage" class="page__taxonomy-item" rel="tag">software-defined storage</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#ceph" class="page__taxonomy-item" rel="tag">Ceph</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2017-02-03T00:00:00-08:00">February 3, 2017</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Red+Hat+Ceph+Storage+2.0+Lab+%2B+Object+Storage+Configuration+Guide%20https%3A%2F%2Fkeithtenzer.com%2Fceph%2Fred-hat-ceph-storage-2-0-lab-object-storage-configuration-guide%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fceph%2Fred-hat-ceph-storage-2-0-lab-object-storage-configuration-guide%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fceph%2Fred-hat-ceph-storage-2-0-lab-object-storage-configuration-guide%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openshift/deploying-openshift-enterprise-from-ansible-tower/" class="pagination--pager" title="Deploying OpenShift Enterprise from Ansible Tower
+">Previous</a>
+    
+    
+      <a href="/openshift/storage-for-containers-overview-part-i/" class="pagination--pager" title="Storage for Containers Overview - Part I
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

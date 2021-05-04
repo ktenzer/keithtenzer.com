@@ -1,0 +1,944 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner - KEITHTENZER.COM</title>
+<meta name="description" content="Overview  OpenShift Enterprise v3 by Red Hat is about building and running next-gen applications. If we look around, we have seen startups in virtually every market segment, turning the competitive landscape upside down. Startup companies like NetFlix, Spotify and Uber have literally pushed the incumbents to the brink of extinction and overtaken entire industries in a very short period of time. How have they been able to rival incumbents 100 times their size? The answer is simple, by bringing innovation to the market faster, much faster. Complacency and overcoming previous successes are very challenging for incumbents. It is much easier for a startup to innovate than an existing company with a degree of legacy. OpenShift v3 will level the playing field and provide organizations the appropriate tooling to rapidly reduce their time-to-market. OpenShift v3 allows organizations to deliver innovation faster by:  Maximizing time developers actually spend developing Enabling efficient clean hand-offs between Dev &amp; Ops (DevOps) Automating development pipelines and continuous integration / delivery Increasing speed of innovation through more frequent experimentation Providing state-of-the-art enterprise grade container infrastructure  In this article we will look at how to setup an OpenShift lab environment and get started on the journey to faster innovation cycles.  Pre Configuration Steps OpenShift requires a master and one or more nodes. In this lab we will configure one master and a node. Install RHEL or CentOS 7.1 on two systems and configure hostname as well as network accordingly. On both systems run the following steps: # subscription-manager repos --disable=&quot;*&quot; # subscription-manager repos --enable=&quot;rhel-7-server-rpms&quot; # subscription-manager repos --enable=&quot;rhel-7-server-extras-rpms&quot; # subscription-manager repos --enable=&quot;rhel-7-server-optional-rpms&quot; # subscription-manager repos --enable=&quot;rhel-7-server-ose-3.0-rpms&quot; #yum install wget git net-tools bind-utils iptables-services bridge-utils #yum install python-virtualenv #yum install gcc #yum install httpd-tools #yum install docker #yum update  Once all the packages are installed it is important to configure Docker so that is allows for insecure registry communication on local network only. #vi /etc/sysconfig/docker OPTIONS=--selinux-enabled --insecure-registry 192.168.122.0/24 Setup ssh access from master to node. #ssh-keygen #ssh-copy-id -i .ssh/id_rsa.pub root@ose3-node.lab.com Install OpenShift Enterprise v3 At this point both the master and node are prepared. We can now begin the install of OpenShift Enterprise v3. From the master run the following command: #sh &lt;(curl -s https://install.openshift.com/ose) Note: if internet access is not available you can download the installer and run it locally on the master host. https://install.openshift.com/portable/oo-install-ose.tgz Configure OpenShift Enterprise v3 Once the installer completes an OpenShift master and node will exist. Now we can begin with the main configuration. By default OpenShift will use HTTP authentication. This is of course only recommended for lab or test environments. For production environments you will want to connect to LDAP or an identity management system. On the master we can edit the /etc/openshift/master/master-config.yaml and configure authentication. #vi /etc/openshift/master/master-config.yaml identityProviders: - name: my_htpasswd_provider challenge: true login: true provider: apiVersion: v1 kind: HTPasswdPasswordIdentityProvider file: /root/users.htpasswd routingConfig:  subdomain: lab.com Next we need to create a standard user. OpenShift enterprise creates the system:admin account for default administration. #htpasswd -c /root/users.htpasswd admin Optionally we can give the newly created admin user, OpenShift cluster-admin permisions. #oadm policy add-cluster-role-to-user cluster-admin admin Configure Docker Registry OpenShift uses the Docker registry for storing Docker container images. Anytime you build or change an application configuration, a new docker container is created and pushed to the registry. Each node can access this registry. You can and should use persistent storage for the registry. In this example we will use a host mountpoint on the node. The Docker registry runs as a container in the default namespace that only OpenShift admins can access. On the node create a directory for the registry #mkdir /images On the master login in using the system:admin account, switch to the default project and create a Docker registry. # oc login Username: system:admin #oc project default #echo &#39;{&quot;kind&quot;:&quot;ServiceAccount&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;metadata&quot;:{&quot;name&quot;:&quot;registry&quot;}}&#39; | oc create -f - #oc edit scc privileged users: - system:serviceaccount:openshift-infra:build-controller - system:serviceaccount:default:registry #oadm registry --service-account=registry --config=/etc/openshift/master/admin.kubeconfig  --credentials=/etc/openshift/master/openshift-registry.kubeconfig --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39; --mount-host=/images Create Router OpenShift v3 uses OpenVswitch as the software defined network. In order for isolation, proxy and load balancing capabilities a router is needed. The router similar to the Docker registry also runs in a container. Using the below command we can create a router in the default namespace. #echo &#39;{&quot;kind&quot;:&quot;ServiceAccount&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;metadata&quot;:{&quot;name&quot;:&quot;router&quot;}}&#39; | oc create -f - #oc edit scc privileged users:  - system:serviceaccount:openshift-infra:build-controller  - system:serviceaccount:default:registry  - system:serviceaccount:default:router #oadm router router-1 --replicas=1 --credentials=&#39;/etc/openshift/master/openshift-router.kubeconfig&#39; --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39;  Configure DNS OpenShift v3 requires a working DNS environment in order to handle URL resolution. The requirement is to create a DNS wildcard that points to the router. This should be the public IP of the node where the router container is running. In our example we have created a local DNS server that acts as a forwarder for the 192.168.122.0 network. In addition we have implemented a DNS wildcard that points to our nodes public or physical IP, where the router container is running. #yum install bind-utils bind #systemctl start named #systemctl enable named vi /etc/named.conf options {listen-on port 53 { 192.168.122.1; }; forwarders { 10.38.5.26; ; }; zone &quot;lab.com&quot; IN {  type master;  file &quot;/var/named/dynamic/lab.com.zone&quot;;  allow-update { none; }; }; vi /var/named/dynamic/lab.com.zone $ORIGIN lab.com. $TTL 86400 @ IN SOA dns1.lab.com. hostmaster.lab.com. (  2001062501 ; serial  21600 ; refresh after 6 hours  3600 ; retry after 1 hour  604800 ; expire after 1 week  86400 ) ; minimum TTL of 1 day ; ;  IN NS dns1.lab.com. dns1 IN A 192.168.122.1   IN AAAA aaaa:bbbb::1 ose3-master IN A 192.168.122.60 ose3-node1 IN A 192.168.122.61 * 300 IN A 192.168.122.61 ; ;  Install and Configure GitHub Lab In most cases you will probably want to configure a local GitHub server. This is of course optional. In the example we are using the public GitHub service, however you could easily do this on an internal GitHub server. You can setup the GitHub server on the OpenShift v3 master. For demos it is recommended to use GitHub lab, since it is much easier to install and configure. #yum install curl openssh-server #systemctl enable sshd #systemctl start sshd #firewall-cmd --permanent --add-service=http #systemctl reload firewalld #curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | bash #yum install gitlab-ce #gitlab-ctl reconfigure Once the above steps are complete you can access GitHub by connecting through browser to the host. Username: root Password: 5iveL!fe Using OpenShift v3 At this point we should have a functioning OpenShift v3 environment. We can now build and deloy applications. Here we will see how to deploy a mysql database using scaling and build a ruby hello world application from GitHub. Deploying MySQL database Though using the OpenShift CLI or API is certainly possible, let us at this point use the UI. To login to the UI open a browser and point it at the IP of the OpenShift v3 master, for example: https://ose3-master.lab.com:8443/console/. Create a new project for hosting containers. In OpenShift v3 each project maps to a namespace in Kubernetes.  Under the demo project deploy a MySQL database by selecting &quot;create&quot; or &quot;getting started&quot;. Make sure you add a label, this is explained later.  Once an application is created we see the status in the Overview.  Each time an application is deployed we have a container deployer and the running container. Once the deployment is complete the deployer container is deleted and we just have the running container. The &quot;oc get pods&quot; command shows us all pods within the namespace. A pod is a Kubernetes construct and means one or more Docker containers that share deployment template. Pods run on nodes, grouping containers within pods is a way to ensure certain containers are localized. # oc get pods NAME            READY  REASON     RESTARTS  AGE mysql-1-deploy  1/1    Running    0         8s mysql-1-rz165   0/1    Running    0         5s For every application deployed, OpenShift will also create a replication controller and service. These are also Kubernetes constructs. A replication controller is used for auto-scaling and determines how many instances of a given pod should exist. # oc get rc CONTROLLER  CONTAINER(S)  IMAGE(S)                              SELECTOR                REPLICAS mysql-1     mysql         .../openshift3/mysql-55-rhel7:latest  deployment=mysql-1,...  1 The service creates a URL for the application and handles dynamically routing to individual pods. This is handled by the kube-proxy layer and the OpenShift routing layer. # oc get services NAME   LABELS                                        SELECTOR    IP(S)          PORT(S) mysql  demo=mysql,template=mysql-ephemeral-template  name=mysql  172.30.76.121  3306/TCP When creating applications it is very important to always define labels. Labels are applied to pods, replication controllers and services. When deleting an application it is very easy to for example reference the label instead of deleting individual components manually. #oc delete all --selector=&quot;demo=mysql&quot; OpenShift v3 also supports auto-scaling. This capability leverages Kubernetes replication controllers. First we need to identify the replication controller using the &quot;oc get rc&quot; command. We can automatically scale our application by changing the number of replicas. In this example we will scale from one to three MySQL databases. #oc scale --replicas=3 rc mysql-1 Upon scaling MySQL, we can quickly see the results in the UI.  Building Ruby Hello World Application So far we have seen how to provision application components such as databases or middleware in seconds. We have also obeserved how we can effortlessly scale these components. In the following example, we will build our own application code in OpenShift v3. OpenShift will provide the Ruby runtime environment and automatically build, as well as launch a container with our hello world code from GitHub. OpenShift utilizes a technology called &quot;Source to Image&quot; (S2I) that efficiently builds the container. Instead of rebuilding the entire container each time, S2I is able to re-use previous builds and only change the application layer within the container. Docker containers are immutable so any change always requires creating a new container. This is a wasteful, time consuming process without OpenShift and S2I. To build our application select &quot;create&quot; from the project page in the OpenShift UI. Enter the URL to the GitHub repository https://github.com/ktenzer/ruby-hello-world and select &quot;next&quot;.  OpenShift asks us for the application build runtime. In this case we will select Ruby 2.0 since this is in fact a Ruby application.  In the final step we can provide any custom details about the build configuration and of course add a label.  OpenShift will create a container with Ruby 2.0 and our code from GitHub. It will also complete any required build steps. The end result is a complete application build, of a running application, inside a Docker container. Our application can now be automatically tested using Jenkins or other such continuous delivery tools. If tests pass, it can be automatically rolled out to production. Think about how much faster you can make code available to your customers with OpenShift? By selecting the URL for the Ruby hello world application we can also access the application directly.  &nbsp;  Troubleshooting In this section we will go through some basic troubleshooting steps for OpenShift v3. In order to get logs we first need the pod name. Using the &quot;oc get pods&quot; command, we can get a list of pods. #oc logs ruby-hello-world-1-65lgf You might consider adding &#39;puma&#39; into your Gemfile. [2015-08-03 08:19:03] INFO WEBrick 1.3.1 [2015-08-03 08:19:03] INFO ruby 2.0.0 (2013-11-22) [x86_64-linux] [2015-08-03 08:19:03] INFO WEBrick::HTTPServer#start: pid=1 port=8080 10.1.0.4 - - [03/Aug/2015 08:49:15] &quot;GET / HTTP/1.1&quot; 200 2496 0.0117 [2015-08-03 08:49:45] ERROR Errno::ECONNRESET: Connection reset by peer  /opt/rh/ruby200/root/usr/share/ruby/webrick/httpserver.rb:80:in `eof?&#39;  /opt/rh/ruby200/root/usr/share/ruby/webrick/httpserver.rb:80:in `run&#39;  /opt/rh/ruby200/root/usr/share/ruby/webrick/server.rb:295:in `block in start_thread&#39; Beyond looking at a pods logs we can also access journald for docker, openshift-master and openshift-node. Using the below journalctl commands we can get a list of current log messages for the major OpenShift components. #journalctl -f -l -u docker #journalctl -f -l -u openshift-master #journalctl -f -l -u openshift-node Issue 1: Pod shows as pending and scheduled but never gets deployed on a node. This problem can occur if the node docker image cache gets out of sync. In order to resolve this issue perform the following steps on the node: #systemctl stop docker #rm -rf /var/lib/docker/* #reboot Summary In this article we have seen how to deploy an OpenShift Enterprise v3 lab environment. We have seen how to use OpenShift in order to deploy and build applications. This is just the tip of the iceberg of course. In a world where speed and agility becomes increasingly important, it is clear that container infrastructure will become the future platform for running applications. You simply can&#39;t argue with being able to start 60 containers in the time it takes to start a single VM. Google deploys over two billion containers a week and everything you do from Google mail to search, runs in a container. Containers are enterprise ready and it is time to start understanding how to take advantage of this technology. OpenShift Enterprise v3 provides a platform for building and running applications on container infrastructure. OpenShift Enterprise v3 enables organizations to innovate faster, bringing that innovation to the market sooner. Don&#39;t let your organization be overtaken by the next startup! If you found this article informative or helpful please share your thoughts. Happy OpenShifting! (c) 2015 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner">
+<meta property="og:url" content="https://keithtenzer.com/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">
+
+
+  <meta property="og:description" content="Overview  OpenShift Enterprise v3 by Red Hat is about building and running next-gen applications. If we look around, we have seen startups in virtually every market segment, turning the competitive landscape upside down. Startup companies like NetFlix, Spotify and Uber have literally pushed the incumbents to the brink of extinction and overtaken entire industries in a very short period of time. How have they been able to rival incumbents 100 times their size? The answer is simple, by bringing innovation to the market faster, much faster. Complacency and overcoming previous successes are very challenging for incumbents. It is much easier for a startup to innovate than an existing company with a degree of legacy. OpenShift v3 will level the playing field and provide organizations the appropriate tooling to rapidly reduce their time-to-market. OpenShift v3 allows organizations to deliver innovation faster by:  Maximizing time developers actually spend developing Enabling efficient clean hand-offs between Dev &amp; Ops (DevOps) Automating development pipelines and continuous integration / delivery Increasing speed of innovation through more frequent experimentation Providing state-of-the-art enterprise grade container infrastructure  In this article we will look at how to setup an OpenShift lab environment and get started on the journey to faster innovation cycles.  Pre Configuration Steps OpenShift requires a master and one or more nodes. In this lab we will configure one master and a node. Install RHEL or CentOS 7.1 on two systems and configure hostname as well as network accordingly. On both systems run the following steps: # subscription-manager repos --disable=&quot;*&quot; # subscription-manager repos --enable=&quot;rhel-7-server-rpms&quot; # subscription-manager repos --enable=&quot;rhel-7-server-extras-rpms&quot; # subscription-manager repos --enable=&quot;rhel-7-server-optional-rpms&quot; # subscription-manager repos --enable=&quot;rhel-7-server-ose-3.0-rpms&quot; #yum install wget git net-tools bind-utils iptables-services bridge-utils #yum install python-virtualenv #yum install gcc #yum install httpd-tools #yum install docker #yum update  Once all the packages are installed it is important to configure Docker so that is allows for insecure registry communication on local network only. #vi /etc/sysconfig/docker OPTIONS=--selinux-enabled --insecure-registry 192.168.122.0/24 Setup ssh access from master to node. #ssh-keygen #ssh-copy-id -i .ssh/id_rsa.pub root@ose3-node.lab.com Install OpenShift Enterprise v3 At this point both the master and node are prepared. We can now begin the install of OpenShift Enterprise v3. From the master run the following command: #sh &lt;(curl -s https://install.openshift.com/ose) Note: if internet access is not available you can download the installer and run it locally on the master host. https://install.openshift.com/portable/oo-install-ose.tgz Configure OpenShift Enterprise v3 Once the installer completes an OpenShift master and node will exist. Now we can begin with the main configuration. By default OpenShift will use HTTP authentication. This is of course only recommended for lab or test environments. For production environments you will want to connect to LDAP or an identity management system. On the master we can edit the /etc/openshift/master/master-config.yaml and configure authentication. #vi /etc/openshift/master/master-config.yaml identityProviders: - name: my_htpasswd_provider challenge: true login: true provider: apiVersion: v1 kind: HTPasswdPasswordIdentityProvider file: /root/users.htpasswd routingConfig:  subdomain: lab.com Next we need to create a standard user. OpenShift enterprise creates the system:admin account for default administration. #htpasswd -c /root/users.htpasswd admin Optionally we can give the newly created admin user, OpenShift cluster-admin permisions. #oadm policy add-cluster-role-to-user cluster-admin admin Configure Docker Registry OpenShift uses the Docker registry for storing Docker container images. Anytime you build or change an application configuration, a new docker container is created and pushed to the registry. Each node can access this registry. You can and should use persistent storage for the registry. In this example we will use a host mountpoint on the node. The Docker registry runs as a container in the default namespace that only OpenShift admins can access. On the node create a directory for the registry #mkdir /images On the master login in using the system:admin account, switch to the default project and create a Docker registry. # oc login Username: system:admin #oc project default #echo &#39;{&quot;kind&quot;:&quot;ServiceAccount&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;metadata&quot;:{&quot;name&quot;:&quot;registry&quot;}}&#39; | oc create -f - #oc edit scc privileged users: - system:serviceaccount:openshift-infra:build-controller - system:serviceaccount:default:registry #oadm registry --service-account=registry --config=/etc/openshift/master/admin.kubeconfig  --credentials=/etc/openshift/master/openshift-registry.kubeconfig --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39; --mount-host=/images Create Router OpenShift v3 uses OpenVswitch as the software defined network. In order for isolation, proxy and load balancing capabilities a router is needed. The router similar to the Docker registry also runs in a container. Using the below command we can create a router in the default namespace. #echo &#39;{&quot;kind&quot;:&quot;ServiceAccount&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;metadata&quot;:{&quot;name&quot;:&quot;router&quot;}}&#39; | oc create -f - #oc edit scc privileged users:  - system:serviceaccount:openshift-infra:build-controller  - system:serviceaccount:default:registry  - system:serviceaccount:default:router #oadm router router-1 --replicas=1 --credentials=&#39;/etc/openshift/master/openshift-router.kubeconfig&#39; --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39;  Configure DNS OpenShift v3 requires a working DNS environment in order to handle URL resolution. The requirement is to create a DNS wildcard that points to the router. This should be the public IP of the node where the router container is running. In our example we have created a local DNS server that acts as a forwarder for the 192.168.122.0 network. In addition we have implemented a DNS wildcard that points to our nodes public or physical IP, where the router container is running. #yum install bind-utils bind #systemctl start named #systemctl enable named vi /etc/named.conf options {listen-on port 53 { 192.168.122.1; }; forwarders { 10.38.5.26; ; }; zone &quot;lab.com&quot; IN {  type master;  file &quot;/var/named/dynamic/lab.com.zone&quot;;  allow-update { none; }; }; vi /var/named/dynamic/lab.com.zone $ORIGIN lab.com. $TTL 86400 @ IN SOA dns1.lab.com. hostmaster.lab.com. (  2001062501 ; serial  21600 ; refresh after 6 hours  3600 ; retry after 1 hour  604800 ; expire after 1 week  86400 ) ; minimum TTL of 1 day ; ;  IN NS dns1.lab.com. dns1 IN A 192.168.122.1   IN AAAA aaaa:bbbb::1 ose3-master IN A 192.168.122.60 ose3-node1 IN A 192.168.122.61 * 300 IN A 192.168.122.61 ; ;  Install and Configure GitHub Lab In most cases you will probably want to configure a local GitHub server. This is of course optional. In the example we are using the public GitHub service, however you could easily do this on an internal GitHub server. You can setup the GitHub server on the OpenShift v3 master. For demos it is recommended to use GitHub lab, since it is much easier to install and configure. #yum install curl openssh-server #systemctl enable sshd #systemctl start sshd #firewall-cmd --permanent --add-service=http #systemctl reload firewalld #curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | bash #yum install gitlab-ce #gitlab-ctl reconfigure Once the above steps are complete you can access GitHub by connecting through browser to the host. Username: root Password: 5iveL!fe Using OpenShift v3 At this point we should have a functioning OpenShift v3 environment. We can now build and deloy applications. Here we will see how to deploy a mysql database using scaling and build a ruby hello world application from GitHub. Deploying MySQL database Though using the OpenShift CLI or API is certainly possible, let us at this point use the UI. To login to the UI open a browser and point it at the IP of the OpenShift v3 master, for example: https://ose3-master.lab.com:8443/console/. Create a new project for hosting containers. In OpenShift v3 each project maps to a namespace in Kubernetes.  Under the demo project deploy a MySQL database by selecting &quot;create&quot; or &quot;getting started&quot;. Make sure you add a label, this is explained later.  Once an application is created we see the status in the Overview.  Each time an application is deployed we have a container deployer and the running container. Once the deployment is complete the deployer container is deleted and we just have the running container. The &quot;oc get pods&quot; command shows us all pods within the namespace. A pod is a Kubernetes construct and means one or more Docker containers that share deployment template. Pods run on nodes, grouping containers within pods is a way to ensure certain containers are localized. # oc get pods NAME            READY  REASON     RESTARTS  AGE mysql-1-deploy  1/1    Running    0         8s mysql-1-rz165   0/1    Running    0         5s For every application deployed, OpenShift will also create a replication controller and service. These are also Kubernetes constructs. A replication controller is used for auto-scaling and determines how many instances of a given pod should exist. # oc get rc CONTROLLER  CONTAINER(S)  IMAGE(S)                              SELECTOR                REPLICAS mysql-1     mysql         .../openshift3/mysql-55-rhel7:latest  deployment=mysql-1,...  1 The service creates a URL for the application and handles dynamically routing to individual pods. This is handled by the kube-proxy layer and the OpenShift routing layer. # oc get services NAME   LABELS                                        SELECTOR    IP(S)          PORT(S) mysql  demo=mysql,template=mysql-ephemeral-template  name=mysql  172.30.76.121  3306/TCP When creating applications it is very important to always define labels. Labels are applied to pods, replication controllers and services. When deleting an application it is very easy to for example reference the label instead of deleting individual components manually. #oc delete all --selector=&quot;demo=mysql&quot; OpenShift v3 also supports auto-scaling. This capability leverages Kubernetes replication controllers. First we need to identify the replication controller using the &quot;oc get rc&quot; command. We can automatically scale our application by changing the number of replicas. In this example we will scale from one to three MySQL databases. #oc scale --replicas=3 rc mysql-1 Upon scaling MySQL, we can quickly see the results in the UI.  Building Ruby Hello World Application So far we have seen how to provision application components such as databases or middleware in seconds. We have also obeserved how we can effortlessly scale these components. In the following example, we will build our own application code in OpenShift v3. OpenShift will provide the Ruby runtime environment and automatically build, as well as launch a container with our hello world code from GitHub. OpenShift utilizes a technology called &quot;Source to Image&quot; (S2I) that efficiently builds the container. Instead of rebuilding the entire container each time, S2I is able to re-use previous builds and only change the application layer within the container. Docker containers are immutable so any change always requires creating a new container. This is a wasteful, time consuming process without OpenShift and S2I. To build our application select &quot;create&quot; from the project page in the OpenShift UI. Enter the URL to the GitHub repository https://github.com/ktenzer/ruby-hello-world and select &quot;next&quot;.  OpenShift asks us for the application build runtime. In this case we will select Ruby 2.0 since this is in fact a Ruby application.  In the final step we can provide any custom details about the build configuration and of course add a label.  OpenShift will create a container with Ruby 2.0 and our code from GitHub. It will also complete any required build steps. The end result is a complete application build, of a running application, inside a Docker container. Our application can now be automatically tested using Jenkins or other such continuous delivery tools. If tests pass, it can be automatically rolled out to production. Think about how much faster you can make code available to your customers with OpenShift? By selecting the URL for the Ruby hello world application we can also access the application directly.  &nbsp;  Troubleshooting In this section we will go through some basic troubleshooting steps for OpenShift v3. In order to get logs we first need the pod name. Using the &quot;oc get pods&quot; command, we can get a list of pods. #oc logs ruby-hello-world-1-65lgf You might consider adding &#39;puma&#39; into your Gemfile. [2015-08-03 08:19:03] INFO WEBrick 1.3.1 [2015-08-03 08:19:03] INFO ruby 2.0.0 (2013-11-22) [x86_64-linux] [2015-08-03 08:19:03] INFO WEBrick::HTTPServer#start: pid=1 port=8080 10.1.0.4 - - [03/Aug/2015 08:49:15] &quot;GET / HTTP/1.1&quot; 200 2496 0.0117 [2015-08-03 08:49:45] ERROR Errno::ECONNRESET: Connection reset by peer  /opt/rh/ruby200/root/usr/share/ruby/webrick/httpserver.rb:80:in `eof?&#39;  /opt/rh/ruby200/root/usr/share/ruby/webrick/httpserver.rb:80:in `run&#39;  /opt/rh/ruby200/root/usr/share/ruby/webrick/server.rb:295:in `block in start_thread&#39; Beyond looking at a pods logs we can also access journald for docker, openshift-master and openshift-node. Using the below journalctl commands we can get a list of current log messages for the major OpenShift components. #journalctl -f -l -u docker #journalctl -f -l -u openshift-master #journalctl -f -l -u openshift-node Issue 1: Pod shows as pending and scheduled but never gets deployed on a node. This problem can occur if the node docker image cache gets out of sync. In order to resolve this issue perform the following steps on the node: #systemctl stop docker #rm -rf /var/lib/docker/* #reboot Summary In this article we have seen how to deploy an OpenShift Enterprise v3 lab environment. We have seen how to use OpenShift in order to deploy and build applications. This is just the tip of the iceberg of course. In a world where speed and agility becomes increasingly important, it is clear that container infrastructure will become the future platform for running applications. You simply can&#39;t argue with being able to start 60 containers in the time it takes to start a single VM. Google deploys over two billion containers a week and everything you do from Google mail to search, runs in a container. Containers are enterprise ready and it is time to start understanding how to take advantage of this technology. OpenShift Enterprise v3 provides a platform for building and running applications on container infrastructure. OpenShift Enterprise v3 enables organizations to innovate faster, bringing that innovation to the market sooner. Don&#39;t let your organization be overtaken by the next startup! If you found this article informative or helpful please share your thoughts. Happy OpenShifting! (c) 2015 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner">
+  <meta name="twitter:description" content="Overview  OpenShift Enterprise v3 by Red Hat is about building and running next-gen applications. If we look around, we have seen startups in virtually every market segment, turning the competitive landscape upside down. Startup companies like NetFlix, Spotify and Uber have literally pushed the incumbents to the brink of extinction and overtaken entire industries in a very short period of time. How have they been able to rival incumbents 100 times their size? The answer is simple, by bringing innovation to the market faster, much faster. Complacency and overcoming previous successes are very challenging for incumbents. It is much easier for a startup to innovate than an existing company with a degree of legacy. OpenShift v3 will level the playing field and provide organizations the appropriate tooling to rapidly reduce their time-to-market. OpenShift v3 allows organizations to deliver innovation faster by:  Maximizing time developers actually spend developing Enabling efficient clean hand-offs between Dev &amp; Ops (DevOps) Automating development pipelines and continuous integration / delivery Increasing speed of innovation through more frequent experimentation Providing state-of-the-art enterprise grade container infrastructure  In this article we will look at how to setup an OpenShift lab environment and get started on the journey to faster innovation cycles.  Pre Configuration Steps OpenShift requires a master and one or more nodes. In this lab we will configure one master and a node. Install RHEL or CentOS 7.1 on two systems and configure hostname as well as network accordingly. On both systems run the following steps: # subscription-manager repos --disable=&quot;*&quot; # subscription-manager repos --enable=&quot;rhel-7-server-rpms&quot; # subscription-manager repos --enable=&quot;rhel-7-server-extras-rpms&quot; # subscription-manager repos --enable=&quot;rhel-7-server-optional-rpms&quot; # subscription-manager repos --enable=&quot;rhel-7-server-ose-3.0-rpms&quot; #yum install wget git net-tools bind-utils iptables-services bridge-utils #yum install python-virtualenv #yum install gcc #yum install httpd-tools #yum install docker #yum update  Once all the packages are installed it is important to configure Docker so that is allows for insecure registry communication on local network only. #vi /etc/sysconfig/docker OPTIONS=--selinux-enabled --insecure-registry 192.168.122.0/24 Setup ssh access from master to node. #ssh-keygen #ssh-copy-id -i .ssh/id_rsa.pub root@ose3-node.lab.com Install OpenShift Enterprise v3 At this point both the master and node are prepared. We can now begin the install of OpenShift Enterprise v3. From the master run the following command: #sh &lt;(curl -s https://install.openshift.com/ose) Note: if internet access is not available you can download the installer and run it locally on the master host. https://install.openshift.com/portable/oo-install-ose.tgz Configure OpenShift Enterprise v3 Once the installer completes an OpenShift master and node will exist. Now we can begin with the main configuration. By default OpenShift will use HTTP authentication. This is of course only recommended for lab or test environments. For production environments you will want to connect to LDAP or an identity management system. On the master we can edit the /etc/openshift/master/master-config.yaml and configure authentication. #vi /etc/openshift/master/master-config.yaml identityProviders: - name: my_htpasswd_provider challenge: true login: true provider: apiVersion: v1 kind: HTPasswdPasswordIdentityProvider file: /root/users.htpasswd routingConfig:  subdomain: lab.com Next we need to create a standard user. OpenShift enterprise creates the system:admin account for default administration. #htpasswd -c /root/users.htpasswd admin Optionally we can give the newly created admin user, OpenShift cluster-admin permisions. #oadm policy add-cluster-role-to-user cluster-admin admin Configure Docker Registry OpenShift uses the Docker registry for storing Docker container images. Anytime you build or change an application configuration, a new docker container is created and pushed to the registry. Each node can access this registry. You can and should use persistent storage for the registry. In this example we will use a host mountpoint on the node. The Docker registry runs as a container in the default namespace that only OpenShift admins can access. On the node create a directory for the registry #mkdir /images On the master login in using the system:admin account, switch to the default project and create a Docker registry. # oc login Username: system:admin #oc project default #echo &#39;{&quot;kind&quot;:&quot;ServiceAccount&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;metadata&quot;:{&quot;name&quot;:&quot;registry&quot;}}&#39; | oc create -f - #oc edit scc privileged users: - system:serviceaccount:openshift-infra:build-controller - system:serviceaccount:default:registry #oadm registry --service-account=registry --config=/etc/openshift/master/admin.kubeconfig  --credentials=/etc/openshift/master/openshift-registry.kubeconfig --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39; --mount-host=/images Create Router OpenShift v3 uses OpenVswitch as the software defined network. In order for isolation, proxy and load balancing capabilities a router is needed. The router similar to the Docker registry also runs in a container. Using the below command we can create a router in the default namespace. #echo &#39;{&quot;kind&quot;:&quot;ServiceAccount&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;metadata&quot;:{&quot;name&quot;:&quot;router&quot;}}&#39; | oc create -f - #oc edit scc privileged users:  - system:serviceaccount:openshift-infra:build-controller  - system:serviceaccount:default:registry  - system:serviceaccount:default:router #oadm router router-1 --replicas=1 --credentials=&#39;/etc/openshift/master/openshift-router.kubeconfig&#39; --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39;  Configure DNS OpenShift v3 requires a working DNS environment in order to handle URL resolution. The requirement is to create a DNS wildcard that points to the router. This should be the public IP of the node where the router container is running. In our example we have created a local DNS server that acts as a forwarder for the 192.168.122.0 network. In addition we have implemented a DNS wildcard that points to our nodes public or physical IP, where the router container is running. #yum install bind-utils bind #systemctl start named #systemctl enable named vi /etc/named.conf options {listen-on port 53 { 192.168.122.1; }; forwarders { 10.38.5.26; ; }; zone &quot;lab.com&quot; IN {  type master;  file &quot;/var/named/dynamic/lab.com.zone&quot;;  allow-update { none; }; }; vi /var/named/dynamic/lab.com.zone $ORIGIN lab.com. $TTL 86400 @ IN SOA dns1.lab.com. hostmaster.lab.com. (  2001062501 ; serial  21600 ; refresh after 6 hours  3600 ; retry after 1 hour  604800 ; expire after 1 week  86400 ) ; minimum TTL of 1 day ; ;  IN NS dns1.lab.com. dns1 IN A 192.168.122.1   IN AAAA aaaa:bbbb::1 ose3-master IN A 192.168.122.60 ose3-node1 IN A 192.168.122.61 * 300 IN A 192.168.122.61 ; ;  Install and Configure GitHub Lab In most cases you will probably want to configure a local GitHub server. This is of course optional. In the example we are using the public GitHub service, however you could easily do this on an internal GitHub server. You can setup the GitHub server on the OpenShift v3 master. For demos it is recommended to use GitHub lab, since it is much easier to install and configure. #yum install curl openssh-server #systemctl enable sshd #systemctl start sshd #firewall-cmd --permanent --add-service=http #systemctl reload firewalld #curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | bash #yum install gitlab-ce #gitlab-ctl reconfigure Once the above steps are complete you can access GitHub by connecting through browser to the host. Username: root Password: 5iveL!fe Using OpenShift v3 At this point we should have a functioning OpenShift v3 environment. We can now build and deloy applications. Here we will see how to deploy a mysql database using scaling and build a ruby hello world application from GitHub. Deploying MySQL database Though using the OpenShift CLI or API is certainly possible, let us at this point use the UI. To login to the UI open a browser and point it at the IP of the OpenShift v3 master, for example: https://ose3-master.lab.com:8443/console/. Create a new project for hosting containers. In OpenShift v3 each project maps to a namespace in Kubernetes.  Under the demo project deploy a MySQL database by selecting &quot;create&quot; or &quot;getting started&quot;. Make sure you add a label, this is explained later.  Once an application is created we see the status in the Overview.  Each time an application is deployed we have a container deployer and the running container. Once the deployment is complete the deployer container is deleted and we just have the running container. The &quot;oc get pods&quot; command shows us all pods within the namespace. A pod is a Kubernetes construct and means one or more Docker containers that share deployment template. Pods run on nodes, grouping containers within pods is a way to ensure certain containers are localized. # oc get pods NAME            READY  REASON     RESTARTS  AGE mysql-1-deploy  1/1    Running    0         8s mysql-1-rz165   0/1    Running    0         5s For every application deployed, OpenShift will also create a replication controller and service. These are also Kubernetes constructs. A replication controller is used for auto-scaling and determines how many instances of a given pod should exist. # oc get rc CONTROLLER  CONTAINER(S)  IMAGE(S)                              SELECTOR                REPLICAS mysql-1     mysql         .../openshift3/mysql-55-rhel7:latest  deployment=mysql-1,...  1 The service creates a URL for the application and handles dynamically routing to individual pods. This is handled by the kube-proxy layer and the OpenShift routing layer. # oc get services NAME   LABELS                                        SELECTOR    IP(S)          PORT(S) mysql  demo=mysql,template=mysql-ephemeral-template  name=mysql  172.30.76.121  3306/TCP When creating applications it is very important to always define labels. Labels are applied to pods, replication controllers and services. When deleting an application it is very easy to for example reference the label instead of deleting individual components manually. #oc delete all --selector=&quot;demo=mysql&quot; OpenShift v3 also supports auto-scaling. This capability leverages Kubernetes replication controllers. First we need to identify the replication controller using the &quot;oc get rc&quot; command. We can automatically scale our application by changing the number of replicas. In this example we will scale from one to three MySQL databases. #oc scale --replicas=3 rc mysql-1 Upon scaling MySQL, we can quickly see the results in the UI.  Building Ruby Hello World Application So far we have seen how to provision application components such as databases or middleware in seconds. We have also obeserved how we can effortlessly scale these components. In the following example, we will build our own application code in OpenShift v3. OpenShift will provide the Ruby runtime environment and automatically build, as well as launch a container with our hello world code from GitHub. OpenShift utilizes a technology called &quot;Source to Image&quot; (S2I) that efficiently builds the container. Instead of rebuilding the entire container each time, S2I is able to re-use previous builds and only change the application layer within the container. Docker containers are immutable so any change always requires creating a new container. This is a wasteful, time consuming process without OpenShift and S2I. To build our application select &quot;create&quot; from the project page in the OpenShift UI. Enter the URL to the GitHub repository https://github.com/ktenzer/ruby-hello-world and select &quot;next&quot;.  OpenShift asks us for the application build runtime. In this case we will select Ruby 2.0 since this is in fact a Ruby application.  In the final step we can provide any custom details about the build configuration and of course add a label.  OpenShift will create a container with Ruby 2.0 and our code from GitHub. It will also complete any required build steps. The end result is a complete application build, of a running application, inside a Docker container. Our application can now be automatically tested using Jenkins or other such continuous delivery tools. If tests pass, it can be automatically rolled out to production. Think about how much faster you can make code available to your customers with OpenShift? By selecting the URL for the Ruby hello world application we can also access the application directly.  &nbsp;  Troubleshooting In this section we will go through some basic troubleshooting steps for OpenShift v3. In order to get logs we first need the pod name. Using the &quot;oc get pods&quot; command, we can get a list of pods. #oc logs ruby-hello-world-1-65lgf You might consider adding &#39;puma&#39; into your Gemfile. [2015-08-03 08:19:03] INFO WEBrick 1.3.1 [2015-08-03 08:19:03] INFO ruby 2.0.0 (2013-11-22) [x86_64-linux] [2015-08-03 08:19:03] INFO WEBrick::HTTPServer#start: pid=1 port=8080 10.1.0.4 - - [03/Aug/2015 08:49:15] &quot;GET / HTTP/1.1&quot; 200 2496 0.0117 [2015-08-03 08:49:45] ERROR Errno::ECONNRESET: Connection reset by peer  /opt/rh/ruby200/root/usr/share/ruby/webrick/httpserver.rb:80:in `eof?&#39;  /opt/rh/ruby200/root/usr/share/ruby/webrick/httpserver.rb:80:in `run&#39;  /opt/rh/ruby200/root/usr/share/ruby/webrick/server.rb:295:in `block in start_thread&#39; Beyond looking at a pods logs we can also access journald for docker, openshift-master and openshift-node. Using the below journalctl commands we can get a list of current log messages for the major OpenShift components. #journalctl -f -l -u docker #journalctl -f -l -u openshift-master #journalctl -f -l -u openshift-node Issue 1: Pod shows as pending and scheduled but never gets deployed on a node. This problem can occur if the node docker image cache gets out of sync. In order to resolve this issue perform the following steps on the node: #systemctl stop docker #rm -rf /var/lib/docker/* #reboot Summary In this article we have seen how to deploy an OpenShift Enterprise v3 lab environment. We have seen how to use OpenShift in order to deploy and build applications. This is just the tip of the iceberg of course. In a world where speed and agility becomes increasingly important, it is clear that container infrastructure will become the future platform for running applications. You simply can&#39;t argue with being able to start 60 containers in the time it takes to start a single VM. Google deploys over two billion containers a week and everything you do from Google mail to search, runs in a container. Containers are enterprise ready and it is time to start understanding how to take advantage of this technology. OpenShift Enterprise v3 provides a platform for building and running applications on container infrastructure. OpenShift Enterprise v3 enables organizations to innovate faster, bringing that innovation to the market sooner. Don&#39;t let your organization be overtaken by the next startup! If you found this article informative or helpful please share your thoughts. Happy OpenShifting! (c) 2015 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2015-08-03T00:00:00-07:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openshift" itemprop="item"><span itemprop="name">Openshift</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner">
+    <meta itemprop="description" content="OverviewOpenShift Enterprise v3 by Red Hat is about building and running next-gen applications. If we look around, we have seen startups in virtually every market segment, turning the competitive landscape upside down. Startup companies like NetFlix, Spotify and Uber have literally pushed the incumbents to the brink of extinction and overtaken entire industries in a very short period of time. How have they been able to rival incumbents 100 times their size? The answer is simple, by bringing innovation to the market faster, much faster. Complacency and overcoming previous successes are very challenging for incumbents. It is much easier for a startup to innovate than an existing company with a degree of legacy. OpenShift v3 will level the playing field and provide organizations the appropriate tooling to rapidly reduce their time-to-market.OpenShift v3 allows organizations to deliver innovation faster by:Maximizing time developers actually spend developingEnabling efficient clean hand-offs between Dev &amp; Ops (DevOps)Automating development pipelines and continuous integration / deliveryIncreasing speed of innovation through more frequent experimentationProviding state-of-the-art enterprise grade container infrastructureIn this article we will look at how to setup an OpenShift lab environment and get started on the journey to faster innovation cycles.Pre Configuration StepsOpenShift requires a master and one or more nodes. In this lab we will configure one master and a node. Install RHEL or CentOS 7.1 on two systems and configure hostname as well as network accordingly. On both systems run the following steps:# subscription-manager repos --disable=&quot;*&quot;# subscription-manager repos --enable=&quot;rhel-7-server-rpms&quot;# subscription-manager repos --enable=&quot;rhel-7-server-extras-rpms&quot;# subscription-manager repos --enable=&quot;rhel-7-server-optional-rpms&quot;# subscription-manager repos --enable=&quot;rhel-7-server-ose-3.0-rpms&quot;#yum install wget git net-tools bind-utils iptables-services bridge-utils#yum install python-virtualenv#yum install gcc#yum install httpd-tools#yum install docker#yum updateOnce all the packages are installed it is important to configure Docker so that is allows for insecure registry communication on local network only.#vi /etc/sysconfig/dockerOPTIONS=--selinux-enabled --insecure-registry 192.168.122.0/24Setup ssh access from master to node.#ssh-keygen#ssh-copy-id -i .ssh/id_rsa.pub root@ose3-node.lab.comInstall OpenShift Enterprise v3At this point both the master and node are prepared. We can now begin the install of OpenShift Enterprise v3. From the master run the following command:#sh &lt;(curl -s https://install.openshift.com/ose)Note: if internet access is not available you can download the installer and run it locally on the master host.https://install.openshift.com/portable/oo-install-ose.tgzConfigure OpenShift Enterprise v3Once the installer completes an OpenShift master and node will exist. Now we can begin with the main configuration. By default OpenShift will use HTTP authentication. This is of course only recommended for lab or test environments. For production environments you will want to connect to LDAP or an identity management system. On the master we can edit the /etc/openshift/master/master-config.yaml and configure authentication.#vi /etc/openshift/master/master-config.yamlidentityProviders:- name: my_htpasswd_providerchallenge: truelogin: trueprovider:apiVersion: v1kind: HTPasswdPasswordIdentityProviderfile: /root/users.htpasswdroutingConfig: subdomain: lab.comNext we need to create a standard user. OpenShift enterprise creates the system:admin account for default administration.#htpasswd -c /root/users.htpasswd adminOptionally we can give the newly created admin user, OpenShift cluster-admin permisions.#oadm policy add-cluster-role-to-user cluster-admin adminConfigure Docker RegistryOpenShift uses the Docker registry for storing Docker container images. Anytime you build or change an application configuration, a new docker container is created and pushed to the registry. Each node can access this registry. You can and should use persistent storage for the registry. In this example we will use a host mountpoint on the node. The Docker registry runs as a container in the default namespace that only OpenShift admins can access.On the node create a directory for the registry#mkdir /imagesOn the master login in using the system:admin account, switch to the default project and create a Docker registry.# oc loginUsername: system:admin#oc project default#echo &#39;{&quot;kind&quot;:&quot;ServiceAccount&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;metadata&quot;:{&quot;name&quot;:&quot;registry&quot;}}&#39; | oc create -f -#oc edit scc privilegedusers:- system:serviceaccount:openshift-infra:build-controller- system:serviceaccount:default:registry#oadm registry --service-account=registry --config=/etc/openshift/master/admin.kubeconfig  --credentials=/etc/openshift/master/openshift-registry.kubeconfig --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39; --mount-host=/imagesCreate RouterOpenShift v3 uses OpenVswitch as the software defined network. In order for isolation, proxy and load balancing capabilities a router is needed. The router similar to the Docker registry also runs in a container. Using the below command we can create a router in the default namespace.#echo &#39;{&quot;kind&quot;:&quot;ServiceAccount&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;metadata&quot;:{&quot;name&quot;:&quot;router&quot;}}&#39; | oc create -f -#oc edit scc privilegedusers: - system:serviceaccount:openshift-infra:build-controller - system:serviceaccount:default:registry - system:serviceaccount:default:router#oadm router router-1 --replicas=1 --credentials=&#39;/etc/openshift/master/openshift-router.kubeconfig&#39; --images=&#39;registry.access.redhat.com/openshift3/ose-${component}:${version}&#39;Configure DNSOpenShift v3 requires a working DNS environment in order to handle URL resolution. The requirement is to create a DNS wildcard that points to the router. This should be the public IP of the node where the router container is running. In our example we have created a local DNS server that acts as a forwarder for the 192.168.122.0 network. In addition we have implemented a DNS wildcard that points to our nodes public or physical IP, where the router container is running.#yum install bind-utils bind#systemctl start named#systemctl enable namedvi /etc/named.confoptions {listen-on port 53 { 192.168.122.1; };forwarders {10.38.5.26;;};zone &quot;lab.com&quot; IN { type master; file &quot;/var/named/dynamic/lab.com.zone&quot;; allow-update { none; };};vi /var/named/dynamic/lab.com.zone$ORIGIN lab.com.$TTL 86400@ IN SOA dns1.lab.com. hostmaster.lab.com. ( 2001062501 ; serial 21600 ; refresh after 6 hours 3600 ; retry after 1 hour 604800 ; expire after 1 week 86400 ) ; minimum TTL of 1 day;; IN NS dns1.lab.com.dns1 IN A 192.168.122.1  IN AAAA aaaa:bbbb::1ose3-master IN A 192.168.122.60ose3-node1 IN A 192.168.122.61* 300 IN A 192.168.122.61;;Install and Configure GitHub LabIn most cases you will probably want to configure a local GitHub server. This is of course optional. In the example we are using the public GitHub service, however you could easily do this on an internal GitHub server. You can setup the GitHub server on the OpenShift v3 master. For demos it is recommended to use GitHub lab, since it is much easier to install and configure.#yum install curl openssh-server#systemctl enable sshd#systemctl start sshd#firewall-cmd --permanent --add-service=http#systemctl reload firewalld#curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | bash#yum install gitlab-ce#gitlab-ctl reconfigureOnce the above steps are complete you can access GitHub by connecting through browser to the host.Username: rootPassword: 5iveL!feUsing OpenShift v3At this point we should have a functioning OpenShift v3 environment. We can now build and deloy applications. Here we will see how to deploy a mysql database using scaling and build a ruby hello world application from GitHub.Deploying MySQL databaseThough using the OpenShift CLI or API is certainly possible, let us at this point use the UI. To login to the UI open a browser and point it at the IP of the OpenShift v3 master, for example: https://ose3-master.lab.com:8443/console/. Create a new project for hosting containers. In OpenShift v3 each project maps to a namespace in Kubernetes.  Under the demo project deploy a MySQL database by selecting &quot;create&quot; or &quot;getting started&quot;. Make sure you add a label, this is explained later.  Once an application is created we see the status in the Overview.  Each time an application is deployed we have a container deployer and the running container. Once the deployment is complete the deployer container is deleted and we just have the running container. The &quot;oc get pods&quot; command shows us all pods within the namespace. A pod is a Kubernetes construct and means one or more Docker containers that share deployment template. Pods run on nodes, grouping containers within pods is a way to ensure certain containers are localized.# oc get podsNAME            READY  REASON     RESTARTS  AGEmysql-1-deploy  1/1    Running    0         8smysql-1-rz165   0/1    Running    0         5sFor every application deployed, OpenShift will also create a replication controller and service. These are also Kubernetes constructs. A replication controller is used for auto-scaling and determines how many instances of a given pod should exist.# oc get rcCONTROLLER  CONTAINER(S)  IMAGE(S)                              SELECTOR                REPLICASmysql-1     mysql         .../openshift3/mysql-55-rhel7:latest  deployment=mysql-1,...  1The service creates a URL for the application and handles dynamically routing to individual pods. This is handled by the kube-proxy layer and the OpenShift routing layer.# oc get servicesNAME   LABELS                                        SELECTOR    IP(S)          PORT(S)mysql  demo=mysql,template=mysql-ephemeral-template  name=mysql  172.30.76.121  3306/TCPWhen creating applications it is very important to always define labels. Labels are applied to pods, replication controllers and services. When deleting an application it is very easy to for example reference the label instead of deleting individual components manually.#oc delete all --selector=&quot;demo=mysql&quot;OpenShift v3 also supports auto-scaling. This capability leverages Kubernetes replication controllers. First we need to identify the replication controller using the &quot;oc get rc&quot; command. We can automatically scale our application by changing the number of replicas. In this example we will scale from one to three MySQL databases.#oc scale --replicas=3 rc mysql-1Upon scaling MySQL, we can quickly see the results in the UI.Building Ruby Hello World ApplicationSo far we have seen how to provision application components such as databases or middleware in seconds. We have also obeserved how we can effortlessly scale these components. In the following example, we will build our own application code in OpenShift v3. OpenShift will provide the Ruby runtime environment and automatically build, as well as launch a container with our hello world code from GitHub. OpenShift utilizes a technology called &quot;Source to Image&quot; (S2I) that efficiently builds the container. Instead of rebuilding the entire container each time, S2I is able to re-use previous builds and only change the application layer within the container. Docker containers are immutable so any change always requires creating a new container. This is a wasteful, time consuming process without OpenShift and S2I.To build our application select &quot;create&quot; from the project page in the OpenShift UI. Enter the URL to the GitHub repository https://github.com/ktenzer/ruby-hello-world and select &quot;next&quot;.OpenShift asks us for the application build runtime. In this case we will select Ruby 2.0 since this is in fact a Ruby application.In the final step we can provide any custom details about the build configuration and of course add a label.OpenShift will create a container with Ruby 2.0 and our code from GitHub. It will also complete any required build steps. The end result is a complete application build, of a running application, inside a Docker container. Our application can now be automatically tested using Jenkins or other such continuous delivery tools. If tests pass, it can be automatically rolled out to production. Think about how much faster you can make code available to your customers with OpenShift? By selecting the URL for the Ruby hello world application we can also access the application directly.&nbsp;TroubleshootingIn this section we will go through some basic troubleshooting steps for OpenShift v3. In order to get logs we first need the pod name. Using the &quot;oc get pods&quot; command, we can get a list of pods.#oc logs ruby-hello-world-1-65lgfYou might consider adding &#39;puma&#39; into your Gemfile.[2015-08-03 08:19:03] INFO WEBrick 1.3.1[2015-08-03 08:19:03] INFO ruby 2.0.0 (2013-11-22) [x86_64-linux][2015-08-03 08:19:03] INFO WEBrick::HTTPServer#start: pid=1 port=808010.1.0.4 - - [03/Aug/2015 08:49:15] &quot;GET / HTTP/1.1&quot; 200 2496 0.0117[2015-08-03 08:49:45] ERROR Errno::ECONNRESET: Connection reset by peer /opt/rh/ruby200/root/usr/share/ruby/webrick/httpserver.rb:80:in `eof?&#39; /opt/rh/ruby200/root/usr/share/ruby/webrick/httpserver.rb:80:in `run&#39; /opt/rh/ruby200/root/usr/share/ruby/webrick/server.rb:295:in `block in start_thread&#39;Beyond looking at a pods logs we can also access journald for docker, openshift-master and openshift-node. Using the below journalctl commands we can get a list of current log messages for the major OpenShift components.#journalctl -f -l -u docker#journalctl -f -l -u openshift-master#journalctl -f -l -u openshift-nodeIssue 1: Pod shows as pending and scheduled but never gets deployed on a node.This problem can occur if the node docker image cache gets out of sync. In order to resolve this issue perform the following steps on the node:#systemctl stop docker#rm -rf /var/lib/docker/*#rebootSummaryIn this article we have seen how to deploy an OpenShift Enterprise v3 lab environment. We have seen how to use OpenShift in order to deploy and build applications. This is just the tip of the iceberg of course. In a world where speed and agility becomes increasingly important, it is clear that container infrastructure will become the future platform for running applications. You simply can&#39;t argue with being able to start 60 containers in the time it takes to start a single VM. Google deploys over two billion containers a week and everything you do from Google mail to search, runs in a container. Containers are enterprise ready and it is time to start understanding how to take advantage of this technology. OpenShift Enterprise v3 provides a platform for building and running applications on container infrastructure. OpenShift Enterprise v3 enables organizations to innovate faster, bringing that innovation to the market sooner. Don&#39;t let your organization be overtaken by the next startup! If you found this article informative or helpful please share your thoughts.Happy OpenShifting!(c) 2015 Keith Tenzer">
+    <meta itemprop="datePublished" content="2015-08-03T00:00:00-07:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2015-08-03T00:00:00-07:00">August 3, 2015</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h3 class="nowrap">Overview</h3>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ose_logo.png"><img class="alignnone size-medium wp-image-1128" src="/assets/2015/08/ose_logo.png?w=300" alt="OSE_LOGO" width="300" height="83" /></a></p>
+<p>OpenShift Enterprise v3 by Red Hat is about building and running next-gen applications. If we look around, we have seen startups in virtually every market segment, turning the competitive landscape upside down. Startup companies like NetFlix, Spotify and Uber have literally pushed the incumbents to the brink of extinction and overtaken entire industries in a very short period of time. How have they been able to rival incumbents 100 times their size? The answer is simple, by bringing innovation to the market faster, much faster. Complacency and overcoming previous successes are very challenging for incumbents. It is much easier for a startup to innovate than an existing company with a degree of legacy. OpenShift v3 will level the playing field and provide organizations the appropriate tooling to rapidly reduce their time-to-market.</p>
+<p>OpenShift v3 allows organizations to deliver innovation faster by:</p>
+<ul>
+<li>Maximizing time developers actually spend developing</li>
+<li>Enabling efficient clean hand-offs between Dev &amp; Ops (DevOps)</li>
+<li>Automating development pipelines and continuous integration / delivery</li>
+<li>Increasing speed of innovation through more frequent experimentation</li>
+<li>Providing state-of-the-art enterprise grade container infrastructure</li>
+</ul>
+<p>In this article we will look at how to setup an OpenShift lab environment and get started on the journey to faster innovation cycles.<br />
+<!--more--></p>
+<h3>Pre Configuration Steps</h3>
+<p>OpenShift requires a master and one or more nodes. In this lab we will configure one master and a node. Install RHEL or CentOS 7.1 on two systems and configure hostname as well as network accordingly. On both systems run the following steps:</p>
+<pre class="nowrap"># subscription-manager repos --disable="*"</pre>
+<pre class="nowrap"># subscription-manager repos --enable="rhel-7-server-rpms"</pre>
+<pre class="nowrap"># subscription-manager repos --enable="rhel-7-server-extras-rpms"</pre>
+<pre class="nowrap"># subscription-manager repos --enable="rhel-7-server-optional-rpms"</pre>
+<pre class="nowrap"># subscription-manager repos --enable="rhel-7-server-ose-3.0-rpms"</pre>
+<pre class="nowrap">#yum install wget git net-tools bind-utils iptables-services bridge-utils</pre>
+<pre>#yum install python-virtualenv</pre>
+<pre>#yum install gcc</pre>
+<pre>#yum install httpd-tools</pre>
+<pre class="nowrap">#yum install docker</pre>
+<pre class="nowrap">#yum update
+</pre>
+<p class="nowrap">Once all the packages are installed it is important to configure Docker so that is allows for insecure registry communication on local network only.</p>
+<pre class="nowrap">#vi /etc/sysconfig/docker
+OPTIONS=--selinux-enabled --insecure-registry 192.168.122.0/24</pre>
+<p class="nowrap">Setup ssh access from master to node.</p>
+<pre>#ssh-keygen</pre>
+<pre>#ssh-copy-id -i .ssh/id_rsa.pub root@ose3-node.lab.com</pre>
+<h3 class="nowrap">Install OpenShift Enterprise v3</h3>
+<p>At this point both the master and node are prepared. We can now begin the install of OpenShift Enterprise v3. From the master run the following command:</p>
+<pre>#sh &lt;(curl -s https://install.openshift.com/ose)</pre>
+<p class="nowrap">Note: if internet access is not available you can download the installer and run it locally on the master host.</p>
+<p class="nowrap"><a href="https://install.openshift.com/portable/oo-install-ose.tgz">https://install.openshift.com/portable/oo-install-ose.tgz</a></p>
+<h3 class="nowrap">Configure OpenShift Enterprise v3</h3>
+<p>Once the installer completes an OpenShift master and node will exist. Now we can begin with the main configuration. By default OpenShift will use HTTP authentication. This is of course only recommended for lab or test environments. For production environments you will want to connect to LDAP or an identity management system. On the master we can edit the /etc/openshift/master/master-config.yaml and configure authentication.</p>
+<pre class="nowrap">#vi /etc/openshift/master/master-config.yaml
+identityProviders:
+- name: my_htpasswd_provider
+challenge: true
+login: true
+provider:
+apiVersion: v1
+kind: HTPasswdPasswordIdentityProvider
+file: /root/users.htpasswd
+routingConfig:
+ subdomain: lab.com</pre>
+<p>Next we need to create a standard user. OpenShift enterprise creates the system:admin account for default administration.</p>
+<pre>#htpasswd -c /root/users.htpasswd admin</pre>
+<p>Optionally we can give the newly created admin user, OpenShift cluster-admin permisions.</p>
+<pre>#oadm policy add-cluster-role-to-user cluster-admin admin</pre>
+<h3>Configure Docker Registry</h3>
+<p>OpenShift uses the Docker registry for storing Docker container images. Anytime you build or change an application configuration, a new docker container is created and pushed to the registry. Each node can access this registry. You can and should use persistent storage for the registry. In this example we will use a host mountpoint on the node. The Docker registry runs as a container in the default namespace that only OpenShift admins can access.</p>
+<p>On the node create a directory for the registry</p>
+<pre>#mkdir /images</pre>
+<p class="nowrap">On the master login in using the system:admin account, switch to the default project and create a Docker registry.</p>
+<pre class="nowrap"># oc login
+Username: system:admin</pre>
+<pre class="nowrap">#oc project default</pre>
+<pre><span class="body">#echo '{"kind":"ServiceAccount","apiVersion":"v1","metadata":{"name":"registry"}}' | oc create -f -</span></pre>
+<pre><span class="body">#oc edit scc privileged</span>
+users:
+- system:serviceaccount:openshift-infra:build-controller
+- system:serviceaccount:default:registry</pre>
+<pre>#oadm registry --service-account=registry --config=/etc/openshift/master/admin.kubeconfig  --credentials=/etc/openshift/master/openshift-registry.kubeconfig --images='registry.access.redhat.com/openshift3/ose-${component}:${version}' --mount-host=/images</pre>
+<h3 class="nowrap">Create Router</h3>
+<p>OpenShift v3 uses OpenVswitch as the software defined network. In order for isolation, proxy and load balancing capabilities a router is needed. The router similar to the Docker registry also runs in a container. Using the below command we can create a router in the default namespace.</p>
+<pre>#echo '{"kind":"ServiceAccount","apiVersion":"v1","metadata":{"name":"router"}}' | oc create -f -</pre>
+<pre>#oc edit scc privileged
+users:
+ - system:serviceaccount:openshift-infra:build-controller
+ - system:serviceaccount:default:registry
+ - system:serviceaccount:default:router</pre>
+<pre>#oadm router router-1 --replicas=1 --credentials='/etc/openshift/master/openshift-router.kubeconfig' --images='registry.access.redhat.com/openshift3/ose-${component}:${version}'
+</pre>
+<h3>Configure DNS</h3>
+<p>OpenShift v3 requires a working DNS environment in order to handle URL resolution. The requirement is to create a DNS wildcard that points to the router. This should be the public IP of the node where the router container is running. In our example we have created a local DNS server that acts as a forwarder for the 192.168.122.0 network. In addition we have implemented a DNS wildcard that points to our nodes public or physical IP, where the router container is running.</p>
+<pre>#yum install bind-utils bind</pre>
+<pre>#systemctl start named</pre>
+<pre>#systemctl enable named</pre>
+<pre>vi /etc/named.conf
+options {listen-on port 53 { 192.168.122.1; };
+forwarders {
+10.38.5.26;
+;
+};
+zone "lab.com" IN {
+ type master;
+ file "/var/named/dynamic/lab.com.zone";
+ allow-update { none; };
+};</pre>
+<pre>vi /var/named/dynamic/lab.com.zone
+$ORIGIN lab.com.
+$TTL 86400
+@ IN SOA dns1.lab.com. hostmaster.lab.com. (
+ 2001062501 ; serial
+ 21600 ; refresh after 6 hours
+ 3600 ; retry after 1 hour
+ 604800 ; expire after 1 week
+ 86400 ) ; minimum TTL of 1 day
+;
+;
+ IN NS dns1.lab.com.
+dns1 IN A 192.168.122.1 
+ IN AAAA aaaa:bbbb::1
+ose3-master IN A 192.168.122.60
+ose3-node1 IN A 192.168.122.61
+* 300 IN A 192.168.122.61
+;
+;
+</pre>
+<h3>Install and Configure GitHub Lab</h3>
+<p>In most cases you will probably want to configure a local GitHub server. This is of course optional. In the example we are using the public GitHub service, however you could easily do this on an internal GitHub server. You can setup the GitHub server on the OpenShift v3 master. For demos it is recommended to use GitHub lab, since it is much easier to install and configure.</p>
+<pre>#yum install curl openssh-server</pre>
+<pre>#systemctl enable sshd</pre>
+<pre>#systemctl start sshd</pre>
+<pre>#firewall-cmd --permanent --add-service=http</pre>
+<pre>#systemctl reload firewalld</pre>
+<pre>#curl <span id="OBJ_PREFIX_DWT5497_com_zimbra_url" class="Object"><span id="OBJ_PREFIX_DWT5498_com_zimbra_url" class="Object"><a href="https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh" target="_blank">https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh</a></span></span> | bash</pre>
+<pre>#yum install gitlab-ce</pre>
+<pre>#gitlab-ctl reconfigure</pre>
+<p>Once the above steps are complete you can access GitHub by connecting through browser to the host.</p>
+<pre>Username: root
+Password: 5iveL!fe</pre>
+<h3>Using OpenShift v3</h3>
+<p>At this point we should have a functioning OpenShift v3 environment. We can now build and deloy applications. Here we will see how to deploy a mysql database using scaling and build a ruby hello world application from GitHub.</p>
+<h4>Deploying MySQL database</h4>
+<p>Though using the OpenShift CLI or API is certainly possible, let us at this point use the UI. To login to the UI open a browser and point it at the IP of the OpenShift v3 master, for example: <a href="https://ose3-master.lab.com:8443/console/">https://ose3-master.lab.com:8443/console/</a>. Create a new project for hosting containers. In OpenShift v3 each project maps to a namespace in Kubernetes. <a href="https://keithtenzer.files.wordpress.com/2015/08/ose_project_create.png"><img class="alignnone wp-image-1115" src="/assets/2015/08/ose_project_create.png?w=300" alt="OSE_PROJECT_CREATE" width="1204" height="321" /></a> Under the demo project deploy a MySQL database by selecting "create" or "getting started". Make sure you add a label, this is explained later. <a href="https://keithtenzer.files.wordpress.com/2015/08/ose_mysql_create.png"><img class="alignnone wp-image-1116" src="/assets/2015/08/ose_mysql_create.png?w=300" alt="OSE_MYSQL_CREATE" width="1203" height="690" /></a> Once an application is created we see the status in the Overview. <a href="https://keithtenzer.files.wordpress.com/2015/08/ose_mysql_created.png"><img class="alignnone wp-image-1117" src="/assets/2015/08/ose_mysql_created.png?w=300" alt="OSE_MYSQL_CREATED" width="1202" height="493" /></a> Each time an application is deployed we have a container deployer and the running container. Once the deployment is complete the deployer container is deleted and we just have the running container. The "oc get pods" command shows us all pods within the namespace. A pod is a Kubernetes construct and means one or more Docker containers that share deployment template. Pods run on nodes, grouping containers within pods is a way to ensure certain containers are localized.</p>
+<pre># oc get pods
+NAME            READY  REASON     RESTARTS  AGE
+mysql-1-deploy  1/1    Running    0         8s
+mysql-1-rz165   0/1    Running    0         5s</pre>
+<p>For every application deployed, OpenShift will also create a replication controller and service. These are also Kubernetes constructs. A replication controller is used for auto-scaling and determines how many instances of a given pod should exist.</p>
+<pre># oc get rc
+CONTROLLER  CONTAINER(S)  IMAGE(S)                              SELECTOR                REPLICAS
+mysql-1     mysql         .../openshift3/mysql-55-rhel7:latest  deployment=mysql-1,...  1</pre>
+<p>The service creates a URL for the application and handles dynamically routing to individual pods. This is handled by the kube-proxy layer and the OpenShift routing layer.</p>
+<pre># oc get services
+NAME   LABELS                                        SELECTOR    IP(S)          PORT(S)
+mysql  demo=mysql,template=mysql-ephemeral-template  name=mysql  172.30.76.121  3306/TCP</pre>
+<p>When creating applications it is very important to always define labels. Labels are applied to pods, replication controllers and services. When deleting an application it is very easy to for example reference the label instead of deleting individual components manually.</p>
+<pre>#oc delete all --selector="demo=mysql"</pre>
+<p>OpenShift v3 also supports auto-scaling. This capability leverages Kubernetes replication controllers. First we need to identify the replication controller using the "oc get rc" command. We can automatically scale our application by changing the number of replicas. In this example we will scale from one to three MySQL databases.</p>
+<pre>#oc scale --replicas=3 rc mysql-1</pre>
+<p>Upon scaling MySQL, we can quickly see the results in the UI.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ose_mysql_scaling.png"><img class="alignnone wp-image-1119" src="/assets/2015/08/ose_mysql_scaling.png?w=300" alt="OSE_MYSQL_SCALING" width="1207" height="499" /></a></p>
+<h4>Building Ruby Hello World Application</h4>
+<p>So far we have seen how to provision application components such as databases or middleware in seconds. We have also obeserved how we can effortlessly scale these components. In the following example, we will build our own application code in OpenShift v3. OpenShift will provide the Ruby runtime environment and automatically build, as well as launch a container with our hello world code from GitHub. OpenShift utilizes a technology called "Source to Image" (S2I) that efficiently builds the container. Instead of rebuilding the entire container each time, S2I is able to re-use previous builds and only change the application layer within the container. Docker containers are immutable so any change always requires creating a new container. This is a wasteful, time consuming process without OpenShift and S2I.</p>
+<p>To build our application select "create" from the project page in the OpenShift UI. Enter the URL to the GitHub repository <a href="https://github.com/ktenzer/ruby-hello-world">https://github.com/ktenzer/ruby-hello-world</a> and select "next".</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ose_ruby_create_1.png"><img class="alignnone wp-image-1120" src="/assets/2015/08/ose_ruby_create_1.png?w=300" alt="OSE_RUBY_CREATE_1" width="1204" height="277" /></a></p>
+<p>OpenShift asks us for the application build runtime. In this case we will select Ruby 2.0 since this is in fact a Ruby application.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ose_ruby_create_2.png"><img class="alignnone wp-image-1121" src="/assets/2015/08/ose_ruby_create_2.png?w=300" alt="OSE_RUBY_CREATE_2" width="1204" height="281" /></a></p>
+<p>In the final step we can provide any custom details about the build configuration and of course add a label.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ose_ruby_create_3.png"><img class="alignnone wp-image-1122" src="/assets/2015/08/ose_ruby_create_3.png?w=300" alt="OSE_RUBY_CREATE_3" width="1205" height="791" /></a></p>
+<p>OpenShift will create a container with Ruby 2.0 and our code from GitHub. It will also complete any required build steps. The end result is a complete application build, of a running application, inside a Docker container. Our application can now be automatically tested using Jenkins or other such continuous delivery tools. If tests pass, it can be automatically rolled out to production. Think about how much faster you can make code available to your customers with OpenShift? By selecting the URL for the Ruby hello world application we can also access the application directly.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ose_ruby_running.png"><img class="alignnone wp-image-1134" src="/assets/2015/08/ose_ruby_running.png?w=300" alt="OSE_RUBY_RUNNING" width="1201" height="821" /></a></p>
+<p>&nbsp;</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ose_ruby_app.png"><img class="alignnone wp-image-1123" src="/assets/2015/08/ose_ruby_app.png?w=300" alt="OSE_RUBY_APP" width="1214" height="267" /></a></p>
+<h3>Troubleshooting</h3>
+<p>In this section we will go through some basic troubleshooting steps for OpenShift v3. In order to get logs we first need the pod name. Using the "oc get pods" command, we can get a list of pods.</p>
+<pre>#oc logs ruby-hello-world-1-65lgf
+You might consider adding 'puma' into your Gemfile.
+[2015-08-03 08:19:03] INFO WEBrick 1.3.1
+[2015-08-03 08:19:03] INFO ruby 2.0.0 (2013-11-22) [x86_64-linux]
+[2015-08-03 08:19:03] INFO WEBrick::HTTPServer#start: pid=1 port=8080
+10.1.0.4 - - [03/Aug/2015 08:49:15] "GET / HTTP/1.1" 200 2496 0.0117
+[2015-08-03 08:49:45] ERROR Errno::ECONNRESET: Connection reset by peer
+ /opt/rh/ruby200/root/usr/share/ruby/webrick/httpserver.rb:80:in `eof?'
+ /opt/rh/ruby200/root/usr/share/ruby/webrick/httpserver.rb:80:in `run'
+ /opt/rh/ruby200/root/usr/share/ruby/webrick/server.rb:295:in `block in start_thread'</pre>
+<p>Beyond looking at a pods logs we can also access journald for docker, openshift-master and openshift-node. Using the below journalctl commands we can get a list of current log messages for the major OpenShift components.</p>
+<pre>#journalctl -f -l -u docker</pre>
+<pre>#journalctl -f -l -u openshift-master</pre>
+<pre>#journalctl -f -l -u openshift-node</pre>
+<p><strong>Issue 1: Pod shows as pending and scheduled but never gets deployed on a node.</strong></p>
+<p>This problem can occur if the node docker image cache gets out of sync. In order to resolve this issue perform the following steps on the node:</p>
+<pre>#systemctl stop docker</pre>
+<pre>#rm -rf /var/lib/docker/*</pre>
+<pre>#reboot</pre>
+<h3>Summary</h3>
+<p>In this article we have seen how to deploy an OpenShift Enterprise v3 lab environment. We have seen how to use OpenShift in order to deploy and build applications. This is just the tip of the iceberg of course. In a world where speed and agility becomes increasingly important, it is clear that container infrastructure will become the future platform for running applications. You simply can't argue with being able to start 60 containers in the time it takes to start a single VM. Google deploys over two billion containers a week and everything you do from Google mail to search, runs in a container. Containers are enterprise ready and it is time to start understanding how to take advantage of this technology. OpenShift Enterprise v3 provides a platform for building and running applications on container infrastructure. OpenShift Enterprise v3 enables organizations to innovate faster, bringing that innovation to the market sooner. Don't let your organization be overtaken by the next startup! If you found this article informative or helpful please share your thoughts.</p>
+<p>Happy OpenShifting!</p>
+<p>(c) 2015 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#containers" class="page__taxonomy-item" rel="tag">Containers</a><span class="sep">, </span>
+    
+      <a href="/tags/#continous-delivery" class="page__taxonomy-item" rel="tag">Continous Delivery</a><span class="sep">, </span>
+    
+      <a href="/tags/#devops" class="page__taxonomy-item" rel="tag">DevOps</a><span class="sep">, </span>
+    
+      <a href="/tags/#docker" class="page__taxonomy-item" rel="tag">Docker</a><span class="sep">, </span>
+    
+      <a href="/tags/#kubernetes" class="page__taxonomy-item" rel="tag">Kubernetes</a><span class="sep">, </span>
+    
+      <a href="/tags/#linux" class="page__taxonomy-item" rel="tag">Linux</a><span class="sep">, </span>
+    
+      <a href="/tags/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a><span class="sep">, </span>
+    
+      <a href="/tags/#paas" class="page__taxonomy-item" rel="tag">PaaS</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2015-08-03T00:00:00-07:00">August 3, 2015</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenShift+Enterprise+v3+Lab+Configuration%3A+Innovate+Faster%2C+Deliver+Sooner%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/cloudforms/governing-the-cloud-with-cloudforms/" class="pagination--pager" title="Governing the Cloud with CloudForms
+">Previous</a>
+    
+    
+      <a href="/openshift/openshift-v3-unlocking-the-power-of-persistent-storage/" class="pagination--pager" title="OpenShift v3: Unlocking the Power of Persistent Storage
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

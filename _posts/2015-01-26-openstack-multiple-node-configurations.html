@@ -1,67 +1,13 @@
 ---
-layout: post
+layout: single 
 title: OpenStack Multiple Node Configurations
-date: 2015-01-26 14:02:24.000000000 -08:00
-type: post
-parent_id: '0'
-published: true
-password: ''
-status: publish
-categories: []
+categories:
+- OpenStack
 tags:
 - KVM
 - Linux
 - OpenStack
 - Red Hat
-meta:
-  _edit_last: '63054820'
-  geo_public: '0'
-  _publicize_job_id: '14430844427'
-  _wpas_skip_9542380: '1'
-  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=5965478662701613057&type=U&a=ZV_3
-  _wpas_done_9468659: '1'
-  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"pzvfqtzaYA";b:1;}}
-  _wpas_skip_9468659: '1'
-  _oembed_72beeb908867782e6438a330166da0c3: "{{unknown}}"
-  _oembed_a79876e563f7a6f249382277715854b7: "{{unknown}}"
-  _oembed_76d93234bc1fad3c755f060982f272cc: "{{unknown}}"
-  _oembed_9eb02dd37afe298b22593464fc7dc69a: "{{unknown}}"
-  _oembed_6109603f83493002b33fcea8845b398e: "{{unknown}}"
-  _oembed_bde70500c76c3c64f033961d46337815: "{{unknown}}"
-  _oembed_98a48f9eac1dae13a55e93d226117c9d: "{{unknown}}"
-  _oembed_8cba39ecdb9fc6d48bd75b3dcf4cd34b: "{{unknown}}"
-  _oembed_96b2a8cab13d5a8ef42e87eb5e53573f: "{{unknown}}"
-  _oembed_4208c915a1a003d9784066593c29fbdd: "{{unknown}}"
-  _oembed_a2064a0848029571df1ea0b9e129f587: "{{unknown}}"
-  _oembed_9ae4931216fc3cba6563084f14ae2897: "{{unknown}}"
-  _oembed_ba664c2d1079fa3499ca3b998e4c149c: "{{unknown}}"
-  _oembed_f487c8b274400647a6a6f648bebd184c: "{{unknown}}"
-  _oembed_721f516d566c33be7548646009c331dd: "{{unknown}}"
-  _oembed_edbd5da2ed33739722950662162b9d9f: "{{unknown}}"
-  _oembed_b42843c87ae5ffe449bcdab9ea9cf30b: "{{unknown}}"
-  _oembed_18a8e5688efb0226e3a6525f8ac641e9: "{{unknown}}"
-  _oembed_a3e3d388667a27dba115197a8eb93ad4: "{{unknown}}"
-  _oembed_46c980652b757a2ac930b5fb14ada822: "{{unknown}}"
-  _oembed_84b909d1d004710045c3a2f206eed596: "{{unknown}}"
-  _oembed_d448b4b85c5b5b0cdeefd3e9be9c090a: "{{unknown}}"
-  _oembed_a26f8cec8b8b1fcfa37e3824cad84983: "{{unknown}}"
-  _oembed_9dd050398ad685e08acb7faf5a7da233: "{{unknown}}"
-  _oembed_cd89ebb23bf1c0ab14206d501b1c06b4: "{{unknown}}"
-  _oembed_b6cb2d9ef98a321bf28b04d1160807cd: "{{unknown}}"
-  _oembed_a5369c4faa4014eb151cc3677f7806af: "{{unknown}}"
-  _oembed_d7347f70397c9f63db2c21eaa0131b0b: "{{unknown}}"
-  _oembed_4885976b7bd330bdcc13450c3ebc8f52: "{{unknown}}"
-  _oembed_6189d1c02f1dbe9418c446c1f513ff3e: "{{unknown}}"
-  _oembed_0b5dd0e9b40b2d8646bd36d22c9bec49: "{{unknown}}"
-  _oembed_e5e19f58900b5f503d56b4b2e5ec947a: "{{unknown}}"
-  _oembed_3952ea234c4307fe3afeb1ea33b5a371: "{{unknown}}"
-author:
-  login: ktenzer1
-  email: keith.tenzer@gmail.com
-  display_name: ktenzer
-  first_name: ''
-  last_name: ''
-permalink: "/2015/01/26/openstack-multiple-node-configurations/"
 ---
 <h3>Node Types</h3>
 <p>OpenStack can be deployed in a single-node or multi-node configuration. For the purpose of this post I am going to assume you understand OpenStack basics and have at least done a basic installation on a single-node using RDO or another installer. <!--more--> If not please refer to this <a href="http://keithtenzer.com/2014/12/05/creating-storage-services-in-openstack-on-netapp-part-i-of-iii/">post </a>which covers the basics. OpenStack is of course a culmination of loosely coupled projects that define services. A node is nothing more than a grouping of OpenStack services that run on bare-metal, in a container or virtual machine. The purpose of a node is to provide horizontal scaling and HA. There are four possible node types in OpenStack: controller, compute, network and storage.</p>

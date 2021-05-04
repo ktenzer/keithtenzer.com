@@ -1,0 +1,833 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Getting Started with Machine Learning - KEITHTENZER.COM</title>
+<meta name="description" content="source: https://news.sophos.com/en-us/2017/07/24/5-questions-to-ask-about-machine-learning/ Overview In this article we will dive into machine learning. We will begin by understanding the concept, then look at some of the use cases, requirements and finally explore a real world scenario using a demo application.  Machine learning has the potential to dramatically change our lives, jobs and influence decision making on a scale that has never been seen before. It is one of the most exciting and also scary technological advancements to ever come around. It is the future but is also happening right now which is why there couldn&#39;t be a better time to get started than today.  Understanding Machine Learning In order to properly understand machine learning we need to consider artificial intelligence. The goal of AI is to create machines, built from computer programs that have cognitive capabilities, are able to analyze their environment and make decisions like a human would. AI is a huge field and there is a lot of topics within it but ultimately it is about making decisions cognitively. Machine learning as such is the foundation or building block of AI. Machine learning primarily is concerned with making the right decision based on learning. Deep learning is a subset of machine learning and often confused with the latter. Deep learning applications are basically the same, where they differs is around how they learn. Deep learning is predicative, understands accuracy and when given metrics or guidelines is able to learn on it&#39;s own without supervision from humans. The below diagram shows how machine learning and deep learning fit into artificial intelligence.  The capability of deep learning being able to learn on it&#39;s own is made possible by neural networks. A neural network is composed of many layers and weighted connections, that when given an input attempts to find the best possible output. The algorithms are within the layers and responsible for determining the output. This is done by weighting, prediction and measuring accuracy against metrics.  A training set of data is then used to run a training cycle and build the neural network connections. The end result is a trained model with it&#39;s own learned rule-set, that would be used by an application to create a business value. I like to refer to the phase of using a trained model as the professional phase. The below diagram shows a basic workflow for machine learning with both the training and professional phases.  The goal is always to improve the accuracy of the model and it&#39;s ability to match an input with the best possible output. As such, models will likely be continually improved over time and there will be a continuous improvement cycle between the training and professional phases. However a trained model is expected to handle future problems or even unknowns. It is thought that a model would not be updated multiple times a day or every few days but should last weeks or maybe even months. Nevertheless there is a need to continue to learn just like humans. Machine Learning Use Cases Today there are a lot of use cases for machine learning, in the future there will be even more, as new patterns or frameworks become available and understood. Some of the more common use cases I consider valid for today are shown below.  The important thing to remember is that machine learning will be replacing and greatly optimizing tasks not replacing humans themselves. The key as already stated about machine learning is to find the best output given an input, in order to make a decision. This probably also answers why search was one of the first use cases for machine learning. Regardless if we are talking about smart cars, analyzing medical imagery, stock market, providing personalized recommendations or even protecting security, the process or workflow is the same. The only thing that changes are the inputs/outputs, data labels or categorization, and sometimes the algorithms. As hinted creating new algorithms or defining new patters is really hard work and a really highly specialized field. However once the patterns or algorithms are known, they can be re-used and this is what everyone can leverage. For example if we take imagery, those patterns are well known and established. Depending on what you are doing you may only need to label your data and adapt what has already been done. If you are dealing with new types of imagery then it is still just a matter of adapting the frameworks that exist and tailoring it to your needs. An example of this is TenzorFlow (no affiliation to myself) which is a machine or deep learning framework that already has a lot of algorithms. TenzorFlow provides a abstraction and a workflow for handling the details of hitching input functions to output functions (neural connections). The whole point of machine learning is to analyze a very large data-set, train itself on all the patterns and connections to build a neural network and then based on a single input find the best possible output. Machine learning can do this better, faster and with more predictably than humans. Machine Learning Requirements Now that we have established a basic understanding for what machine learning is and where it can be used, let&#39;s get into some of the requirements. Below is a list of some of the more important things to take into consideration.  Requires GPUs, not CPUs for best performance High memory requirements as trained models are loaded in memory Large data-set for training Trained models are very large, many, many GBs Complex, diverse software stack (python, modules, compilers, hardware drivers, integration layers) Multi-cloud being able to leverage software stacks and data-sets across cloud platforms, including the existing enterprise environments  If you add up all the requirements you end up with needing a very dynamic and flexible environment that cannot only scale but meet the challenges around diversity and integration. Machine learning needs data and as such it likely won&#39;t be some one-off, but rather integrated into the various sources of data in your enterprise environments. Containers and specifically a kubernetes based container platform is the only solution that can effectively meet the demands of machine learning workloads. Containers provide process isolation while also providing an easy mechanism to package and transport such a complex software stacks across multi-cloud environments. A container platform enables ability to do many releases and fast rollouts of new capabilities without downtime. Models can be compiled and stored on persistent volumes so they don&#39;t reside in the containers themselves. Machine learning workloads can easily be isolated to compute nodes with GPUs and large amounts of memory, typically running on baremetal from other workloads that may be better suited for VMs  or other hardware. Finally it is key that a container platform can run in the enterprise environment as well as public cloud. In addition must be open, allow necessary control and leverage the best capabilities in order to harness the true power machine learning offers. Machine Learning Demo Application As we have discussed there are two parts to machine learning: building a trained model and using it. Most people will be more interested with the latter as that is where you see business value. As such the demo focuses on using an already trained model. The demo application is a voice recognition system. It will take an audio file, decode audio into text and then translate that text to the language of our choice. The application is broken into three parts: frontend, backend and the trained model. The front-end is written in nodejs while the back-end is python. Currently the container image has both but that could be broken apart with an additional API or middleware layer. The trained model is downloaded but stored on a persistent volume that is simply mounted in the container image. This allows us to make changes to front-end or back-end and quickly rebuild without having to download model again. It also allows for a separate CI/CD process for delivering the model. Trained models will also likely be continually improved in the goal to get better outputs and intelligence from the algorithms. The back-end is using Mozilla Deepspeech to do the voice recognition. Mozilla DeepSpeech is a TenzorFlow implementation of Baidu&#39;s DeepSpeech architecture. We are using a basic trained English model (provided by DeepSpeech project) so accuracy is not nearly as good as it could if we trained the model to for example, with our voice, dialect or even other language characteristics. It is just intended for demo purposes not a real-world scenario. Once we have text we run the text through spell and accuracy correction and finally translate the text in to another language using Google Translate. Deploy Machine Learning Demo Application A Dockerfile is provided to build and deploy the application. Here we will deploy the application to OpenShift which is Red Hat&#39;s Enterprise Kubernetes platform. As I mentioned a container platform is critical and OpenShift provides an independent, open platform for machine learning workloads. If you don&#39;t have OpenShift I would recommend getting the community upstream version called OKD. If that isn&#39;t an option you can use plain-old boring Docker and do a docker build of the Dockerfile on your workstation. Clone GitHub Repository Clone the GitHub repository to your laptop or workstation. $ git clone https://github.com/ktenzer/openshift-ml-demo.git Login to OpenShift and create new project A project in OpenShift is a namespace or workspace for applications.  Add Template into OpenShift Templates in OpenShift provide pre-determined automation for how to build and deploy an application. The template we have provided takes care of building and deploying the demo application as well as configuring a persistent volume for storage and a URL or route.  Next you can choose to process and save the template so it is available in the project or service catalog for later use. We will do both.  Update Template Parameters Templates are parameterized by their creators. In this case we will leave the defaults.  Build Demo Application After all the objects defined in the template are created, the build will start. In this step we will build a container image with the necessary software stack and python development environment to run the application.  Deploy Demo Application The deployment is started after the build completes and the build artifact, which is a container image is saved in the OpenShift registry. The deployment schedules the application to run and the scheduler determines the most appropriate node. The images is then pulled from the OpenShift registry to the node. The pod will show a grey border while the image is being pulled to a node.  Once the image is pulled to the node it will be started on that node.  The first time the application starts it will download the trained model. You can follow this by looking in the pods and containers logs. Once the trained model is downloaded the nodejs server will be started and the application made available.  You can also access the pod and container and look at the downloaded models under the /deepspeech directory. This is of course a persistent model.  You can view the persistent volume used under storage in OpenShift.  Using Demo Application To access application simply click the URL or route configured by the template. Note: if it is still downloading the model (can take a while), application will not start or be available, so check the logs in the container and be patient the first time.  Click choose file to select an audio file. There is a demo.wav file in the GitHub repository provided for convenience. You can of course record your own audio just follow the requirements mentioned in the application.  Once you click submit the audio file is downloaded into the container image and run through the translate.py program which loads DeepSpeech and performs audio-to-text as well as translation to language chosen. Click the Results button to see the results. Note: it may take a minute or two to see any results and the translation will be done step-by-step so you can see how DeepSpeech model is making decisions. You will notice it makes several mistakes that later are corrected. This really illustrates the power of machine learning and also the complexity of understanding voice in a compute program.  The last audio-to-text sentence and translation is displayed before end of translation message. As you can see it got everything almost perfect.  Once the model runs you will notice quite a bit of memory and some CPU usage. The model is loaded into memory so you can imagine the usage for a much larger model, this one is only around 2GB. CPU/GPU usage will vary depending on size of the audio file and data-set.  Video Below is a video recording of the demo. [wpvideo lLhyPenM] Summary In this article we gained a broader understanding for machine learning. By exploring use cases we saw just how wide reaching machine learning has become today and garnered new appreciation for it&#39;s potential in the future. Looking into the requirements of machine learning workloads we were able to see the value of containers and a container platform. I am convinced given the diversity of the software stack, the integration required into multiple clouds as well as data-sets and the flexibility needed that a container platform, is the only option we should be considering for machine learning workloads. Finally a demo was provided to put more context around machine learning, show that it is actually simple to utilize and allow us to understand better what running machine learning workloads actually means. Happy Machine Learning! (c) 2018 Keith Tenzer &nbsp;">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Getting Started with Machine Learning">
+<meta property="og:url" content="https://keithtenzer.com/openshift/getting-started-with-machine-learning/">
+
+
+  <meta property="og:description" content="source: https://news.sophos.com/en-us/2017/07/24/5-questions-to-ask-about-machine-learning/ Overview In this article we will dive into machine learning. We will begin by understanding the concept, then look at some of the use cases, requirements and finally explore a real world scenario using a demo application.  Machine learning has the potential to dramatically change our lives, jobs and influence decision making on a scale that has never been seen before. It is one of the most exciting and also scary technological advancements to ever come around. It is the future but is also happening right now which is why there couldn&#39;t be a better time to get started than today.  Understanding Machine Learning In order to properly understand machine learning we need to consider artificial intelligence. The goal of AI is to create machines, built from computer programs that have cognitive capabilities, are able to analyze their environment and make decisions like a human would. AI is a huge field and there is a lot of topics within it but ultimately it is about making decisions cognitively. Machine learning as such is the foundation or building block of AI. Machine learning primarily is concerned with making the right decision based on learning. Deep learning is a subset of machine learning and often confused with the latter. Deep learning applications are basically the same, where they differs is around how they learn. Deep learning is predicative, understands accuracy and when given metrics or guidelines is able to learn on it&#39;s own without supervision from humans. The below diagram shows how machine learning and deep learning fit into artificial intelligence.  The capability of deep learning being able to learn on it&#39;s own is made possible by neural networks. A neural network is composed of many layers and weighted connections, that when given an input attempts to find the best possible output. The algorithms are within the layers and responsible for determining the output. This is done by weighting, prediction and measuring accuracy against metrics.  A training set of data is then used to run a training cycle and build the neural network connections. The end result is a trained model with it&#39;s own learned rule-set, that would be used by an application to create a business value. I like to refer to the phase of using a trained model as the professional phase. The below diagram shows a basic workflow for machine learning with both the training and professional phases.  The goal is always to improve the accuracy of the model and it&#39;s ability to match an input with the best possible output. As such, models will likely be continually improved over time and there will be a continuous improvement cycle between the training and professional phases. However a trained model is expected to handle future problems or even unknowns. It is thought that a model would not be updated multiple times a day or every few days but should last weeks or maybe even months. Nevertheless there is a need to continue to learn just like humans. Machine Learning Use Cases Today there are a lot of use cases for machine learning, in the future there will be even more, as new patterns or frameworks become available and understood. Some of the more common use cases I consider valid for today are shown below.  The important thing to remember is that machine learning will be replacing and greatly optimizing tasks not replacing humans themselves. The key as already stated about machine learning is to find the best output given an input, in order to make a decision. This probably also answers why search was one of the first use cases for machine learning. Regardless if we are talking about smart cars, analyzing medical imagery, stock market, providing personalized recommendations or even protecting security, the process or workflow is the same. The only thing that changes are the inputs/outputs, data labels or categorization, and sometimes the algorithms. As hinted creating new algorithms or defining new patters is really hard work and a really highly specialized field. However once the patterns or algorithms are known, they can be re-used and this is what everyone can leverage. For example if we take imagery, those patterns are well known and established. Depending on what you are doing you may only need to label your data and adapt what has already been done. If you are dealing with new types of imagery then it is still just a matter of adapting the frameworks that exist and tailoring it to your needs. An example of this is TenzorFlow (no affiliation to myself) which is a machine or deep learning framework that already has a lot of algorithms. TenzorFlow provides a abstraction and a workflow for handling the details of hitching input functions to output functions (neural connections). The whole point of machine learning is to analyze a very large data-set, train itself on all the patterns and connections to build a neural network and then based on a single input find the best possible output. Machine learning can do this better, faster and with more predictably than humans. Machine Learning Requirements Now that we have established a basic understanding for what machine learning is and where it can be used, let&#39;s get into some of the requirements. Below is a list of some of the more important things to take into consideration.  Requires GPUs, not CPUs for best performance High memory requirements as trained models are loaded in memory Large data-set for training Trained models are very large, many, many GBs Complex, diverse software stack (python, modules, compilers, hardware drivers, integration layers) Multi-cloud being able to leverage software stacks and data-sets across cloud platforms, including the existing enterprise environments  If you add up all the requirements you end up with needing a very dynamic and flexible environment that cannot only scale but meet the challenges around diversity and integration. Machine learning needs data and as such it likely won&#39;t be some one-off, but rather integrated into the various sources of data in your enterprise environments. Containers and specifically a kubernetes based container platform is the only solution that can effectively meet the demands of machine learning workloads. Containers provide process isolation while also providing an easy mechanism to package and transport such a complex software stacks across multi-cloud environments. A container platform enables ability to do many releases and fast rollouts of new capabilities without downtime. Models can be compiled and stored on persistent volumes so they don&#39;t reside in the containers themselves. Machine learning workloads can easily be isolated to compute nodes with GPUs and large amounts of memory, typically running on baremetal from other workloads that may be better suited for VMs  or other hardware. Finally it is key that a container platform can run in the enterprise environment as well as public cloud. In addition must be open, allow necessary control and leverage the best capabilities in order to harness the true power machine learning offers. Machine Learning Demo Application As we have discussed there are two parts to machine learning: building a trained model and using it. Most people will be more interested with the latter as that is where you see business value. As such the demo focuses on using an already trained model. The demo application is a voice recognition system. It will take an audio file, decode audio into text and then translate that text to the language of our choice. The application is broken into three parts: frontend, backend and the trained model. The front-end is written in nodejs while the back-end is python. Currently the container image has both but that could be broken apart with an additional API or middleware layer. The trained model is downloaded but stored on a persistent volume that is simply mounted in the container image. This allows us to make changes to front-end or back-end and quickly rebuild without having to download model again. It also allows for a separate CI/CD process for delivering the model. Trained models will also likely be continually improved in the goal to get better outputs and intelligence from the algorithms. The back-end is using Mozilla Deepspeech to do the voice recognition. Mozilla DeepSpeech is a TenzorFlow implementation of Baidu&#39;s DeepSpeech architecture. We are using a basic trained English model (provided by DeepSpeech project) so accuracy is not nearly as good as it could if we trained the model to for example, with our voice, dialect or even other language characteristics. It is just intended for demo purposes not a real-world scenario. Once we have text we run the text through spell and accuracy correction and finally translate the text in to another language using Google Translate. Deploy Machine Learning Demo Application A Dockerfile is provided to build and deploy the application. Here we will deploy the application to OpenShift which is Red Hat&#39;s Enterprise Kubernetes platform. As I mentioned a container platform is critical and OpenShift provides an independent, open platform for machine learning workloads. If you don&#39;t have OpenShift I would recommend getting the community upstream version called OKD. If that isn&#39;t an option you can use plain-old boring Docker and do a docker build of the Dockerfile on your workstation. Clone GitHub Repository Clone the GitHub repository to your laptop or workstation. $ git clone https://github.com/ktenzer/openshift-ml-demo.git Login to OpenShift and create new project A project in OpenShift is a namespace or workspace for applications.  Add Template into OpenShift Templates in OpenShift provide pre-determined automation for how to build and deploy an application. The template we have provided takes care of building and deploying the demo application as well as configuring a persistent volume for storage and a URL or route.  Next you can choose to process and save the template so it is available in the project or service catalog for later use. We will do both.  Update Template Parameters Templates are parameterized by their creators. In this case we will leave the defaults.  Build Demo Application After all the objects defined in the template are created, the build will start. In this step we will build a container image with the necessary software stack and python development environment to run the application.  Deploy Demo Application The deployment is started after the build completes and the build artifact, which is a container image is saved in the OpenShift registry. The deployment schedules the application to run and the scheduler determines the most appropriate node. The images is then pulled from the OpenShift registry to the node. The pod will show a grey border while the image is being pulled to a node.  Once the image is pulled to the node it will be started on that node.  The first time the application starts it will download the trained model. You can follow this by looking in the pods and containers logs. Once the trained model is downloaded the nodejs server will be started and the application made available.  You can also access the pod and container and look at the downloaded models under the /deepspeech directory. This is of course a persistent model.  You can view the persistent volume used under storage in OpenShift.  Using Demo Application To access application simply click the URL or route configured by the template. Note: if it is still downloading the model (can take a while), application will not start or be available, so check the logs in the container and be patient the first time.  Click choose file to select an audio file. There is a demo.wav file in the GitHub repository provided for convenience. You can of course record your own audio just follow the requirements mentioned in the application.  Once you click submit the audio file is downloaded into the container image and run through the translate.py program which loads DeepSpeech and performs audio-to-text as well as translation to language chosen. Click the Results button to see the results. Note: it may take a minute or two to see any results and the translation will be done step-by-step so you can see how DeepSpeech model is making decisions. You will notice it makes several mistakes that later are corrected. This really illustrates the power of machine learning and also the complexity of understanding voice in a compute program.  The last audio-to-text sentence and translation is displayed before end of translation message. As you can see it got everything almost perfect.  Once the model runs you will notice quite a bit of memory and some CPU usage. The model is loaded into memory so you can imagine the usage for a much larger model, this one is only around 2GB. CPU/GPU usage will vary depending on size of the audio file and data-set.  Video Below is a video recording of the demo. [wpvideo lLhyPenM] Summary In this article we gained a broader understanding for machine learning. By exploring use cases we saw just how wide reaching machine learning has become today and garnered new appreciation for it&#39;s potential in the future. Looking into the requirements of machine learning workloads we were able to see the value of containers and a container platform. I am convinced given the diversity of the software stack, the integration required into multiple clouds as well as data-sets and the flexibility needed that a container platform, is the only option we should be considering for machine learning workloads. Finally a demo was provided to put more context around machine learning, show that it is actually simple to utilize and allow us to understand better what running machine learning workloads actually means. Happy Machine Learning! (c) 2018 Keith Tenzer &nbsp;">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Getting Started with Machine Learning">
+  <meta name="twitter:description" content="source: https://news.sophos.com/en-us/2017/07/24/5-questions-to-ask-about-machine-learning/ Overview In this article we will dive into machine learning. We will begin by understanding the concept, then look at some of the use cases, requirements and finally explore a real world scenario using a demo application.  Machine learning has the potential to dramatically change our lives, jobs and influence decision making on a scale that has never been seen before. It is one of the most exciting and also scary technological advancements to ever come around. It is the future but is also happening right now which is why there couldn&#39;t be a better time to get started than today.  Understanding Machine Learning In order to properly understand machine learning we need to consider artificial intelligence. The goal of AI is to create machines, built from computer programs that have cognitive capabilities, are able to analyze their environment and make decisions like a human would. AI is a huge field and there is a lot of topics within it but ultimately it is about making decisions cognitively. Machine learning as such is the foundation or building block of AI. Machine learning primarily is concerned with making the right decision based on learning. Deep learning is a subset of machine learning and often confused with the latter. Deep learning applications are basically the same, where they differs is around how they learn. Deep learning is predicative, understands accuracy and when given metrics or guidelines is able to learn on it&#39;s own without supervision from humans. The below diagram shows how machine learning and deep learning fit into artificial intelligence.  The capability of deep learning being able to learn on it&#39;s own is made possible by neural networks. A neural network is composed of many layers and weighted connections, that when given an input attempts to find the best possible output. The algorithms are within the layers and responsible for determining the output. This is done by weighting, prediction and measuring accuracy against metrics.  A training set of data is then used to run a training cycle and build the neural network connections. The end result is a trained model with it&#39;s own learned rule-set, that would be used by an application to create a business value. I like to refer to the phase of using a trained model as the professional phase. The below diagram shows a basic workflow for machine learning with both the training and professional phases.  The goal is always to improve the accuracy of the model and it&#39;s ability to match an input with the best possible output. As such, models will likely be continually improved over time and there will be a continuous improvement cycle between the training and professional phases. However a trained model is expected to handle future problems or even unknowns. It is thought that a model would not be updated multiple times a day or every few days but should last weeks or maybe even months. Nevertheless there is a need to continue to learn just like humans. Machine Learning Use Cases Today there are a lot of use cases for machine learning, in the future there will be even more, as new patterns or frameworks become available and understood. Some of the more common use cases I consider valid for today are shown below.  The important thing to remember is that machine learning will be replacing and greatly optimizing tasks not replacing humans themselves. The key as already stated about machine learning is to find the best output given an input, in order to make a decision. This probably also answers why search was one of the first use cases for machine learning. Regardless if we are talking about smart cars, analyzing medical imagery, stock market, providing personalized recommendations or even protecting security, the process or workflow is the same. The only thing that changes are the inputs/outputs, data labels or categorization, and sometimes the algorithms. As hinted creating new algorithms or defining new patters is really hard work and a really highly specialized field. However once the patterns or algorithms are known, they can be re-used and this is what everyone can leverage. For example if we take imagery, those patterns are well known and established. Depending on what you are doing you may only need to label your data and adapt what has already been done. If you are dealing with new types of imagery then it is still just a matter of adapting the frameworks that exist and tailoring it to your needs. An example of this is TenzorFlow (no affiliation to myself) which is a machine or deep learning framework that already has a lot of algorithms. TenzorFlow provides a abstraction and a workflow for handling the details of hitching input functions to output functions (neural connections). The whole point of machine learning is to analyze a very large data-set, train itself on all the patterns and connections to build a neural network and then based on a single input find the best possible output. Machine learning can do this better, faster and with more predictably than humans. Machine Learning Requirements Now that we have established a basic understanding for what machine learning is and where it can be used, let&#39;s get into some of the requirements. Below is a list of some of the more important things to take into consideration.  Requires GPUs, not CPUs for best performance High memory requirements as trained models are loaded in memory Large data-set for training Trained models are very large, many, many GBs Complex, diverse software stack (python, modules, compilers, hardware drivers, integration layers) Multi-cloud being able to leverage software stacks and data-sets across cloud platforms, including the existing enterprise environments  If you add up all the requirements you end up with needing a very dynamic and flexible environment that cannot only scale but meet the challenges around diversity and integration. Machine learning needs data and as such it likely won&#39;t be some one-off, but rather integrated into the various sources of data in your enterprise environments. Containers and specifically a kubernetes based container platform is the only solution that can effectively meet the demands of machine learning workloads. Containers provide process isolation while also providing an easy mechanism to package and transport such a complex software stacks across multi-cloud environments. A container platform enables ability to do many releases and fast rollouts of new capabilities without downtime. Models can be compiled and stored on persistent volumes so they don&#39;t reside in the containers themselves. Machine learning workloads can easily be isolated to compute nodes with GPUs and large amounts of memory, typically running on baremetal from other workloads that may be better suited for VMs  or other hardware. Finally it is key that a container platform can run in the enterprise environment as well as public cloud. In addition must be open, allow necessary control and leverage the best capabilities in order to harness the true power machine learning offers. Machine Learning Demo Application As we have discussed there are two parts to machine learning: building a trained model and using it. Most people will be more interested with the latter as that is where you see business value. As such the demo focuses on using an already trained model. The demo application is a voice recognition system. It will take an audio file, decode audio into text and then translate that text to the language of our choice. The application is broken into three parts: frontend, backend and the trained model. The front-end is written in nodejs while the back-end is python. Currently the container image has both but that could be broken apart with an additional API or middleware layer. The trained model is downloaded but stored on a persistent volume that is simply mounted in the container image. This allows us to make changes to front-end or back-end and quickly rebuild without having to download model again. It also allows for a separate CI/CD process for delivering the model. Trained models will also likely be continually improved in the goal to get better outputs and intelligence from the algorithms. The back-end is using Mozilla Deepspeech to do the voice recognition. Mozilla DeepSpeech is a TenzorFlow implementation of Baidu&#39;s DeepSpeech architecture. We are using a basic trained English model (provided by DeepSpeech project) so accuracy is not nearly as good as it could if we trained the model to for example, with our voice, dialect or even other language characteristics. It is just intended for demo purposes not a real-world scenario. Once we have text we run the text through spell and accuracy correction and finally translate the text in to another language using Google Translate. Deploy Machine Learning Demo Application A Dockerfile is provided to build and deploy the application. Here we will deploy the application to OpenShift which is Red Hat&#39;s Enterprise Kubernetes platform. As I mentioned a container platform is critical and OpenShift provides an independent, open platform for machine learning workloads. If you don&#39;t have OpenShift I would recommend getting the community upstream version called OKD. If that isn&#39;t an option you can use plain-old boring Docker and do a docker build of the Dockerfile on your workstation. Clone GitHub Repository Clone the GitHub repository to your laptop or workstation. $ git clone https://github.com/ktenzer/openshift-ml-demo.git Login to OpenShift and create new project A project in OpenShift is a namespace or workspace for applications.  Add Template into OpenShift Templates in OpenShift provide pre-determined automation for how to build and deploy an application. The template we have provided takes care of building and deploying the demo application as well as configuring a persistent volume for storage and a URL or route.  Next you can choose to process and save the template so it is available in the project or service catalog for later use. We will do both.  Update Template Parameters Templates are parameterized by their creators. In this case we will leave the defaults.  Build Demo Application After all the objects defined in the template are created, the build will start. In this step we will build a container image with the necessary software stack and python development environment to run the application.  Deploy Demo Application The deployment is started after the build completes and the build artifact, which is a container image is saved in the OpenShift registry. The deployment schedules the application to run and the scheduler determines the most appropriate node. The images is then pulled from the OpenShift registry to the node. The pod will show a grey border while the image is being pulled to a node.  Once the image is pulled to the node it will be started on that node.  The first time the application starts it will download the trained model. You can follow this by looking in the pods and containers logs. Once the trained model is downloaded the nodejs server will be started and the application made available.  You can also access the pod and container and look at the downloaded models under the /deepspeech directory. This is of course a persistent model.  You can view the persistent volume used under storage in OpenShift.  Using Demo Application To access application simply click the URL or route configured by the template. Note: if it is still downloading the model (can take a while), application will not start or be available, so check the logs in the container and be patient the first time.  Click choose file to select an audio file. There is a demo.wav file in the GitHub repository provided for convenience. You can of course record your own audio just follow the requirements mentioned in the application.  Once you click submit the audio file is downloaded into the container image and run through the translate.py program which loads DeepSpeech and performs audio-to-text as well as translation to language chosen. Click the Results button to see the results. Note: it may take a minute or two to see any results and the translation will be done step-by-step so you can see how DeepSpeech model is making decisions. You will notice it makes several mistakes that later are corrected. This really illustrates the power of machine learning and also the complexity of understanding voice in a compute program.  The last audio-to-text sentence and translation is displayed before end of translation message. As you can see it got everything almost perfect.  Once the model runs you will notice quite a bit of memory and some CPU usage. The model is loaded into memory so you can imagine the usage for a much larger model, this one is only around 2GB. CPU/GPU usage will vary depending on size of the audio file and data-set.  Video Below is a video recording of the demo. [wpvideo lLhyPenM] Summary In this article we gained a broader understanding for machine learning. By exploring use cases we saw just how wide reaching machine learning has become today and garnered new appreciation for it&#39;s potential in the future. Looking into the requirements of machine learning workloads we were able to see the value of containers and a container platform. I am convinced given the diversity of the software stack, the integration required into multiple clouds as well as data-sets and the flexibility needed that a container platform, is the only option we should be considering for machine learning workloads. Finally a demo was provided to put more context around machine learning, show that it is actually simple to utilize and allow us to understand better what running machine learning workloads actually means. Happy Machine Learning! (c) 2018 Keith Tenzer &nbsp;">
+  <meta name="twitter:url" content="https://keithtenzer.com/openshift/getting-started-with-machine-learning/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2018-12-14T00:00:00-08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openshift/getting-started-with-machine-learning/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openshift" itemprop="item"><span itemprop="name">Openshift</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Getting Started with Machine Learning</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Getting Started with Machine Learning">
+    <meta itemprop="description" content="source: https://news.sophos.com/en-us/2017/07/24/5-questions-to-ask-about-machine-learning/OverviewIn this article we will dive into machine learning. We will begin by understanding the concept, then look at some of the use cases, requirements and finally explore a real world scenario using a demo application.  Machine learning has the potential to dramatically change our lives, jobs and influence decision making on a scale that has never been seen before. It is one of the most exciting and also scary technological advancements to ever come around. It is the future but is also happening right now which is why there couldn&#39;t be a better time to get started than today.Understanding Machine LearningIn order to properly understand machine learning we need to consider artificial intelligence. The goal of AI is to create machines, built from computer programs that have cognitive capabilities, are able to analyze their environment and make decisions like a human would. AI is a huge field and there is a lot of topics within it but ultimately it is about making decisions cognitively. Machine learning as such is the foundation or building block of AI. Machine learning primarily is concerned with making the right decision based on learning. Deep learning is a subset of machine learning and often confused with the latter. Deep learning applications are basically the same, where they differs is around how they learn. Deep learning is predicative, understands accuracy and when given metrics or guidelines is able to learn on it&#39;s own without supervision from humans. The below diagram shows how machine learning and deep learning fit into artificial intelligence.The capability of deep learning being able to learn on it&#39;s own is made possible by neural networks. A neural network is composed of many layers and weighted connections, that when given an input attempts to find the best possible output. The algorithms are within the layers and responsible for determining the output. This is done by weighting, prediction and measuring accuracy against metrics.  A training set of data is then used to run a training cycle and build the neural network connections. The end result is a trained model with it&#39;s own learned rule-set, that would be used by an application to create a business value. I like to refer to the phase of using a trained model as the professional phase.The below diagram shows a basic workflow for machine learning with both the training and professional phases.The goal is always to improve the accuracy of the model and it&#39;s ability to match an input with the best possible output. As such, models will likely be continually improved over time and there will be a continuous improvement cycle between the training and professional phases. However a trained model is expected to handle future problems or even unknowns. It is thought that a model would not be updated multiple times a day or every few days but should last weeks or maybe even months. Nevertheless there is a need to continue to learn just like humans.Machine Learning Use CasesToday there are a lot of use cases for machine learning, in the future there will be even more, as new patterns or frameworks become available and understood. Some of the more common use cases I consider valid for today are shown below.The important thing to remember is that machine learning will be replacing and greatly optimizing tasks not replacing humans themselves. The key as already stated about machine learning is to find the best output given an input, in order to make a decision. This probably also answers why search was one of the first use cases for machine learning. Regardless if we are talking about smart cars, analyzing medical imagery, stock market, providing personalized recommendations or even protecting security, the process or workflow is the same. The only thing that changes are the inputs/outputs, data labels or categorization, and sometimes the algorithms. As hinted creating new algorithms or defining new patters is really hard work and a really highly specialized field. However once the patterns or algorithms are known, they can be re-used and this is what everyone can leverage. For example if we take imagery, those patterns are well known and established. Depending on what you are doing you may only need to label your data and adapt what has already been done. If you are dealing with new types of imagery then it is still just a matter of adapting the frameworks that exist and tailoring it to your needs. An example of this is TenzorFlow (no affiliation to myself) which is a machine or deep learning framework that already has a lot of algorithms. TenzorFlow provides a abstraction and a workflow for handling the details of hitching input functions to output functions (neural connections). The whole point of machine learning is to analyze a very large data-set, train itself on all the patterns and connections to build a neural network and then based on a single input find the best possible output. Machine learning can do this better, faster and with more predictably than humans.Machine Learning RequirementsNow that we have established a basic understanding for what machine learning is and where it can be used, let&#39;s get into some of the requirements. Below is a list of some of the more important things to take into consideration.Requires GPUs, not CPUs for best performanceHigh memory requirements as trained models are loaded in memoryLarge data-set for trainingTrained models are very large, many, many GBsComplex, diverse software stack (python, modules, compilers, hardware drivers, integration layers)Multi-cloud being able to leverage software stacks and data-sets across cloud platforms, including the existing enterprise environmentsIf you add up all the requirements you end up with needing a very dynamic and flexible environment that cannot only scale but meet the challenges around diversity and integration. Machine learning needs data and as such it likely won&#39;t be some one-off, but rather integrated into the various sources of data in your enterprise environments. Containers and specifically a kubernetes based container platform is the only solution that can effectively meet the demands of machine learning workloads.Containers provide process isolation while also providing an easy mechanism to package and transport such a complex software stacks across multi-cloud environments. A container platform enables ability to do many releases and fast rollouts of new capabilities without downtime. Models can be compiled and stored on persistent volumes so they don&#39;t reside in the containers themselves. Machine learning workloads can easily be isolated to compute nodes with GPUs and large amounts of memory, typically running on baremetal from other workloads that may be better suited for VMs  or other hardware. Finally it is key that a container platform can run in the enterprise environment as well as public cloud. In addition must be open, allow necessary control and leverage the best capabilities in order to harness the true power machine learning offers.Machine Learning Demo ApplicationAs we have discussed there are two parts to machine learning: building a trained model and using it. Most people will be more interested with the latter as that is where you see business value. As such the demo focuses on using an already trained model. The demo application is a voice recognition system. It will take an audio file, decode audio into text and then translate that text to the language of our choice. The application is broken into three parts: frontend, backend and the trained model.The front-end is written in nodejs while the back-end is python. Currently the container image has both but that could be broken apart with an additional API or middleware layer. The trained model is downloaded but stored on a persistent volume that is simply mounted in the container image. This allows us to make changes to front-end or back-end and quickly rebuild without having to download model again. It also allows for a separate CI/CD process for delivering the model. Trained models will also likely be continually improved in the goal to get better outputs and intelligence from the algorithms.The back-end is using Mozilla Deepspeech to do the voice recognition. Mozilla DeepSpeech is a TenzorFlow implementation of Baidu&#39;s DeepSpeech architecture. We are using a basic trained English model (provided by DeepSpeech project) so accuracy is not nearly as good as it could if we trained the model to for example, with our voice, dialect or even other language characteristics. It is just intended for demo purposes not a real-world scenario. Once we have text we run the text through spell and accuracy correction and finally translate the text in to another language using Google Translate.Deploy Machine Learning Demo ApplicationA Dockerfile is provided to build and deploy the application. Here we will deploy the application to OpenShift which is Red Hat&#39;s Enterprise Kubernetes platform. As I mentioned a container platform is critical and OpenShift provides an independent, open platform for machine learning workloads. If you don&#39;t have OpenShift I would recommend getting the community upstream version called OKD. If that isn&#39;t an option you can use plain-old boring Docker and do a docker build of the Dockerfile on your workstation.Clone GitHub RepositoryClone the GitHub repository to your laptop or workstation.$ git clone https://github.com/ktenzer/openshift-ml-demo.gitLogin to OpenShift and create new projectA project in OpenShift is a namespace or workspace for applications.Add Template into OpenShiftTemplates in OpenShift provide pre-determined automation for how to build and deploy an application. The template we have provided takes care of building and deploying the demo application as well as configuring a persistent volume for storage and a URL or route.Next you can choose to process and save the template so it is available in the project or service catalog for later use. We will do both.Update Template ParametersTemplates are parameterized by their creators. In this case we will leave the defaults. Build Demo ApplicationAfter all the objects defined in the template are created, the build will start. In this step we will build a container image with the necessary software stack and python development environment to run the application.Deploy Demo ApplicationThe deployment is started after the build completes and the build artifact, which is a container image is saved in the OpenShift registry. The deployment schedules the application to run and the scheduler determines the most appropriate node. The images is then pulled from the OpenShift registry to the node. The pod will show a grey border while the image is being pulled to a node.Once the image is pulled to the node it will be started on that node.The first time the application starts it will download the trained model. You can follow this by looking in the pods and containers logs. Once the trained model is downloaded the nodejs server will be started and the application made available.You can also access the pod and container and look at the downloaded models under the /deepspeech directory. This is of course a persistent model.You can view the persistent volume used under storage in OpenShift.Using Demo ApplicationTo access application simply click the URL or route configured by the template.Note: if it is still downloading the model (can take a while), application will not start or be available, so check the logs in the container and be patient the first time.Click choose file to select an audio file. There is a demo.wav file in the GitHub repository provided for convenience. You can of course record your own audio just follow the requirements mentioned in the application.Once you click submit the audio file is downloaded into the container image and run through the translate.py program which loads DeepSpeech and performs audio-to-text as well as translation to language chosen. Click the Results button to see the results.Note: it may take a minute or two to see any results and the translation will be done step-by-step so you can see how DeepSpeech model is making decisions. You will notice it makes several mistakes that later are corrected. This really illustrates the power of machine learning and also the complexity of understanding voice in a compute program.The last audio-to-text sentence and translation is displayed before end of translation message. As you can see it got everything almost perfect.Once the model runs you will notice quite a bit of memory and some CPU usage. The model is loaded into memory so you can imagine the usage for a much larger model, this one is only around 2GB. CPU/GPU usage will vary depending on size of the audio file and data-set.VideoBelow is a video recording of the demo.[wpvideo lLhyPenM]SummaryIn this article we gained a broader understanding for machine learning. By exploring use cases we saw just how wide reaching machine learning has become today and garnered new appreciation for it&#39;s potential in the future. Looking into the requirements of machine learning workloads we were able to see the value of containers and a container platform. I am convinced given the diversity of the software stack, the integration required into multiple clouds as well as data-sets and the flexibility needed that a container platform, is the only option we should be considering for machine learning workloads. Finally a demo was provided to put more context around machine learning, show that it is actually simple to utilize and allow us to understand better what running machine learning workloads actually means.Happy Machine Learning!(c) 2018 Keith Tenzer&nbsp;">
+    <meta itemprop="datePublished" content="2018-12-14T00:00:00-08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Getting Started with Machine Learning
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2018-12-14T00:00:00-08:00">December 14, 2018</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h2><img class="alignnone size-full wp-image-12852" src="/assets/2018/12/ml.jpg" alt="ml" width="640" height="334" /></h2>
+<p>source: <a href="https://news.sophos.com/en-us/2017/07/24/5-questions-to-ask-about-machine-learning/">https://news.sophos.com/en-us/2017/07/24/5-questions-to-ask-about-machine-learning/</a></p>
+<h2>Overview</h2>
+<p>In this article we will dive into machine learning. We will begin by understanding the concept, then look at some of the use cases, requirements and finally explore a real world scenario using a demo application.  Machine learning has the potential to dramatically change our lives, jobs and influence decision making on a scale that has never been seen before. It is one of the most exciting and also scary technological advancements to ever come around. It is the future but is also happening right now which is why there couldn't be a better time to get started than today.</p>
+<p><!--more--></p>
+<h2>Understanding Machine Learning</h2>
+<p>In order to properly understand machine learning we need to consider artificial intelligence. The goal of AI is to create machines, built from computer programs that have cognitive capabilities, are able to analyze their environment and make decisions like a human would. AI is a huge field and there is a lot of topics within it but ultimately it is about making decisions cognitively. Machine learning as such is the foundation or building block of AI. Machine learning primarily is concerned with making the right decision based on learning. Deep learning is a subset of machine learning and often confused with the latter. Deep learning applications are basically the same, where they differs is around how they learn. Deep learning is predicative, understands accuracy and when given metrics or guidelines is able to learn on it's own without supervision from humans. The below diagram shows how machine learning and deep learning fit into artificial intelligence.</p>
+<p><img class="alignnone  wp-image-12824" src="/assets/2018/12/ml_basics.png" alt="ml_basics" width="1102" height="465" /></p>
+<p>The capability of deep learning being able to learn on it's own is made possible by neural networks. A neural network is composed of many layers and weighted connections, that when given an input attempts to find the best possible output. The algorithms are within the layers and responsible for determining the output. This is done by weighting, prediction and measuring accuracy against metrics.  A training set of data is then used to run a training cycle and build the neural network connections. The end result is a trained model with it's own learned rule-set, that would be used by an application to create a business value. I like to refer to the phase of using a trained model as the professional phase.</p>
+<p>The below diagram shows a basic workflow for machine learning with both the training and professional phases.</p>
+<p><img class="alignnone  wp-image-12826" src="/assets/2018/12/ml_workflow-1.png" alt="ml_workflow" width="965" height="393" /></p>
+<p>The goal is always to improve the accuracy of the model and it's ability to match an input with the best possible output. As such, models will likely be continually improved over time and there will be a continuous improvement cycle between the training and professional phases. However a trained model is expected to handle future problems or even unknowns. It is thought that a model would not be updated multiple times a day or every few days but should last weeks or maybe even months. Nevertheless there is a need to continue to learn just like humans.</p>
+<h2>Machine Learning Use Cases</h2>
+<p>Today there are a lot of use cases for machine learning, in the future there will be even more, as new patterns or frameworks become available and understood. Some of the more common use cases I consider valid for today are shown below.</p>
+<p><img class="alignnone  wp-image-12835" src="/assets/2018/12/ml_use_cases.png" alt="ml_use_cases" width="858" height="313" /></p>
+<p>The important thing to remember is that machine learning will be replacing and greatly optimizing tasks not replacing humans themselves. The key as already stated about machine learning is to find the best output given an input, in order to make a decision. This probably also answers why search was one of the first use cases for machine learning. Regardless if we are talking about smart cars, analyzing medical imagery, stock market, providing personalized recommendations or even protecting security, the process or workflow is the same. The only thing that changes are the inputs/outputs, data labels or categorization, and sometimes the algorithms. As hinted creating new algorithms or defining new patters is really hard work and a really highly specialized field. However once the patterns or algorithms are known, they can be re-used and this is what everyone can leverage. For example if we take imagery, those patterns are well known and established. Depending on what you are doing you may only need to label your data and adapt what has already been done. If you are dealing with new types of imagery then it is still just a matter of adapting the frameworks that exist and tailoring it to your needs. An example of this is TenzorFlow (no affiliation to myself) which is a machine or deep learning framework that already has a lot of algorithms. TenzorFlow provides a abstraction and a workflow for handling the details of hitching input functions to output functions (neural connections). The whole point of machine learning is to analyze a very large data-set, train itself on all the patterns and connections to build a neural network and then based on a single input find the best possible output. Machine learning can do this better, faster and with more predictably than humans.</p>
+<h2>Machine Learning Requirements</h2>
+<p>Now that we have established a basic understanding for what machine learning is and where it can be used, let's get into some of the requirements. Below is a list of some of the more important things to take into consideration.</p>
+<ul>
+<li>Requires GPUs, not CPUs for best performance</li>
+<li>High memory requirements as trained models are loaded in memory</li>
+<li>Large data-set for training</li>
+<li>Trained models are very large, many, many GBs</li>
+<li>Complex, diverse software stack (python, modules, compilers, hardware drivers, integration layers)</li>
+<li>Multi-cloud being able to leverage software stacks and data-sets across cloud platforms, including the existing enterprise environments</li>
+</ul>
+<p>If you add up all the requirements you end up with needing a very dynamic and flexible environment that cannot only scale but meet the challenges around diversity and integration. Machine learning needs data and as such it likely won't be some one-off, but rather integrated into the various sources of data in your enterprise environments. Containers and specifically a kubernetes based container platform is the only solution that can effectively meet the demands of machine learning workloads.</p>
+<p>Containers provide process isolation while also providing an easy mechanism to package and transport such a complex software stacks across multi-cloud environments. A container platform enables ability to do many releases and fast rollouts of new capabilities without downtime. Models can be compiled and stored on persistent volumes so they don't reside in the containers themselves. Machine learning workloads can easily be isolated to compute nodes with GPUs and large amounts of memory, typically running on baremetal from other workloads that may be better suited for VMs  or other hardware. Finally it is key that a container platform can run in the enterprise environment as well as public cloud. In addition must be open, allow necessary control and leverage the best capabilities in order to harness the true power machine learning offers.</p>
+<h2>Machine Learning Demo Application</h2>
+<p>As we have discussed there are two parts to machine learning: building a trained model and using it. Most people will be more interested with the latter as that is where you see business value. As such the demo focuses on using an already trained model. The demo application is a voice recognition system. It will take an audio file, decode audio into text and then translate that text to the language of our choice. The application is broken into three parts: frontend, backend and the trained model.</p>
+<p>The front-end is written in nodejs while the back-end is python. Currently the container image has both but that could be broken apart with an additional API or middleware layer. The trained model is downloaded but stored on a persistent volume that is simply mounted in the container image. This allows us to make changes to front-end or back-end and quickly rebuild without having to download model again. It also allows for a separate CI/CD process for delivering the model. Trained models will also likely be continually improved in the goal to get better outputs and intelligence from the algorithms.</p>
+<p>The back-end is using Mozilla Deepspeech to do the voice recognition. Mozilla DeepSpeech is a TenzorFlow implementation of Baidu's DeepSpeech architecture. We are using a basic trained English model (provided by DeepSpeech project) so accuracy is not nearly as good as it could if we trained the model to for example, with our voice, dialect or even other language characteristics. It is just intended for demo purposes not a real-world scenario. Once we have text we run the text through spell and accuracy correction and finally translate the text in to another language using Google Translate.</p>
+<h2>Deploy Machine Learning Demo Application</h2>
+<p>A Dockerfile is provided to build and deploy the application. Here we will deploy the application to OpenShift which is Red Hat's Enterprise Kubernetes platform. As I mentioned a container platform is critical and OpenShift provides an independent, open platform for machine learning workloads. If you don't have OpenShift I would recommend getting the community upstream version called <a href="https://www.okd.io/">OKD</a>. If that isn't an option you can use plain-old boring Docker and do a docker build of the Dockerfile on your workstation.</p>
+<p><strong>Clone GitHub Repository</strong></p>
+<p>Clone the GitHub repository to your laptop or workstation.</p>
+<pre>$ git clone https://github.com/ktenzer/openshift-ml-demo.git</pre>
+<p><strong>Login to OpenShift and create new project</strong></p>
+<p>A project in OpenShift is a namespace or workspace for applications.</p>
+<p><img class="alignnone  wp-image-12836" src="/assets/2018/12/ml-demo-1.png" alt="ml-demo-1" width="1125" height="561" /></p>
+<p><strong>Add Template into OpenShift</strong></p>
+<p>Templates in OpenShift provide pre-determined automation for how to build and deploy an application. The template we have provided takes care of building and deploying the demo application as well as configuring a persistent volume for storage and a URL or route.</p>
+<p><img class="alignnone  wp-image-12837" src="/assets/2018/12/ml-demo-2.png" alt="ml-demo-2" width="1124" height="671" /></p>
+<p>Next you can choose to process and save the template so it is available in the project or service catalog for later use. We will do both.</p>
+<p><img class="alignnone  wp-image-12838" src="/assets/2018/12/ml-demo-3.png" alt="ml-demo-3" width="1114" height="503" /></p>
+<p><strong>Update Template Parameters</strong></p>
+<p>Templates are parameterized by their creators. In this case we will leave the defaults.</p>
+<p><img class="alignnone  wp-image-12839" src="/assets/2018/12/ml-demo-4.png" alt="ml-demo-4" width="942" height="561" /> <strong>Build </strong><strong>Demo Application</strong></p>
+<p>After all the objects defined in the template are created, the build will start. In this step we will build a container image with the necessary software stack and python development environment to run the application.</p>
+<p><img class="alignnone  wp-image-12840" src="/assets/2018/12/ml-demo-5.png" alt="ml-demo-5" width="1568" height="715" /></p>
+<p><strong>Deploy Demo Application</strong></p>
+<p>The deployment is started after the build completes and the build artifact, which is a container image is saved in the OpenShift registry. The deployment schedules the application to run and the scheduler determines the most appropriate node. The images is then pulled from the OpenShift registry to the node. The pod will show a grey border while the image is being pulled to a node.</p>
+<p><img class="alignnone  wp-image-12841" src="/assets/2018/12/ml-demo-6.png" alt="ml-demo-6" width="1320" height="658" /></p>
+<p>Once the image is pulled to the node it will be started on that node.</p>
+<p><img class="alignnone  wp-image-12842" src="/assets/2018/12/ml-demo-7.png" alt="ml-demo-7" width="980" height="448" /></p>
+<p>The first time the application starts it will download the trained model. You can follow this by looking in the pods and containers logs. Once the trained model is downloaded the nodejs server will be started and the application made available.</p>
+<p><img class="alignnone  wp-image-12843" src="/assets/2018/12/ml-demo-8.png" alt="ml-demo-8" width="1100" height="529" /></p>
+<p>You can also access the pod and container and look at the downloaded models under the /deepspeech directory. This is of course a persistent model.</p>
+<p><img class="alignnone  wp-image-12844" src="/assets/2018/12/ml-demo-9.png" alt="ml-demo-9" width="1130" height="525" /></p>
+<p>You can view the persistent volume used under storage in OpenShift.</p>
+<p><img class="alignnone  wp-image-12845" src="/assets/2018/12/ml-demo-10.png" alt="ml-demo-10" width="1513" height="652" /></p>
+<h2>Using Demo Application</h2>
+<p>To access application simply click the URL or route configured by the template.</p>
+<p>Note: if it is still downloading the model (can take a while), application will not start or be available, so check the logs in the container and be patient the first time.</p>
+<p><img class="alignnone  wp-image-12846" src="/assets/2018/12/ml-demo-11.png" alt="ml-demo-11.png" width="1420" height="612" /></p>
+<p>Click choose file to select an audio file. There is a demo.wav file in the GitHub repository provided for convenience. You can of course record your own audio just follow the requirements mentioned in the application.</p>
+<p><img class="alignnone  wp-image-12847" src="/assets/2018/12/ml-demo-12.png" alt="ml-demo-12" width="1207" height="522" /></p>
+<p>Once you click submit the audio file is downloaded into the container image and run through the translate.py program which loads DeepSpeech and performs audio-to-text as well as translation to language chosen. Click the Results button to see the results.</p>
+<p>Note: it may take a minute or two to see any results and the translation will be done step-by-step so you can see how DeepSpeech model is making decisions. You will notice it makes several mistakes that later are corrected. This really illustrates the power of machine learning and also the complexity of understanding voice in a compute program.</p>
+<p><img class="alignnone  wp-image-12848" src="/assets/2018/12/ml-demo-13.png" alt="ml-demo-13" width="948" height="1348" /></p>
+<p>The last audio-to-text sentence and translation is displayed before end of translation message. As you can see it got everything almost perfect.</p>
+<p><img class="alignnone  wp-image-12850" src="/assets/2018/12/ml-demo-14-1.png" alt="ml-demo-14" width="960" height="950" /></p>
+<p>Once the model runs you will notice quite a bit of memory and some CPU usage. The model is loaded into memory so you can imagine the usage for a much larger model, this one is only around 2GB. CPU/GPU usage will vary depending on size of the audio file and data-set.</p>
+<p><img class="alignnone size-full wp-image-12851" src="/assets/2018/12/ml-demo-15.png" alt="ml-demo-15" width="1395" height="607" /></p>
+<h2>Video</h2>
+<p>Below is a video recording of the demo.</p>
+<p>[wpvideo lLhyPenM]</p>
+<h2>Summary</h2>
+<p>In this article we gained a broader understanding for machine learning. By exploring use cases we saw just how wide reaching machine learning has become today and garnered new appreciation for it's potential in the future. Looking into the requirements of machine learning workloads we were able to see the value of containers and a container platform. I am convinced given the diversity of the software stack, the integration required into multiple clouds as well as data-sets and the flexibility needed that a container platform, is the only option we should be considering for machine learning workloads. Finally a demo was provided to put more context around machine learning, show that it is actually simple to utilize and allow us to understand better what running machine learning workloads actually means.</p>
+<p>Happy Machine Learning!</p>
+<p>(c) 2018 Keith Tenzer</p>
+<p>&nbsp;</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#ai" class="page__taxonomy-item" rel="tag">AI</a><span class="sep">, </span>
+    
+      <a href="/tags/#containers" class="page__taxonomy-item" rel="tag">Containers</a><span class="sep">, </span>
+    
+      <a href="/tags/#deepspeech" class="page__taxonomy-item" rel="tag">Deepspeech</a><span class="sep">, </span>
+    
+      <a href="/tags/#kubernetes" class="page__taxonomy-item" rel="tag">Kubernetes</a><span class="sep">, </span>
+    
+      <a href="/tags/#machinelearning" class="page__taxonomy-item" rel="tag">MachineLearning</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2018-12-14T00:00:00-08:00">December 14, 2018</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Getting+Started+with+Machine+Learning%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fgetting-started-with-machine-learning%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fgetting-started-with-machine-learning%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fgetting-started-with-machine-learning%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/cloud/building-a-niche-cloud-a-pragmatic-approach/" class="pagination--pager" title="Building A Niche Cloud: A Pragmatic Approach
+">Previous</a>
+    
+    
+      <a href="/openshift/its-a-paas-vanilla-kubernetes-vs-openshift-on-openstack-lab-setup-guide/" class="pagination--pager" title="It’s a PaaS: Vanilla Kubernetes vs OpenShift on OpenStack Lab Setup Guide
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

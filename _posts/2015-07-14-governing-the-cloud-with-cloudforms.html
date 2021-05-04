@@ -1,12 +1,6 @@
 ---
-layout: post
+layout: single 
 title: Governing the Cloud with CloudForms
-date: 2015-07-14 15:48:00.000000000 -07:00
-type: post
-parent_id: '0'
-published: true
-password: ''
-status: publish
 categories:
 - CloudForms
 tags:
@@ -15,18 +9,6 @@ tags:
 - governance
 - ManageIQ
 - Security
-meta:
-  _edit_last: '63054820'
-  geo_public: '0'
-  _wpas_skip_9542380: '1'
-  _publicize_job_id: '12723000170'
-author:
-  login: ktenzer1
-  email: keith.tenzer@gmail.com
-  display_name: ktenzer
-  first_name: ''
-  last_name: ''
-permalink: "/2015/07/14/governing-the-cloud-with-cloudforms/"
 ---
 <h3>Overview</h3>
 <p>In a previous <a href="http://keithtenzer.com/2015/01/14/to-cloud-or-not-to-cloud-that-is-the-question/">article</a> it was stated that <span style="text-decoration:underline;"><em>cloud in not a technology but rather an architectural methodology of resource governance that utilizes underlying virtualization technologies</em></span>. Since cloud is more about the methodology, the technology platforms such as VMware vCenter, Red Hat Virtualization Management (RHEVM), Microsoft System Center, Amazon EC2 and OpenStack can change as application requirements or life cycles change. An application may start on a virtualization platform like VMware but over time move to a cloud platform such as OpenStack. It could even have components serviced by both. This is the exact concept behind what Gartner talks about when they refer to <a href="http://www.gartner.com/it-glossary/bimodal">Bi-Modal IT</a>. Gartner also says 50% of companies will screw this up. A bridge is definitely needed for managing applications between these various platforms. Red Hat CloudForms is exactly that bridge. It allows us to create an abstraction above the virtualization platforms so that governance and business process can remain consistent across the cloud.<br />

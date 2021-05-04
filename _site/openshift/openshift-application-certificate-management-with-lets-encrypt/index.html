@@ -1,0 +1,795 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>OpenShift Application Certificate Management with Let’s Encrypt - KEITHTENZER.COM</title>
+<meta name="description" content="Overview In this short article we will look at a solution for application certificates in OpenShift. Let&#39;s Encrypt is a non-profit certificate authority and provides easy on-demand TLS certificates. Each application you create that you want to expose to users will of course have it&#39;s own URL and require a TLS certificate. It can be quite tedious to manage these certificates and deploy them manually. Kubernetes platforms also require an innovative, built-in native approach to properly mitigate complexity. Thankfully a fellow RHatter (Tomáš Nožička) has created a k8s admission controller that integrates with let&#39;s encrypt. A k8s admission controller is a pattern for extending kubernetes platform capabilities by reacting to API events in real-time.  In this case the admission controller watches the route APIs. If a new route is added, plus has the right annotation, the admission controller will automatically register the route with Let&#39;s Encrypt, wait for the certificate and finally configure the certificate automatically in the route. Tomáš has provided the code and yaml for an easy deployment in the following Github repository: https://github.com/tnozicka/openshift-acme. While hee does provide documentation there are a few additional steps that need explanation when creating a route. I decided to as such put it all together in a simple concise post.  Configure Let&#39;s Encrypt OpenShift Admission Controller Here we will enable the k8s admission controller on the entire cluster but it is possible to limit the scope to individual namespaces. See Github repository for more information. Create new project $ oc new-project acme Deploy Controller $ oc apply -fhttps://raw.githubusercontent.com/tnozicka/openshift-acme/master/deploy/cluster-wide/{clusterrole,serviceaccount,issuer-letsencrypt-live,deployment}.yaml Create Service Account and Role Binding $ oc create clusterrolebinding openshift-acme --clusterrole=openshift-acme \ --serviceaccount=&quot;$( oc project -q ):openshift-acme&quot; --dry-run -o yaml | \ oc apply -f - Add Certificate to Application Route Now that the k8s admission controller is deployed we will create a route. In OpenShift a route is how we expose a service to the outside world. Since we will provide a custom TLS certificate, route termination should be on the edge. As such we can use http from the router edge to the service. Create Route $ vi letsencrypt_route.yaml kind: Route apiVersion: route.openshift.io/v1 metadata:   name: meet   labels:     app: jitsi   annotations:     openshift.io/host.generated: &#39;true&#39;     kubernetes.io/tls-acme: &quot;true&quot; spec:   host: meet-jitsi.apps.ocp4.keithtenzer.com   to:     kind: Service     name: web     weight: 100   port:     targetPort: http   tls:     termination: edge   wildcardPolicy: None  Validate Route As soon as the ACME admission controller sees a route with the annotation kubernetes.io/tls-acme: &quot;true&quot; it will register URL with Let&#39;s Encrypt. A temporary route will be created so once the certificate is accepted it can be pulled down and added to route.  Once process completes the temporary exposer route is removed and the certificate and private key are added to the original route.  It&#39;s that easy and you now have a valid certificate for your application in OpenShift. Summary In this article we showed how to setup application certificates in an OpenShift enviornment using a k8s admission controller. This solution also shows the value of a k8s admission controller being able to customize and adapt the environment to an organizations governance model. (c) 2020 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="OpenShift Application Certificate Management with Let’s Encrypt">
+<meta property="og:url" content="https://keithtenzer.com/openshift/openshift-application-certificate-management-with-lets-encrypt/">
+
+
+  <meta property="og:description" content="Overview In this short article we will look at a solution for application certificates in OpenShift. Let&#39;s Encrypt is a non-profit certificate authority and provides easy on-demand TLS certificates. Each application you create that you want to expose to users will of course have it&#39;s own URL and require a TLS certificate. It can be quite tedious to manage these certificates and deploy them manually. Kubernetes platforms also require an innovative, built-in native approach to properly mitigate complexity. Thankfully a fellow RHatter (Tomáš Nožička) has created a k8s admission controller that integrates with let&#39;s encrypt. A k8s admission controller is a pattern for extending kubernetes platform capabilities by reacting to API events in real-time.  In this case the admission controller watches the route APIs. If a new route is added, plus has the right annotation, the admission controller will automatically register the route with Let&#39;s Encrypt, wait for the certificate and finally configure the certificate automatically in the route. Tomáš has provided the code and yaml for an easy deployment in the following Github repository: https://github.com/tnozicka/openshift-acme. While hee does provide documentation there are a few additional steps that need explanation when creating a route. I decided to as such put it all together in a simple concise post.  Configure Let&#39;s Encrypt OpenShift Admission Controller Here we will enable the k8s admission controller on the entire cluster but it is possible to limit the scope to individual namespaces. See Github repository for more information. Create new project $ oc new-project acme Deploy Controller $ oc apply -fhttps://raw.githubusercontent.com/tnozicka/openshift-acme/master/deploy/cluster-wide/{clusterrole,serviceaccount,issuer-letsencrypt-live,deployment}.yaml Create Service Account and Role Binding $ oc create clusterrolebinding openshift-acme --clusterrole=openshift-acme \ --serviceaccount=&quot;$( oc project -q ):openshift-acme&quot; --dry-run -o yaml | \ oc apply -f - Add Certificate to Application Route Now that the k8s admission controller is deployed we will create a route. In OpenShift a route is how we expose a service to the outside world. Since we will provide a custom TLS certificate, route termination should be on the edge. As such we can use http from the router edge to the service. Create Route $ vi letsencrypt_route.yaml kind: Route apiVersion: route.openshift.io/v1 metadata:   name: meet   labels:     app: jitsi   annotations:     openshift.io/host.generated: &#39;true&#39;     kubernetes.io/tls-acme: &quot;true&quot; spec:   host: meet-jitsi.apps.ocp4.keithtenzer.com   to:     kind: Service     name: web     weight: 100   port:     targetPort: http   tls:     termination: edge   wildcardPolicy: None  Validate Route As soon as the ACME admission controller sees a route with the annotation kubernetes.io/tls-acme: &quot;true&quot; it will register URL with Let&#39;s Encrypt. A temporary route will be created so once the certificate is accepted it can be pulled down and added to route.  Once process completes the temporary exposer route is removed and the certificate and private key are added to the original route.  It&#39;s that easy and you now have a valid certificate for your application in OpenShift. Summary In this article we showed how to setup application certificates in an OpenShift enviornment using a k8s admission controller. This solution also shows the value of a k8s admission controller being able to customize and adapt the environment to an organizations governance model. (c) 2020 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="OpenShift Application Certificate Management with Let’s Encrypt">
+  <meta name="twitter:description" content="Overview In this short article we will look at a solution for application certificates in OpenShift. Let&#39;s Encrypt is a non-profit certificate authority and provides easy on-demand TLS certificates. Each application you create that you want to expose to users will of course have it&#39;s own URL and require a TLS certificate. It can be quite tedious to manage these certificates and deploy them manually. Kubernetes platforms also require an innovative, built-in native approach to properly mitigate complexity. Thankfully a fellow RHatter (Tomáš Nožička) has created a k8s admission controller that integrates with let&#39;s encrypt. A k8s admission controller is a pattern for extending kubernetes platform capabilities by reacting to API events in real-time.  In this case the admission controller watches the route APIs. If a new route is added, plus has the right annotation, the admission controller will automatically register the route with Let&#39;s Encrypt, wait for the certificate and finally configure the certificate automatically in the route. Tomáš has provided the code and yaml for an easy deployment in the following Github repository: https://github.com/tnozicka/openshift-acme. While hee does provide documentation there are a few additional steps that need explanation when creating a route. I decided to as such put it all together in a simple concise post.  Configure Let&#39;s Encrypt OpenShift Admission Controller Here we will enable the k8s admission controller on the entire cluster but it is possible to limit the scope to individual namespaces. See Github repository for more information. Create new project $ oc new-project acme Deploy Controller $ oc apply -fhttps://raw.githubusercontent.com/tnozicka/openshift-acme/master/deploy/cluster-wide/{clusterrole,serviceaccount,issuer-letsencrypt-live,deployment}.yaml Create Service Account and Role Binding $ oc create clusterrolebinding openshift-acme --clusterrole=openshift-acme \ --serviceaccount=&quot;$( oc project -q ):openshift-acme&quot; --dry-run -o yaml | \ oc apply -f - Add Certificate to Application Route Now that the k8s admission controller is deployed we will create a route. In OpenShift a route is how we expose a service to the outside world. Since we will provide a custom TLS certificate, route termination should be on the edge. As such we can use http from the router edge to the service. Create Route $ vi letsencrypt_route.yaml kind: Route apiVersion: route.openshift.io/v1 metadata:   name: meet   labels:     app: jitsi   annotations:     openshift.io/host.generated: &#39;true&#39;     kubernetes.io/tls-acme: &quot;true&quot; spec:   host: meet-jitsi.apps.ocp4.keithtenzer.com   to:     kind: Service     name: web     weight: 100   port:     targetPort: http   tls:     termination: edge   wildcardPolicy: None  Validate Route As soon as the ACME admission controller sees a route with the annotation kubernetes.io/tls-acme: &quot;true&quot; it will register URL with Let&#39;s Encrypt. A temporary route will be created so once the certificate is accepted it can be pulled down and added to route.  Once process completes the temporary exposer route is removed and the certificate and private key are added to the original route.  It&#39;s that easy and you now have a valid certificate for your application in OpenShift. Summary In this article we showed how to setup application certificates in an OpenShift enviornment using a k8s admission controller. This solution also shows the value of a k8s admission controller being able to customize and adapt the environment to an organizations governance model. (c) 2020 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/openshift/openshift-application-certificate-management-with-lets-encrypt/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2020-04-03T00:00:00-07:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openshift/openshift-application-certificate-management-with-lets-encrypt/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openshift" itemprop="item"><span itemprop="name">Openshift</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">OpenShift Application Certificate Management with Let's Encrypt</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="OpenShift Application Certificate Management with Let’s Encrypt">
+    <meta itemprop="description" content="OverviewIn this short article we will look at a solution for application certificates in OpenShift. Let&#39;s Encrypt is a non-profit certificate authority and provides easy on-demand TLS certificates. Each application you create that you want to expose to users will of course have it&#39;s own URL and require a TLS certificate. It can be quite tedious to manage these certificates and deploy them manually. Kubernetes platforms also require an innovative, built-in native approach to properly mitigate complexity.Thankfully a fellow RHatter (Tomáš Nožička) has created a k8s admission controller that integrates with let&#39;s encrypt. A k8s admission controller is a pattern for extending kubernetes platform capabilities by reacting to API events in real-time.  In this case the admission controller watches the route APIs. If a new route is added, plus has the right annotation, the admission controller will automatically register the route with Let&#39;s Encrypt, wait for the certificate and finally configure the certificate automatically in the route.Tomáš has provided the code and yaml for an easy deployment in the following Github repository: https://github.com/tnozicka/openshift-acme. While hee does provide documentation there are a few additional steps that need explanation when creating a route. I decided to as such put it all together in a simple concise post.Configure Let&#39;s Encrypt OpenShift Admission ControllerHere we will enable the k8s admission controller on the entire cluster but it is possible to limit the scope to individual namespaces. See Github repository for more information.Create new project$ oc new-project acmeDeploy Controller$ oc apply -fhttps://raw.githubusercontent.com/tnozicka/openshift-acme/master/deploy/cluster-wide/{clusterrole,serviceaccount,issuer-letsencrypt-live,deployment}.yamlCreate Service Account and Role Binding$ oc create clusterrolebinding openshift-acme --clusterrole=openshift-acme \--serviceaccount=&quot;$( oc project -q ):openshift-acme&quot; --dry-run -o yaml | \oc apply -f -Add Certificate to Application RouteNow that the k8s admission controller is deployed we will create a route. In OpenShift a route is how we expose a service to the outside world. Since we will provide a custom TLS certificate, route termination should be on the edge. As such we can use http from the router edge to the service.Create Route$ vi letsencrypt_route.yamlkind: RouteapiVersion: route.openshift.io/v1metadata:  name: meet  labels:    app: jitsi  annotations:    openshift.io/host.generated: &#39;true&#39;    kubernetes.io/tls-acme: &quot;true&quot;spec:  host: meet-jitsi.apps.ocp4.keithtenzer.com  to:    kind: Service    name: web    weight: 100  port:    targetPort: http  tls:    termination: edge  wildcardPolicy: NoneValidate RouteAs soon as the ACME admission controller sees a route with the annotation kubernetes.io/tls-acme: &quot;true&quot; it will register URL with Let&#39;s Encrypt. A temporary route will be created so once the certificate is accepted it can be pulled down and added to route.Once process completes the temporary exposer route is removed and the certificate and private key are added to the original route.It&#39;s that easy and you now have a valid certificate for your application in OpenShift.SummaryIn this article we showed how to setup application certificates in an OpenShift enviornment using a k8s admission controller. This solution also shows the value of a k8s admission controller being able to customize and adapt the environment to an organizations governance model.(c) 2020 Keith Tenzer">
+    <meta itemprop="datePublished" content="2020-04-03T00:00:00-07:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">OpenShift Application Certificate Management with Let’s Encrypt
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-04-03T00:00:00-07:00">April 3, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h2><img class="alignnone  wp-image-12890" src="/assets/2020/04/OpenShift-LogoType.svg_.png" alt="OpenShift-LogoType.svg" width="111" height="118" /><img class="alignnone  wp-image-5506" src="/assets/2020/04/plus_sign.gif" alt="plus_sign" width="142" height="142" /><img class="alignnone  wp-image-14504" src="/assets/2020/04/le-logo-twitter-noalpha.png" alt="le-logo-twitter-noalpha" width="161" height="161" /></h2>
+<h2>Overview</h2>
+<p>In this short article we will look at a solution for application certificates in OpenShift. Let's Encrypt is a non-profit certificate authority and provides easy on-demand TLS certificates. Each application you create that you want to expose to users will of course have it's own URL and require a TLS certificate. It can be quite tedious to manage these certificates and deploy them manually. Kubernetes platforms also require an innovative, built-in native approach to properly mitigate complexity.</p>
+<p>Thankfully a fellow RHatter (Tomáš Nožička) has created a k8s admission controller that integrates with let's encrypt. A k8s admission controller is a pattern for extending kubernetes platform capabilities by reacting to API events in real-time.  In this case the admission controller watches the route APIs. If a new route is added, plus has the right annotation, the admission controller will automatically register the route with Let's Encrypt, wait for the certificate and finally configure the certificate automatically in the route.</p>
+<p>Tomáš has provided the code and yaml for an easy deployment in the following Github repository: <a href="https://github.com/tnozicka/openshift-acme">https://github.com/tnozicka/openshift-acme</a>. While hee does provide documentation there are a few additional steps that need explanation when creating a route. I decided to as such put it all together in a simple concise post.</p>
+<p><!--more--></p>
+<h2>Configure Let's Encrypt OpenShift Admission Controller</h2>
+<p>Here we will enable the k8s admission controller on the entire cluster but it is possible to limit the scope to individual namespaces. See Github repository for more information.</p>
+<p><strong>Create new project</strong></p>
+<pre>$ oc new-project acme</pre>
+<p><strong>Deploy Controller</strong></p>
+<pre>$ oc apply -fhttps://raw.githubusercontent.com/tnozicka/openshift-acme/master/deploy/cluster-wide/{clusterrole,serviceaccount,issuer-letsencrypt-live,deployment}.yaml</pre>
+<p><strong>Create Service Account and Role Binding</strong></p>
+<pre>$ oc create clusterrolebinding openshift-acme --clusterrole=openshift-acme \
+--serviceaccount="$( oc project -q ):openshift-acme" --dry-run -o yaml | \
+oc apply -f -</pre>
+<h2>Add Certificate to Application Route</h2>
+<p>Now that the k8s admission controller is deployed we will create a route. In OpenShift a route is how we expose a service to the outside world. Since we will provide a custom TLS certificate, route termination should be on the edge. As such we can use http from the router edge to the service.</p>
+<p><strong>Create Route</strong></p>
+<pre>$ vi letsencrypt_route.yaml
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: meet
+  labels:
+    app: jitsi
+  annotations:
+    openshift.io/host.generated: 'true'
+    <strong>kubernetes.io/tls-acme: "true"</strong>
+spec:
+  host: meet-jitsi.apps.ocp4.keithtenzer.com
+  to:
+    kind: Service
+    name: web
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+  wildcardPolicy: None
+</pre>
+<p><strong>Validate Route</strong></p>
+<p>As soon as the ACME admission controller sees a route with the annotation kubernetes.io/tls-acme: "true" it will register URL with Let's Encrypt. A temporary route will be created so once the certificate is accepted it can be pulled down and added to route.</p>
+<p><img class="alignnone  wp-image-14500" src="/assets/2020/04/exposer.png" alt="exposer" width="1256" height="327" /></p>
+<p>Once process completes the temporary exposer route is removed and the certificate and private key are added to the original route.</p>
+<p><img class="alignnone  wp-image-14501" src="/assets/2020/04/exposer_2.png" alt="exposer_2" width="2040" height="396" /></p>
+<p>It's that easy and you now have a valid certificate for your application in OpenShift.</p>
+<h2>Summary</h2>
+<p>In this article we showed how to setup application certificates in an OpenShift enviornment using a k8s admission controller. This solution also shows the value of a k8s admission controller being able to customize and adapt the environment to an organizations governance model.</p>
+<p>(c) 2020 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#certificates" class="page__taxonomy-item" rel="tag">Certificates</a><span class="sep">, </span>
+    
+      <a href="/tags/#letsencypt" class="page__taxonomy-item" rel="tag">LetsEncypt</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2020-04-03T00:00:00-07:00">April 3, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenShift+Application+Certificate+Management+with+Let%27s+Encrypt%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-application-certificate-management-with-lets-encrypt%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-application-certificate-management-with-lets-encrypt%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-application-certificate-management-with-lets-encrypt%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/general/the-great-human-experiment-global-disconnection-from-coronavirus/" class="pagination--pager" title="The Great Human Experiment: Global Disconnection from Coronavirus
+">Previous</a>
+    
+    
+      <a href="/openshift/openshift-operator-getting-started-part-i/" class="pagination--pager" title="OpenShift Operator Getting Started Part I
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

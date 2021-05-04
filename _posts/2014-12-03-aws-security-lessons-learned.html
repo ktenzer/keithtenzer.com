@@ -1,34 +1,14 @@
 ---
-layout: post
+layout: single 
 title: AWS Security Lessons Learned
-date: 2014-12-03 18:34:27.000000000 -08:00
-type: post
-parent_id: '0'
-published: true
-password: ''
-status: publish
-categories: []
+categories:
+- Cloud 
 tags:
 - AWS
 - Cloud
 - DevOps
 - Java
 - Security
-meta:
-  _edit_last: '63054820'
-  geo_public: '0'
-  publicize_linkedin_url: https://www.linkedin.com/updates?discuss=&scope=329229505&stype=M&topic=5945978177481363456&type=U&a=956X
-  _wpas_done_9468659: '1'
-  _publicize_done_external: a:1:{s:8:"linkedin";a:1:{s:10:"pzvfqtzaYA";b:1;}}
-  _wpas_skip_9468659: '1'
-  _wpas_skip_9542380: '1'
-author:
-  login: ktenzer1
-  email: keith.tenzer@gmail.com
-  display_name: ktenzer
-  first_name: ''
-  last_name: ''
-permalink: "/2014/12/03/aws-security-lessons-learned/"
 ---
 <h3>My Story</h3>
 <p>Once upon a time not too long ago, I had a project to transport data in and out of S3 using Java. Things started off rather smoothly. Within about 30 minutes I had my Amazon Web Services (AWS) account active, had the Java SDK pulled into Eclipse through Maven and was testing my first AWS S3 API calls. <!--more-->Everything was fine except I embedded my AWS access key in the code! I spent a few hours prototyping, testing API calls and understanding how I wanted to structure the code for this project. Along the way I got side-tracked, switched to working on other things and eventually came back to my AWS S3 project. At this point I had a pretty good prototype for structuring data in S3 as well as getting data in and out. I wanted to save my work and had forgotten all about the fact that my AWS access key was still embedded in the code. I created a public Github repo and checked in the code, it had been a long day and was about to get much longer...</p>

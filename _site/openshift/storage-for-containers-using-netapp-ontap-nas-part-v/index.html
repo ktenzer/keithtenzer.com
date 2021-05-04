@@ -1,0 +1,848 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Storage for Containers using NetApp ONTAP NAS – Part V - KEITHTENZER.COM</title>
+<meta name="description" content="Overview In this article we will look at how you can configure and dynamically provision ONTAP NAS Storage for containerized applications in a Kubernetes/OpenShift environment. This article is a work from Kapil Arora (Cloud Platform Architect @NetApp).  Storage for Containers Overview – Part I Storage for Containers using Gluster – Part II Storage for Containers using Container Native Storage – Part III Storage for Containers using Ceph – Part IV Storage for Containers using NetApp ONTAP NAS – Part V Storage for Containers using NetApp SolidFire – Part VI  NetApp recently released an open source project known as Trident, the first external storage provisioner for Kubernetes leveraging on-premises storage. Trident enables the use of the new storage class concept in Kubernetes, acting as a provisioning controller that watches for PVCs (persistent volume requests) and creates them on-demand. This means that when a pod requests storage from a storage class that Trident is responsible for, it will provision a volume that meets those requirements and make it available to the pod in real-time. To learn more  check-out these  Trident videos.  This is how it works:  The OpenShift/Kubernetes Administrator deploys and configures Trident with NetApp ONTAP NAS and defines StorageClasses and Quotas. The developer creates a PVC  with the respective StorageClass. Trident dynamically provisions storage for the developer.  Installation and Configuration Instructions Following are the steps to install and configure NetApp ONTAP NAS backend with Trident in your OpenShift environment: 1) Ensure OpenShift 3.4+, or OpenShift Origin 1.4+ Create a service account for trident. oc create serviceaccount trident oc adm policy add-cluster-role-to-user storage-admin system:serviceaccount:myproject:trident oc adm policy add-scc-to-user anyuid system:serviceaccount:myproject:trident oc adm policy add-role-to-user edit system:serviceaccount:myproject:trident You can find detailed  instructions here. 2) Install &#39;kubectl&#39; client for Trident install script curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl chmod +x ./kubectl  sudo mv ./kubectl /usr/local/bin/kubectl  You can find detailed instructions here. 3) Download and untar the Trident installer bundle. 4) Install nfs utils on all your OpenShift nodes if not already installed. $ sudo yum install -y nfs-utils 5) Configure the ONTAP backend. A sample is provided here sample-input/backend-ontap-nas.json. Copy the edited file to setup/backed.json  https://gist.github.com/kapilarora/ce450bf8840f57ce5f152a45689785aa 6) Execute Trident installer script. $ ./install_trident.sh --namespace myproject --serviceaccount trident 7) Wait until the deployment is complte. You should see Trident deployment when you execute &#39;oc get deployment&#39; and trident pod when you execute &#39;oc get pods&#39; 8) If you face issues, check this troubleshooting session. 9) Register you backend with Trident $ cat setup/backend.json | kubectl exec -i -- post.sh backend 10) Edit storage-class-nfs-gold.yaml to configure your storage class. https://gist.github.com/kapilarora/f7c921fca4c4a42c59ac5df89162fdba 11) Create storage class in openshift: $ oc create -f  storage-class-nfs-gold.yaml 12) Trident is now installed and we have also defined a storage class for ONTAP NAS. 13) Now Storage is dynamically provisioned when we create a PVC. e.g. Make sure you provide the right ONTAP NFS export policy as per your environment. https://gist.github.com/kapilarora/565ed2647a4368dd863948dd417e5a65 Application use-case Let us look at how we can deploy a Wordpress application backed by a MySQL database. In the below example we use Trident to dynamically provision ONTAP NAS storage for our Wordpress (+ MySQL) application using PVCs and nfs-gold StorageClass.  https://gist.github.com/kapilarora/93eb209182c027db2588a1898e869cc2 NetApp ONTAP NetApp ONTAP is a unified enterprise storage system which supports both File and Block storage  and comes in many flavours like AFF (All Flash version), FAS (Fabric Attached Storage), ONTAP Select (Virtualized) and ONTAP Cloud (in Public cloud AWS/Azure).    Why NetApp ONTAP? NetApp ONTAP offers following key benefits for the most demanding applications:     Predictable high performance Consistent low latency and excellent response time Inline efficiency, achieved by inline deduplication and compression Instant, efficient and efficient database clones for QA and dev-test environments Backup and recovery using Snapshot technology Disaster recovery solutions using SnapMirror(enterprise replication technology) Scalability, reliability and non-disruptive operations  Summary With NetApp Trident dynamic provisioner ONTAP NAS storage can be provisioned on-demand for your containerized applications. Trident can help you deploy Stateful containerized applications  e.g.  Databases with NetApp ONTAP enterprise storage References  NetApp Trident GitHub project NetApp thePub website Join NetApp on Slack NetApp Trident and OpenShift Trident Videos  Happy ONTAPing! (c) 2017 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Storage for Containers using NetApp ONTAP NAS – Part V">
+<meta property="og:url" content="https://keithtenzer.com/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">
+
+
+  <meta property="og:description" content="Overview In this article we will look at how you can configure and dynamically provision ONTAP NAS Storage for containerized applications in a Kubernetes/OpenShift environment. This article is a work from Kapil Arora (Cloud Platform Architect @NetApp).  Storage for Containers Overview – Part I Storage for Containers using Gluster – Part II Storage for Containers using Container Native Storage – Part III Storage for Containers using Ceph – Part IV Storage for Containers using NetApp ONTAP NAS – Part V Storage for Containers using NetApp SolidFire – Part VI  NetApp recently released an open source project known as Trident, the first external storage provisioner for Kubernetes leveraging on-premises storage. Trident enables the use of the new storage class concept in Kubernetes, acting as a provisioning controller that watches for PVCs (persistent volume requests) and creates them on-demand. This means that when a pod requests storage from a storage class that Trident is responsible for, it will provision a volume that meets those requirements and make it available to the pod in real-time. To learn more  check-out these  Trident videos.  This is how it works:  The OpenShift/Kubernetes Administrator deploys and configures Trident with NetApp ONTAP NAS and defines StorageClasses and Quotas. The developer creates a PVC  with the respective StorageClass. Trident dynamically provisions storage for the developer.  Installation and Configuration Instructions Following are the steps to install and configure NetApp ONTAP NAS backend with Trident in your OpenShift environment: 1) Ensure OpenShift 3.4+, or OpenShift Origin 1.4+ Create a service account for trident. oc create serviceaccount trident oc adm policy add-cluster-role-to-user storage-admin system:serviceaccount:myproject:trident oc adm policy add-scc-to-user anyuid system:serviceaccount:myproject:trident oc adm policy add-role-to-user edit system:serviceaccount:myproject:trident You can find detailed  instructions here. 2) Install &#39;kubectl&#39; client for Trident install script curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl chmod +x ./kubectl  sudo mv ./kubectl /usr/local/bin/kubectl  You can find detailed instructions here. 3) Download and untar the Trident installer bundle. 4) Install nfs utils on all your OpenShift nodes if not already installed. $ sudo yum install -y nfs-utils 5) Configure the ONTAP backend. A sample is provided here sample-input/backend-ontap-nas.json. Copy the edited file to setup/backed.json  https://gist.github.com/kapilarora/ce450bf8840f57ce5f152a45689785aa 6) Execute Trident installer script. $ ./install_trident.sh --namespace myproject --serviceaccount trident 7) Wait until the deployment is complte. You should see Trident deployment when you execute &#39;oc get deployment&#39; and trident pod when you execute &#39;oc get pods&#39; 8) If you face issues, check this troubleshooting session. 9) Register you backend with Trident $ cat setup/backend.json | kubectl exec -i -- post.sh backend 10) Edit storage-class-nfs-gold.yaml to configure your storage class. https://gist.github.com/kapilarora/f7c921fca4c4a42c59ac5df89162fdba 11) Create storage class in openshift: $ oc create -f  storage-class-nfs-gold.yaml 12) Trident is now installed and we have also defined a storage class for ONTAP NAS. 13) Now Storage is dynamically provisioned when we create a PVC. e.g. Make sure you provide the right ONTAP NFS export policy as per your environment. https://gist.github.com/kapilarora/565ed2647a4368dd863948dd417e5a65 Application use-case Let us look at how we can deploy a Wordpress application backed by a MySQL database. In the below example we use Trident to dynamically provision ONTAP NAS storage for our Wordpress (+ MySQL) application using PVCs and nfs-gold StorageClass.  https://gist.github.com/kapilarora/93eb209182c027db2588a1898e869cc2 NetApp ONTAP NetApp ONTAP is a unified enterprise storage system which supports both File and Block storage  and comes in many flavours like AFF (All Flash version), FAS (Fabric Attached Storage), ONTAP Select (Virtualized) and ONTAP Cloud (in Public cloud AWS/Azure).    Why NetApp ONTAP? NetApp ONTAP offers following key benefits for the most demanding applications:     Predictable high performance Consistent low latency and excellent response time Inline efficiency, achieved by inline deduplication and compression Instant, efficient and efficient database clones for QA and dev-test environments Backup and recovery using Snapshot technology Disaster recovery solutions using SnapMirror(enterprise replication technology) Scalability, reliability and non-disruptive operations  Summary With NetApp Trident dynamic provisioner ONTAP NAS storage can be provisioned on-demand for your containerized applications. Trident can help you deploy Stateful containerized applications  e.g.  Databases with NetApp ONTAP enterprise storage References  NetApp Trident GitHub project NetApp thePub website Join NetApp on Slack NetApp Trident and OpenShift Trident Videos  Happy ONTAPing! (c) 2017 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Storage for Containers using NetApp ONTAP NAS – Part V">
+  <meta name="twitter:description" content="Overview In this article we will look at how you can configure and dynamically provision ONTAP NAS Storage for containerized applications in a Kubernetes/OpenShift environment. This article is a work from Kapil Arora (Cloud Platform Architect @NetApp).  Storage for Containers Overview – Part I Storage for Containers using Gluster – Part II Storage for Containers using Container Native Storage – Part III Storage for Containers using Ceph – Part IV Storage for Containers using NetApp ONTAP NAS – Part V Storage for Containers using NetApp SolidFire – Part VI  NetApp recently released an open source project known as Trident, the first external storage provisioner for Kubernetes leveraging on-premises storage. Trident enables the use of the new storage class concept in Kubernetes, acting as a provisioning controller that watches for PVCs (persistent volume requests) and creates them on-demand. This means that when a pod requests storage from a storage class that Trident is responsible for, it will provision a volume that meets those requirements and make it available to the pod in real-time. To learn more  check-out these  Trident videos.  This is how it works:  The OpenShift/Kubernetes Administrator deploys and configures Trident with NetApp ONTAP NAS and defines StorageClasses and Quotas. The developer creates a PVC  with the respective StorageClass. Trident dynamically provisions storage for the developer.  Installation and Configuration Instructions Following are the steps to install and configure NetApp ONTAP NAS backend with Trident in your OpenShift environment: 1) Ensure OpenShift 3.4+, or OpenShift Origin 1.4+ Create a service account for trident. oc create serviceaccount trident oc adm policy add-cluster-role-to-user storage-admin system:serviceaccount:myproject:trident oc adm policy add-scc-to-user anyuid system:serviceaccount:myproject:trident oc adm policy add-role-to-user edit system:serviceaccount:myproject:trident You can find detailed  instructions here. 2) Install &#39;kubectl&#39; client for Trident install script curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl chmod +x ./kubectl  sudo mv ./kubectl /usr/local/bin/kubectl  You can find detailed instructions here. 3) Download and untar the Trident installer bundle. 4) Install nfs utils on all your OpenShift nodes if not already installed. $ sudo yum install -y nfs-utils 5) Configure the ONTAP backend. A sample is provided here sample-input/backend-ontap-nas.json. Copy the edited file to setup/backed.json  https://gist.github.com/kapilarora/ce450bf8840f57ce5f152a45689785aa 6) Execute Trident installer script. $ ./install_trident.sh --namespace myproject --serviceaccount trident 7) Wait until the deployment is complte. You should see Trident deployment when you execute &#39;oc get deployment&#39; and trident pod when you execute &#39;oc get pods&#39; 8) If you face issues, check this troubleshooting session. 9) Register you backend with Trident $ cat setup/backend.json | kubectl exec -i -- post.sh backend 10) Edit storage-class-nfs-gold.yaml to configure your storage class. https://gist.github.com/kapilarora/f7c921fca4c4a42c59ac5df89162fdba 11) Create storage class in openshift: $ oc create -f  storage-class-nfs-gold.yaml 12) Trident is now installed and we have also defined a storage class for ONTAP NAS. 13) Now Storage is dynamically provisioned when we create a PVC. e.g. Make sure you provide the right ONTAP NFS export policy as per your environment. https://gist.github.com/kapilarora/565ed2647a4368dd863948dd417e5a65 Application use-case Let us look at how we can deploy a Wordpress application backed by a MySQL database. In the below example we use Trident to dynamically provision ONTAP NAS storage for our Wordpress (+ MySQL) application using PVCs and nfs-gold StorageClass.  https://gist.github.com/kapilarora/93eb209182c027db2588a1898e869cc2 NetApp ONTAP NetApp ONTAP is a unified enterprise storage system which supports both File and Block storage  and comes in many flavours like AFF (All Flash version), FAS (Fabric Attached Storage), ONTAP Select (Virtualized) and ONTAP Cloud (in Public cloud AWS/Azure).    Why NetApp ONTAP? NetApp ONTAP offers following key benefits for the most demanding applications:     Predictable high performance Consistent low latency and excellent response time Inline efficiency, achieved by inline deduplication and compression Instant, efficient and efficient database clones for QA and dev-test environments Backup and recovery using Snapshot technology Disaster recovery solutions using SnapMirror(enterprise replication technology) Scalability, reliability and non-disruptive operations  Summary With NetApp Trident dynamic provisioner ONTAP NAS storage can be provisioned on-demand for your containerized applications. Trident can help you deploy Stateful containerized applications  e.g.  Databases with NetApp ONTAP enterprise storage References  NetApp Trident GitHub project NetApp thePub website Join NetApp on Slack NetApp Trident and OpenShift Trident Videos  Happy ONTAPing! (c) 2017 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2017-04-05T00:00:00-07:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openshift" itemprop="item"><span itemprop="name">Openshift</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Storage for Containers using NetApp ONTAP NAS – Part V</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Storage for Containers using NetApp ONTAP NAS – Part V">
+    <meta itemprop="description" content="OverviewIn this article we will look at how you can configure and dynamically provision ONTAP NAS Storage for containerized applications in a Kubernetes/OpenShift environment.This article is a work from Kapil Arora (Cloud Platform Architect @NetApp).Storage for Containers Overview – Part IStorage for Containers using Gluster – Part IIStorage for Containers using Container Native Storage – Part IIIStorage for Containers using Ceph – Part IVStorage for Containers using NetApp ONTAP NAS – Part VStorage for Containers using NetApp SolidFire – Part VINetApp recently released an open source project known as Trident, the first external storage provisioner for Kubernetes leveraging on-premises storage.Trident enables the use of the new storage class concept in Kubernetes, acting as a provisioning controller that watches for PVCs (persistent volume requests) and creates them on-demand.This means that when a pod requests storage from a storage class that Trident is responsible for, it will provision a volume that meets those requirements and make it available to the pod in real-time.To learn more  check-out these  Trident videos.This is how it works:The OpenShift/Kubernetes Administrator deploys and configures Trident with NetApp ONTAP NAS and defines StorageClasses and Quotas.The developer creates a PVC  with the respective StorageClass.Trident dynamically provisions storage for the developer.Installation and Configuration InstructionsFollowing are the steps to install and configure NetApp ONTAP NAS backend with Trident in your OpenShift environment:1) Ensure OpenShift 3.4+, or OpenShift Origin 1.4+Create a service account for trident.oc create serviceaccount tridentoc adm policy add-cluster-role-to-user storage-admin system:serviceaccount:myproject:tridentoc adm policy add-scc-to-user anyuid system:serviceaccount:myproject:tridentoc adm policy add-role-to-user edit system:serviceaccount:myproject:tridentYou can find detailed  instructions here.2) Install &#39;kubectl&#39; client for Trident install scriptcurl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectlchmod +x ./kubectl sudo mv ./kubectl /usr/local/bin/kubectl You can find detailed instructions here.3) Download and untar the Trident installer bundle.4) Install nfs utils on all your OpenShift nodes if not already installed.$ sudo yum install -y nfs-utils5) Configure the ONTAP backend. A sample is provided here sample-input/backend-ontap-nas.json. Copy the edited file to setup/backed.json https://gist.github.com/kapilarora/ce450bf8840f57ce5f152a45689785aa6) Execute Trident installer script.$ ./install_trident.sh --namespace myproject --serviceaccount trident7) Wait until the deployment is complte. You should see Trident deployment when you execute &#39;oc get deployment&#39; and trident pod when you execute &#39;oc get pods&#39;8) If you face issues, check this troubleshooting session.9) Register you backend with Trident$ cat setup/backend.json | kubectl exec -i -- post.sh backend10) Edit storage-class-nfs-gold.yaml to configure your storage class.https://gist.github.com/kapilarora/f7c921fca4c4a42c59ac5df89162fdba11) Create storage class in openshift:$ oc create -f  storage-class-nfs-gold.yaml12) Trident is now installed and we have also defined a storage class for ONTAP NAS.13) Now Storage is dynamically provisioned when we create a PVC. e.g.Make sure you provide the right ONTAP NFS export policy as per your environment.https://gist.github.com/kapilarora/565ed2647a4368dd863948dd417e5a65Application use-caseLet us look at how we can deploy a Wordpress application backed by a MySQL database.In the below example we use Trident to dynamically provision ONTAP NAS storage for our Wordpress (+ MySQL) application using PVCs and nfs-gold StorageClass.https://gist.github.com/kapilarora/93eb209182c027db2588a1898e869cc2NetApp ONTAPNetApp ONTAP is a unified enterprise storage system which supports both File and Block storage  and comes in many flavours like AFF (All Flash version), FAS (Fabric Attached Storage), ONTAP Select (Virtualized) and ONTAP Cloud (in Public cloud AWS/Azure).Why NetApp ONTAP?NetApp ONTAP offers following key benefits for the most demanding applications:Predictable high performanceConsistent low latency and excellent response timeInline efficiency, achieved by inline deduplication and compressionInstant, efficient and efficient database clones for QA and dev-test environmentsBackup and recovery using Snapshot technologyDisaster recovery solutions using SnapMirror(enterprise replication technology)Scalability, reliability and non-disruptive operationsSummaryWith NetApp Trident dynamic provisioner ONTAP NAS storage can be provisioned on-demand for your containerized applications.Trident can help you deploy Stateful containerized applications  e.g.  Databases with NetApp ONTAP enterprise storageReferencesNetApp Trident GitHub projectNetApp thePub websiteJoin NetApp on SlackNetApp Trident and OpenShiftTrident VideosHappy ONTAPing!(c) 2017 Keith Tenzer">
+    <meta itemprop="datePublished" content="2017-04-05T00:00:00-07:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Storage for Containers using NetApp ONTAP NAS – Part V
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2017-04-05T00:00:00-07:00">April 5, 2017</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h3><img class="alignnone size-full wp-image-8150" src="/assets/2017/04/storage_article_008.jpg" alt="Shipping containers" width="1200" height="400" /></h3>
+<h3>Overview</h3>
+<p>In this article we will look at how you can configure and dynamically provision ONTAP NAS Storage for containerized applications in a Kubernetes/OpenShift environment.</p>
+<p>This article is a work from Kapil Arora (Cloud Platform Architect @NetApp).</p>
+<ul>
+<li><a href="https://keithtenzer.com/2017/03/07/storage-for-containers-overview-part-i/">Storage for Containers Overview – Part I</a></li>
+<li><a href="https://keithtenzer.com/2017/03/24/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a></li>
+<li><a href="https://keithtenzer.com/2017/03/29/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a></li>
+<li><a href="https://keithtenzer.com/2017/04/07/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers using Ceph – Part IV</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire – Part VI</a></li>
+</ul>
+<p>NetApp recently released an open source project known as <a href="https://github.com/netapp/trident">Trident</a>, the first external storage provisioner for <a href="https://kubernetes.io/">Kubernetes</a> leveraging on-premises storage.</p>
+<p>Trident enables the use of the new <em>storage class</em> concept in Kubernetes, acting as a provisioning controller that watches for PVCs (persistent volume requests) and creates them on-demand.</p>
+<p>This means that when a pod requests storage from a storage class that Trident is responsible for, it will provision a volume that meets those requirements and make it available to the pod in real-time.</p>
+<p>To learn more  check-out these  <a href="https://www.youtube.com/playlist?list=PLZdTVI9ql2pFNCfk1UuSeBIV7mxlkfz4J">Trident videos</a>.</p>
+<p><!--more--></p>
+<p>This is how it works:</p>
+<ol>
+<li>The OpenShift/Kubernetes Administrator deploys and configures Trident with NetApp ONTAP NAS and defines StorageClasses and Quotas.</li>
+<li>The developer creates a PVC  with the respective StorageClass.</li>
+<li>Trident dynamically provisions storage for the developer.</li>
+</ol>
+<h3>Installation and Configuration Instructions</h3>
+<p>Following are the steps to install and configure NetApp ONTAP NAS backend with Trident in your OpenShift environment:</p>
+<p>1) Ensure OpenShift 3.4+, or OpenShift Origin 1.4+</p>
+<p>Create a service account for trident.</p>
+<pre>oc create serviceaccount trident
+oc adm policy add-cluster-role-to-user storage-admin system:serviceaccount:myproject:trident
+oc adm policy add-scc-to-user anyuid system:serviceaccount:myproject:trident
+oc adm policy add-role-to-user edit system:serviceaccount:myproject:trident</pre>
+<p>You can find detailed  instructions <a href="https://github.com/NetApp/trident#deploying-in-openshift">here</a>.</p>
+<p>2) Install 'kubectl' client for Trident install script</p>
+<pre><code>curl -LO <a href="https://storage.googleapis.com/kubernetes-release/release/">https://storage.googleapis.com/kubernetes-release/release/</a>$(curl -s <a href="https://storage.googleapis.com/kubernetes-release/release/stable.txt">https://storage.googleapis.com/kubernetes-release/release/stable.txt</a>)/bin/linux/amd64/kubectl</code>
+<code>chmod +x ./kubectl </code>
+<code>sudo mv ./kubectl /usr/local/bin/kubectl </code></pre>
+<p>You can find detailed instructions <a href="https://kubernetes.io/docs/user-guide/prereqs/">here</a>.</p>
+<p>3) Download and untar the <a href="https://github.com/NetApp/trident/releases/download/v1.0/trident-installer-1.0.tar.gz">Trident installer bundle</a>.</p>
+<p>4) Install nfs utils on all your OpenShift nodes if not already installed.</p>
+<pre>$ sudo yum install -y nfs-utils</pre>
+<p>5) Configure the ONTAP backend. A sample is provided here sample-input/backend-ontap-nas.json. Copy the edited file to <strong>setup/backed.json </strong></p>
+<p>https://gist.github.com/kapilarora/ce450bf8840f57ce5f152a45689785aa</p>
+<p>6) Execute Trident installer script.</p>
+<pre>$ ./install_trident.sh --namespace myproject --serviceaccount trident</pre>
+<p>7) Wait until the deployment is complte. You should see Trident deployment when you execute '<em>oc </em><code><em>get deployment</em>'</code> and trident pod when you execute '<em>oc</em><code><em> get pods</em>'</code></p>
+<p>8) If you face issues, check this <a href="https://github.com/NetApp/trident#troubleshooting">troubleshooting</a> session.</p>
+<p>9) Register you backend with Trident</p>
+<pre><code>$ cat setup/backend.json | kubectl exec -i -- post.sh backend</code></pre>
+<p>10) Edit storage-class-nfs-gold.yaml to configure your storage class.</p>
+<p>https://gist.github.com/kapilarora/f7c921fca4c4a42c59ac5df89162fdba</p>
+<p>11) Create storage class in openshift:</p>
+<pre>$ oc create -f  storage-class-nfs-gold.yaml</pre>
+<p>12) Trident is now installed and we have also defined a storage class for ONTAP NAS.</p>
+<p>13) Now Storage is dynamically provisioned when we create a PVC. e.g.</p>
+<p>Make sure you provide the right ONTAP NFS export policy as per your environment.</p>
+<p>https://gist.github.com/kapilarora/565ed2647a4368dd863948dd417e5a65</p>
+<h3>Application use-case</h3>
+<p>Let us look at how we can deploy a Wordpress application backed by a MySQL database.</p>
+<p>In the below example we use Trident to dynamically provision ONTAP NAS storage for our Wordpress (+ MySQL) application using PVCs and nfs-gold StorageClass.</p>
+<p><img class="  wp-image-8623 aligncenter" src="/assets/2017/04/mysql-wordpress-ontap-openshift.png" alt="mysql-wordpress-ontap-openshift" width="729" height="549" /></p>
+<p>https://gist.github.com/kapilarora/93eb209182c027db2588a1898e869cc2</p>
+<h3>NetApp ONTAP</h3>
+<p>NetApp ONTAP is a unified enterprise storage system which supports both File and Block storage  and comes in many flavours like AFF (All Flash version), FAS (Fabric Attached Storage), ONTAP Select (Virtualized) and ONTAP Cloud (in Public cloud AWS/Azure).</p>
+<div class="page" title="Page 4">
+<div class="layoutArea">
+<div class="column">
+<h3>Why NetApp ONTAP?</h3>
+<p>NetApp ONTAP offers following key benefits for the most demanding applications:</p>
+</div>
+</div>
+</div>
+<ul>
+<li>Predictable high performance</li>
+<li>Consistent low latency and excellent response time</li>
+<li>Inline efficiency, achieved by inline deduplication and compression</li>
+<li>Instant, efficient and efficient database clones for QA and dev-test environments</li>
+<li>Backup and recovery using Snapshot technology</li>
+<li>Disaster recovery solutions using SnapMirror(enterprise replication technology)</li>
+<li>Scalability, reliability and non-disruptive operations</li>
+</ul>
+<h3>Summary</h3>
+<p>With NetApp Trident dynamic provisioner ONTAP NAS storage can be provisioned on-demand for your containerized applications.</p>
+<p>Trident can help you deploy Stateful containerized applications  e.g.  Databases with NetApp ONTAP enterprise storage</p>
+<h3>References</h3>
+<ol>
+<li><a href="https://github.com/NetApp/trident">NetApp Trident GitHub project</a></li>
+<li><a href="http://netapp.io/">NetApp thePub website</a></li>
+<li><a href="http://netapp.io/slack/">Join NetApp on Slack</a></li>
+<li><a href="http://netapp.io/2017/02/17/using-persistent-storage-openshift-applications-trident/">NetApp Trident and OpenShift</a></li>
+<li><a href="https://www.youtube.com/playlist?list=PLZdTVI9ql2pFNCfk1UuSeBIV7mxlkfz4J">Trident Videos</a></li>
+</ol>
+<p>Happy ONTAPing!</p>
+<p>(c) 2017 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#containers" class="page__taxonomy-item" rel="tag">Containers</a><span class="sep">, </span>
+    
+      <a href="/tags/#docker" class="page__taxonomy-item" rel="tag">Docker</a><span class="sep">, </span>
+    
+      <a href="/tags/#nas" class="page__taxonomy-item" rel="tag">NAS</a><span class="sep">, </span>
+    
+      <a href="/tags/#netapp" class="page__taxonomy-item" rel="tag">NetApp</a><span class="sep">, </span>
+    
+      <a href="/tags/#ontap" class="page__taxonomy-item" rel="tag">ONTAP</a><span class="sep">, </span>
+    
+      <a href="/tags/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a><span class="sep">, </span>
+    
+      <a href="/tags/#storage" class="page__taxonomy-item" rel="tag">Storage</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2017-04-05T00:00:00-07:00">April 5, 2017</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Storage+for+Containers+using+NetApp+ONTAP+NAS+%E2%80%93+Part+V%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fstorage-for-containers-using-netapp-ontap-nas-part-v%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fstorage-for-containers-using-netapp-ontap-nas-part-v%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fstorage-for-containers-using-netapp-ontap-nas-part-v%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openstack/openstack-swift-integration-with-ceph/" class="pagination--pager" title="OpenStack Swift Integration with Ceph
+">Previous</a>
+    
+    
+      <a href="/openshift/storage-for-containers-using-netapp-solidfire-part-vi/" class="pagination--pager" title="Storage for Containers using NetApp SolidFire– Part VI
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

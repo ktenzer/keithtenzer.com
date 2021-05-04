@@ -1,0 +1,905 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Disaster Recovery with Containers? You Bet! - KEITHTENZER.COM</title>
+<meta name="description" content="Overview In this article we will discuss the benefits containers bring to business continuance, reveal concepts for applying containers to disaster recovery and of course show disaster recovery of a live database between production and DR OpenShift environments. Business continuance of course is all about maintaining critical business functions, during and after a disaster has occurred.  Business continuance defines two main criteria: recovery point objective (RPO) and recovery time objective (RTO). RPO amounts to how much data loss is tolerable and RTO how quickly services can be restored when a disaster occurs. Disaster recovery outlines the processes as well as technology for how an organization responds to a disaster. Disaster recovery can be viewed as the implementation of RPO and RTO. Most organizations today have DR capabilities but there many challenges.  Cost - DR usually is at least doubles the price. Efficiency - DR requires regular testing and in the event of a disaster, resources must be available. This leads to idle resources for 99.9% of the time. Complexity - Updating applications is complex enough but DR requires a complete redeployment where the DR side almost never mirrors production due to cost. Outdated - Business continuance only deals with one aspect,  disaster recovery but as mentioned cloud-native applications are active/active so to be effective today, business continuance architectures must cover DR and multi-site. Slow - DR often is not 100% automated and recovery is often dependent on manual procedures that may not be up to date or even tested with the latest application deployment.  I would take these challenges even further and suggest that for many organizations business continuance and DR is nothing more than a false safety net. It costs a fortune and in the event of a true disaster probably won&#39;t be able to deliver RPO and RTO for all critical applications. How could it when DR is not part of the continuous deployment pipeline and being tested with each application update? How could it with the level of complexity and scale that exists today and not 100% automation?  A New Approach It is well overdue that organizations refresh and re-think their disaster recovery strategies. The good news is business continuance forced most companies into a two-site architecture, even if it were just focused on DR, the infrastructure is already there. In addition with the emergence of public cloud we have a plethora of infrastructure options. Re-thinking business continuance  DR &amp; Multi-site - Business continuance plans should focus on a true multi-site architecture where applications have choice, can go with active/passive traditional or active/active cloud-native approaches across regions or availability zones. Regions - Move away from limiting terminology such as production or DR. Each site should be a region such as Europe East or West. It should be just as easy to span applications across regions or configure a region for DR from the application perspective. Platform - It goes without saying you will want software-defined networking and storage. Most organizations will want to augment their private with public clouds. On the private cloud infrastructure side, if you aren&#39;t already doing OpenStack you really ought to be going down that path. Technology - All applications should be containerized. Containers allow for packaging the application with all dependencies and running it across any infrastructure. Containers are not just a DevOps technology, they are essential to multi-cloud. The application deployment configuration is implicit, allowing for 100% automated, fast, reproducible deployments. In addition containers allow DR to be treated as just another stage in the CI/CD pipeline.  Obviously containers is a no-brainer for cloud-native applications but anything can be containerized and there are many advantages of containerization for non cloud-native applications. Disaster recovery is just one example. Using OpenStack allows us to move our already existing private cloud infrastructure to a multi-site, region and cloud approach. It allows organizations to mirror their public cloud environments so that end users don&#39;t even notice difference between organizationally defined regions, US West (OpenStack) and US East (AWS us-east-1) regions. Containers also need a platform that provides orchestration, security, routing, storage and integration with underlying infrastructure platform. Kubernetes is obviously the industry standard for how to orchestrate containers but by itself isn&#39;t enough. OpenShift is the platform running on Kubernetes that can provide a true runtime for containerized applications across Google, Azure, AWS, OpenStack or whatever other infrastructure may exist. Advantages of a new approach  Reduce Cost -  The DR site is no longer a single purpose site. It has been transformed into a region. Test or DR workloads could share infrastructure. This means 99.9% of the time, when we aren&#39;t in disaster mode, resource utilization remains high as test would be using those resources. Reduce RTO - Usually measured in hours, days or weeks. Again, RTO is how quickly it takes to get up and running after disaster. Using containers allows us to start applications in seconds and do so in 100% automated fashion. As such we can also greatly reduce RTO. The cost alone of restoring service several hours faster in event of disaster could alone pay for DR infrastructure for some organizations. Ensure DR Actually Works - The only way to ensure something will work is to test it. Using containers allows DR to be just another stage in CI/CD pipeline ensuring every application change is tested from DR perspective. Support Cloud Native - Expanding DR architecture from single to multi purpose enables the same infrastructure, already in place, to handle cloud native workloads as well. This of course, further increases the efficiency and drives down cost.  Getting Started Since most organizations already have DR capabilities, the key question is how to get started and moving in the right direction with the least amount of cost as well as effort. Here are some additional ideas to get started.  Don&#39;t rip and replace - Initially I would keep existing DR and design new approach that could either use existing infrastructure or new infrastructure (maybe public cloud). The idea is to introduce a new DR service that is better and at lower cost. If you achieve that, applications will be lining up to migrate and this is how you can expand container adoption at the same time. Start with multisite first architecture - Define your regions, workloads, production, dev, test and DR. Then decide where workloads should run. Ideally each region should be capable of running all workloads but that may not be possible. Understand resource usage - One of the main goals should be to increase utilization of existing infrastructure. Understand where current utilization lies and how to increase it. If your paying for resources all the time you better use them! Embrace public cloud - DR is an absolute perfect use case for a pay-per-use model. DR is only used when testing or in event of disaster. Not having to pay up front for required scale is a very hard offer to turn down. At a minimum ,I would provide capability to use public cloud as DR region. If business can run their DR in public cloud then it should be an option. Define Cost Models - Having your own DR infrastructure vs pay-per-use usually means paying up front vs deferred. Most organizations don&#39;t have the scale to really make pay-per-use work.  Understanding applications and their requirements are key. In most organizations you will have the following profiles.  Single site application (traditional) - runs on a single site has no disaster recovery. Multi site application (cloud-native) - spread evenly across multiple sites. Disaster recovery is built-in and is simply a matter of re-scaling. Usually three sites works better than two. DR application (traditional) - runs primarily on single site and can failover in the event of a disaster to a secondary site.  We should get to the point where a application owner simply selects one of these three profile and the application is setup accordingly, including CI/CD. Making DR Effective and Efficient Single site and multi site applications are pretty easy to deal with from infrastructure perspective but DR is not, let alone making it somehow efficient. As such we need to think out-of-the-box to really drive needed improvements. As discussed, one of the main issues with DR is the resources need to be available but otherwise are not used. Sure as mentioned above public cloud solves that easily but what if you have workloads that can&#39;t use public cloud or simply aren&#39;t there yet? One idea here is to force the test and development environments to run in the region assigned for an applications DR. Under normal operations infrastructure at DR region is used for test, development and DR testing. In the event of a disaster development and test environments are scaled down and DR is scaled up. Using containers and a platform like OpenShift we can easily achieve this. In addition a global load balancer (or active/active ingress router) is needed to balance traffic between region running production and DR. A DR cut-over is simply an Blue/Green deployment, a matter of redirecting the URL. Such an architecture not only makes DR testing simple but ensures DR resources are in use, all the time. In the event that production is larger than all of development and test, additional resources may need to be available. Fortunately most test environments are larger than production. The diagram below illustrates how a CI/CD concept using containers and OpenShift as a platform could work. OpenShift projects are split between Dev, Test, DR and production. The Dev, Test and DR environments run on one OpenShift cluster and Production another. Each application change goes through CI/CD pipeline where the change is tested in Dev, Test and DR before going to production. In the event of a disaster we simply scale Test and Dev to zero and scale-up DR.  Image Source: Red Hat Storage and Replication When considering DR for OpenShift/Kubernetes there are several layers that require replication. In OpenShift/Kubernetes there is the project/namespace level, the images and any persistent volumes. Projects Objects such as deployment configs, secrets or even build configs can easily be exported and imported. Everything in OpenShift/Kubernetes is an object and as such can easily be exported and imported via yaml or json. Some scripts to do exactly that are already being developed but can also be easily written. One of the key things to remember is that the SElinux groups, uids and ranges must be exactly the same between the production and DR project otherwise access to a persistent volume will be forbidden by SELinux. Images Since applications themselves are packaged nicely into containers, each application update results in a new image. The best way to distribute images to DR projects is to add DR to the CI/CD pipeline. Images would be pushed between OpenShift clusters using CI/CD pipeline. The above diagram illustrates this concept and how images can be promoted across the lifecycle stages. Persistent Volumes Containers themselves are immutable but can (in case of OpenShift/Kubernetes) mount Persistent Volumes (PVs) by making a Persistent Volume Claim (PVC). A PVC binds a PV to a particular pod where a single or multiple containers are running. A PV is a mapping to a physical disk or file system (in the case of file based storage such as NFS). If a pod is going to move nodes, storage must be unmapped, remapped and mounted on the new node before it can be made available to the pods and eventually containers. Thankfully this is all done automatically by OpenShift assuming the storage has a dynamic provisioner. Today OpenStack, Ceph, Gluster, Azure, Google and AWS all have dynamic provsioners that are shipped and supported in OpenShift. You will want to choose one of these which brings me back to OpenStack for on-premise. OpenStack in turn supports many other storage systems so the clear advantage here is the abstraction layer of the IaaS. Replication itself of persistent volumes will be done either synchronous or asynchronously, depending on latency. Most DR scenarios today rely on asynchronous replication which is why recovery point objective (RPO) is typically measured in hours or days. In case of OpenStack if your production and DR sites are close (within 100km) you may choose to stretch OpenStack across sites. Three sites instead of two would be more ideal due to quorum but both could work. Another option at IaaS layer is separate OpenStack environments and then rely on underlying storage replication to ensure your persistent volumes are asynchronously replicated between sites or environments. A Proof of Concept As already alluded, multiple OpenShift clusters are needed. In the proof of concept I have created two OpenShift clusters Europe West and Europe East. Both are tenants in a single OpenStack environment. The diagram below illustrates the architecture. In this case since we are talking about a single OpenStack environment, cinder storage is being provided across the cluster.  In this example I will show how to DR a live mariadb database running in container on OpenShift from Europe West to Europe East. [Production OpenShift]  Export secrets persistent volume, persistent volume claim and deployment config. Export project itself. Scale production to 0 (this of course simulates a site failure).  [OpenStack Europe West]  Determine persistent volume mapping and identify cinder volume UUID in OpenStack. Using volume UUID start a transfer request of the volume. Moving storage between tenants in OpenStack is done via transfer, of course storage volumes must be visible to all nodes.  [OpenStack Europe East]  Using the transfer id and auth_key, issue a transfer accept to import the volume from europe west.  [DR OpenShift]  Create DR project (if not done so already) using the exact same SELinux Groups, UIDs and Ranges as production project. Import secrets from previous export into DR project. Import persistent volume (PV) from previous export. Import persistent volume claim (PVC) into DR project from previous export. Import deployment config into DR project from previous export. Start database. The OpenShift node will be scheduled, Cinder volume automatically mapped/mounted and the database will start.  Just like magic! These of course are the different steps across both Paas and IaaS layers. Ideally you would create the DR project at time when production project is created and use CI/CD to keep things in sync. Then assuming storage is replicated you should be able to just scale replica in deployment and things will start. As mentioned for applications which are image and config dependent you would use CI/CD tooling. CloudForms or CI/CD could be used to easily create the appropriate environments according to user inputs. BTW did I mention CloudForms is included in OpenShift? Here is an example of what you could build with CloudForms to provide an application environment as-a-service for the various application profiles. Application Profile Choice  Project Details  Cost Center and Justification  Now we will go through a DR scenario. Verify database on production site running in project drtest-prod.  Verify persistent volume on production site runngin in project drtest-prod.  Execute Script to perform DR failover. The script is available here in Github. The script takes six arguments.  Project name. Deployment config. Endpoint for OpenShift production cluster. Token for OpenShift production cluster. Endpoint for OpenShift DR cluster. Token for OpenShift production cluster.  [cloud-user@bastion ~]$ ./perform-dr-failover.sh drtest mariadb \n https://openshift.144.76.134.230.xip.io:8443 PqIeLvATB4liHqLpd018yd2kppUt-4OiXX6BLMAjBSo \n https://openshift.144.76.134.229.xip.io:8443 nQEbP4MD_6kY6k2YkRenljtKDWrvCT9Cy-uhb-YiNnY Production is scaled down.  Volume transfer request generated in Europe West OpenStack tenant.  Volume transfer request is accepted in Europe East OpenStack tenant.  Verify persistent volume on DR site running in project drtest-dr.  Deploy mariadb in europe west.  Notice error that the PVC already exists. This is of course expected.  Verify the mariadb pod has started successfully.  Verify the cinder volume was automatically mounted on the node where mariadb pod started.  Verify the mariadb contains database books and rows with authors as it did on production site.  Congrats, that was a DR cut-over between OpenShift clusters. Summary In this article we discussed the challenges that organizations have with business continuous. We discussed new ideas and concepts for disaster recovery using containers. Finally a proof-of-concept was provided, showing DR cut-over of a mariadb database across OpenShift clusters. A new path forward is needed that not only is more cost effective, efficient but also handles disaster recovery and multi-cloud applications, together. Containers are the technology that package our applications, simplifying their deployment and enabling them to be deployed across multiple clouds and infrastructures. IT and DevOps teams have huge reasons to put everything into containers. It is the only way to deal with the level of scale and complexity that exists today. Most recognize this, but unfortunately not all. By providing a container driven disaster recovery solution that is not only better than what exists today, but also at a lower cost, with a lower RTO, could be a driving factor to get traditional non-container applications into containers. I think we can all agree that would be a good thing for everyone. I hope this article serves as a springboard for future architecture concepts relating to disaster recovery and multi-site. Happy Containerization of Everything! (c) 2018 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Disaster Recovery with Containers? You Bet!">
+<meta property="og:url" content="https://keithtenzer.com/openshift/disaster-recovery-with-containers-you-bet/">
+
+
+  <meta property="og:description" content="Overview In this article we will discuss the benefits containers bring to business continuance, reveal concepts for applying containers to disaster recovery and of course show disaster recovery of a live database between production and DR OpenShift environments. Business continuance of course is all about maintaining critical business functions, during and after a disaster has occurred.  Business continuance defines two main criteria: recovery point objective (RPO) and recovery time objective (RTO). RPO amounts to how much data loss is tolerable and RTO how quickly services can be restored when a disaster occurs. Disaster recovery outlines the processes as well as technology for how an organization responds to a disaster. Disaster recovery can be viewed as the implementation of RPO and RTO. Most organizations today have DR capabilities but there many challenges.  Cost - DR usually is at least doubles the price. Efficiency - DR requires regular testing and in the event of a disaster, resources must be available. This leads to idle resources for 99.9% of the time. Complexity - Updating applications is complex enough but DR requires a complete redeployment where the DR side almost never mirrors production due to cost. Outdated - Business continuance only deals with one aspect,  disaster recovery but as mentioned cloud-native applications are active/active so to be effective today, business continuance architectures must cover DR and multi-site. Slow - DR often is not 100% automated and recovery is often dependent on manual procedures that may not be up to date or even tested with the latest application deployment.  I would take these challenges even further and suggest that for many organizations business continuance and DR is nothing more than a false safety net. It costs a fortune and in the event of a true disaster probably won&#39;t be able to deliver RPO and RTO for all critical applications. How could it when DR is not part of the continuous deployment pipeline and being tested with each application update? How could it with the level of complexity and scale that exists today and not 100% automation?  A New Approach It is well overdue that organizations refresh and re-think their disaster recovery strategies. The good news is business continuance forced most companies into a two-site architecture, even if it were just focused on DR, the infrastructure is already there. In addition with the emergence of public cloud we have a plethora of infrastructure options. Re-thinking business continuance  DR &amp; Multi-site - Business continuance plans should focus on a true multi-site architecture where applications have choice, can go with active/passive traditional or active/active cloud-native approaches across regions or availability zones. Regions - Move away from limiting terminology such as production or DR. Each site should be a region such as Europe East or West. It should be just as easy to span applications across regions or configure a region for DR from the application perspective. Platform - It goes without saying you will want software-defined networking and storage. Most organizations will want to augment their private with public clouds. On the private cloud infrastructure side, if you aren&#39;t already doing OpenStack you really ought to be going down that path. Technology - All applications should be containerized. Containers allow for packaging the application with all dependencies and running it across any infrastructure. Containers are not just a DevOps technology, they are essential to multi-cloud. The application deployment configuration is implicit, allowing for 100% automated, fast, reproducible deployments. In addition containers allow DR to be treated as just another stage in the CI/CD pipeline.  Obviously containers is a no-brainer for cloud-native applications but anything can be containerized and there are many advantages of containerization for non cloud-native applications. Disaster recovery is just one example. Using OpenStack allows us to move our already existing private cloud infrastructure to a multi-site, region and cloud approach. It allows organizations to mirror their public cloud environments so that end users don&#39;t even notice difference between organizationally defined regions, US West (OpenStack) and US East (AWS us-east-1) regions. Containers also need a platform that provides orchestration, security, routing, storage and integration with underlying infrastructure platform. Kubernetes is obviously the industry standard for how to orchestrate containers but by itself isn&#39;t enough. OpenShift is the platform running on Kubernetes that can provide a true runtime for containerized applications across Google, Azure, AWS, OpenStack or whatever other infrastructure may exist. Advantages of a new approach  Reduce Cost -  The DR site is no longer a single purpose site. It has been transformed into a region. Test or DR workloads could share infrastructure. This means 99.9% of the time, when we aren&#39;t in disaster mode, resource utilization remains high as test would be using those resources. Reduce RTO - Usually measured in hours, days or weeks. Again, RTO is how quickly it takes to get up and running after disaster. Using containers allows us to start applications in seconds and do so in 100% automated fashion. As such we can also greatly reduce RTO. The cost alone of restoring service several hours faster in event of disaster could alone pay for DR infrastructure for some organizations. Ensure DR Actually Works - The only way to ensure something will work is to test it. Using containers allows DR to be just another stage in CI/CD pipeline ensuring every application change is tested from DR perspective. Support Cloud Native - Expanding DR architecture from single to multi purpose enables the same infrastructure, already in place, to handle cloud native workloads as well. This of course, further increases the efficiency and drives down cost.  Getting Started Since most organizations already have DR capabilities, the key question is how to get started and moving in the right direction with the least amount of cost as well as effort. Here are some additional ideas to get started.  Don&#39;t rip and replace - Initially I would keep existing DR and design new approach that could either use existing infrastructure or new infrastructure (maybe public cloud). The idea is to introduce a new DR service that is better and at lower cost. If you achieve that, applications will be lining up to migrate and this is how you can expand container adoption at the same time. Start with multisite first architecture - Define your regions, workloads, production, dev, test and DR. Then decide where workloads should run. Ideally each region should be capable of running all workloads but that may not be possible. Understand resource usage - One of the main goals should be to increase utilization of existing infrastructure. Understand where current utilization lies and how to increase it. If your paying for resources all the time you better use them! Embrace public cloud - DR is an absolute perfect use case for a pay-per-use model. DR is only used when testing or in event of disaster. Not having to pay up front for required scale is a very hard offer to turn down. At a minimum ,I would provide capability to use public cloud as DR region. If business can run their DR in public cloud then it should be an option. Define Cost Models - Having your own DR infrastructure vs pay-per-use usually means paying up front vs deferred. Most organizations don&#39;t have the scale to really make pay-per-use work.  Understanding applications and their requirements are key. In most organizations you will have the following profiles.  Single site application (traditional) - runs on a single site has no disaster recovery. Multi site application (cloud-native) - spread evenly across multiple sites. Disaster recovery is built-in and is simply a matter of re-scaling. Usually three sites works better than two. DR application (traditional) - runs primarily on single site and can failover in the event of a disaster to a secondary site.  We should get to the point where a application owner simply selects one of these three profile and the application is setup accordingly, including CI/CD. Making DR Effective and Efficient Single site and multi site applications are pretty easy to deal with from infrastructure perspective but DR is not, let alone making it somehow efficient. As such we need to think out-of-the-box to really drive needed improvements. As discussed, one of the main issues with DR is the resources need to be available but otherwise are not used. Sure as mentioned above public cloud solves that easily but what if you have workloads that can&#39;t use public cloud or simply aren&#39;t there yet? One idea here is to force the test and development environments to run in the region assigned for an applications DR. Under normal operations infrastructure at DR region is used for test, development and DR testing. In the event of a disaster development and test environments are scaled down and DR is scaled up. Using containers and a platform like OpenShift we can easily achieve this. In addition a global load balancer (or active/active ingress router) is needed to balance traffic between region running production and DR. A DR cut-over is simply an Blue/Green deployment, a matter of redirecting the URL. Such an architecture not only makes DR testing simple but ensures DR resources are in use, all the time. In the event that production is larger than all of development and test, additional resources may need to be available. Fortunately most test environments are larger than production. The diagram below illustrates how a CI/CD concept using containers and OpenShift as a platform could work. OpenShift projects are split between Dev, Test, DR and production. The Dev, Test and DR environments run on one OpenShift cluster and Production another. Each application change goes through CI/CD pipeline where the change is tested in Dev, Test and DR before going to production. In the event of a disaster we simply scale Test and Dev to zero and scale-up DR.  Image Source: Red Hat Storage and Replication When considering DR for OpenShift/Kubernetes there are several layers that require replication. In OpenShift/Kubernetes there is the project/namespace level, the images and any persistent volumes. Projects Objects such as deployment configs, secrets or even build configs can easily be exported and imported. Everything in OpenShift/Kubernetes is an object and as such can easily be exported and imported via yaml or json. Some scripts to do exactly that are already being developed but can also be easily written. One of the key things to remember is that the SElinux groups, uids and ranges must be exactly the same between the production and DR project otherwise access to a persistent volume will be forbidden by SELinux. Images Since applications themselves are packaged nicely into containers, each application update results in a new image. The best way to distribute images to DR projects is to add DR to the CI/CD pipeline. Images would be pushed between OpenShift clusters using CI/CD pipeline. The above diagram illustrates this concept and how images can be promoted across the lifecycle stages. Persistent Volumes Containers themselves are immutable but can (in case of OpenShift/Kubernetes) mount Persistent Volumes (PVs) by making a Persistent Volume Claim (PVC). A PVC binds a PV to a particular pod where a single or multiple containers are running. A PV is a mapping to a physical disk or file system (in the case of file based storage such as NFS). If a pod is going to move nodes, storage must be unmapped, remapped and mounted on the new node before it can be made available to the pods and eventually containers. Thankfully this is all done automatically by OpenShift assuming the storage has a dynamic provisioner. Today OpenStack, Ceph, Gluster, Azure, Google and AWS all have dynamic provsioners that are shipped and supported in OpenShift. You will want to choose one of these which brings me back to OpenStack for on-premise. OpenStack in turn supports many other storage systems so the clear advantage here is the abstraction layer of the IaaS. Replication itself of persistent volumes will be done either synchronous or asynchronously, depending on latency. Most DR scenarios today rely on asynchronous replication which is why recovery point objective (RPO) is typically measured in hours or days. In case of OpenStack if your production and DR sites are close (within 100km) you may choose to stretch OpenStack across sites. Three sites instead of two would be more ideal due to quorum but both could work. Another option at IaaS layer is separate OpenStack environments and then rely on underlying storage replication to ensure your persistent volumes are asynchronously replicated between sites or environments. A Proof of Concept As already alluded, multiple OpenShift clusters are needed. In the proof of concept I have created two OpenShift clusters Europe West and Europe East. Both are tenants in a single OpenStack environment. The diagram below illustrates the architecture. In this case since we are talking about a single OpenStack environment, cinder storage is being provided across the cluster.  In this example I will show how to DR a live mariadb database running in container on OpenShift from Europe West to Europe East. [Production OpenShift]  Export secrets persistent volume, persistent volume claim and deployment config. Export project itself. Scale production to 0 (this of course simulates a site failure).  [OpenStack Europe West]  Determine persistent volume mapping and identify cinder volume UUID in OpenStack. Using volume UUID start a transfer request of the volume. Moving storage between tenants in OpenStack is done via transfer, of course storage volumes must be visible to all nodes.  [OpenStack Europe East]  Using the transfer id and auth_key, issue a transfer accept to import the volume from europe west.  [DR OpenShift]  Create DR project (if not done so already) using the exact same SELinux Groups, UIDs and Ranges as production project. Import secrets from previous export into DR project. Import persistent volume (PV) from previous export. Import persistent volume claim (PVC) into DR project from previous export. Import deployment config into DR project from previous export. Start database. The OpenShift node will be scheduled, Cinder volume automatically mapped/mounted and the database will start.  Just like magic! These of course are the different steps across both Paas and IaaS layers. Ideally you would create the DR project at time when production project is created and use CI/CD to keep things in sync. Then assuming storage is replicated you should be able to just scale replica in deployment and things will start. As mentioned for applications which are image and config dependent you would use CI/CD tooling. CloudForms or CI/CD could be used to easily create the appropriate environments according to user inputs. BTW did I mention CloudForms is included in OpenShift? Here is an example of what you could build with CloudForms to provide an application environment as-a-service for the various application profiles. Application Profile Choice  Project Details  Cost Center and Justification  Now we will go through a DR scenario. Verify database on production site running in project drtest-prod.  Verify persistent volume on production site runngin in project drtest-prod.  Execute Script to perform DR failover. The script is available here in Github. The script takes six arguments.  Project name. Deployment config. Endpoint for OpenShift production cluster. Token for OpenShift production cluster. Endpoint for OpenShift DR cluster. Token for OpenShift production cluster.  [cloud-user@bastion ~]$ ./perform-dr-failover.sh drtest mariadb \n https://openshift.144.76.134.230.xip.io:8443 PqIeLvATB4liHqLpd018yd2kppUt-4OiXX6BLMAjBSo \n https://openshift.144.76.134.229.xip.io:8443 nQEbP4MD_6kY6k2YkRenljtKDWrvCT9Cy-uhb-YiNnY Production is scaled down.  Volume transfer request generated in Europe West OpenStack tenant.  Volume transfer request is accepted in Europe East OpenStack tenant.  Verify persistent volume on DR site running in project drtest-dr.  Deploy mariadb in europe west.  Notice error that the PVC already exists. This is of course expected.  Verify the mariadb pod has started successfully.  Verify the cinder volume was automatically mounted on the node where mariadb pod started.  Verify the mariadb contains database books and rows with authors as it did on production site.  Congrats, that was a DR cut-over between OpenShift clusters. Summary In this article we discussed the challenges that organizations have with business continuous. We discussed new ideas and concepts for disaster recovery using containers. Finally a proof-of-concept was provided, showing DR cut-over of a mariadb database across OpenShift clusters. A new path forward is needed that not only is more cost effective, efficient but also handles disaster recovery and multi-cloud applications, together. Containers are the technology that package our applications, simplifying their deployment and enabling them to be deployed across multiple clouds and infrastructures. IT and DevOps teams have huge reasons to put everything into containers. It is the only way to deal with the level of scale and complexity that exists today. Most recognize this, but unfortunately not all. By providing a container driven disaster recovery solution that is not only better than what exists today, but also at a lower cost, with a lower RTO, could be a driving factor to get traditional non-container applications into containers. I think we can all agree that would be a good thing for everyone. I hope this article serves as a springboard for future architecture concepts relating to disaster recovery and multi-site. Happy Containerization of Everything! (c) 2018 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Disaster Recovery with Containers? You Bet!">
+  <meta name="twitter:description" content="Overview In this article we will discuss the benefits containers bring to business continuance, reveal concepts for applying containers to disaster recovery and of course show disaster recovery of a live database between production and DR OpenShift environments. Business continuance of course is all about maintaining critical business functions, during and after a disaster has occurred.  Business continuance defines two main criteria: recovery point objective (RPO) and recovery time objective (RTO). RPO amounts to how much data loss is tolerable and RTO how quickly services can be restored when a disaster occurs. Disaster recovery outlines the processes as well as technology for how an organization responds to a disaster. Disaster recovery can be viewed as the implementation of RPO and RTO. Most organizations today have DR capabilities but there many challenges.  Cost - DR usually is at least doubles the price. Efficiency - DR requires regular testing and in the event of a disaster, resources must be available. This leads to idle resources for 99.9% of the time. Complexity - Updating applications is complex enough but DR requires a complete redeployment where the DR side almost never mirrors production due to cost. Outdated - Business continuance only deals with one aspect,  disaster recovery but as mentioned cloud-native applications are active/active so to be effective today, business continuance architectures must cover DR and multi-site. Slow - DR often is not 100% automated and recovery is often dependent on manual procedures that may not be up to date or even tested with the latest application deployment.  I would take these challenges even further and suggest that for many organizations business continuance and DR is nothing more than a false safety net. It costs a fortune and in the event of a true disaster probably won&#39;t be able to deliver RPO and RTO for all critical applications. How could it when DR is not part of the continuous deployment pipeline and being tested with each application update? How could it with the level of complexity and scale that exists today and not 100% automation?  A New Approach It is well overdue that organizations refresh and re-think their disaster recovery strategies. The good news is business continuance forced most companies into a two-site architecture, even if it were just focused on DR, the infrastructure is already there. In addition with the emergence of public cloud we have a plethora of infrastructure options. Re-thinking business continuance  DR &amp; Multi-site - Business continuance plans should focus on a true multi-site architecture where applications have choice, can go with active/passive traditional or active/active cloud-native approaches across regions or availability zones. Regions - Move away from limiting terminology such as production or DR. Each site should be a region such as Europe East or West. It should be just as easy to span applications across regions or configure a region for DR from the application perspective. Platform - It goes without saying you will want software-defined networking and storage. Most organizations will want to augment their private with public clouds. On the private cloud infrastructure side, if you aren&#39;t already doing OpenStack you really ought to be going down that path. Technology - All applications should be containerized. Containers allow for packaging the application with all dependencies and running it across any infrastructure. Containers are not just a DevOps technology, they are essential to multi-cloud. The application deployment configuration is implicit, allowing for 100% automated, fast, reproducible deployments. In addition containers allow DR to be treated as just another stage in the CI/CD pipeline.  Obviously containers is a no-brainer for cloud-native applications but anything can be containerized and there are many advantages of containerization for non cloud-native applications. Disaster recovery is just one example. Using OpenStack allows us to move our already existing private cloud infrastructure to a multi-site, region and cloud approach. It allows organizations to mirror their public cloud environments so that end users don&#39;t even notice difference between organizationally defined regions, US West (OpenStack) and US East (AWS us-east-1) regions. Containers also need a platform that provides orchestration, security, routing, storage and integration with underlying infrastructure platform. Kubernetes is obviously the industry standard for how to orchestrate containers but by itself isn&#39;t enough. OpenShift is the platform running on Kubernetes that can provide a true runtime for containerized applications across Google, Azure, AWS, OpenStack or whatever other infrastructure may exist. Advantages of a new approach  Reduce Cost -  The DR site is no longer a single purpose site. It has been transformed into a region. Test or DR workloads could share infrastructure. This means 99.9% of the time, when we aren&#39;t in disaster mode, resource utilization remains high as test would be using those resources. Reduce RTO - Usually measured in hours, days or weeks. Again, RTO is how quickly it takes to get up and running after disaster. Using containers allows us to start applications in seconds and do so in 100% automated fashion. As such we can also greatly reduce RTO. The cost alone of restoring service several hours faster in event of disaster could alone pay for DR infrastructure for some organizations. Ensure DR Actually Works - The only way to ensure something will work is to test it. Using containers allows DR to be just another stage in CI/CD pipeline ensuring every application change is tested from DR perspective. Support Cloud Native - Expanding DR architecture from single to multi purpose enables the same infrastructure, already in place, to handle cloud native workloads as well. This of course, further increases the efficiency and drives down cost.  Getting Started Since most organizations already have DR capabilities, the key question is how to get started and moving in the right direction with the least amount of cost as well as effort. Here are some additional ideas to get started.  Don&#39;t rip and replace - Initially I would keep existing DR and design new approach that could either use existing infrastructure or new infrastructure (maybe public cloud). The idea is to introduce a new DR service that is better and at lower cost. If you achieve that, applications will be lining up to migrate and this is how you can expand container adoption at the same time. Start with multisite first architecture - Define your regions, workloads, production, dev, test and DR. Then decide where workloads should run. Ideally each region should be capable of running all workloads but that may not be possible. Understand resource usage - One of the main goals should be to increase utilization of existing infrastructure. Understand where current utilization lies and how to increase it. If your paying for resources all the time you better use them! Embrace public cloud - DR is an absolute perfect use case for a pay-per-use model. DR is only used when testing or in event of disaster. Not having to pay up front for required scale is a very hard offer to turn down. At a minimum ,I would provide capability to use public cloud as DR region. If business can run their DR in public cloud then it should be an option. Define Cost Models - Having your own DR infrastructure vs pay-per-use usually means paying up front vs deferred. Most organizations don&#39;t have the scale to really make pay-per-use work.  Understanding applications and their requirements are key. In most organizations you will have the following profiles.  Single site application (traditional) - runs on a single site has no disaster recovery. Multi site application (cloud-native) - spread evenly across multiple sites. Disaster recovery is built-in and is simply a matter of re-scaling. Usually three sites works better than two. DR application (traditional) - runs primarily on single site and can failover in the event of a disaster to a secondary site.  We should get to the point where a application owner simply selects one of these three profile and the application is setup accordingly, including CI/CD. Making DR Effective and Efficient Single site and multi site applications are pretty easy to deal with from infrastructure perspective but DR is not, let alone making it somehow efficient. As such we need to think out-of-the-box to really drive needed improvements. As discussed, one of the main issues with DR is the resources need to be available but otherwise are not used. Sure as mentioned above public cloud solves that easily but what if you have workloads that can&#39;t use public cloud or simply aren&#39;t there yet? One idea here is to force the test and development environments to run in the region assigned for an applications DR. Under normal operations infrastructure at DR region is used for test, development and DR testing. In the event of a disaster development and test environments are scaled down and DR is scaled up. Using containers and a platform like OpenShift we can easily achieve this. In addition a global load balancer (or active/active ingress router) is needed to balance traffic between region running production and DR. A DR cut-over is simply an Blue/Green deployment, a matter of redirecting the URL. Such an architecture not only makes DR testing simple but ensures DR resources are in use, all the time. In the event that production is larger than all of development and test, additional resources may need to be available. Fortunately most test environments are larger than production. The diagram below illustrates how a CI/CD concept using containers and OpenShift as a platform could work. OpenShift projects are split between Dev, Test, DR and production. The Dev, Test and DR environments run on one OpenShift cluster and Production another. Each application change goes through CI/CD pipeline where the change is tested in Dev, Test and DR before going to production. In the event of a disaster we simply scale Test and Dev to zero and scale-up DR.  Image Source: Red Hat Storage and Replication When considering DR for OpenShift/Kubernetes there are several layers that require replication. In OpenShift/Kubernetes there is the project/namespace level, the images and any persistent volumes. Projects Objects such as deployment configs, secrets or even build configs can easily be exported and imported. Everything in OpenShift/Kubernetes is an object and as such can easily be exported and imported via yaml or json. Some scripts to do exactly that are already being developed but can also be easily written. One of the key things to remember is that the SElinux groups, uids and ranges must be exactly the same between the production and DR project otherwise access to a persistent volume will be forbidden by SELinux. Images Since applications themselves are packaged nicely into containers, each application update results in a new image. The best way to distribute images to DR projects is to add DR to the CI/CD pipeline. Images would be pushed between OpenShift clusters using CI/CD pipeline. The above diagram illustrates this concept and how images can be promoted across the lifecycle stages. Persistent Volumes Containers themselves are immutable but can (in case of OpenShift/Kubernetes) mount Persistent Volumes (PVs) by making a Persistent Volume Claim (PVC). A PVC binds a PV to a particular pod where a single or multiple containers are running. A PV is a mapping to a physical disk or file system (in the case of file based storage such as NFS). If a pod is going to move nodes, storage must be unmapped, remapped and mounted on the new node before it can be made available to the pods and eventually containers. Thankfully this is all done automatically by OpenShift assuming the storage has a dynamic provisioner. Today OpenStack, Ceph, Gluster, Azure, Google and AWS all have dynamic provsioners that are shipped and supported in OpenShift. You will want to choose one of these which brings me back to OpenStack for on-premise. OpenStack in turn supports many other storage systems so the clear advantage here is the abstraction layer of the IaaS. Replication itself of persistent volumes will be done either synchronous or asynchronously, depending on latency. Most DR scenarios today rely on asynchronous replication which is why recovery point objective (RPO) is typically measured in hours or days. In case of OpenStack if your production and DR sites are close (within 100km) you may choose to stretch OpenStack across sites. Three sites instead of two would be more ideal due to quorum but both could work. Another option at IaaS layer is separate OpenStack environments and then rely on underlying storage replication to ensure your persistent volumes are asynchronously replicated between sites or environments. A Proof of Concept As already alluded, multiple OpenShift clusters are needed. In the proof of concept I have created two OpenShift clusters Europe West and Europe East. Both are tenants in a single OpenStack environment. The diagram below illustrates the architecture. In this case since we are talking about a single OpenStack environment, cinder storage is being provided across the cluster.  In this example I will show how to DR a live mariadb database running in container on OpenShift from Europe West to Europe East. [Production OpenShift]  Export secrets persistent volume, persistent volume claim and deployment config. Export project itself. Scale production to 0 (this of course simulates a site failure).  [OpenStack Europe West]  Determine persistent volume mapping and identify cinder volume UUID in OpenStack. Using volume UUID start a transfer request of the volume. Moving storage between tenants in OpenStack is done via transfer, of course storage volumes must be visible to all nodes.  [OpenStack Europe East]  Using the transfer id and auth_key, issue a transfer accept to import the volume from europe west.  [DR OpenShift]  Create DR project (if not done so already) using the exact same SELinux Groups, UIDs and Ranges as production project. Import secrets from previous export into DR project. Import persistent volume (PV) from previous export. Import persistent volume claim (PVC) into DR project from previous export. Import deployment config into DR project from previous export. Start database. The OpenShift node will be scheduled, Cinder volume automatically mapped/mounted and the database will start.  Just like magic! These of course are the different steps across both Paas and IaaS layers. Ideally you would create the DR project at time when production project is created and use CI/CD to keep things in sync. Then assuming storage is replicated you should be able to just scale replica in deployment and things will start. As mentioned for applications which are image and config dependent you would use CI/CD tooling. CloudForms or CI/CD could be used to easily create the appropriate environments according to user inputs. BTW did I mention CloudForms is included in OpenShift? Here is an example of what you could build with CloudForms to provide an application environment as-a-service for the various application profiles. Application Profile Choice  Project Details  Cost Center and Justification  Now we will go through a DR scenario. Verify database on production site running in project drtest-prod.  Verify persistent volume on production site runngin in project drtest-prod.  Execute Script to perform DR failover. The script is available here in Github. The script takes six arguments.  Project name. Deployment config. Endpoint for OpenShift production cluster. Token for OpenShift production cluster. Endpoint for OpenShift DR cluster. Token for OpenShift production cluster.  [cloud-user@bastion ~]$ ./perform-dr-failover.sh drtest mariadb \n https://openshift.144.76.134.230.xip.io:8443 PqIeLvATB4liHqLpd018yd2kppUt-4OiXX6BLMAjBSo \n https://openshift.144.76.134.229.xip.io:8443 nQEbP4MD_6kY6k2YkRenljtKDWrvCT9Cy-uhb-YiNnY Production is scaled down.  Volume transfer request generated in Europe West OpenStack tenant.  Volume transfer request is accepted in Europe East OpenStack tenant.  Verify persistent volume on DR site running in project drtest-dr.  Deploy mariadb in europe west.  Notice error that the PVC already exists. This is of course expected.  Verify the mariadb pod has started successfully.  Verify the cinder volume was automatically mounted on the node where mariadb pod started.  Verify the mariadb contains database books and rows with authors as it did on production site.  Congrats, that was a DR cut-over between OpenShift clusters. Summary In this article we discussed the challenges that organizations have with business continuous. We discussed new ideas and concepts for disaster recovery using containers. Finally a proof-of-concept was provided, showing DR cut-over of a mariadb database across OpenShift clusters. A new path forward is needed that not only is more cost effective, efficient but also handles disaster recovery and multi-cloud applications, together. Containers are the technology that package our applications, simplifying their deployment and enabling them to be deployed across multiple clouds and infrastructures. IT and DevOps teams have huge reasons to put everything into containers. It is the only way to deal with the level of scale and complexity that exists today. Most recognize this, but unfortunately not all. By providing a container driven disaster recovery solution that is not only better than what exists today, but also at a lower cost, with a lower RTO, could be a driving factor to get traditional non-container applications into containers. I think we can all agree that would be a good thing for everyone. I hope this article serves as a springboard for future architecture concepts relating to disaster recovery and multi-site. Happy Containerization of Everything! (c) 2018 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/openshift/disaster-recovery-with-containers-you-bet/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2018-03-21T00:00:00-07:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openshift/disaster-recovery-with-containers-you-bet/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openshift" itemprop="item"><span itemprop="name">Openshift</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Disaster Recovery with Containers? You Bet!</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Disaster Recovery with Containers? You Bet!">
+    <meta itemprop="description" content="OverviewIn this article we will discuss the benefits containers bring to business continuance, reveal concepts for applying containers to disaster recovery and of course show disaster recovery of a live database between production and DR OpenShift environments. Business continuance of course is all about maintaining critical business functions, during and after a disaster has occurred.  Business continuance defines two main criteria: recovery point objective (RPO) and recovery time objective (RTO). RPO amounts to how much data loss is tolerable and RTO how quickly services can be restored when a disaster occurs. Disaster recovery outlines the processes as well as technology for how an organization responds to a disaster. Disaster recovery can be viewed as the implementation of RPO and RTO. Most organizations today have DR capabilities but there many challenges.Cost - DR usually is at least doubles the price.Efficiency - DR requires regular testing and in the event of a disaster, resources must be available. This leads to idle resources for 99.9% of the time.Complexity - Updating applications is complex enough but DR requires a complete redeployment where the DR side almost never mirrors production due to cost.Outdated - Business continuance only deals with one aspect,  disaster recovery but as mentioned cloud-native applications are active/active so to be effective today, business continuance architectures must cover DR and multi-site.Slow - DR often is not 100% automated and recovery is often dependent on manual procedures that may not be up to date or even tested with the latest application deployment.I would take these challenges even further and suggest that for many organizations business continuance and DR is nothing more than a false safety net. It costs a fortune and in the event of a true disaster probably won&#39;t be able to deliver RPO and RTO for all critical applications. How could it when DR is not part of the continuous deployment pipeline and being tested with each application update? How could it with the level of complexity and scale that exists today and not 100% automation?A New ApproachIt is well overdue that organizations refresh and re-think their disaster recovery strategies. The good news is business continuance forced most companies into a two-site architecture, even if it were just focused on DR, the infrastructure is already there. In addition with the emergence of public cloud we have a plethora of infrastructure options.Re-thinking business continuanceDR &amp; Multi-site - Business continuance plans should focus on a true multi-site architecture where applications have choice, can go with active/passive traditional or active/active cloud-native approaches across regions or availability zones.Regions - Move away from limiting terminology such as production or DR. Each site should be a region such as Europe East or West. It should be just as easy to span applications across regions or configure a region for DR from the application perspective.Platform - It goes without saying you will want software-defined networking and storage. Most organizations will want to augment their private with public clouds. On the private cloud infrastructure side, if you aren&#39;t already doing OpenStack you really ought to be going down that path.Technology - All applications should be containerized. Containers allow for packaging the application with all dependencies and running it across any infrastructure. Containers are not just a DevOps technology, they are essential to multi-cloud. The application deployment configuration is implicit, allowing for 100% automated, fast, reproducible deployments. In addition containers allow DR to be treated as just another stage in the CI/CD pipeline.Obviously containers is a no-brainer for cloud-native applications but anything can be containerized and there are many advantages of containerization for non cloud-native applications. Disaster recovery is just one example.Using OpenStack allows us to move our already existing private cloud infrastructure to a multi-site, region and cloud approach. It allows organizations to mirror their public cloud environments so that end users don&#39;t even notice difference between organizationally defined regions, US West (OpenStack) and US East (AWS us-east-1) regions.Containers also need a platform that provides orchestration, security, routing, storage and integration with underlying infrastructure platform. Kubernetes is obviously the industry standard for how to orchestrate containers but by itself isn&#39;t enough. OpenShift is the platform running on Kubernetes that can provide a true runtime for containerized applications across Google, Azure, AWS, OpenStack or whatever other infrastructure may exist.Advantages of a new approachReduce Cost -  The DR site is no longer a single purpose site. It has been transformed into a region. Test or DR workloads could share infrastructure. This means 99.9% of the time, when we aren&#39;t in disaster mode, resource utilization remains high as test would be using those resources.Reduce RTO - Usually measured in hours, days or weeks. Again, RTO is how quickly it takes to get up and running after disaster. Using containers allows us to start applications in seconds and do so in 100% automated fashion. As such we can also greatly reduce RTO. The cost alone of restoring service several hours faster in event of disaster could alone pay for DR infrastructure for some organizations.Ensure DR Actually Works - The only way to ensure something will work is to test it. Using containers allows DR to be just another stage in CI/CD pipeline ensuring every application change is tested from DR perspective.Support Cloud Native - Expanding DR architecture from single to multi purpose enables the same infrastructure, already in place, to handle cloud native workloads as well. This of course, further increases the efficiency and drives down cost.Getting StartedSince most organizations already have DR capabilities, the key question is how to get started and moving in the right direction with the least amount of cost as well as effort.Here are some additional ideas to get started.Don&#39;t rip and replace - Initially I would keep existing DR and design new approach that could either use existing infrastructure or new infrastructure (maybe public cloud). The idea is to introduce a new DR service that is better and at lower cost. If you achieve that, applications will be lining up to migrate and this is how you can expand container adoption at the same time.Start with multisite first architecture - Define your regions, workloads, production, dev, test and DR. Then decide where workloads should run. Ideally each region should be capable of running all workloads but that may not be possible.Understand resource usage - One of the main goals should be to increase utilization of existing infrastructure. Understand where current utilization lies and how to increase it. If your paying for resources all the time you better use them!Embrace public cloud - DR is an absolute perfect use case for a pay-per-use model. DR is only used when testing or in event of disaster. Not having to pay up front for required scale is a very hard offer to turn down. At a minimum ,I would provide capability to use public cloud as DR region. If business can run their DR in public cloud then it should be an option.Define Cost Models - Having your own DR infrastructure vs pay-per-use usually means paying up front vs deferred. Most organizations don&#39;t have the scale to really make pay-per-use work.Understanding applications and their requirements are key. In most organizations you will have the following profiles.Single site application (traditional) - runs on a single site has no disaster recovery.Multi site application (cloud-native) - spread evenly across multiple sites. Disaster recovery is built-in and is simply a matter of re-scaling. Usually three sites works better than two.DR application (traditional) - runs primarily on single site and can failover in the event of a disaster to a secondary site.We should get to the point where a application owner simply selects one of these three profile and the application is setup accordingly, including CI/CD.Making DR Effective and EfficientSingle site and multi site applications are pretty easy to deal with from infrastructure perspective but DR is not, let alone making it somehow efficient. As such we need to think out-of-the-box to really drive needed improvements. As discussed, one of the main issues with DR is the resources need to be available but otherwise are not used. Sure as mentioned above public cloud solves that easily but what if you have workloads that can&#39;t use public cloud or simply aren&#39;t there yet?One idea here is to force the test and development environments to run in the region assigned for an applications DR. Under normal operations infrastructure at DR region is used for test, development and DR testing. In the event of a disaster development and test environments are scaled down and DR is scaled up. Using containers and a platform like OpenShift we can easily achieve this. In addition a global load balancer (or active/active ingress router) is needed to balance traffic between region running production and DR. A DR cut-over is simply an Blue/Green deployment, a matter of redirecting the URL. Such an architecture not only makes DR testing simple but ensures DR resources are in use, all the time. In the event that production is larger than all of development and test, additional resources may need to be available. Fortunately most test environments are larger than production.The diagram below illustrates how a CI/CD concept using containers and OpenShift as a platform could work. OpenShift projects are split between Dev, Test, DR and production. The Dev, Test and DR environments run on one OpenShift cluster and Production another. Each application change goes through CI/CD pipeline where the change is tested in Dev, Test and DR before going to production. In the event of a disaster we simply scale Test and Dev to zero and scale-up DR.Image Source: Red HatStorage and ReplicationWhen considering DR for OpenShift/Kubernetes there are several layers that require replication. In OpenShift/Kubernetes there is the project/namespace level, the images and any persistent volumes.ProjectsObjects such as deployment configs, secrets or even build configs can easily be exported and imported. Everything in OpenShift/Kubernetes is an object and as such can easily be exported and imported via yaml or json. Some scripts to do exactly that are already being developed but can also be easily written. One of the key things to remember is that the SElinux groups, uids and ranges must be exactly the same between the production and DR project otherwise access to a persistent volume will be forbidden by SELinux.ImagesSince applications themselves are packaged nicely into containers, each application update results in a new image. The best way to distribute images to DR projects is to add DR to the CI/CD pipeline. Images would be pushed between OpenShift clusters using CI/CD pipeline. The above diagram illustrates this concept and how images can be promoted across the lifecycle stages.Persistent VolumesContainers themselves are immutable but can (in case of OpenShift/Kubernetes) mount Persistent Volumes (PVs) by making a Persistent Volume Claim (PVC). A PVC binds a PV to a particular pod where a single or multiple containers are running. A PV is a mapping to a physical disk or file system (in the case of file based storage such as NFS). If a pod is going to move nodes, storage must be unmapped, remapped and mounted on the new node before it can be made available to the pods and eventually containers. Thankfully this is all done automatically by OpenShift assuming the storage has a dynamic provisioner. Today OpenStack, Ceph, Gluster, Azure, Google and AWS all have dynamic provsioners that are shipped and supported in OpenShift. You will want to choose one of these which brings me back to OpenStack for on-premise. OpenStack in turn supports many other storage systems so the clear advantage here is the abstraction layer of the IaaS.Replication itself of persistent volumes will be done either synchronous or asynchronously, depending on latency. Most DR scenarios today rely on asynchronous replication which is why recovery point objective (RPO) is typically measured in hours or days. In case of OpenStack if your production and DR sites are close (within 100km) you may choose to stretch OpenStack across sites. Three sites instead of two would be more ideal due to quorum but both could work. Another option at IaaS layer is separate OpenStack environments and then rely on underlying storage replication to ensure your persistent volumes are asynchronously replicated between sites or environments.A Proof of ConceptAs already alluded, multiple OpenShift clusters are needed. In the proof of concept I have created two OpenShift clusters Europe West and Europe East. Both are tenants in a single OpenStack environment.The diagram below illustrates the architecture. In this case since we are talking about a single OpenStack environment, cinder storage is being provided across the cluster.In this example I will show how to DR a live mariadb database running in container on OpenShift from Europe West to Europe East.[Production OpenShift]Export secrets persistent volume, persistent volume claim and deployment config.Export project itself.Scale production to 0 (this of course simulates a site failure).[OpenStack Europe West]Determine persistent volume mapping and identify cinder volume UUID in OpenStack.Using volume UUID start a transfer request of the volume. Moving storage between tenants in OpenStack is done via transfer, of course storage volumes must be visible to all nodes.[OpenStack Europe East]Using the transfer id and auth_key, issue a transfer accept to import the volume from europe west.[DR OpenShift]Create DR project (if not done so already) using the exact same SELinux Groups, UIDs and Ranges as production project.Import secrets from previous export into DR project.Import persistent volume (PV) from previous export.Import persistent volume claim (PVC) into DR project from previous export.Import deployment config into DR project from previous export.Start database. The OpenShift node will be scheduled, Cinder volume automatically mapped/mounted and the database will start.Just like magic!These of course are the different steps across both Paas and IaaS layers. Ideally you would create the DR project at time when production project is created and use CI/CD to keep things in sync. Then assuming storage is replicated you should be able to just scale replica in deployment and things will start. As mentioned for applications which are image and config dependent you would use CI/CD tooling.CloudForms or CI/CD could be used to easily create the appropriate environments according to user inputs. BTW did I mention CloudForms is included in OpenShift? Here is an example of what you could build with CloudForms to provide an application environment as-a-service for the various application profiles.Application Profile ChoiceProject DetailsCost Center and JustificationNow we will go through a DR scenario.Verify database on production site running in project drtest-prod.Verify persistent volume on production site runngin in project drtest-prod.Execute Script to perform DR failover.The script is available here in Github.The script takes six arguments.Project name.Deployment config.Endpoint for OpenShift production cluster.Token for OpenShift production cluster.Endpoint for OpenShift DR cluster.Token for OpenShift production cluster.[cloud-user@bastion ~]$ ./perform-dr-failover.sh drtest mariadb \nhttps://openshift.144.76.134.230.xip.io:8443 PqIeLvATB4liHqLpd018yd2kppUt-4OiXX6BLMAjBSo \nhttps://openshift.144.76.134.229.xip.io:8443 nQEbP4MD_6kY6k2YkRenljtKDWrvCT9Cy-uhb-YiNnYProduction is scaled down.Volume transfer request generated in Europe West OpenStack tenant.Volume transfer request is accepted in Europe East OpenStack tenant.Verify persistent volume on DR site running in project drtest-dr.Deploy mariadb in europe west.Notice error that the PVC already exists. This is of course expected.Verify the mariadb pod has started successfully.Verify the cinder volume was automatically mounted on the node where mariadb pod started.Verify the mariadb contains database books and rows with authors as it did on production site.Congrats, that was a DR cut-over between OpenShift clusters.SummaryIn this article we discussed the challenges that organizations have with business continuous. We discussed new ideas and concepts for disaster recovery using containers. Finally a proof-of-concept was provided, showing DR cut-over of a mariadb database across OpenShift clusters.A new path forward is needed that not only is more cost effective, efficient but also handles disaster recovery and multi-cloud applications, together. Containers are the technology that package our applications, simplifying their deployment and enabling them to be deployed across multiple clouds and infrastructures. IT and DevOps teams have huge reasons to put everything into containers. It is the only way to deal with the level of scale and complexity that exists today. Most recognize this, but unfortunately not all. By providing a container driven disaster recovery solution that is not only better than what exists today, but also at a lower cost, with a lower RTO, could be a driving factor to get traditional non-container applications into containers. I think we can all agree that would be a good thing for everyone. I hope this article serves as a springboard for future architecture concepts relating to disaster recovery and multi-site.Happy Containerization of Everything!(c) 2018 Keith Tenzer">
+    <meta itemprop="datePublished" content="2018-03-21T00:00:00-07:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Disaster Recovery with Containers? You Bet!
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2018-03-21T00:00:00-07:00">March 21, 2018</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          28 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h2><img class="alignnone  wp-image-12436" src="/assets/2018/03/disaster-recovery.png" alt="disaster-recovery" width="452" height="278" /></h2>
+<h2>Overview</h2>
+<p>In this article we will discuss the benefits containers bring to business continuance, reveal concepts for applying containers to disaster recovery and of course show disaster recovery of a live database between production and DR OpenShift environments. Business continuance of course is all about maintaining critical business functions, during and after a disaster has occurred.  Business continuance defines two main criteria: recovery point objective (RPO) and recovery time objective (RTO). RPO amounts to how much data loss is tolerable and RTO how quickly services can be restored when a disaster occurs. Disaster recovery outlines the processes as well as technology for how an organization responds to a disaster. Disaster recovery can be viewed as the implementation of RPO and RTO. Most organizations today have DR capabilities but there many challenges.</p>
+<ul>
+<li><strong>Cost</strong> - DR usually is at least doubles the price.</li>
+<li><strong>Efficiency</strong> - DR requires regular testing and in the event of a disaster, resources must be available. This leads to idle resources for 99.9% of the time.</li>
+<li><strong>Complexity</strong> - Updating applications is complex enough but DR requires a complete redeployment where the DR side almost never mirrors production due to cost.</li>
+<li><strong>Outdated</strong> - Business continuance only deals with one aspect,  disaster recovery but as mentioned cloud-native applications are active/active so to be effective today, business continuance architectures must cover DR and multi-site.</li>
+<li><strong>Slow</strong> - DR often is not 100% automated and recovery is often dependent on manual procedures that may not be up to date or even tested with the latest application deployment.</li>
+</ul>
+<p>I would take these challenges even further and suggest that for many organizations business continuance and DR is nothing more than a false safety net. It costs a fortune and in the event of a true disaster probably won't be able to deliver RPO and RTO for all critical applications. How could it when DR is not part of the continuous deployment pipeline and being tested with each application update? How could it with the level of complexity and scale that exists today and not 100% automation?</p>
+<p><!--more--></p>
+<h2>A New Approach</h2>
+<p>It is well overdue that organizations refresh and re-think their disaster recovery strategies. The good news is business continuance forced most companies into a two-site architecture, even if it were just focused on DR, the infrastructure is already there. In addition with the emergence of public cloud we have a plethora of infrastructure options.</p>
+<p><strong>Re-thinking business continuance</strong></p>
+<ul>
+<li><strong>DR &amp; Multi-site</strong> - Business continuance plans should focus on a true multi-site architecture where applications have choice, can go with active/passive traditional or active/active cloud-native approaches across regions or availability zones.</li>
+<li><strong>Regions</strong> - Move away from limiting terminology such as production or DR. Each site should be a region such as Europe East or West. It should be just as easy to span applications across regions or configure a region for DR from the application perspective.</li>
+<li><b>Platform </b>- It goes without saying you will want software-defined networking and storage. Most organizations will want to augment their private with public clouds. On the private cloud infrastructure side, if you aren't already doing OpenStack you really ought to be going down that path.</li>
+<li><strong>Technology </strong>- All applications should be containerized. Containers allow for packaging the application with all dependencies and running it across any infrastructure. Containers are not just a DevOps technology, they are essential to multi-cloud. The application deployment configuration is implicit, allowing for 100% automated, fast, reproducible deployments. In addition containers allow DR to be treated as just another stage in the CI/CD pipeline.</li>
+</ul>
+<p>Obviously containers is a no-brainer for cloud-native applications but anything can be containerized and there are many advantages of containerization for non cloud-native applications. Disaster recovery is just one example.</p>
+<p>Using OpenStack allows us to move our already existing private cloud infrastructure to a multi-site, region and cloud approach. It allows organizations to mirror their public cloud environments so that end users don't even notice difference between organizationally defined regions, US West (OpenStack) and US East (AWS us-east-1) regions.</p>
+<p>Containers also need a platform that provides orchestration, security, routing, storage and integration with underlying infrastructure platform. Kubernetes is obviously the industry standard for how to orchestrate containers but by itself isn't enough. OpenShift is the platform running on Kubernetes that can provide a true runtime for containerized applications across Google, Azure, AWS, OpenStack or whatever other infrastructure may exist.</p>
+<p><strong>Advantages of a new approach</strong></p>
+<ul>
+<li><strong>Reduce Cost</strong> -  The DR site is no longer a single purpose site. It has been transformed into a region. Test or DR workloads could share infrastructure. This means 99.9% of the time, when we aren't in disaster mode, resource utilization remains high as test would be using those resources.</li>
+<li><strong>Reduce RTO</strong> - Usually measured in hours, days or weeks. Again, RTO is how quickly it takes to get up and running after disaster. Using containers allows us to start applications in seconds and do so in 100% automated fashion. As such we can also greatly reduce RTO. The cost alone of restoring service several hours faster in event of disaster could alone pay for DR infrastructure for some organizations.</li>
+<li><strong>Ensure DR Actually Works</strong> - The only way to ensure something will work is to test it. Using containers allows DR to be just another stage in CI/CD pipeline ensuring every application change is tested from DR perspective.</li>
+<li><strong>Support Cloud Native</strong> - Expanding DR architecture from single to multi purpose enables the same infrastructure, already in place, to handle cloud native workloads as well. This of course, further increases the efficiency and drives down cost.</li>
+</ul>
+<h2><strong>Getting Started</strong></h2>
+<p>Since most organizations already have DR capabilities, the key question is how to get started and moving in the right direction with the least amount of cost as well as effort.</p>
+<p>Here are some additional ideas to get started.</p>
+<ul>
+<li><b>Don't rip and replace - </b>Initially I would keep existing DR and design new approach that could either use existing infrastructure or new infrastructure (maybe public cloud). The idea is to introduce a new DR service that is better and at lower cost. If you achieve that, applications will be lining up to migrate and this is how you can expand container adoption at the same time.</li>
+<li><strong>Start with multisite first architecture</strong> - Define your regions, workloads, production, dev, test and DR. Then decide where workloads should run. Ideally each region should be capable of running all workloads but that may not be possible.</li>
+<li><strong>Understand resource usage</strong> - One of the main goals should be to increase utilization of existing infrastructure. Understand where current utilization lies and how to increase it. If your paying for resources all the time you better use them!</li>
+<li><strong>Embrace public cloud</strong> - DR is an absolute perfect use case for a pay-per-use model. DR is only used when testing or in event of disaster. Not having to pay up front for required scale is a very hard offer to turn down. At a minimum ,I would provide capability to use public cloud as DR region. If business can run their DR in public cloud then it should be an option.</li>
+<li><strong>Define Cost Models - </strong>Having your own DR infrastructure vs pay-per-use usually means paying up front vs deferred. Most organizations don't have the scale to really make pay-per-use work.</li>
+</ul>
+<p>Understanding applications and their requirements are key. In most organizations you will have the following profiles.</p>
+<ul>
+<li><strong>Single site application (traditional) -</strong> runs on a single site has no disaster recovery.</li>
+<li><strong>Multi site application (cloud-native) -</strong> spread evenly across multiple sites. Disaster recovery is built-in and is simply a matter of re-scaling. Usually three sites works better than two.</li>
+<li><strong>DR application (traditional) -</strong> runs primarily on single site and can failover in the event of a disaster to a secondary site.</li>
+</ul>
+<p>We should get to the point where a application owner simply selects one of these three profile and the application is setup accordingly, including CI/CD.</p>
+<h2>Making DR Effective and Efficient</h2>
+<p>Single site and multi site applications are pretty easy to deal with from infrastructure perspective but DR is not, let alone making it somehow efficient. As such we need to think out-of-the-box to really drive needed improvements. As discussed, one of the main issues with DR is the resources need to be available but otherwise are not used. Sure as mentioned above public cloud solves that easily but what if you have workloads that can't use public cloud or simply aren't there yet?</p>
+<p>One idea here is to force the test and development environments to run in the region assigned for an applications DR. Under normal operations infrastructure at DR region is used for test, development and DR testing. In the event of a disaster development and test environments are scaled down and DR is scaled up. Using containers and a platform like OpenShift we can easily achieve this. In addition a global load balancer (or active/active ingress router) is needed to balance traffic between region running production and DR. A DR cut-over is simply an Blue/Green deployment, a matter of redirecting the URL. Such an architecture not only makes DR testing simple but ensures DR resources are in use, all the time. In the event that production is larger than all of development and test, additional resources may need to be available. Fortunately most test environments are larger than production.</p>
+<p>The diagram below illustrates how a CI/CD concept using containers and OpenShift as a platform could work. OpenShift projects are split between Dev, Test, DR and production. The Dev, Test and DR environments run on one OpenShift cluster and Production another. Each application change goes through CI/CD pipeline where the change is tested in Dev, Test and DR before going to production. In the event of a disaster we simply scale Test and Dev to zero and scale-up DR.</p>
+<p><img class="alignnone  wp-image-12415" src="/assets/2018/03/dr_ci_cd1.png" alt="dr_ci_cd" width="830" height="405" /></p>
+<p><em>Image Source: Red Hat</em></p>
+<h2>Storage and Replication</h2>
+<p>When considering DR for OpenShift/Kubernetes there are several layers that require replication. In OpenShift/Kubernetes there is the project/namespace level, the images and any persistent volumes.</p>
+<p><strong>Projects</strong></p>
+<p>Objects such as deployment configs, secrets or even build configs can easily be exported and imported. Everything in OpenShift/Kubernetes is an object and as such can easily be exported and imported via yaml or json. Some <a href="https://github.com/openshift/openshift-ansible-contrib/tree/master/reference-architecture/day2ops/scripts">scripts </a>to do exactly that are already being developed but can also be easily written. One of the key things to remember is that the SElinux groups, uids and ranges must be exactly the same between the production and DR project otherwise access to a persistent volume will be forbidden by SELinux.</p>
+<p><strong>Images</strong></p>
+<p>Since applications themselves are packaged nicely into containers, each application update results in a new image. The best way to distribute images to DR projects is to add DR to the CI/CD pipeline. Images would be pushed between OpenShift clusters using CI/CD pipeline. The above diagram illustrates this concept and how images can be promoted across the lifecycle stages.</p>
+<p><strong>Persistent Volumes</strong></p>
+<p>Containers themselves are immutable but can (in case of OpenShift/Kubernetes) mount Persistent Volumes (PVs) by making a Persistent Volume Claim (PVC). A PVC binds a PV to a particular pod where a single or multiple containers are running. A PV is a mapping to a physical disk or file system (in the case of file based storage such as NFS). If a pod is going to move nodes, storage must be unmapped, remapped and mounted on the new node before it can be made available to the pods and eventually containers. Thankfully this is all done automatically by OpenShift assuming the storage has a dynamic provisioner. Today OpenStack, Ceph, Gluster, Azure, Google and AWS all have dynamic provsioners that are shipped and supported in OpenShift. You will want to choose one of these which brings me back to OpenStack for on-premise. OpenStack in turn supports many other storage systems so the clear advantage here is the abstraction layer of the IaaS.</p>
+<p>Replication itself of persistent volumes will be done either synchronous or asynchronously, depending on latency. Most DR scenarios today rely on asynchronous replication which is why recovery point objective (RPO) is typically measured in hours or days. In case of OpenStack if your production and DR sites are close (within 100km) you may choose to stretch OpenStack across sites. Three sites instead of two would be more ideal due to quorum but both could work. Another option at IaaS layer is separate OpenStack environments and then rely on underlying storage replication to ensure your persistent volumes are asynchronously replicated between sites or environments.</p>
+<h2><strong>A Proof of Concept</strong></h2>
+<p>As already alluded, multiple OpenShift clusters are needed. In the proof of concept I have created two OpenShift clusters Europe West and Europe East. Both are tenants in a single OpenStack environment.</p>
+<p>The diagram below illustrates the architecture. In this case since we are talking about a single OpenStack environment, cinder storage is being provided across the cluster.</p>
+<p><img class="alignnone  wp-image-12417" src="/assets/2018/03/multi-region-openshift1.png" alt="multi-region-openshift" width="1258" height="714" /></p>
+<p>In this example I will show how to DR a live mariadb database running in container on OpenShift from Europe West to Europe East.</p>
+<p><strong>[Production OpenShift]</strong></p>
+<ol>
+<li>Export secrets persistent volume, persistent volume claim and deployment config.</li>
+<li>Export project itself.</li>
+<li>Scale production to 0 (this of course simulates a site failure).</li>
+</ol>
+<p><strong>[OpenStack Europe West]</strong></p>
+<ol>
+<li>Determine persistent volume mapping and identify cinder volume UUID in OpenStack.</li>
+<li>Using volume UUID start a transfer request of the volume. Moving storage between tenants in OpenStack is done via transfer, of course storage volumes must be visible to all nodes.</li>
+</ol>
+<p><strong>[OpenStack Europe East]</strong></p>
+<ol>
+<li>Using the transfer id and auth_key, issue a transfer accept to import the volume from europe west.</li>
+</ol>
+<p><strong>[DR OpenShift]</strong></p>
+<ol>
+<li>Create DR project (if not done so already) using the exact same SELinux Groups, UIDs and Ranges as production project.</li>
+<li>Import secrets from previous export into DR project.</li>
+<li>Import persistent volume (PV) from previous export.</li>
+<li>Import persistent volume claim (PVC) into DR project from previous export.</li>
+<li>Import deployment config into DR project from previous export.</li>
+<li>Start database. The OpenShift node will be scheduled, Cinder volume automatically mapped/mounted and the database will start.</li>
+</ol>
+<p>Just like magic!</p>
+<p>These of course are the different steps across both Paas and IaaS layers. Ideally you would create the DR project at time when production project is created and use CI/CD to keep things in sync. Then assuming storage is replicated you should be able to just scale replica in deployment and things will start. As mentioned for applications which are image and config dependent you would use CI/CD tooling.</p>
+<p>CloudForms or CI/CD could be used to easily create the appropriate environments according to user inputs. BTW did I mention CloudForms is included in OpenShift? Here is an example of what you could build with CloudForms to provide an application environment as-a-service for the various application profiles.</p>
+<p><strong>Application Profile Choice</strong></p>
+<p><img class="alignnone  wp-image-12418" src="/assets/2018/03/openshift_project_order1.png" alt="openshift_project_order1" width="995" height="344" /></p>
+<p><strong>Project Details</strong></p>
+<p><img class="alignnone  wp-image-12422" src="/assets/2018/03/openshift_project_order22.png" alt="openshift_project_order2" width="1041" height="444" /></p>
+<p><strong>Cost Center and Justification</strong></p>
+<p><img class="alignnone  wp-image-12423" src="/assets/2018/03/openshift_project_order31.png" alt="openshift_project_order3" width="1171" height="365" /></p>
+<p>Now we will go through a DR scenario.</p>
+<p><strong>Verify database on production site running in project drtest-prod.</strong></p>
+<p><img class="alignnone  wp-image-12425" src="/assets/2018/03/ocp_west_db.png" alt="ocp_west_db" width="1185" height="774" /></p>
+<p><strong>Verify persistent volume on production site runngin in project drtest-prod.</strong></p>
+<p><img class="alignnone  wp-image-12426" src="/assets/2018/03/ocp_west_storage.png" alt="ocp_west_storage" width="1257" height="662" /></p>
+<p><strong>Execute Script to perform DR failover.</strong></p>
+<p>The script is available <a href="https://github.com/ktenzer/openshift-dr-multisite/blob/master/scripts/perform-dr-failover.sh">here </a>in Github.</p>
+<p>The script takes six arguments.</p>
+<ul>
+<li>Project name.</li>
+<li>Deployment config.</li>
+<li>Endpoint for OpenShift production cluster.</li>
+<li>Token for OpenShift production cluster.</li>
+<li>Endpoint for OpenShift DR cluster.</li>
+<li>Token for OpenShift production cluster.</li>
+</ul>
+<pre>[cloud-user@bastion ~]$ ./perform-dr-failover.sh drtest mariadb \n
+https://openshift.144.76.134.230.xip.io:8443 PqIeLvATB4liHqLpd018yd2kppUt-4OiXX6BLMAjBSo \n
+https://openshift.144.76.134.229.xip.io:8443 nQEbP4MD_6kY6k2YkRenljtKDWrvCT9Cy-uhb-YiNnY</pre>
+<p><strong>Production is scaled down.</strong></p>
+<p><img class="alignnone  wp-image-12427" src="/assets/2018/03/ocp_scale_1.png" alt="ocp_scale_1" width="1009" height="374" /></p>
+<p><strong>Volume transfer request generated in Europe West OpenStack tenant.</strong></p>
+<p><img class="alignnone  wp-image-12428" src="/assets/2018/03/ocp1_1.png" alt="ocp1_1" width="2399" height="575" /></p>
+<p><strong>Volume transfer request is accepted in Europe East OpenStack tenant.</strong></p>
+<p><img class="alignnone  wp-image-12429" src="/assets/2018/03/osp_2.png" alt="osp_2" width="1788" height="384" /></p>
+<p><strong>Verify persistent volume on DR site running in project drtest-dr.</strong></p>
+<p><img class="alignnone  wp-image-12430" src="/assets/2018/03/ocp_east_storage.png" alt="ocp_east_storage" width="2339" height="633" /></p>
+<p><strong>Deploy mariadb in europe west.</strong></p>
+<p><img class="alignnone  wp-image-12431" src="/assets/2018/03/ocp_east_mariadb_create.png" alt="ocp_east_mariadb_create" width="1175" height="757" /></p>
+<p><strong>Notice error that the PVC already exists. This is of course expected.</strong></p>
+<p><img class="alignnone  wp-image-12432" src="/assets/2018/03/ocp_db_2.png" alt="ocp_db_2" width="918" height="672" /></p>
+<p><strong>Verify the mariadb pod has started successfully.</strong></p>
+<p><img class="alignnone  wp-image-12433" src="/assets/2018/03/ocp_db_3.png" alt="ocp_db_3" width="1639" height="511" /></p>
+<p><strong>Verify the cinder volume was automatically mounted on the node where mariadb pod started.</strong></p>
+<p><img class="alignnone  wp-image-12434" src="/assets/2018/03/osp_volume_3.png" alt="osp_volume_3" width="1232" height="270" /></p>
+<p><strong>Verify the mariadb contains database books and rows with authors as it did on production site.</strong></p>
+<p><img class="alignnone  wp-image-12435" src="/assets/2018/03/ocp_db_4.png" alt="ocp_db_4" width="1069" height="935" /></p>
+<p>Congrats, that was a DR cut-over between OpenShift clusters.</p>
+<h2><strong>Summary</strong></h2>
+<p>In this article we discussed the challenges that organizations have with business continuous. We discussed new ideas and concepts for disaster recovery using containers. Finally a proof-of-concept was provided, showing DR cut-over of a mariadb database across OpenShift clusters.</p>
+<p>A new path forward is needed that not only is more cost effective, efficient but also handles disaster recovery and multi-cloud applications, together. Containers are the technology that package our applications, simplifying their deployment and enabling them to be deployed across multiple clouds and infrastructures. IT and DevOps teams have huge reasons to put everything into containers. It is the only way to deal with the level of scale and complexity that exists today. Most recognize this, but unfortunately not all. By providing a container driven disaster recovery solution that is not only better than what exists today, but also at a lower cost, with a lower RTO, could be a driving factor to get traditional non-container applications into containers. I think we can all agree that would be a good thing for everyone. I hope this article serves as a springboard for future architecture concepts relating to disaster recovery and multi-site.</p>
+<p>Happy Containerization of Everything!</p>
+<p>(c) 2018 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#business-continuance" class="page__taxonomy-item" rel="tag">Business Continuance</a><span class="sep">, </span>
+    
+      <a href="/tags/#containers" class="page__taxonomy-item" rel="tag">Containers</a><span class="sep">, </span>
+    
+      <a href="/tags/#disaster-recovery" class="page__taxonomy-item" rel="tag">Disaster Recovery</a><span class="sep">, </span>
+    
+      <a href="/tags/#docker" class="page__taxonomy-item" rel="tag">Docker</a><span class="sep">, </span>
+    
+      <a href="/tags/#dr" class="page__taxonomy-item" rel="tag">DR</a><span class="sep">, </span>
+    
+      <a href="/tags/#iaas" class="page__taxonomy-item" rel="tag">IaaS</a><span class="sep">, </span>
+    
+      <a href="/tags/#kubernetes" class="page__taxonomy-item" rel="tag">Kubernetes</a><span class="sep">, </span>
+    
+      <a href="/tags/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a><span class="sep">, </span>
+    
+      <a href="/tags/#openstack" class="page__taxonomy-item" rel="tag">OpenStack</a><span class="sep">, </span>
+    
+      <a href="/tags/#paas" class="page__taxonomy-item" rel="tag">PaaS</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2018-03-21T00:00:00-07:00">March 21, 2018</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Disaster+Recovery+with+Containers%3F+You+Bet%21%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fdisaster-recovery-with-containers-you-bet%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fdisaster-recovery-with-containers-you-bet%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fdisaster-recovery-with-containers-you-bet%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openshift/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/" class="pagination--pager" title="OpenShift on OpenStack 1-2-3: Bringing IaaS and PaaS Together
+">Previous</a>
+    
+    
+      <a href="/openshift/openshift-getting-started-with-the-service-broker/" class="pagination--pager" title="OpenShift: Getting Started with the Service Broker
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

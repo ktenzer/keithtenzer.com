@@ -1,0 +1,982 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples - KEITHTENZER.COM</title>
+<meta name="description" content="Overview Red Hat Enterprise Virtualization has two main components: RHEV-H and RHEV-M. In this post we will be focusing on RHEV-M which provides a REST API and various SDKs. By integrating with RHEV-M we can integrate a powerful set of virtualization APIs into any applications, processes or workflows. If you are new to RHEV or don&#39;t have a lab environment setup, check out this post on building a RHEV lab environment. RHEV-H Red Hat Enterprise Virtualization Hypervisor (RHEV-H) is a compact, full-featured virtualization platform built on Red Hat Enterprise Linux (RHEL). It has a very small footprint (less than 100MB) and is built from only a subset of RHEL components plus the Kernel-Based Virtual Machine (KVM). RHEV-M Red Hat Enterprise Virtualization Management (RHEV-M) is a virtual management console built on Red Hat Enterprise Linux (RHEL). It interacts with individual RHEV-H nodes using the Virtual Desktop Server Manager (VDSM). A VDSM agent is running on each of the RHEV-H nodes. RHEV-M allows administrators to manage multiple data centers and their network, compute and storage resources. In addition RHEV-M provides a central repository for storing virtual machines, disks, images and virtual machine snapshots. RHEV-M provides a common feature set such as HA, Load Balancing, Host Fencing, Networking, Storage and more across all hosts and virtual machines.  RHEV-M Architecture RHEV-M is built on top of libvirt and allows for the management of many KVM (Kernel-Based Virtual Machine) hosts. Libvirt just allows for the management of a single KVM host. RHEV-M is downstream from the open-source project oVirt. Red Hat started the oVirt project and though the hypervisor backend is open (KVM, XEN, or VirtualBox) the project is currently focused on KVM. Originally oVirt was based on C# and .NET but has since ported to Java. RHEV-M has several components: Engine, Interfaces, VDSM Agent and SPICE. Engine The RHEV-M engine runs on a standalone RHEL host. It inventories as well as exposes virtual resources and allows the administrator to organise those resources across many data centers. In addition it provides capabilities such as HA, authentication, load balancing, live migration, network management, storage management, virtual machine management, image management and monitoring across an entire virtual ecosystem based around the KVM hypervisor. The engine maintains a postgreSQL database for storing relational information about the environment. Interfaces RHEV-M offers a CLI and a web-based UI built around the Google Web-Framework (GWT). Since RHEV-M uses GWT it is also possible to create plugins and add UI extensions during runtime. RHEV-M offers a powerful REST API and SDKs for Java as well as Python. Later in this post we will give some Java code examples and take a closer look at the SDK. VDSM The Virtual Desktop Server Manager is an interface abstraction built around libvirt. Since libvirt was only designed to manage a single KVM hypervisor it was necessary to extend capabilities to allow management of 1000s of virtual machines across many KVM hypervisors. VDSM provides the necessary scalability around libvirt. VDSM has a few components. It has a daemon agent that runs on the KVM hypervisor (either RHEV-H or RHEL + KVM), a client component and a manager that is built into the RHEV-M engine. SPICE RHEV-M uses SPICE in order to display the console of a virtual machine through user interfaces. SPICE is responsible for handling console graphics and sending control commands. Java Coding Examples Below are several coding examples in Java using the SDK built on the RHEV-M REST API. These code examples will work with RHEV-M and oVirt. The Java SDK is available through maven or direct download from oVirt. To use via maven simply add following to your pom.xml: [code language=&quot;xml&quot;] &lt;dependency&gt;    &lt;groupId&gt;org.ovirt.engine.sdk&lt;/groupId&gt;    &lt;artifactId&gt;ovirt-engine-sdk-java&lt;/artifactId&gt;    &lt;version&gt;3.4.4.0&lt;/version&gt; &lt;/dependency&gt; [/code] RHEV-M Connection Below is a class that we can instantiate with various parameters. It returns a connection object that is used as the basis in other examples: [code language=&quot;java&quot;] import org.ovirt.engine.sdk.Api; public class RhevConnection {     private String URL;     private String domain;     private String username;     private String password;     public RhevConnection(String hostname, Integer port, Boolean sslEnable, String username, String password, String domain) {         if (sslEnable) {             this.URL = &quot;https://&quot; + hostname + &quot;:&quot; + port + &quot;/api&quot;;         } else {             this.URL = &quot;http://&quot; + hostname + &quot;:&quot; + port + &quot;/api&quot;;         }         this.domain = domain;         this.username = username;         this.password = password;     }     public Api getConnection() throws Exception {         Api api = null;         try {             api = new Api(URL, username + &quot;@&quot; + domain, password, true);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return api;     } } [/code] Data Centers The top-level organisational entity in RHEV-M is the data center. It is meant to be a logical or physical segregation of virtual resources. Data Centers contain storage domains, networks, clusters and of course hypervisor hosts. Below is a Java example that uses a defined model to return details about data centers: [code language=&quot;java&quot;]     public List&lt;DataCenterModel&gt; inventoryDataCenters() throws Exception {         List&lt;DataCenterModel&gt; dcModelList = new ArrayList&lt;DataCenterModel&gt;();         try {             for (DataCenter dc : api.getDataCenters().list()) {                 DataCenterModel dcModel = new DataCenterModel();                 dcModel.setName(dc.getName());                 dcModel.setDescription(dc.getDescription());                 dcModel.setIsLocal(dc.getLocal());                 dcModel.setStatus(dc.getStatus().getState());                 dcModelList.add(dcModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return dcModelList;     } [/code]  Storage Domains Storage domains provide storage management within RHEV-M. Virtual machine images and disks are stored in storage domains. A storage domain can be local to hypervisor host or shared across many hosts. A storage domain can be NFS, ISCSI, FC, Gluster, Ceph or ZFS. Below is a Java example that uses a defined model to return details of storage domains: [code language=&quot;java&quot;]     public List&lt;StorageDomainModel&gt; inventoryStorageDomains() throws Exception {         List&lt;StorageDomainModel&gt; storageDomainModelList = new ArrayList&lt;StorageDomainModel&gt;();         try {             List&lt;StorageDomain&gt; storageDomainList = api.getStorageDomains().list();             for (StorageDomain storageDomain : storageDomainList) {                 StorageDomainModel storageDomainModel = new StorageDomainModel();                 storageDomainModel.setName(storageDomain.getName());                 storageDomainModel.setDescription(storageDomain.getDescription());                 storageDomainModel.setDomainType(storageDomain.getType());                 storageDomainModel.setStorageType(storageDomain.getStorage().getType());                 storageDomainModel.setPath(storageDomain.getStorage().getPath());                 storageDomainModel.setAvailable(storageDomain.getAvailable());                 storageDomainModel.setUsed(storageDomain.getUsed());                 storageDomainModelList.add(storageDomainModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return storageDomainModelList;     } [/code] Hosts In RHEV-M a host is a RHEL system running KVM and the VDSM agent. As mentioned you can either use RHEV-H which comes with everything you need out-of-the-box or RHEL and add KVM / VDSM packages manually. Below is a Java example that uses a defined model to return details of hosts: [code language=&quot;java&quot;]     public List&lt;HostModel&gt; inventoryHosts() throws Exception {         List&lt;HostModel&gt; hostList = new ArrayList&lt;HostModel&gt;();         try {             List&lt;Host&gt; hosts = api.getHosts().list();             for (Host host : hosts) {                 HostModel hostModel = new HostModel();                 hostModel.setName(host.getName());                 hostModel.setIp(host.getAddress());                 hostModel.setCpuType(host.getCpu().getName());                 hostModel.setCpuCores(host.getCpu().getTopology().getCores());                 hostModel.setMemory(host.getMemory());                 hostModel.setOsType(host.getOs().getType());                 hostModel.setOsVersion(host.getOs().getVersion().getFullVersion());                 hostList.add(hostModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return hostList;     } [/code] Virtual Machines In RHEV-H virtual machines or as they are referred to in KVM domains provide the building blocks for the RHEV platform. Most actions and things of interest are typically performed on virtual machines. Below are several code examples of typical things administrators would perform on virtual machines. Listing Virtual Machines [code language=&quot;java&quot;]     public List&lt;VirtualMachineModel&gt; inventoryVirtualMachines() throws Exception {         List&lt;VirtualMachineModel&gt; vmModelList = new ArrayList&lt;VirtualMachineModel&gt;();         try {             List&lt;VM&gt; vmList = api.getVMs().list();             for (VM vm : vmList) {                 VirtualMachineModel vmModel = new VirtualMachineModel();                 vmModel.setName(vm.getName());                 vmModel.setCpuCores(vm.getCpu().getTopology().getCores());                 vmModel.setMemory(vm.getMemory());                 vmModel.setOsType(vm.getOs().getType());                 vmModel.setState(vm.getStatus().getState());                 String hostId = vm.getPlacementPolicy().getHost().getId();                 vmModel.setHostName(api.getHosts().getById(hostId).getName());                 vmModelList.add(vmModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return vmModelList;     } [/code] Create Virtual Machine Snapshot [code language=&quot;java&quot;]     public void createSnapshot(String vmName, String description) throws Exception {         try {             Snapshot snapshot = new Snapshot();             snapshot.setDescription(&quot;XYZ snapshot [&quot; + description + &quot;]&quot;);             api.getVMs().get(vmName).getSnapshots().add(snapshot);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] Delete Virtual Machine Snapshot [code language=&quot;java&quot;]     public void deleteSnapshot(String vmName, String snapshotId) throws Exception {         try {             api.getVMs().get(vmName).getSnapshots().getById(snapshotId).delete();         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] Restore Virtual Machine Snapshot [code language=&quot;java&quot;]     public void restoreSnapshot(String vmName, String snapshotId) throws Exception {         try {             Action action = new Action();             action.setId(snapshotId);             api.getVMs().get(vmName).getSnapshots().getById(snapshotId).restore(action);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] List Virtual Machine Snapshots [code language=&quot;java&quot;]     public List&lt;SnapshotModel&gt; listSnapshots(String vmName) throws Exception {         List&lt;SnapshotModel&gt; snapshotList = new ArrayList&lt;SnapshotModel&gt;();         List&lt;VMSnapshot&gt; snapshots = api.getVMs().get(vmName).getSnapshots().list();         for (VMSnapshot snapshot : snapshots) {             SnapshotModel snapshotModel = new SnapshotModel();             snapshotModel.setId(snapshot.getId());             snapshotModel.setDescription(snapshot.getDescription());             snapshotModel.setDate(snapshot.getDate().toString());             snapshotList.add(snapshotModel);         }         return snapshotList;     } [/code] Start Virtual Machine [code language=&quot;java&quot;]     public void startVirtualMachine(String vmName) throws Exception {         try {             Action action = new Action();             action.setName(vmName);             ;             api.getVMs().get(vmName).start(action);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] Stop Virtual Machine [code language=&quot;java&quot;]     public void stopVirtualMachine(String vmName) throws Exception {         try {             Action action = new Action();             action.setName(vmName);             ;             api.getVMs().get(vmName).shutdown(action);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code]  Conclusion RHEV is a powerful virtualization platform and certainly has not only the management but also feature capabilities to be on par with other virtualization platforms from VMware and Microsoft. The big advantage of RHEV over Microsoft or VMware is that everything is of course open-source and built in a thriving community. The industry has long wanted an enterprise open-source virtualization platform and now it has one! Hopefully this post was useful and informative. I was very impressed at the easy-of-use of RHEV-M interfaces and APIs. If you have any questions or comments please feel free to ask. Happy RHEVing! (c) 2015 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples">
+<meta property="og:url" content="https://keithtenzer.com/rhev/red-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples/">
+
+
+  <meta property="og:description" content="Overview Red Hat Enterprise Virtualization has two main components: RHEV-H and RHEV-M. In this post we will be focusing on RHEV-M which provides a REST API and various SDKs. By integrating with RHEV-M we can integrate a powerful set of virtualization APIs into any applications, processes or workflows. If you are new to RHEV or don&#39;t have a lab environment setup, check out this post on building a RHEV lab environment. RHEV-H Red Hat Enterprise Virtualization Hypervisor (RHEV-H) is a compact, full-featured virtualization platform built on Red Hat Enterprise Linux (RHEL). It has a very small footprint (less than 100MB) and is built from only a subset of RHEL components plus the Kernel-Based Virtual Machine (KVM). RHEV-M Red Hat Enterprise Virtualization Management (RHEV-M) is a virtual management console built on Red Hat Enterprise Linux (RHEL). It interacts with individual RHEV-H nodes using the Virtual Desktop Server Manager (VDSM). A VDSM agent is running on each of the RHEV-H nodes. RHEV-M allows administrators to manage multiple data centers and their network, compute and storage resources. In addition RHEV-M provides a central repository for storing virtual machines, disks, images and virtual machine snapshots. RHEV-M provides a common feature set such as HA, Load Balancing, Host Fencing, Networking, Storage and more across all hosts and virtual machines.  RHEV-M Architecture RHEV-M is built on top of libvirt and allows for the management of many KVM (Kernel-Based Virtual Machine) hosts. Libvirt just allows for the management of a single KVM host. RHEV-M is downstream from the open-source project oVirt. Red Hat started the oVirt project and though the hypervisor backend is open (KVM, XEN, or VirtualBox) the project is currently focused on KVM. Originally oVirt was based on C# and .NET but has since ported to Java. RHEV-M has several components: Engine, Interfaces, VDSM Agent and SPICE. Engine The RHEV-M engine runs on a standalone RHEL host. It inventories as well as exposes virtual resources and allows the administrator to organise those resources across many data centers. In addition it provides capabilities such as HA, authentication, load balancing, live migration, network management, storage management, virtual machine management, image management and monitoring across an entire virtual ecosystem based around the KVM hypervisor. The engine maintains a postgreSQL database for storing relational information about the environment. Interfaces RHEV-M offers a CLI and a web-based UI built around the Google Web-Framework (GWT). Since RHEV-M uses GWT it is also possible to create plugins and add UI extensions during runtime. RHEV-M offers a powerful REST API and SDKs for Java as well as Python. Later in this post we will give some Java code examples and take a closer look at the SDK. VDSM The Virtual Desktop Server Manager is an interface abstraction built around libvirt. Since libvirt was only designed to manage a single KVM hypervisor it was necessary to extend capabilities to allow management of 1000s of virtual machines across many KVM hypervisors. VDSM provides the necessary scalability around libvirt. VDSM has a few components. It has a daemon agent that runs on the KVM hypervisor (either RHEV-H or RHEL + KVM), a client component and a manager that is built into the RHEV-M engine. SPICE RHEV-M uses SPICE in order to display the console of a virtual machine through user interfaces. SPICE is responsible for handling console graphics and sending control commands. Java Coding Examples Below are several coding examples in Java using the SDK built on the RHEV-M REST API. These code examples will work with RHEV-M and oVirt. The Java SDK is available through maven or direct download from oVirt. To use via maven simply add following to your pom.xml: [code language=&quot;xml&quot;] &lt;dependency&gt;    &lt;groupId&gt;org.ovirt.engine.sdk&lt;/groupId&gt;    &lt;artifactId&gt;ovirt-engine-sdk-java&lt;/artifactId&gt;    &lt;version&gt;3.4.4.0&lt;/version&gt; &lt;/dependency&gt; [/code] RHEV-M Connection Below is a class that we can instantiate with various parameters. It returns a connection object that is used as the basis in other examples: [code language=&quot;java&quot;] import org.ovirt.engine.sdk.Api; public class RhevConnection {     private String URL;     private String domain;     private String username;     private String password;     public RhevConnection(String hostname, Integer port, Boolean sslEnable, String username, String password, String domain) {         if (sslEnable) {             this.URL = &quot;https://&quot; + hostname + &quot;:&quot; + port + &quot;/api&quot;;         } else {             this.URL = &quot;http://&quot; + hostname + &quot;:&quot; + port + &quot;/api&quot;;         }         this.domain = domain;         this.username = username;         this.password = password;     }     public Api getConnection() throws Exception {         Api api = null;         try {             api = new Api(URL, username + &quot;@&quot; + domain, password, true);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return api;     } } [/code] Data Centers The top-level organisational entity in RHEV-M is the data center. It is meant to be a logical or physical segregation of virtual resources. Data Centers contain storage domains, networks, clusters and of course hypervisor hosts. Below is a Java example that uses a defined model to return details about data centers: [code language=&quot;java&quot;]     public List&lt;DataCenterModel&gt; inventoryDataCenters() throws Exception {         List&lt;DataCenterModel&gt; dcModelList = new ArrayList&lt;DataCenterModel&gt;();         try {             for (DataCenter dc : api.getDataCenters().list()) {                 DataCenterModel dcModel = new DataCenterModel();                 dcModel.setName(dc.getName());                 dcModel.setDescription(dc.getDescription());                 dcModel.setIsLocal(dc.getLocal());                 dcModel.setStatus(dc.getStatus().getState());                 dcModelList.add(dcModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return dcModelList;     } [/code]  Storage Domains Storage domains provide storage management within RHEV-M. Virtual machine images and disks are stored in storage domains. A storage domain can be local to hypervisor host or shared across many hosts. A storage domain can be NFS, ISCSI, FC, Gluster, Ceph or ZFS. Below is a Java example that uses a defined model to return details of storage domains: [code language=&quot;java&quot;]     public List&lt;StorageDomainModel&gt; inventoryStorageDomains() throws Exception {         List&lt;StorageDomainModel&gt; storageDomainModelList = new ArrayList&lt;StorageDomainModel&gt;();         try {             List&lt;StorageDomain&gt; storageDomainList = api.getStorageDomains().list();             for (StorageDomain storageDomain : storageDomainList) {                 StorageDomainModel storageDomainModel = new StorageDomainModel();                 storageDomainModel.setName(storageDomain.getName());                 storageDomainModel.setDescription(storageDomain.getDescription());                 storageDomainModel.setDomainType(storageDomain.getType());                 storageDomainModel.setStorageType(storageDomain.getStorage().getType());                 storageDomainModel.setPath(storageDomain.getStorage().getPath());                 storageDomainModel.setAvailable(storageDomain.getAvailable());                 storageDomainModel.setUsed(storageDomain.getUsed());                 storageDomainModelList.add(storageDomainModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return storageDomainModelList;     } [/code] Hosts In RHEV-M a host is a RHEL system running KVM and the VDSM agent. As mentioned you can either use RHEV-H which comes with everything you need out-of-the-box or RHEL and add KVM / VDSM packages manually. Below is a Java example that uses a defined model to return details of hosts: [code language=&quot;java&quot;]     public List&lt;HostModel&gt; inventoryHosts() throws Exception {         List&lt;HostModel&gt; hostList = new ArrayList&lt;HostModel&gt;();         try {             List&lt;Host&gt; hosts = api.getHosts().list();             for (Host host : hosts) {                 HostModel hostModel = new HostModel();                 hostModel.setName(host.getName());                 hostModel.setIp(host.getAddress());                 hostModel.setCpuType(host.getCpu().getName());                 hostModel.setCpuCores(host.getCpu().getTopology().getCores());                 hostModel.setMemory(host.getMemory());                 hostModel.setOsType(host.getOs().getType());                 hostModel.setOsVersion(host.getOs().getVersion().getFullVersion());                 hostList.add(hostModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return hostList;     } [/code] Virtual Machines In RHEV-H virtual machines or as they are referred to in KVM domains provide the building blocks for the RHEV platform. Most actions and things of interest are typically performed on virtual machines. Below are several code examples of typical things administrators would perform on virtual machines. Listing Virtual Machines [code language=&quot;java&quot;]     public List&lt;VirtualMachineModel&gt; inventoryVirtualMachines() throws Exception {         List&lt;VirtualMachineModel&gt; vmModelList = new ArrayList&lt;VirtualMachineModel&gt;();         try {             List&lt;VM&gt; vmList = api.getVMs().list();             for (VM vm : vmList) {                 VirtualMachineModel vmModel = new VirtualMachineModel();                 vmModel.setName(vm.getName());                 vmModel.setCpuCores(vm.getCpu().getTopology().getCores());                 vmModel.setMemory(vm.getMemory());                 vmModel.setOsType(vm.getOs().getType());                 vmModel.setState(vm.getStatus().getState());                 String hostId = vm.getPlacementPolicy().getHost().getId();                 vmModel.setHostName(api.getHosts().getById(hostId).getName());                 vmModelList.add(vmModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return vmModelList;     } [/code] Create Virtual Machine Snapshot [code language=&quot;java&quot;]     public void createSnapshot(String vmName, String description) throws Exception {         try {             Snapshot snapshot = new Snapshot();             snapshot.setDescription(&quot;XYZ snapshot [&quot; + description + &quot;]&quot;);             api.getVMs().get(vmName).getSnapshots().add(snapshot);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] Delete Virtual Machine Snapshot [code language=&quot;java&quot;]     public void deleteSnapshot(String vmName, String snapshotId) throws Exception {         try {             api.getVMs().get(vmName).getSnapshots().getById(snapshotId).delete();         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] Restore Virtual Machine Snapshot [code language=&quot;java&quot;]     public void restoreSnapshot(String vmName, String snapshotId) throws Exception {         try {             Action action = new Action();             action.setId(snapshotId);             api.getVMs().get(vmName).getSnapshots().getById(snapshotId).restore(action);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] List Virtual Machine Snapshots [code language=&quot;java&quot;]     public List&lt;SnapshotModel&gt; listSnapshots(String vmName) throws Exception {         List&lt;SnapshotModel&gt; snapshotList = new ArrayList&lt;SnapshotModel&gt;();         List&lt;VMSnapshot&gt; snapshots = api.getVMs().get(vmName).getSnapshots().list();         for (VMSnapshot snapshot : snapshots) {             SnapshotModel snapshotModel = new SnapshotModel();             snapshotModel.setId(snapshot.getId());             snapshotModel.setDescription(snapshot.getDescription());             snapshotModel.setDate(snapshot.getDate().toString());             snapshotList.add(snapshotModel);         }         return snapshotList;     } [/code] Start Virtual Machine [code language=&quot;java&quot;]     public void startVirtualMachine(String vmName) throws Exception {         try {             Action action = new Action();             action.setName(vmName);             ;             api.getVMs().get(vmName).start(action);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] Stop Virtual Machine [code language=&quot;java&quot;]     public void stopVirtualMachine(String vmName) throws Exception {         try {             Action action = new Action();             action.setName(vmName);             ;             api.getVMs().get(vmName).shutdown(action);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code]  Conclusion RHEV is a powerful virtualization platform and certainly has not only the management but also feature capabilities to be on par with other virtualization platforms from VMware and Microsoft. The big advantage of RHEV over Microsoft or VMware is that everything is of course open-source and built in a thriving community. The industry has long wanted an enterprise open-source virtualization platform and now it has one! Hopefully this post was useful and informative. I was very impressed at the easy-of-use of RHEV-M interfaces and APIs. If you have any questions or comments please feel free to ask. Happy RHEVing! (c) 2015 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples">
+  <meta name="twitter:description" content="Overview Red Hat Enterprise Virtualization has two main components: RHEV-H and RHEV-M. In this post we will be focusing on RHEV-M which provides a REST API and various SDKs. By integrating with RHEV-M we can integrate a powerful set of virtualization APIs into any applications, processes or workflows. If you are new to RHEV or don&#39;t have a lab environment setup, check out this post on building a RHEV lab environment. RHEV-H Red Hat Enterprise Virtualization Hypervisor (RHEV-H) is a compact, full-featured virtualization platform built on Red Hat Enterprise Linux (RHEL). It has a very small footprint (less than 100MB) and is built from only a subset of RHEL components plus the Kernel-Based Virtual Machine (KVM). RHEV-M Red Hat Enterprise Virtualization Management (RHEV-M) is a virtual management console built on Red Hat Enterprise Linux (RHEL). It interacts with individual RHEV-H nodes using the Virtual Desktop Server Manager (VDSM). A VDSM agent is running on each of the RHEV-H nodes. RHEV-M allows administrators to manage multiple data centers and their network, compute and storage resources. In addition RHEV-M provides a central repository for storing virtual machines, disks, images and virtual machine snapshots. RHEV-M provides a common feature set such as HA, Load Balancing, Host Fencing, Networking, Storage and more across all hosts and virtual machines.  RHEV-M Architecture RHEV-M is built on top of libvirt and allows for the management of many KVM (Kernel-Based Virtual Machine) hosts. Libvirt just allows for the management of a single KVM host. RHEV-M is downstream from the open-source project oVirt. Red Hat started the oVirt project and though the hypervisor backend is open (KVM, XEN, or VirtualBox) the project is currently focused on KVM. Originally oVirt was based on C# and .NET but has since ported to Java. RHEV-M has several components: Engine, Interfaces, VDSM Agent and SPICE. Engine The RHEV-M engine runs on a standalone RHEL host. It inventories as well as exposes virtual resources and allows the administrator to organise those resources across many data centers. In addition it provides capabilities such as HA, authentication, load balancing, live migration, network management, storage management, virtual machine management, image management and monitoring across an entire virtual ecosystem based around the KVM hypervisor. The engine maintains a postgreSQL database for storing relational information about the environment. Interfaces RHEV-M offers a CLI and a web-based UI built around the Google Web-Framework (GWT). Since RHEV-M uses GWT it is also possible to create plugins and add UI extensions during runtime. RHEV-M offers a powerful REST API and SDKs for Java as well as Python. Later in this post we will give some Java code examples and take a closer look at the SDK. VDSM The Virtual Desktop Server Manager is an interface abstraction built around libvirt. Since libvirt was only designed to manage a single KVM hypervisor it was necessary to extend capabilities to allow management of 1000s of virtual machines across many KVM hypervisors. VDSM provides the necessary scalability around libvirt. VDSM has a few components. It has a daemon agent that runs on the KVM hypervisor (either RHEV-H or RHEL + KVM), a client component and a manager that is built into the RHEV-M engine. SPICE RHEV-M uses SPICE in order to display the console of a virtual machine through user interfaces. SPICE is responsible for handling console graphics and sending control commands. Java Coding Examples Below are several coding examples in Java using the SDK built on the RHEV-M REST API. These code examples will work with RHEV-M and oVirt. The Java SDK is available through maven or direct download from oVirt. To use via maven simply add following to your pom.xml: [code language=&quot;xml&quot;] &lt;dependency&gt;    &lt;groupId&gt;org.ovirt.engine.sdk&lt;/groupId&gt;    &lt;artifactId&gt;ovirt-engine-sdk-java&lt;/artifactId&gt;    &lt;version&gt;3.4.4.0&lt;/version&gt; &lt;/dependency&gt; [/code] RHEV-M Connection Below is a class that we can instantiate with various parameters. It returns a connection object that is used as the basis in other examples: [code language=&quot;java&quot;] import org.ovirt.engine.sdk.Api; public class RhevConnection {     private String URL;     private String domain;     private String username;     private String password;     public RhevConnection(String hostname, Integer port, Boolean sslEnable, String username, String password, String domain) {         if (sslEnable) {             this.URL = &quot;https://&quot; + hostname + &quot;:&quot; + port + &quot;/api&quot;;         } else {             this.URL = &quot;http://&quot; + hostname + &quot;:&quot; + port + &quot;/api&quot;;         }         this.domain = domain;         this.username = username;         this.password = password;     }     public Api getConnection() throws Exception {         Api api = null;         try {             api = new Api(URL, username + &quot;@&quot; + domain, password, true);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return api;     } } [/code] Data Centers The top-level organisational entity in RHEV-M is the data center. It is meant to be a logical or physical segregation of virtual resources. Data Centers contain storage domains, networks, clusters and of course hypervisor hosts. Below is a Java example that uses a defined model to return details about data centers: [code language=&quot;java&quot;]     public List&lt;DataCenterModel&gt; inventoryDataCenters() throws Exception {         List&lt;DataCenterModel&gt; dcModelList = new ArrayList&lt;DataCenterModel&gt;();         try {             for (DataCenter dc : api.getDataCenters().list()) {                 DataCenterModel dcModel = new DataCenterModel();                 dcModel.setName(dc.getName());                 dcModel.setDescription(dc.getDescription());                 dcModel.setIsLocal(dc.getLocal());                 dcModel.setStatus(dc.getStatus().getState());                 dcModelList.add(dcModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return dcModelList;     } [/code]  Storage Domains Storage domains provide storage management within RHEV-M. Virtual machine images and disks are stored in storage domains. A storage domain can be local to hypervisor host or shared across many hosts. A storage domain can be NFS, ISCSI, FC, Gluster, Ceph or ZFS. Below is a Java example that uses a defined model to return details of storage domains: [code language=&quot;java&quot;]     public List&lt;StorageDomainModel&gt; inventoryStorageDomains() throws Exception {         List&lt;StorageDomainModel&gt; storageDomainModelList = new ArrayList&lt;StorageDomainModel&gt;();         try {             List&lt;StorageDomain&gt; storageDomainList = api.getStorageDomains().list();             for (StorageDomain storageDomain : storageDomainList) {                 StorageDomainModel storageDomainModel = new StorageDomainModel();                 storageDomainModel.setName(storageDomain.getName());                 storageDomainModel.setDescription(storageDomain.getDescription());                 storageDomainModel.setDomainType(storageDomain.getType());                 storageDomainModel.setStorageType(storageDomain.getStorage().getType());                 storageDomainModel.setPath(storageDomain.getStorage().getPath());                 storageDomainModel.setAvailable(storageDomain.getAvailable());                 storageDomainModel.setUsed(storageDomain.getUsed());                 storageDomainModelList.add(storageDomainModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return storageDomainModelList;     } [/code] Hosts In RHEV-M a host is a RHEL system running KVM and the VDSM agent. As mentioned you can either use RHEV-H which comes with everything you need out-of-the-box or RHEL and add KVM / VDSM packages manually. Below is a Java example that uses a defined model to return details of hosts: [code language=&quot;java&quot;]     public List&lt;HostModel&gt; inventoryHosts() throws Exception {         List&lt;HostModel&gt; hostList = new ArrayList&lt;HostModel&gt;();         try {             List&lt;Host&gt; hosts = api.getHosts().list();             for (Host host : hosts) {                 HostModel hostModel = new HostModel();                 hostModel.setName(host.getName());                 hostModel.setIp(host.getAddress());                 hostModel.setCpuType(host.getCpu().getName());                 hostModel.setCpuCores(host.getCpu().getTopology().getCores());                 hostModel.setMemory(host.getMemory());                 hostModel.setOsType(host.getOs().getType());                 hostModel.setOsVersion(host.getOs().getVersion().getFullVersion());                 hostList.add(hostModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return hostList;     } [/code] Virtual Machines In RHEV-H virtual machines or as they are referred to in KVM domains provide the building blocks for the RHEV platform. Most actions and things of interest are typically performed on virtual machines. Below are several code examples of typical things administrators would perform on virtual machines. Listing Virtual Machines [code language=&quot;java&quot;]     public List&lt;VirtualMachineModel&gt; inventoryVirtualMachines() throws Exception {         List&lt;VirtualMachineModel&gt; vmModelList = new ArrayList&lt;VirtualMachineModel&gt;();         try {             List&lt;VM&gt; vmList = api.getVMs().list();             for (VM vm : vmList) {                 VirtualMachineModel vmModel = new VirtualMachineModel();                 vmModel.setName(vm.getName());                 vmModel.setCpuCores(vm.getCpu().getTopology().getCores());                 vmModel.setMemory(vm.getMemory());                 vmModel.setOsType(vm.getOs().getType());                 vmModel.setState(vm.getStatus().getState());                 String hostId = vm.getPlacementPolicy().getHost().getId();                 vmModel.setHostName(api.getHosts().getById(hostId).getName());                 vmModelList.add(vmModel);             }         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }         return vmModelList;     } [/code] Create Virtual Machine Snapshot [code language=&quot;java&quot;]     public void createSnapshot(String vmName, String description) throws Exception {         try {             Snapshot snapshot = new Snapshot();             snapshot.setDescription(&quot;XYZ snapshot [&quot; + description + &quot;]&quot;);             api.getVMs().get(vmName).getSnapshots().add(snapshot);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] Delete Virtual Machine Snapshot [code language=&quot;java&quot;]     public void deleteSnapshot(String vmName, String snapshotId) throws Exception {         try {             api.getVMs().get(vmName).getSnapshots().getById(snapshotId).delete();         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] Restore Virtual Machine Snapshot [code language=&quot;java&quot;]     public void restoreSnapshot(String vmName, String snapshotId) throws Exception {         try {             Action action = new Action();             action.setId(snapshotId);             api.getVMs().get(vmName).getSnapshots().getById(snapshotId).restore(action);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] List Virtual Machine Snapshots [code language=&quot;java&quot;]     public List&lt;SnapshotModel&gt; listSnapshots(String vmName) throws Exception {         List&lt;SnapshotModel&gt; snapshotList = new ArrayList&lt;SnapshotModel&gt;();         List&lt;VMSnapshot&gt; snapshots = api.getVMs().get(vmName).getSnapshots().list();         for (VMSnapshot snapshot : snapshots) {             SnapshotModel snapshotModel = new SnapshotModel();             snapshotModel.setId(snapshot.getId());             snapshotModel.setDescription(snapshot.getDescription());             snapshotModel.setDate(snapshot.getDate().toString());             snapshotList.add(snapshotModel);         }         return snapshotList;     } [/code] Start Virtual Machine [code language=&quot;java&quot;]     public void startVirtualMachine(String vmName) throws Exception {         try {             Action action = new Action();             action.setName(vmName);             ;             api.getVMs().get(vmName).start(action);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code] Stop Virtual Machine [code language=&quot;java&quot;]     public void stopVirtualMachine(String vmName) throws Exception {         try {             Action action = new Action();             action.setName(vmName);             ;             api.getVMs().get(vmName).shutdown(action);         } catch (Exception e) {             throw new Exception(e.getMessage(), e);         }     } [/code]  Conclusion RHEV is a powerful virtualization platform and certainly has not only the management but also feature capabilities to be on par with other virtualization platforms from VMware and Microsoft. The big advantage of RHEV over Microsoft or VMware is that everything is of course open-source and built in a thriving community. The industry has long wanted an enterprise open-source virtualization platform and now it has one! Hopefully this post was useful and informative. I was very impressed at the easy-of-use of RHEV-M interfaces and APIs. If you have any questions or comments please feel free to ask. Happy RHEVing! (c) 2015 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/rhev/red-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2015-01-08T00:00:00-08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/rhev/red-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#rhev" itemprop="item"><span itemprop="name">Rhev</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples">
+    <meta itemprop="description" content="OverviewRed Hat Enterprise Virtualization has two main components: RHEV-H and RHEV-M. In this post we will be focusing on RHEV-M which provides a REST API and various SDKs. By integrating with RHEV-M we can integrate a powerful set of virtualization APIs into any applications, processes or workflows. If you are new to RHEV or don&#39;t have a lab environment setup, check out this post on building a RHEV lab environment.RHEV-HRed Hat Enterprise Virtualization Hypervisor (RHEV-H) is a compact, full-featured virtualization platform built on Red Hat Enterprise Linux (RHEL). It has a very small footprint (less than 100MB) and is built from only a subset of RHEL components plus the Kernel-Based Virtual Machine (KVM).RHEV-MRed Hat Enterprise Virtualization Management (RHEV-M) is a virtual management console built on Red Hat Enterprise Linux (RHEL). It interacts with individual RHEV-H nodes using the Virtual Desktop Server Manager (VDSM). A VDSM agent is running on each of the RHEV-H nodes. RHEV-M allows administrators to manage multiple data centers and their network, compute and storage resources. In addition RHEV-M provides a central repository for storing virtual machines, disks, images and virtual machine snapshots. RHEV-M provides a common feature set such as HA, Load Balancing, Host Fencing, Networking, Storage and more across all hosts and virtual machines.RHEV-M ArchitectureRHEV-M is built on top of libvirt and allows for the management of many KVM (Kernel-Based Virtual Machine) hosts. Libvirt just allows for the management of a single KVM host. RHEV-M is downstream from the open-source project oVirt. Red Hat started the oVirt project and though the hypervisor backend is open (KVM, XEN, or VirtualBox) the project is currently focused on KVM. Originally oVirt was based on C# and .NET but has since ported to Java.RHEV-M has several components: Engine, Interfaces, VDSM Agent and SPICE.EngineThe RHEV-M engine runs on a standalone RHEL host. It inventories as well as exposes virtual resources and allows the administrator to organise those resources across many data centers. In addition it provides capabilities such as HA, authentication, load balancing, live migration, network management, storage management, virtual machine management, image management and monitoring across an entire virtual ecosystem based around the KVM hypervisor. The engine maintains a postgreSQL database for storing relational information about the environment.InterfacesRHEV-M offers a CLI and a web-based UI built around the Google Web-Framework (GWT). Since RHEV-M uses GWT it is also possible to create plugins and add UI extensions during runtime. RHEV-M offers a powerful REST API and SDKs for Java as well as Python. Later in this post we will give some Java code examples and take a closer look at the SDK.VDSMThe Virtual Desktop Server Manager is an interface abstraction built around libvirt. Since libvirt was only designed to manage a single KVM hypervisor it was necessary to extend capabilities to allow management of 1000s of virtual machines across many KVM hypervisors. VDSM provides the necessary scalability around libvirt. VDSM has a few components. It has a daemon agent that runs on the KVM hypervisor (either RHEV-H or RHEL + KVM), a client component and a manager that is built into the RHEV-M engine.SPICERHEV-M uses SPICE in order to display the console of a virtual machine through user interfaces. SPICE is responsible for handling console graphics and sending control commands.Java Coding ExamplesBelow are several coding examples in Java using the SDK built on the RHEV-M REST API. These code examples will work with RHEV-M and oVirt. The Java SDK is available through maven or direct download from oVirt. To use via maven simply add following to your pom.xml:[code language=&quot;xml&quot;]&lt;dependency&gt;   &lt;groupId&gt;org.ovirt.engine.sdk&lt;/groupId&gt;   &lt;artifactId&gt;ovirt-engine-sdk-java&lt;/artifactId&gt;   &lt;version&gt;3.4.4.0&lt;/version&gt;&lt;/dependency&gt;[/code]RHEV-M ConnectionBelow is a class that we can instantiate with various parameters. It returns a connection object that is used as the basis in other examples:[code language=&quot;java&quot;]import org.ovirt.engine.sdk.Api;public class RhevConnection {    private String URL;    private String domain;    private String username;    private String password;    public RhevConnection(String hostname, Integer port, Boolean sslEnable, String username, String password, String domain) {        if (sslEnable) {            this.URL = &quot;https://&quot; + hostname + &quot;:&quot; + port + &quot;/api&quot;;        } else {            this.URL = &quot;http://&quot; + hostname + &quot;:&quot; + port + &quot;/api&quot;;        }        this.domain = domain;        this.username = username;        this.password = password;    }    public Api getConnection() throws Exception {        Api api = null;        try {            api = new Api(URL, username + &quot;@&quot; + domain, password, true);        } catch (Exception e) {            throw new Exception(e.getMessage(), e);        }        return api;    }}[/code]Data CentersThe top-level organisational entity in RHEV-M is the data center. It is meant to be a logical or physical segregation of virtual resources. Data Centers contain storage domains, networks, clusters and of course hypervisor hosts. Below is a Java example that uses a defined model to return details about data centers:[code language=&quot;java&quot;]    public List&lt;DataCenterModel&gt; inventoryDataCenters() throws Exception {        List&lt;DataCenterModel&gt; dcModelList = new ArrayList&lt;DataCenterModel&gt;();        try {            for (DataCenter dc : api.getDataCenters().list()) {                DataCenterModel dcModel = new DataCenterModel();                dcModel.setName(dc.getName());                dcModel.setDescription(dc.getDescription());                dcModel.setIsLocal(dc.getLocal());                dcModel.setStatus(dc.getStatus().getState());                dcModelList.add(dcModel);            }        } catch (Exception e) {            throw new Exception(e.getMessage(), e);        }        return dcModelList;    }[/code] Storage DomainsStorage domains provide storage management within RHEV-M. Virtual machine images and disks are stored in storage domains. A storage domain can be local to hypervisor host or shared across many hosts. A storage domain can be NFS, ISCSI, FC, Gluster, Ceph or ZFS. Below is a Java example that uses a defined model to return details of storage domains:[code language=&quot;java&quot;]    public List&lt;StorageDomainModel&gt; inventoryStorageDomains() throws Exception {        List&lt;StorageDomainModel&gt; storageDomainModelList = new ArrayList&lt;StorageDomainModel&gt;();        try {            List&lt;StorageDomain&gt; storageDomainList = api.getStorageDomains().list();            for (StorageDomain storageDomain : storageDomainList) {                StorageDomainModel storageDomainModel = new StorageDomainModel();                storageDomainModel.setName(storageDomain.getName());                storageDomainModel.setDescription(storageDomain.getDescription());                storageDomainModel.setDomainType(storageDomain.getType());                storageDomainModel.setStorageType(storageDomain.getStorage().getType());                storageDomainModel.setPath(storageDomain.getStorage().getPath());                storageDomainModel.setAvailable(storageDomain.getAvailable());                storageDomainModel.setUsed(storageDomain.getUsed());                storageDomainModelList.add(storageDomainModel);            }        } catch (Exception e) {            throw new Exception(e.getMessage(), e);        }        return storageDomainModelList;    }[/code]HostsIn RHEV-M a host is a RHEL system running KVM and the VDSM agent. As mentioned you can either use RHEV-H which comes with everything you need out-of-the-box or RHEL and add KVM / VDSM packages manually. Below is a Java example that uses a defined model to return details of hosts:[code language=&quot;java&quot;]    public List&lt;HostModel&gt; inventoryHosts() throws Exception {        List&lt;HostModel&gt; hostList = new ArrayList&lt;HostModel&gt;();        try {            List&lt;Host&gt; hosts = api.getHosts().list();            for (Host host : hosts) {                HostModel hostModel = new HostModel();                hostModel.setName(host.getName());                hostModel.setIp(host.getAddress());                hostModel.setCpuType(host.getCpu().getName());                hostModel.setCpuCores(host.getCpu().getTopology().getCores());                hostModel.setMemory(host.getMemory());                hostModel.setOsType(host.getOs().getType());                hostModel.setOsVersion(host.getOs().getVersion().getFullVersion());                hostList.add(hostModel);            }        } catch (Exception e) {            throw new Exception(e.getMessage(), e);        }        return hostList;    }[/code]Virtual MachinesIn RHEV-H virtual machines or as they are referred to in KVM domains provide the building blocks for the RHEV platform. Most actions and things of interest are typically performed on virtual machines. Below are several code examples of typical things administrators would perform on virtual machines.Listing Virtual Machines[code language=&quot;java&quot;]    public List&lt;VirtualMachineModel&gt; inventoryVirtualMachines() throws Exception {        List&lt;VirtualMachineModel&gt; vmModelList = new ArrayList&lt;VirtualMachineModel&gt;();        try {            List&lt;VM&gt; vmList = api.getVMs().list();            for (VM vm : vmList) {                VirtualMachineModel vmModel = new VirtualMachineModel();                vmModel.setName(vm.getName());                vmModel.setCpuCores(vm.getCpu().getTopology().getCores());                vmModel.setMemory(vm.getMemory());                vmModel.setOsType(vm.getOs().getType());                vmModel.setState(vm.getStatus().getState());                String hostId = vm.getPlacementPolicy().getHost().getId();                vmModel.setHostName(api.getHosts().getById(hostId).getName());                vmModelList.add(vmModel);            }        } catch (Exception e) {            throw new Exception(e.getMessage(), e);        }        return vmModelList;    }[/code]Create Virtual Machine Snapshot[code language=&quot;java&quot;]    public void createSnapshot(String vmName, String description) throws Exception {        try {            Snapshot snapshot = new Snapshot();            snapshot.setDescription(&quot;XYZ snapshot [&quot; + description + &quot;]&quot;);            api.getVMs().get(vmName).getSnapshots().add(snapshot);        } catch (Exception e) {            throw new Exception(e.getMessage(), e);        }    }[/code]Delete Virtual Machine Snapshot[code language=&quot;java&quot;]    public void deleteSnapshot(String vmName, String snapshotId) throws Exception {        try {            api.getVMs().get(vmName).getSnapshots().getById(snapshotId).delete();        } catch (Exception e) {            throw new Exception(e.getMessage(), e);        }    }[/code]Restore Virtual Machine Snapshot[code language=&quot;java&quot;]    public void restoreSnapshot(String vmName, String snapshotId) throws Exception {        try {            Action action = new Action();            action.setId(snapshotId);            api.getVMs().get(vmName).getSnapshots().getById(snapshotId).restore(action);        } catch (Exception e) {            throw new Exception(e.getMessage(), e);        }    }[/code]List Virtual Machine Snapshots[code language=&quot;java&quot;]    public List&lt;SnapshotModel&gt; listSnapshots(String vmName) throws Exception {        List&lt;SnapshotModel&gt; snapshotList = new ArrayList&lt;SnapshotModel&gt;();        List&lt;VMSnapshot&gt; snapshots = api.getVMs().get(vmName).getSnapshots().list();        for (VMSnapshot snapshot : snapshots) {            SnapshotModel snapshotModel = new SnapshotModel();            snapshotModel.setId(snapshot.getId());            snapshotModel.setDescription(snapshot.getDescription());            snapshotModel.setDate(snapshot.getDate().toString());            snapshotList.add(snapshotModel);        }        return snapshotList;    }[/code]Start Virtual Machine[code language=&quot;java&quot;]    public void startVirtualMachine(String vmName) throws Exception {        try {            Action action = new Action();            action.setName(vmName);            ;            api.getVMs().get(vmName).start(action);        } catch (Exception e) {            throw new Exception(e.getMessage(), e);        }    }[/code]Stop Virtual Machine[code language=&quot;java&quot;]    public void stopVirtualMachine(String vmName) throws Exception {        try {            Action action = new Action();            action.setName(vmName);            ;            api.getVMs().get(vmName).shutdown(action);        } catch (Exception e) {            throw new Exception(e.getMessage(), e);        }    }[/code] ConclusionRHEV is a powerful virtualization platform and certainly has not only the management but also feature capabilities to be on par with other virtualization platforms from VMware and Microsoft. The big advantage of RHEV over Microsoft or VMware is that everything is of course open-source and built in a thriving community. The industry has long wanted an enterprise open-source virtualization platform and now it has one! Hopefully this post was useful and informative. I was very impressed at the easy-of-use of RHEV-M interfaces and APIs. If you have any questions or comments please feel free to ask.Happy RHEVing!(c) 2015 Keith Tenzer">
+    <meta itemprop="datePublished" content="2015-01-08T00:00:00-08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2015-01-08T00:00:00-08:00">January 8, 2015</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h3>Overview</h3>
+<p>Red Hat Enterprise Virtualization has two main components: RHEV-H and RHEV-M. In this post we will be focusing on RHEV-M which provides a REST API and various SDKs. By integrating with RHEV-M we can integrate a powerful set of virtualization APIs into any applications, processes or workflows. <!--more-->If you are new to RHEV or don't have a lab environment setup, check out this post on <a href="http://keithtenzer.com/2015/01/05/red-hat-enterprise-virtualization-rhev-home-lab-configuration/">building a RHEV lab environment</a>.</p>
+<h4>RHEV-H</h4>
+<p>Red Hat Enterprise Virtualization Hypervisor (RHEV-H) is a compact, full-featured virtualization platform built on Red Hat Enterprise Linux (RHEL). It has a very small footprint (less than 100MB) and is built from only a subset of RHEL components plus the Kernel-Based Virtual Machine (KVM).</p>
+<h4>RHEV-M</h4>
+<p>Red Hat Enterprise Virtualization Management (RHEV-M) is a virtual management console built on Red Hat Enterprise Linux (RHEL). It interacts with individual RHEV-H nodes using the Virtual Desktop Server Manager (VDSM). A VDSM agent is running on each of the RHEV-H nodes. RHEV-M allows administrators to manage multiple data centers and their network, compute and storage resources. In addition RHEV-M provides a central repository for storing virtual machines, disks, images and virtual machine snapshots. RHEV-M provides a common feature set such as HA, Load Balancing, Host Fencing, Networking, Storage and more across all hosts and virtual machines.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/01/rhevm_architecture1.png"><img class=" wp-image-396 aligncenter" src="/assets/2015/01/rhevm_architecture1.png?w=300" alt="RHEVM_Architecture" width="707" height="471" /></a></p>
+<h3>RHEV-M Architecture</h3>
+<p>RHEV-M is built on top of libvirt and allows for the management of many KVM (Kernel-Based Virtual Machine) hosts. Libvirt just allows for the management of a single KVM host. RHEV-M is downstream from the open-source project <a href="http://www.ovirt.org/Home">oVirt</a>. Red Hat started the oVirt project and though the hypervisor backend is open (KVM, XEN, or VirtualBox) the project is currently focused on KVM. Originally oVirt was based on C# and .NET but has since ported to Java.</p>
+<p>RHEV-M has several components: Engine, Interfaces, VDSM Agent and SPICE.</p>
+<h4>Engine</h4>
+<p>The RHEV-M engine runs on a standalone RHEL host. It inventories as well as exposes virtual resources and allows the administrator to organise those resources across many data centers. In addition it provides capabilities such as HA, authentication, load balancing, live migration, network management, storage management, virtual machine management, image management and monitoring across an entire virtual ecosystem based around the KVM hypervisor. The engine maintains a postgreSQL database for storing relational information about the environment.</p>
+<h4>Interfaces</h4>
+<p>RHEV-M offers a CLI and a web-based UI built around the Google Web-Framework (GWT). Since RHEV-M uses GWT it is also possible to create plugins and add UI extensions during runtime. RHEV-M offers a powerful REST API and SDKs for Java as well as Python. Later in this post we will give some Java code examples and take a closer look at the SDK.</p>
+<h4>VDSM</h4>
+<p>The Virtual Desktop Server Manager is an interface abstraction built around libvirt. Since libvirt was only designed to manage a single KVM hypervisor it was necessary to extend capabilities to allow management of 1000s of virtual machines across many KVM hypervisors. VDSM provides the necessary scalability around libvirt. VDSM has a few components. It has a daemon agent that runs on the KVM hypervisor (either RHEV-H or RHEL + KVM), a client component and a manager that is built into the RHEV-M engine.</p>
+<h4>SPICE</h4>
+<p>RHEV-M uses SPICE in order to display the console of a virtual machine through user interfaces. SPICE is responsible for handling console graphics and sending control commands.</p>
+<h3>Java Coding Examples</h3>
+<p>Below are several coding examples in Java using the SDK built on the RHEV-M REST API. These code examples will work with RHEV-M and oVirt. The Java SDK is available through maven or direct download from <a href="http://www.ovirt.org/Home">oVirt</a>. To use via maven simply add following to your pom.xml:</p>
+<p>[code language="xml"]<br />
+&lt;dependency&gt;<br />
+   &lt;groupId&gt;org.ovirt.engine.sdk&lt;/groupId&gt;<br />
+   &lt;artifactId&gt;ovirt-engine-sdk-java&lt;/artifactId&gt;<br />
+   &lt;version&gt;3.4.4.0&lt;/version&gt;<br />
+&lt;/dependency&gt;<br />
+[/code]</p>
+<h4>RHEV-M Connection</h4>
+<p>Below is a class that we can instantiate with various parameters. It returns a connection object that is used as the basis in other examples:</p>
+<p>[code language="java"]<br />
+import org.ovirt.engine.sdk.Api;</p>
+<p>public class RhevConnection {</p>
+<p>    private String URL;<br />
+    private String domain;<br />
+    private String username;<br />
+    private String password;</p>
+<p>    public RhevConnection(String hostname, Integer port, Boolean sslEnable, String username, String password, String domain) {<br />
+        if (sslEnable) {<br />
+            this.URL = &quot;https://&quot; + hostname + &quot;:&quot; + port + &quot;/api&quot;;<br />
+        } else {<br />
+            this.URL = &quot;http://&quot; + hostname + &quot;:&quot; + port + &quot;/api&quot;;<br />
+        }</p>
+<p>        this.domain = domain;<br />
+        this.username = username;<br />
+        this.password = password;<br />
+    }</p>
+<p>    public Api getConnection() throws Exception {</p>
+<p>        Api api = null;<br />
+        try {<br />
+            api = new Api(URL, username + &quot;@&quot; + domain, password, true);<br />
+        } catch (Exception e) {<br />
+            throw new Exception(e.getMessage(), e);<br />
+        }</p>
+<p>        return api;<br />
+    }<br />
+}<br />
+[/code]</p>
+<h4>Data Centers</h4>
+<p>The top-level organisational entity in RHEV-M is the data center. It is meant to be a logical or physical segregation of virtual resources. Data Centers contain storage domains, networks, clusters and of course hypervisor hosts. Below is a Java example that uses a defined model to return details about data centers:</p>
+<p>[code language="java"]<br />
+    public List&lt;DataCenterModel&gt; inventoryDataCenters() throws Exception {<br />
+        List&lt;DataCenterModel&gt; dcModelList = new ArrayList&lt;DataCenterModel&gt;();</p>
+<p>        try {<br />
+            for (DataCenter dc : api.getDataCenters().list()) {<br />
+                DataCenterModel dcModel = new DataCenterModel();</p>
+<p>                dcModel.setName(dc.getName());<br />
+                dcModel.setDescription(dc.getDescription());<br />
+                dcModel.setIsLocal(dc.getLocal());<br />
+                dcModel.setStatus(dc.getStatus().getState());</p>
+<p>                dcModelList.add(dcModel);<br />
+            }<br />
+        } catch (Exception e) {<br />
+            throw new Exception(e.getMessage(), e);<br />
+        }</p>
+<p>        return dcModelList;<br />
+    }<br />
+[/code]</p>
+<h4> Storage Domains</h4>
+<p>Storage domains provide storage management within RHEV-M. Virtual machine images and disks are stored in storage domains. A storage domain can be local to hypervisor host or shared across many hosts. A storage domain can be NFS, ISCSI, FC, Gluster, Ceph or ZFS. Below is a Java example that uses a defined model to return details of storage domains:</p>
+<p>[code language="java"]<br />
+    public List&lt;StorageDomainModel&gt; inventoryStorageDomains() throws Exception {<br />
+        List&lt;StorageDomainModel&gt; storageDomainModelList = new ArrayList&lt;StorageDomainModel&gt;();</p>
+<p>        try {<br />
+            List&lt;StorageDomain&gt; storageDomainList = api.getStorageDomains().list();</p>
+<p>            for (StorageDomain storageDomain : storageDomainList) {<br />
+                StorageDomainModel storageDomainModel = new StorageDomainModel();<br />
+                storageDomainModel.setName(storageDomain.getName());<br />
+                storageDomainModel.setDescription(storageDomain.getDescription());<br />
+                storageDomainModel.setDomainType(storageDomain.getType());<br />
+                storageDomainModel.setStorageType(storageDomain.getStorage().getType());<br />
+                storageDomainModel.setPath(storageDomain.getStorage().getPath());<br />
+                storageDomainModel.setAvailable(storageDomain.getAvailable());<br />
+                storageDomainModel.setUsed(storageDomain.getUsed());</p>
+<p>                storageDomainModelList.add(storageDomainModel);<br />
+            }<br />
+        } catch (Exception e) {<br />
+            throw new Exception(e.getMessage(), e);<br />
+        }</p>
+<p>        return storageDomainModelList;<br />
+    }<br />
+[/code]</p>
+<h4>Hosts</h4>
+<p>In RHEV-M a host is a RHEL system running KVM and the VDSM agent. As mentioned you can either use RHEV-H which comes with everything you need out-of-the-box or RHEL and add KVM / VDSM packages manually. Below is a Java example that uses a defined model to return details of hosts:</p>
+<p>[code language="java"]<br />
+    public List&lt;HostModel&gt; inventoryHosts() throws Exception {<br />
+        List&lt;HostModel&gt; hostList = new ArrayList&lt;HostModel&gt;();</p>
+<p>        try {<br />
+            List&lt;Host&gt; hosts = api.getHosts().list();<br />
+            for (Host host : hosts) {<br />
+                HostModel hostModel = new HostModel();<br />
+                hostModel.setName(host.getName());<br />
+                hostModel.setIp(host.getAddress());<br />
+                hostModel.setCpuType(host.getCpu().getName());<br />
+                hostModel.setCpuCores(host.getCpu().getTopology().getCores());<br />
+                hostModel.setMemory(host.getMemory());<br />
+                hostModel.setOsType(host.getOs().getType());<br />
+                hostModel.setOsVersion(host.getOs().getVersion().getFullVersion());</p>
+<p>                hostList.add(hostModel);<br />
+            }<br />
+        } catch (Exception e) {<br />
+            throw new Exception(e.getMessage(), e);<br />
+        }</p>
+<p>        return hostList;<br />
+    }<br />
+[/code]</p>
+<h4>Virtual Machines</h4>
+<p>In RHEV-H virtual machines or as they are referred to in KVM domains provide the building blocks for the RHEV platform. Most actions and things of interest are typically performed on virtual machines. Below are several code examples of typical things administrators would perform on virtual machines.</p>
+<p>Listing Virtual Machines</p>
+<p>[code language="java"]<br />
+    public List&lt;VirtualMachineModel&gt; inventoryVirtualMachines() throws Exception {<br />
+        List&lt;VirtualMachineModel&gt; vmModelList = new ArrayList&lt;VirtualMachineModel&gt;();</p>
+<p>        try {<br />
+            List&lt;VM&gt; vmList = api.getVMs().list();</p>
+<p>            for (VM vm : vmList) {<br />
+                VirtualMachineModel vmModel = new VirtualMachineModel();<br />
+                vmModel.setName(vm.getName());<br />
+                vmModel.setCpuCores(vm.getCpu().getTopology().getCores());<br />
+                vmModel.setMemory(vm.getMemory());<br />
+                vmModel.setOsType(vm.getOs().getType());<br />
+                vmModel.setState(vm.getStatus().getState());</p>
+<p>                String hostId = vm.getPlacementPolicy().getHost().getId();<br />
+                vmModel.setHostName(api.getHosts().getById(hostId).getName());</p>
+<p>                vmModelList.add(vmModel);<br />
+            }<br />
+        } catch (Exception e) {<br />
+            throw new Exception(e.getMessage(), e);<br />
+        }</p>
+<p>        return vmModelList;<br />
+    }<br />
+[/code]</p>
+<p>Create Virtual Machine Snapshot</p>
+<p>[code language="java"]<br />
+    public void createSnapshot(String vmName, String description) throws Exception {<br />
+        try {<br />
+            Snapshot snapshot = new Snapshot();<br />
+            snapshot.setDescription(&quot;XYZ snapshot [&quot; + description + &quot;]&quot;);<br />
+            api.getVMs().get(vmName).getSnapshots().add(snapshot);<br />
+        } catch (Exception e) {<br />
+            throw new Exception(e.getMessage(), e);<br />
+        }<br />
+    }<br />
+[/code]</p>
+<p>Delete Virtual Machine Snapshot</p>
+<p>[code language="java"]<br />
+    public void deleteSnapshot(String vmName, String snapshotId) throws Exception {<br />
+        try {<br />
+            api.getVMs().get(vmName).getSnapshots().getById(snapshotId).delete();<br />
+        } catch (Exception e) {<br />
+            throw new Exception(e.getMessage(), e);<br />
+        }<br />
+    }<br />
+[/code]</p>
+<p>Restore Virtual Machine Snapshot</p>
+<p>[code language="java"]<br />
+    public void restoreSnapshot(String vmName, String snapshotId) throws Exception {<br />
+        try {<br />
+            Action action = new Action();<br />
+            action.setId(snapshotId);<br />
+            api.getVMs().get(vmName).getSnapshots().getById(snapshotId).restore(action);<br />
+        } catch (Exception e) {<br />
+            throw new Exception(e.getMessage(), e);<br />
+        }<br />
+    }<br />
+[/code]</p>
+<p>List Virtual Machine Snapshots</p>
+<p>[code language="java"]<br />
+    public List&lt;SnapshotModel&gt; listSnapshots(String vmName) throws Exception {<br />
+        List&lt;SnapshotModel&gt; snapshotList = new ArrayList&lt;SnapshotModel&gt;();</p>
+<p>        List&lt;VMSnapshot&gt; snapshots = api.getVMs().get(vmName).getSnapshots().list();<br />
+        for (VMSnapshot snapshot : snapshots) {<br />
+            SnapshotModel snapshotModel = new SnapshotModel();<br />
+            snapshotModel.setId(snapshot.getId());<br />
+            snapshotModel.setDescription(snapshot.getDescription());<br />
+            snapshotModel.setDate(snapshot.getDate().toString());</p>
+<p>            snapshotList.add(snapshotModel);<br />
+        }</p>
+<p>        return snapshotList;<br />
+    }<br />
+[/code]</p>
+<p>Start Virtual Machine</p>
+<p>[code language="java"]<br />
+    public void startVirtualMachine(String vmName) throws Exception {<br />
+        try {<br />
+            Action action = new Action();<br />
+            action.setName(vmName);<br />
+            ;<br />
+            api.getVMs().get(vmName).start(action);<br />
+        } catch (Exception e) {<br />
+            throw new Exception(e.getMessage(), e);<br />
+        }<br />
+    }<br />
+[/code]</p>
+<p>Stop Virtual Machine</p>
+<p>[code language="java"]<br />
+    public void stopVirtualMachine(String vmName) throws Exception {<br />
+        try {<br />
+            Action action = new Action();<br />
+            action.setName(vmName);<br />
+            ;<br />
+            api.getVMs().get(vmName).shutdown(action);<br />
+        } catch (Exception e) {<br />
+            throw new Exception(e.getMessage(), e);<br />
+        }<br />
+    }<br />
+[/code]</p>
+<h3> Conclusion</h3>
+<p>RHEV is a powerful virtualization platform and certainly has not only the management but also feature capabilities to be on par with other virtualization platforms from VMware and Microsoft. The big advantage of RHEV over Microsoft or VMware is that everything is of course open-source and built in a thriving community. The industry has long wanted an enterprise open-source virtualization platform and now it has one! Hopefully this post was useful and informative. I was very impressed at the easy-of-use of RHEV-M interfaces and APIs. If you have any questions or comments please feel free to ask.</p>
+<p>Happy RHEVing!</p>
+<p>(c) 2015 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#cloud-computing" class="page__taxonomy-item" rel="tag">Cloud Computing</a><span class="sep">, </span>
+    
+      <a href="/tags/#java" class="page__taxonomy-item" rel="tag">Java</a><span class="sep">, </span>
+    
+      <a href="/tags/#kvm" class="page__taxonomy-item" rel="tag">KVM</a><span class="sep">, </span>
+    
+      <a href="/tags/#linux" class="page__taxonomy-item" rel="tag">Linux</a><span class="sep">, </span>
+    
+      <a href="/tags/#red-hat" class="page__taxonomy-item" rel="tag">Red Hat</a><span class="sep">, </span>
+    
+      <a href="/tags/#virtualization" class="page__taxonomy-item" rel="tag">Virtualization</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#rhev" class="page__taxonomy-item" rel="tag">RHEV</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2015-01-08T00:00:00-08:00">January 8, 2015</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Red+Hat+Enterprise+Virtualization+Management+%28RHEV-M%29+-+Overview%2C+APIs+and+Code+Examples%20https%3A%2F%2Fkeithtenzer.com%2Frhev%2Fred-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Frhev%2Fred-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Frhev%2Fred-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/rhev/red-hat-enterprise-virtualization-rhev-home-lab-configuration/" class="pagination--pager" title="Red Hat Enterprise Virtualization (RHEV) Home Lab Configuration
+">Previous</a>
+    
+    
+      <a href="/rhev/rhev-importing-ova-templates/" class="pagination--pager" title="RHEV - Importing OVA Templates
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

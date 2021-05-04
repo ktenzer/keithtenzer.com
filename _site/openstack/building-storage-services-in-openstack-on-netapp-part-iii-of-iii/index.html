@@ -1,0 +1,931 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Building Storage Services in OpenStack on NetApp - Part III of III - KEITHTENZER.COM</title>
+<meta name="description" content="Welcome to part three of the three-part series on creating storage services in OpenStack on NetApp. In this post we will look at how to configure storage services within OpenStack utilising NetApp storage.  In part one of the series we looked at how to install and configure OpenStack. In part two we looked at how to configure underlying NetApp storage to support OpenStack storage services.  Building Storage Services in OpenStack on NetApp - Part I of III Building Storage Services in OpenStack on NetApp - Part II of III  Overview OpenStack of course consists of many decoupled services that run independently but at the same time integrate with one another. NetApp has integrations in the following OpenStack services: Cinder (block storage), Glance (image services), Swift (object storage) and Manilla (shared file services).  Cinder Configuration Cinder provides block storage services in OpenStack. One very important thing to keep in mind is that while Cinder presents block devices to compute resources, underlying storage such as NetApp can expose either ISCSI or NFS storage to Cinder. In my example below I am going to show you how to set up two NFS storage backends: one for primary storage and the other DR. A storage backend maps to a NetApp Clustered Data ONTAP storage virtual machine (SVM), so for each SVM you will create a storage backend in Cinder. Edit the cinder.conf (/etc/cinder/cinder.conf) Note: if we chose to do the RDO installation using answers file then we already configured the first storage backend cdotNfs and just need to add the backend for cdotNfsDr. [code language=&quot;text&quot;] enabled_backends=cdotNfs,cdotNfsDr [cdotNfs] volume_backend_name=cdotNfs volume_driver=cinder.volume.drivers.netapp.common.NetAppDriver netapp_server_hostname=&lt;cluster mgmt vserver&gt; netapp_server_port=80 netapp_storage_protocol=nfs netapp_storage_family=ontap_cluster netapp_login=&lt;username&gt; netapp_password=&lt;password&gt; netapp_vserver=&lt;storage virtual machine&gt; nfs_shares_config=/etc/cinder/cdotNfs_exports.conf netapp_copyoffload_tool_path=/usr/bin/na_copyoffload_64 [cdotNfsDr] volume_backend_name=cdotNfsDr volume_driver=cinder.volume.drivers.netapp.common.NetAppDriver netapp_server_hostname=&lt;cluster mgmt vserver&gt; netapp_server_port=80 netapp_storage_protocol=nfs netapp_storage_family=ontap_cluster netapp_login=&lt;username&gt; netapp_password=&lt;password&gt; netapp_vserver=&lt;storage virtual machine&gt; [/code] Edit the cdotNfs_exports.conf (/etc/cinder/cdotNfs_exports.conf) Make the three NetApp volumes on our storage virtual machine available to Cinder backend [cdotNfs]: [code language=&quot;text&quot;] 192.168.160.100:/openstack_gold 192.168.160.100:/openstack_silver 192.168.160.100:/openstack_bronze [/code] Note: make sure you use a data LIF on the storage virtual machine Verify Configuration Once we have configured our storage backends we can verify them following the below steps:  . /root/keystonerc_admin service openstack-cinder-api restart service openstack-cinder-volume restart cinder service-list  The &quot;cinder service-list&quot; command will show us the two new storage backends:  &lt;hostname&gt;@cdotNfs &lt;hostname&gt;@cdotNfsDr  Glance Glance is the images service in OpenStack. It stores and provides images as well as templates to the Nova compute service. NetApp storage provides two key benefits for Glance:  Save network bandwidth by efficiently cloning images via copy offload driver Reduce storage requirements by enabling dedup  Edit the glance-api.conf (/etc/glance/glance-api.conf) Mount a NetApp volume (openstack_glance) on the OpenStack host or the host running the glance service. The volume must be mounted at boot so make sure you add it to the /etc/fstab. [code language=&quot;text&quot;] filesystem_store_datadir=/glance filesystem_store_metadata_file=/etc/glance/metadata.conf [/code] Edit the metadat.conf (/etc/glance/metadata.conf) The purpose of this file is to enable glance to store images and templates on NetApp storage. [code language=&quot;text&quot;] { &quot;share_location&quot;: &quot;nfs://192.168.160.100:/openstack_glance&quot;, &quot;mount_point&quot;: &quot;/glance&quot;, &quot;type&quot;: &quot;nfs&quot; } [/code] Enable copy offload driver The copy offload driver allows Glance to use NetApp file cloning capabilities providing near instant image copies to the Nova compute service. Without copy offload images must be copied over the network between Glance and Nova. Copy offload requirements:  The storage system must have Data ONTAP v8.2 or greater installed To configure the copy offload workflow, enable NFS v4.0 or greater and export it from the SVM The vStorage feature must be enabled on each storage virtual machine (SVM, also known as a Vserver) that is permitted to interact with the copy offload client. To set this feature, you can use the vserver nfs modify - -vstorage enabled –v4.0 enabled CLI command  To install the copy offload driver following the following steps:  Download copy offload tool Copy the binary to /usr/bin/na_copyoffload_64 Ensure the permissions are 755  Create Storage Services One of the major features of cinder is the ability to configure storage services. Below is an example of how we can create a service: gold, silver and bronze from our NetApp storage volumes. The NetApp driver for OpenStack exposes capabilities which we can use to define services. Below is a table of all the NetApp storage capabilities we can use to define services in OpenStack:    Extra spec DataType Description     netapp:raid_type String Limit the candidate volume list based on one of the following raid types: raid4, raid_dp.   netapp:disk_type String Limit the candidate volume list based on one of the following disk types: ATA, BSAS, EATA, FCAL,FSAS, LUN, MSATA, SAS, SATA, SCSI, XATA, XSAS, or SSD.   netapp:qos_policy_group String Specify the name of a QoS policy group, which defines measurable Service Level Objectives, that should be applied to the Cinder volume at the time of volume creation. Ensure that the QoS policy group object within Data ONTAP should be defined before a Cinder volume is created, and that the QoS policy group is not associated with the destination FlexVol volume.   netapp_mirrored Boolean Limit the candidate volume list to only the ones that are mirrored on the storage controller.   netapp_unmirrored Boolean Limit the candidate volume list to only the ones that are not mirrored on the storage controller.   netapp_dedup Boolean Limit the candidate volume list to only the ones that have deduplication enabled on the storage controller.   netapp_nodedup Boolean Limit the candidate volume list to only the ones that have deduplication disabled on the storage controller.   netapp_compression Boolean Limit the candidate volume list to only the ones that have compression enabled on the storage controller.   netapp_nocompression Boolean Limit the candidate volume list to only the ones that have compression disabled on the storage controller.   netapp_thin_provisioned Boolean Limit the candidate volume list to only the ones that support thin  provisioning on the storage controller.   netapp_thick_provisioned  Boolean Limit the candidate volume list to only the ones that support thick   provisioning on the storage controller.    Gold Service Gold - Highest performance storage (SSD) and Disaster Recovery  cinder type-key gold set netapp_mirrored=true  Silver Service Silver - Highest performance storage with compression  cinder type-key silver set netapp_compression=true  Bronze Service Bronze Lower performance storage with dedup  cinder type-key bronze setnetapp_dedup=true  Note: you can add more than one capability to a storage service.  Create Instance using Storage Services Finally we can use the storage services to create a cinder volume and spawn an instance based on the new cinder volume. Log into the OpenStack UI horizon. Under project-&gt;volumes select &quot;create volume&quot;. You can now select a storage service (gold, silver or bronze), create a cinder volume and attach it to an OS image. Below is an example:  (c) 2014 Keith Tenzer">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Building Storage Services in OpenStack on NetApp - Part III of III">
+<meta property="og:url" content="https://keithtenzer.com/openstack/building-storage-services-in-openstack-on-netapp-part-iii-of-iii/">
+
+
+  <meta property="og:description" content="Welcome to part three of the three-part series on creating storage services in OpenStack on NetApp. In this post we will look at how to configure storage services within OpenStack utilising NetApp storage.  In part one of the series we looked at how to install and configure OpenStack. In part two we looked at how to configure underlying NetApp storage to support OpenStack storage services.  Building Storage Services in OpenStack on NetApp - Part I of III Building Storage Services in OpenStack on NetApp - Part II of III  Overview OpenStack of course consists of many decoupled services that run independently but at the same time integrate with one another. NetApp has integrations in the following OpenStack services: Cinder (block storage), Glance (image services), Swift (object storage) and Manilla (shared file services).  Cinder Configuration Cinder provides block storage services in OpenStack. One very important thing to keep in mind is that while Cinder presents block devices to compute resources, underlying storage such as NetApp can expose either ISCSI or NFS storage to Cinder. In my example below I am going to show you how to set up two NFS storage backends: one for primary storage and the other DR. A storage backend maps to a NetApp Clustered Data ONTAP storage virtual machine (SVM), so for each SVM you will create a storage backend in Cinder. Edit the cinder.conf (/etc/cinder/cinder.conf) Note: if we chose to do the RDO installation using answers file then we already configured the first storage backend cdotNfs and just need to add the backend for cdotNfsDr. [code language=&quot;text&quot;] enabled_backends=cdotNfs,cdotNfsDr [cdotNfs] volume_backend_name=cdotNfs volume_driver=cinder.volume.drivers.netapp.common.NetAppDriver netapp_server_hostname=&lt;cluster mgmt vserver&gt; netapp_server_port=80 netapp_storage_protocol=nfs netapp_storage_family=ontap_cluster netapp_login=&lt;username&gt; netapp_password=&lt;password&gt; netapp_vserver=&lt;storage virtual machine&gt; nfs_shares_config=/etc/cinder/cdotNfs_exports.conf netapp_copyoffload_tool_path=/usr/bin/na_copyoffload_64 [cdotNfsDr] volume_backend_name=cdotNfsDr volume_driver=cinder.volume.drivers.netapp.common.NetAppDriver netapp_server_hostname=&lt;cluster mgmt vserver&gt; netapp_server_port=80 netapp_storage_protocol=nfs netapp_storage_family=ontap_cluster netapp_login=&lt;username&gt; netapp_password=&lt;password&gt; netapp_vserver=&lt;storage virtual machine&gt; [/code] Edit the cdotNfs_exports.conf (/etc/cinder/cdotNfs_exports.conf) Make the three NetApp volumes on our storage virtual machine available to Cinder backend [cdotNfs]: [code language=&quot;text&quot;] 192.168.160.100:/openstack_gold 192.168.160.100:/openstack_silver 192.168.160.100:/openstack_bronze [/code] Note: make sure you use a data LIF on the storage virtual machine Verify Configuration Once we have configured our storage backends we can verify them following the below steps:  . /root/keystonerc_admin service openstack-cinder-api restart service openstack-cinder-volume restart cinder service-list  The &quot;cinder service-list&quot; command will show us the two new storage backends:  &lt;hostname&gt;@cdotNfs &lt;hostname&gt;@cdotNfsDr  Glance Glance is the images service in OpenStack. It stores and provides images as well as templates to the Nova compute service. NetApp storage provides two key benefits for Glance:  Save network bandwidth by efficiently cloning images via copy offload driver Reduce storage requirements by enabling dedup  Edit the glance-api.conf (/etc/glance/glance-api.conf) Mount a NetApp volume (openstack_glance) on the OpenStack host or the host running the glance service. The volume must be mounted at boot so make sure you add it to the /etc/fstab. [code language=&quot;text&quot;] filesystem_store_datadir=/glance filesystem_store_metadata_file=/etc/glance/metadata.conf [/code] Edit the metadat.conf (/etc/glance/metadata.conf) The purpose of this file is to enable glance to store images and templates on NetApp storage. [code language=&quot;text&quot;] { &quot;share_location&quot;: &quot;nfs://192.168.160.100:/openstack_glance&quot;, &quot;mount_point&quot;: &quot;/glance&quot;, &quot;type&quot;: &quot;nfs&quot; } [/code] Enable copy offload driver The copy offload driver allows Glance to use NetApp file cloning capabilities providing near instant image copies to the Nova compute service. Without copy offload images must be copied over the network between Glance and Nova. Copy offload requirements:  The storage system must have Data ONTAP v8.2 or greater installed To configure the copy offload workflow, enable NFS v4.0 or greater and export it from the SVM The vStorage feature must be enabled on each storage virtual machine (SVM, also known as a Vserver) that is permitted to interact with the copy offload client. To set this feature, you can use the vserver nfs modify - -vstorage enabled –v4.0 enabled CLI command  To install the copy offload driver following the following steps:  Download copy offload tool Copy the binary to /usr/bin/na_copyoffload_64 Ensure the permissions are 755  Create Storage Services One of the major features of cinder is the ability to configure storage services. Below is an example of how we can create a service: gold, silver and bronze from our NetApp storage volumes. The NetApp driver for OpenStack exposes capabilities which we can use to define services. Below is a table of all the NetApp storage capabilities we can use to define services in OpenStack:    Extra spec DataType Description     netapp:raid_type String Limit the candidate volume list based on one of the following raid types: raid4, raid_dp.   netapp:disk_type String Limit the candidate volume list based on one of the following disk types: ATA, BSAS, EATA, FCAL,FSAS, LUN, MSATA, SAS, SATA, SCSI, XATA, XSAS, or SSD.   netapp:qos_policy_group String Specify the name of a QoS policy group, which defines measurable Service Level Objectives, that should be applied to the Cinder volume at the time of volume creation. Ensure that the QoS policy group object within Data ONTAP should be defined before a Cinder volume is created, and that the QoS policy group is not associated with the destination FlexVol volume.   netapp_mirrored Boolean Limit the candidate volume list to only the ones that are mirrored on the storage controller.   netapp_unmirrored Boolean Limit the candidate volume list to only the ones that are not mirrored on the storage controller.   netapp_dedup Boolean Limit the candidate volume list to only the ones that have deduplication enabled on the storage controller.   netapp_nodedup Boolean Limit the candidate volume list to only the ones that have deduplication disabled on the storage controller.   netapp_compression Boolean Limit the candidate volume list to only the ones that have compression enabled on the storage controller.   netapp_nocompression Boolean Limit the candidate volume list to only the ones that have compression disabled on the storage controller.   netapp_thin_provisioned Boolean Limit the candidate volume list to only the ones that support thin  provisioning on the storage controller.   netapp_thick_provisioned  Boolean Limit the candidate volume list to only the ones that support thick   provisioning on the storage controller.    Gold Service Gold - Highest performance storage (SSD) and Disaster Recovery  cinder type-key gold set netapp_mirrored=true  Silver Service Silver - Highest performance storage with compression  cinder type-key silver set netapp_compression=true  Bronze Service Bronze Lower performance storage with dedup  cinder type-key bronze setnetapp_dedup=true  Note: you can add more than one capability to a storage service.  Create Instance using Storage Services Finally we can use the storage services to create a cinder volume and spawn an instance based on the new cinder volume. Log into the OpenStack UI horizon. Under project-&gt;volumes select &quot;create volume&quot;. You can now select a storage service (gold, silver or bronze), create a cinder volume and attach it to an OS image. Below is an example:  (c) 2014 Keith Tenzer">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Building Storage Services in OpenStack on NetApp - Part III of III">
+  <meta name="twitter:description" content="Welcome to part three of the three-part series on creating storage services in OpenStack on NetApp. In this post we will look at how to configure storage services within OpenStack utilising NetApp storage.  In part one of the series we looked at how to install and configure OpenStack. In part two we looked at how to configure underlying NetApp storage to support OpenStack storage services.  Building Storage Services in OpenStack on NetApp - Part I of III Building Storage Services in OpenStack on NetApp - Part II of III  Overview OpenStack of course consists of many decoupled services that run independently but at the same time integrate with one another. NetApp has integrations in the following OpenStack services: Cinder (block storage), Glance (image services), Swift (object storage) and Manilla (shared file services).  Cinder Configuration Cinder provides block storage services in OpenStack. One very important thing to keep in mind is that while Cinder presents block devices to compute resources, underlying storage such as NetApp can expose either ISCSI or NFS storage to Cinder. In my example below I am going to show you how to set up two NFS storage backends: one for primary storage and the other DR. A storage backend maps to a NetApp Clustered Data ONTAP storage virtual machine (SVM), so for each SVM you will create a storage backend in Cinder. Edit the cinder.conf (/etc/cinder/cinder.conf) Note: if we chose to do the RDO installation using answers file then we already configured the first storage backend cdotNfs and just need to add the backend for cdotNfsDr. [code language=&quot;text&quot;] enabled_backends=cdotNfs,cdotNfsDr [cdotNfs] volume_backend_name=cdotNfs volume_driver=cinder.volume.drivers.netapp.common.NetAppDriver netapp_server_hostname=&lt;cluster mgmt vserver&gt; netapp_server_port=80 netapp_storage_protocol=nfs netapp_storage_family=ontap_cluster netapp_login=&lt;username&gt; netapp_password=&lt;password&gt; netapp_vserver=&lt;storage virtual machine&gt; nfs_shares_config=/etc/cinder/cdotNfs_exports.conf netapp_copyoffload_tool_path=/usr/bin/na_copyoffload_64 [cdotNfsDr] volume_backend_name=cdotNfsDr volume_driver=cinder.volume.drivers.netapp.common.NetAppDriver netapp_server_hostname=&lt;cluster mgmt vserver&gt; netapp_server_port=80 netapp_storage_protocol=nfs netapp_storage_family=ontap_cluster netapp_login=&lt;username&gt; netapp_password=&lt;password&gt; netapp_vserver=&lt;storage virtual machine&gt; [/code] Edit the cdotNfs_exports.conf (/etc/cinder/cdotNfs_exports.conf) Make the three NetApp volumes on our storage virtual machine available to Cinder backend [cdotNfs]: [code language=&quot;text&quot;] 192.168.160.100:/openstack_gold 192.168.160.100:/openstack_silver 192.168.160.100:/openstack_bronze [/code] Note: make sure you use a data LIF on the storage virtual machine Verify Configuration Once we have configured our storage backends we can verify them following the below steps:  . /root/keystonerc_admin service openstack-cinder-api restart service openstack-cinder-volume restart cinder service-list  The &quot;cinder service-list&quot; command will show us the two new storage backends:  &lt;hostname&gt;@cdotNfs &lt;hostname&gt;@cdotNfsDr  Glance Glance is the images service in OpenStack. It stores and provides images as well as templates to the Nova compute service. NetApp storage provides two key benefits for Glance:  Save network bandwidth by efficiently cloning images via copy offload driver Reduce storage requirements by enabling dedup  Edit the glance-api.conf (/etc/glance/glance-api.conf) Mount a NetApp volume (openstack_glance) on the OpenStack host or the host running the glance service. The volume must be mounted at boot so make sure you add it to the /etc/fstab. [code language=&quot;text&quot;] filesystem_store_datadir=/glance filesystem_store_metadata_file=/etc/glance/metadata.conf [/code] Edit the metadat.conf (/etc/glance/metadata.conf) The purpose of this file is to enable glance to store images and templates on NetApp storage. [code language=&quot;text&quot;] { &quot;share_location&quot;: &quot;nfs://192.168.160.100:/openstack_glance&quot;, &quot;mount_point&quot;: &quot;/glance&quot;, &quot;type&quot;: &quot;nfs&quot; } [/code] Enable copy offload driver The copy offload driver allows Glance to use NetApp file cloning capabilities providing near instant image copies to the Nova compute service. Without copy offload images must be copied over the network between Glance and Nova. Copy offload requirements:  The storage system must have Data ONTAP v8.2 or greater installed To configure the copy offload workflow, enable NFS v4.0 or greater and export it from the SVM The vStorage feature must be enabled on each storage virtual machine (SVM, also known as a Vserver) that is permitted to interact with the copy offload client. To set this feature, you can use the vserver nfs modify - -vstorage enabled –v4.0 enabled CLI command  To install the copy offload driver following the following steps:  Download copy offload tool Copy the binary to /usr/bin/na_copyoffload_64 Ensure the permissions are 755  Create Storage Services One of the major features of cinder is the ability to configure storage services. Below is an example of how we can create a service: gold, silver and bronze from our NetApp storage volumes. The NetApp driver for OpenStack exposes capabilities which we can use to define services. Below is a table of all the NetApp storage capabilities we can use to define services in OpenStack:    Extra spec DataType Description     netapp:raid_type String Limit the candidate volume list based on one of the following raid types: raid4, raid_dp.   netapp:disk_type String Limit the candidate volume list based on one of the following disk types: ATA, BSAS, EATA, FCAL,FSAS, LUN, MSATA, SAS, SATA, SCSI, XATA, XSAS, or SSD.   netapp:qos_policy_group String Specify the name of a QoS policy group, which defines measurable Service Level Objectives, that should be applied to the Cinder volume at the time of volume creation. Ensure that the QoS policy group object within Data ONTAP should be defined before a Cinder volume is created, and that the QoS policy group is not associated with the destination FlexVol volume.   netapp_mirrored Boolean Limit the candidate volume list to only the ones that are mirrored on the storage controller.   netapp_unmirrored Boolean Limit the candidate volume list to only the ones that are not mirrored on the storage controller.   netapp_dedup Boolean Limit the candidate volume list to only the ones that have deduplication enabled on the storage controller.   netapp_nodedup Boolean Limit the candidate volume list to only the ones that have deduplication disabled on the storage controller.   netapp_compression Boolean Limit the candidate volume list to only the ones that have compression enabled on the storage controller.   netapp_nocompression Boolean Limit the candidate volume list to only the ones that have compression disabled on the storage controller.   netapp_thin_provisioned Boolean Limit the candidate volume list to only the ones that support thin  provisioning on the storage controller.   netapp_thick_provisioned  Boolean Limit the candidate volume list to only the ones that support thick   provisioning on the storage controller.    Gold Service Gold - Highest performance storage (SSD) and Disaster Recovery  cinder type-key gold set netapp_mirrored=true  Silver Service Silver - Highest performance storage with compression  cinder type-key silver set netapp_compression=true  Bronze Service Bronze Lower performance storage with dedup  cinder type-key bronze setnetapp_dedup=true  Note: you can add more than one capability to a storage service.  Create Instance using Storage Services Finally we can use the storage services to create a cinder volume and spawn an instance based on the new cinder volume. Log into the OpenStack UI horizon. Under project-&gt;volumes select &quot;create volume&quot;. You can now select a storage service (gold, silver or bronze), create a cinder volume and attach it to an OS image. Below is an example:  (c) 2014 Keith Tenzer">
+  <meta name="twitter:url" content="https://keithtenzer.com/openstack/building-storage-services-in-openstack-on-netapp-part-iii-of-iii/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2014-12-10T00:00:00-08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openstack/building-storage-services-in-openstack-on-netapp-part-iii-of-iii/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openstack" itemprop="item"><span itemprop="name">Openstack</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Building Storage Services in OpenStack on NetApp - Part III of III</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Building Storage Services in OpenStack on NetApp - Part III of III">
+    <meta itemprop="description" content="Welcome to part three of the three-part series on creating storage services in OpenStack on NetApp. In this post we will look at how to configure storage services within OpenStack utilising NetApp storage.  In part one of the series we looked at how to install and configure OpenStack. In part two we looked at how to configure underlying NetApp storage to support OpenStack storage services.Building Storage Services in OpenStack on NetApp - Part I of IIIBuilding Storage Services in OpenStack on NetApp - Part II of IIIOverviewOpenStack of course consists of many decoupled services that run independently but at the same time integrate with one another. NetApp has integrations in the following OpenStack services: Cinder (block storage), Glance (image services), Swift (object storage) and Manilla (shared file services).Cinder ConfigurationCinder provides block storage services in OpenStack. One very important thing to keep in mind is that while Cinder presents block devices to compute resources, underlying storage such as NetApp can expose either ISCSI or NFS storage to Cinder. In my example below I am going to show you how to set up two NFS storage backends: one for primary storage and the other DR. A storage backend maps to a NetApp Clustered Data ONTAP storage virtual machine (SVM), so for each SVM you will create a storage backend in Cinder.Edit the cinder.conf (/etc/cinder/cinder.conf)Note: if we chose to do the RDO installation using answers file then we already configured the first storage backend cdotNfs and just need to add the backend for cdotNfsDr.[code language=&quot;text&quot;]enabled_backends=cdotNfs,cdotNfsDr[cdotNfs]volume_backend_name=cdotNfsvolume_driver=cinder.volume.drivers.netapp.common.NetAppDrivernetapp_server_hostname=&lt;cluster mgmt vserver&gt;netapp_server_port=80netapp_storage_protocol=nfsnetapp_storage_family=ontap_clusternetapp_login=&lt;username&gt;netapp_password=&lt;password&gt;netapp_vserver=&lt;storage virtual machine&gt;nfs_shares_config=/etc/cinder/cdotNfs_exports.confnetapp_copyoffload_tool_path=/usr/bin/na_copyoffload_64[cdotNfsDr]volume_backend_name=cdotNfsDrvolume_driver=cinder.volume.drivers.netapp.common.NetAppDrivernetapp_server_hostname=&lt;cluster mgmt vserver&gt;netapp_server_port=80netapp_storage_protocol=nfsnetapp_storage_family=ontap_clusternetapp_login=&lt;username&gt;netapp_password=&lt;password&gt;netapp_vserver=&lt;storage virtual machine&gt;[/code]Edit the cdotNfs_exports.conf (/etc/cinder/cdotNfs_exports.conf)Make the three NetApp volumes on our storage virtual machine available to Cinder backend [cdotNfs]:[code language=&quot;text&quot;]192.168.160.100:/openstack_gold192.168.160.100:/openstack_silver192.168.160.100:/openstack_bronze[/code]Note: make sure you use a data LIF on the storage virtual machineVerify ConfigurationOnce we have configured our storage backends we can verify them following the below steps:. /root/keystonerc_adminservice openstack-cinder-api restartservice openstack-cinder-volume restartcinder service-listThe &quot;cinder service-list&quot; command will show us the two new storage backends:&lt;hostname&gt;@cdotNfs&lt;hostname&gt;@cdotNfsDrGlanceGlance is the images service in OpenStack. It stores and provides images as well as templates to the Nova compute service. NetApp storage provides two key benefits for Glance:Save network bandwidth by efficiently cloning images via copy offload driverReduce storage requirements by enabling dedupEdit the glance-api.conf (/etc/glance/glance-api.conf)Mount a NetApp volume (openstack_glance) on the OpenStack host or the host running the glance service. The volume must be mounted at boot so make sure you add it to the /etc/fstab.[code language=&quot;text&quot;]filesystem_store_datadir=/glancefilesystem_store_metadata_file=/etc/glance/metadata.conf[/code]Edit the metadat.conf (/etc/glance/metadata.conf)The purpose of this file is to enable glance to store images and templates on NetApp storage.[code language=&quot;text&quot;]{&quot;share_location&quot;: &quot;nfs://192.168.160.100:/openstack_glance&quot;,&quot;mount_point&quot;: &quot;/glance&quot;,&quot;type&quot;: &quot;nfs&quot;}[/code]Enable copy offload driverThe copy offload driver allows Glance to use NetApp file cloning capabilities providing near instant image copies to the Nova compute service. Without copy offload images must be copied over the network between Glance and Nova.Copy offload requirements:The storage system must have Data ONTAP v8.2 or greater installedTo configure the copy offload workflow, enable NFS v4.0 or greater and export it from the SVMThe vStorage feature must be enabled on each storage virtual machine (SVM, also known as a Vserver) that is permitted to interact with the copy offload client. To set this feature, you can use the vserver nfs modify - -vstorage enabled –v4.0 enabled CLI commandTo install the copy offload driver following the following steps:Download copy offload toolCopy the binary to /usr/bin/na_copyoffload_64Ensure the permissions are 755Create Storage ServicesOne of the major features of cinder is the ability to configure storage services. Below is an example of how we can create a service: gold, silver and bronze from our NetApp storage volumes. The NetApp driver for OpenStack exposes capabilities which we can use to define services.Below is a table of all the NetApp storage capabilities we can use to define services in OpenStack:Extra specDataTypeDescriptionnetapp:raid_typeStringLimit the candidate volume list based on one of the following raid types: raid4, raid_dp.netapp:disk_typeStringLimit the candidate volume list based on one of the following disk types: ATA, BSAS, EATA, FCAL,FSAS, LUN, MSATA, SAS, SATA, SCSI, XATA, XSAS, or SSD.netapp:qos_policy_groupStringSpecify the name of a QoS policy group, which defines measurable Service Level Objectives, that should be applied to the Cinder volume at the time of volume creation. Ensure that the QoS policy group object within Data ONTAP should be defined before a Cinder volume is created, and that the QoS policy group is not associated with the destination FlexVol volume.netapp_mirroredBooleanLimit the candidate volume list to only the ones that are mirrored on the storage controller.netapp_unmirroredBooleanLimit the candidate volume list to only the ones that are not mirrored on the storage controller.netapp_dedupBooleanLimit the candidate volume list to only the ones that have deduplication enabled on the storage controller.netapp_nodedupBooleanLimit the candidate volume list to only the ones that have deduplication disabled on the storage controller.netapp_compressionBooleanLimit the candidate volume list to only the ones that have compression enabled on the storage controller.netapp_nocompressionBooleanLimit the candidate volume list to only the ones that have compression disabled on the storage controller.netapp_thin_provisionedBooleanLimit the candidate volume list to only the ones that support thin  provisioning on the storage controller.netapp_thick_provisioned BooleanLimit the candidate volume list to only the ones that support thick   provisioning on the storage controller.Gold ServiceGold - Highest performance storage (SSD) and Disaster Recoverycinder type-key gold set netapp_mirrored=trueSilver ServiceSilver - Highest performance storage with compressioncinder type-key silver set netapp_compression=trueBronze ServiceBronze Lower performance storage with dedupcinder type-key bronze setnetapp_dedup=trueNote: you can add more than one capability to a storage service. Create Instance using Storage ServicesFinally we can use the storage services to create a cinder volume and spawn an instance based on the new cinder volume. Log into the OpenStack UI horizon. Under project-&gt;volumes select &quot;create volume&quot;. You can now select a storage service (gold, silver or bronze), create a cinder volume and attach it to an OS image. Below is an example:(c) 2014 Keith Tenzer">
+    <meta itemprop="datePublished" content="2014-12-10T00:00:00-08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Building Storage Services in OpenStack on NetApp - Part III of III
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2014-12-10T00:00:00-08:00">December 10, 2014</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <p>Welcome to part three of the three-part series on creating storage services in OpenStack on NetApp. In this post we will look at how to configure storage services within OpenStack utilising NetApp storage.  In part one of the series we looked at how to install and configure OpenStack. In part two we looked at how to configure underlying NetApp storage to support OpenStack storage services.<!--more--></p>
+<ul>
+<li><a href="http://keithtenzer.com/2014/12/05/creating-storage-services-in-openstack-on-netapp-part-i-of-iii/">Building Storage Services in OpenStack on NetApp - Part I of III</a></li>
+<li><a href="http://keithtenzer.com/2014/12/09/building-storage-services-in-openstack-on-netapp-part-ii-of-iii/">Building Storage Services in OpenStack on NetApp - Part II of III</a></li>
+</ul>
+<h3>Overview</h3>
+<p>OpenStack of course consists of many decoupled services that run independently but at the same time integrate with one another. NetApp has integrations in the following OpenStack services: Cinder (block storage), Glance (image services), Swift (object storage) and Manilla (shared file services).</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/openstack_ntap_integration_overview.jpg"><img class="  wp-image-105 aligncenter" src="/assets/2014/12/openstack_ntap_integration_overview.jpg?w=300" alt="openstack_ntap_integration_overview" width="704" height="277" /></a></p>
+<h3>Cinder Configuration</h3>
+<p>Cinder provides block storage services in OpenStack. One very important thing to keep in mind is that while Cinder presents block devices to compute resources, underlying storage such as NetApp can expose either ISCSI or NFS storage to Cinder. In my example below I am going to show you how to set up two NFS storage backends: one for primary storage and the other DR. A storage backend maps to a NetApp Clustered Data ONTAP storage virtual machine (SVM), so for each SVM you will create a storage backend in Cinder.</p>
+<h4>Edit the cinder.conf (/etc/cinder/cinder.conf)</h4>
+<p>Note: if we chose to do the RDO installation using answers file then we already configured the first storage backend cdotNfs and just need to add the backend for cdotNfsDr.</p>
+<p>[code language="text"]</p>
+<p>enabled_backends=cdotNfs,cdotNfsDr</p>
+<p>[cdotNfs]<br />
+volume_backend_name=cdotNfs<br />
+volume_driver=cinder.volume.drivers.netapp.common.NetAppDriver<br />
+netapp_server_hostname=&lt;cluster mgmt vserver&gt;<br />
+netapp_server_port=80<br />
+netapp_storage_protocol=nfs<br />
+netapp_storage_family=ontap_cluster<br />
+netapp_login=&lt;username&gt;<br />
+netapp_password=&lt;password&gt;<br />
+netapp_vserver=&lt;storage virtual machine&gt;<br />
+nfs_shares_config=/etc/cinder/cdotNfs_exports.conf<br />
+netapp_copyoffload_tool_path=/usr/bin/na_copyoffload_64</p>
+<p>[cdotNfsDr]<br />
+volume_backend_name=cdotNfsDr<br />
+volume_driver=cinder.volume.drivers.netapp.common.NetAppDriver<br />
+netapp_server_hostname=&lt;cluster mgmt vserver&gt;<br />
+netapp_server_port=80<br />
+netapp_storage_protocol=nfs<br />
+netapp_storage_family=ontap_cluster<br />
+netapp_login=&lt;username&gt;<br />
+netapp_password=&lt;password&gt;<br />
+netapp_vserver=&lt;storage virtual machine&gt;<br />
+[/code]</p>
+<h4>Edit the cdotNfs_exports.conf (/etc/cinder/cdotNfs_exports.conf)</h4>
+<p>Make the three NetApp volumes on our storage virtual machine available to Cinder backend [cdotNfs]:</p>
+<p>[code language="text"]<br />
+192.168.160.100:/openstack_gold<br />
+192.168.160.100:/openstack_silver<br />
+192.168.160.100:/openstack_bronze<br />
+[/code]</p>
+<p>Note: make sure you use a data LIF on the storage virtual machine</p>
+<h4>Verify Configuration</h4>
+<p>Once we have configured our storage backends we can verify them following the below steps:</p>
+<ul>
+<li>. /root/keystonerc_admin</li>
+<li>service openstack-cinder-api restart</li>
+<li>service openstack-cinder-volume restart</li>
+<li>cinder service-list</li>
+</ul>
+<p>The "cinder service-list" command will show us the two new storage backends:</p>
+<ul>
+<li>&lt;hostname&gt;@cdotNfs</li>
+<li>&lt;hostname&gt;@cdotNfsDr</li>
+</ul>
+<h3>Glance</h3>
+<p>Glance is the images service in OpenStack. It stores and provides images as well as templates to the Nova compute service. NetApp storage provides two key benefits for Glance:</p>
+<ul>
+<li>Save network bandwidth by efficiently cloning images via copy offload driver</li>
+<li>Reduce storage requirements by enabling dedup</li>
+</ul>
+<h4>Edit the glance-api.conf (/etc/glance/glance-api.conf)</h4>
+<p>Mount a NetApp volume (openstack_glance) on the OpenStack host or the host running the glance service. The volume must be mounted at boot so make sure you add it to the /etc/fstab.</p>
+<p>[code language="text"]</p>
+<p>filesystem_store_datadir=/glance</p>
+<p>filesystem_store_metadata_file=/etc/glance/metadata.conf</p>
+<p>[/code]</p>
+<h4>Edit the metadat.conf (/etc/glance/metadata.conf)</h4>
+<p>The purpose of this file is to enable glance to store images and templates on NetApp storage.</p>
+<p>[code language="text"]</p>
+<p>{<br />
+&quot;share_location&quot;: &quot;nfs://192.168.160.100:/openstack_glance&quot;,<br />
+&quot;mount_point&quot;: &quot;/glance&quot;,<br />
+&quot;type&quot;: &quot;nfs&quot;<br />
+}</p>
+<p>[/code]</p>
+<h3>Enable copy offload driver</h3>
+<p>The copy offload driver allows Glance to use NetApp file cloning capabilities providing near instant image copies to the Nova compute service. Without copy offload images must be copied over the network between Glance and Nova.</p>
+<p>Copy offload requirements:</p>
+<ul class="itemizedlist" type="disc">
+<li class="listitem">The storage system must have Data ONTAP v8.2 or greater installed</li>
+<li class="listitem">To configure the <span class="highlight">copy</span> <span class="highlight">offload</span> workflow, enable NFS v4.0 or greater and export it from the SVM</li>
+<li class="listitem">The vStorage feature must be enabled on each storage virtual machine (SVM, also known as a Vserver) that is permitted to interact with the <span class="highlight">copy</span> <span class="highlight">offload</span> client. To set this feature, you can use the <code class="literal">vserver nfs modify - -vstorage enabled –v4.0 enabled</code> CLI command</li>
+</ul>
+<p>To install the copy offload driver following the following steps:</p>
+<ul>
+<li><a href="http://mysupport.netapp.com/NOW/download/tools/ntap_openstack_nfs/">Download copy offload tool</a></li>
+<li>Copy the binary to /usr/bin/na_copyoffload_64</li>
+<li>Ensure the permissions are 755</li>
+</ul>
+<h3>Create Storage Services</h3>
+<p>One of the major features of cinder is the ability to configure storage services. Below is an example of how we can create a service: gold, silver and bronze from our NetApp storage volumes. The NetApp driver for OpenStack exposes capabilities which we can use to define services.</p>
+<p>Below is a table of all the NetApp storage capabilities we can use to define services in OpenStack:</p>
+<table id="cinder.netapp.extra_specs" style="height:740px;" width="634" rules="all">
+<thead>
+<tr>
+<td style="text-align:center;">Extra spec</td>
+<td style="text-align:center;">DataType</td>
+<td style="text-align:center;">Description</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="option">netapp:raid_type</code></td>
+<td>String</td>
+<td>Limit the candidate volume list based on one of the following raid types: <code class="option">raid4</code>, <code class="option">raid_dp</code>.</td>
+</tr>
+<tr>
+<td><code class="option">netapp:disk_type</code></td>
+<td>String</td>
+<td>Limit the candidate volume list based on one of the following disk types: <code class="option">ATA</code>, <code class="option">BSAS</code>, <code class="option">EATA</code>, <code class="option">FCAL</code>,<code class="option">FSAS</code>, <code class="option">LUN</code>, <code class="option">MSATA</code>, <code class="option">SAS</code>, <code class="option">SATA</code>, <code class="option">SCSI</code>, <code class="option">XATA</code>, <code class="option">XSAS</code>, or <code class="option">SSD</code>.</td>
+</tr>
+<tr>
+<td><code class="option">netapp:qos_policy_group</code></td>
+<td>String</td>
+<td>Specify the name of a QoS policy group, which defines measurable Service Level Objectives, that should be applied to the Cinder volume at the time of volume creation. Ensure that the QoS policy group object within Data ONTAP should be defined before a Cinder volume is created, and that the QoS policy group is not associated with the destination FlexVol volume.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_mirrored</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that are mirrored on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_unmirrored</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that are not mirrored on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_dedup</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that have deduplication enabled on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_nodedup</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that have deduplication disabled on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_compression</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that have compression enabled on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_nocompression</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that have compression disabled on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_thin_provisioned</code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that support thin  provisioning on the storage controller.</td>
+</tr>
+<tr>
+<td><code class="option">netapp_thick_provisioned </code></td>
+<td>Boolean</td>
+<td>Limit the candidate volume list to only the ones that support thick   provisioning on the storage controller.</td>
+</tr>
+</tbody>
+</table>
+<h4>Gold Service</h4>
+<p>Gold - Highest performance storage (SSD) and Disaster Recovery</p>
+<ul>
+<li>cinder type-key gold set netapp_mirrored=true</li>
+</ul>
+<h4>Silver Service</h4>
+<p>Silver - Highest performance storage with compression</p>
+<ul>
+<li>cinder type-key silver set netapp_compression=true</li>
+</ul>
+<h4>Bronze Service</h4>
+<p>Bronze Lower performance storage with dedup</p>
+<ul>
+<li>cinder type-key bronze setnetapp_dedup=true</li>
+</ul>
+<p>Note: you can add more than one capability to a storage service.</p>
+<h3> Create Instance using Storage Services</h3>
+<p>Finally we can use the storage services to create a cinder volume and spawn an instance based on the new cinder volume. Log into the OpenStack UI horizon. Under project-&gt;volumes select "create volume". You can now select a storage service (gold, silver or bronze), create a cinder volume and attach it to an OS image. Below is an example:</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2014/12/screen-shot-2014-12-02-at-18-25-18.png"><img class="  wp-image-65 aligncenter" src="/assets/2014/12/screen-shot-2014-12-02-at-18-25-18.png?w=300" alt="Screen Shot 2014-12-02 at 18.25.18" width="617" height="555" /></a></p>
+<p>(c) 2014 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#cloud" class="page__taxonomy-item" rel="tag">Cloud</a><span class="sep">, </span>
+    
+      <a href="/tags/#netapp" class="page__taxonomy-item" rel="tag">NetApp</a><span class="sep">, </span>
+    
+      <a href="/tags/#openstack" class="page__taxonomy-item" rel="tag">OpenStack</a><span class="sep">, </span>
+    
+      <a href="/tags/#storage" class="page__taxonomy-item" rel="tag">Storage</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openstack" class="page__taxonomy-item" rel="tag">OpenStack</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2014-12-10T00:00:00-08:00">December 10, 2014</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Building+Storage+Services+in+OpenStack+on+NetApp+-+Part+III+of+III%20https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fbuilding-storage-services-in-openstack-on-netapp-part-iii-of-iii%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fbuilding-storage-services-in-openstack-on-netapp-part-iii-of-iii%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fbuilding-storage-services-in-openstack-on-netapp-part-iii-of-iii%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openstack/building-storage-services-in-openstack-on-netapp-part-ii-of-iii/" class="pagination--pager" title="Building Storage Services in OpenStack on NetApp - Part II of III
+">Previous</a>
+    
+    
+      <a href="/rhel/rename-network-interfaces-in-rhel-7/" class="pagination--pager" title="Rename network interfaces in RHEL 7
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

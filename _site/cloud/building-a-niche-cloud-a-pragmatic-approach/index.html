@@ -1,0 +1,855 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Building A Niche Cloud: A Pragmatic Approach - KEITHTENZER.COM</title>
+<meta name="description" content="source: https://innolectinc.com/how-smart-is-your-team/teamwork-ants-building-a-house/  Part I: Birth of the Niche Cloud? Part II: Building a Niche Cloud: A Pragmatic Approach  Overview Before getting started you might want to read about the birth of the niche cloud in the first part of this two part series. We have all heard the saying, you cannot teach an old dog new tricks. Yes that is true, but we aren&#39;t thankfully dogs. Learning to do something new of course, requires an open mind-set and a desire for change. Many organizations are getting left out of digital disruption these days because they keep falling back on old outdated ideas, behaviors and habits. Our minds are so full, so occupied and so tired we simply cannot grasp or don&#39;t have the energy for anything new. We spend our time applying what is new to what we know, which is old. In this article lets reset our minds and look at an approach to build a niche cloud from the ground up. Instead of pealing back the onion we will apply layer after layer until we have the onion itself. Of course I realize there is a lot more and this article is just scratching at the surface, nevertheless it is an approach, a basic rule-set and guideline for getting started.  Define your Cloud Layers Each layer must be independent of one another and all layers should be abstracted away behind our onion. When imaging a cloud, the first things is imagine the user and imagine him or her seeing the onion. Rule #1: The user doesn&#39;t see any layers, just the onion, but there are many, many layers.  Layers are necessary to abstract complexity. If you achieve a high enough abstraction level, you have essentially created a cloud, congratulations it really is that easy and yet also so complex thus I really think simplexity is a great way to understand the goal. Every layer obviously requires automation. Ideally you should settle on an automation language and build a platform around your automation. Writing a script, playbook, recipe, package, whatever is not automation. It also isn&#39;t automation if individuals in different groups can perform their tasks automatically. Rule #2: Automation is about abstracting complexity, process, individual domain knowledge and making it standard or easily consumable across the cloud. Automation is important at every layer. It should be used to construct the layers, one by one but it also plays a key role at the business process layer and customer portal layer. This is the area where you will want to invest the most time and create the most value for your customers. As such all tasks or anything running on the cloud, must be implemented in the Automation layer. Below is a diagram illustrating the key cloud layers. The entry point for customers is the portal. Customer are of course developers, users, anyone that will consume a service.  Automation Layer Responsible for deployment of layers and tooling used within them. Each layer should be deployed individually with no coupling to other layers. Layers should be orchestrated into overall workflow, enabling end-to-end cloud deployment. Infrastructure Layer Provides an abstraction on baremetal. Abstracts physical compute, storage and network resources though it is possible to move those abstractions to another layer, for example the PaaS layer. PaaS Layer Provides abstraction for services, applications and their runtimes. Ensures applications are portable and decoupled from infrastructure. PaaS layer provides consistent application layer that is independent of individual clouds, can and may actually span clouds or cloud constructs. Management Layer Provides patching, security vulnerability detection, governance, chargeback, automation platform, analytics and more across cloud(s). Management tooling should be cloud agnostic and not coupled to underlying layers. Management layer should provide interfaces for business process layer. Business Process Layer Integration with backend systems, responsible for defining services, logic, billing and other such rule sets. Responsible for handling customer accounts and customer related activities. Customer Portal Layer Interface and API exposed to end customer. Abstraction of all complexity to provide a service which is simple to understand and consume. This is all about customer experience. Products and Technologies After a discussion around the various layer and their decoupling it is important to decide on technology and products. This is obviously where most people want to start but doing so without understanding the layers and having a strategy around automation, platform capabilities and a technology roadmap would be a major mistake. Rule #3: Don&#39;t lead with technology and don&#39;t just choose technology vendors solely because they exist or you have good experience with them. You should be building your Cloud from the ground-up. Choose your technology based on how it best compliments the required capabilities and of course the desired outcomes. Envision where you want to be several years from now. I am going to provide examples using Red Hat products and technologies to build the layers and show a Red Hat approach. I think it provides a good example for how to create a technology map and map technologies to the various layers. Rule #4: Technology and products can and should be replaced down the road, don&#39;t get attached to them. Automation Layer This is the most important to get right. I think it is a no-brainer actually. Ansible provides a simple, easy language for automation. Ansible Tower provides a powerful platform around Ansible that among other things, gives Ansible an API. Using Ansible Tower would allow automation to be built, consumed and reused among various teams. Another thing I really like about Ansible is it is simple, everyone can take part, understand it and there are no heroics needed to operate. Rule #5: Anything that is dependent on individuals and heroes should be re-designed and replaced with something standard that is not. Infrastructure Layer This layer is responsible for the foundation of your Cloud. It runs on metal and needs to provide the same capabilities you would get from Amazon, Google or Microsoft. OpenStack is a no-brainer but I also think Red Hat OpenStack is a no-brainer. Red Hat OpenStack uses Director which builds an undercloud, manages metal and deploy, manages, upgrades the OpenStack overcloud. Director is built around Ironic and TripleO (OpenStack on OpenStack). Why require separate tools that need to be learned when you simply can use OpenStack to deploy OpenStack. Another critical piece is upgrades. Red Hat offers not only version to version but a fast-forward upgrade that lets you skip versions. Red Hat also provides support for 5 years on a single release. This layer needs to be rock solid and the Achilles heal of OpenStack is upgrade and lifecycle management. The reason you go with OpenStack is to abstract technology and allow you to change technologies without impacting the APIs. OpenStack is maybe the one thing you likely won&#39;t want to change, if done right and as such having a long support lifecycle is crucial. PaaS Layer While there are many, many options, I think the industry has settled on Kubernetes. Besides Google, who announced the project, Red Hat is the only company there since the beginning. Everyone is obviously jumping on the bandwagon and for good reason, every application should and will eventually run in containers. Portability of applications and a much, much faster, more streamlined release cycle alone is driving container adoption. OpenShift is by far the most advanced and enterprise ready Kubernetes. OpenShift is also a platform and this is why it makes a great choice. Kubernetes is just an orchestration layer, you need to build an ecosystem around it (container registry, sdn, security, governance, CI/CD, IaaS plugins and much more). Management Layer This layer is a little less straight forward and there is more room to come to other technology decision points. I think Ansible Tower is a given to provide Ansible-as-a-Platform. Other capabilities needed are patching, vulnerability detection, monitoring, governance and predictive systems management, going in the direction of AI. Clearly this is just a starting point and a lot more will fall into this layer. Satellite would be used for patching of Red Hat Enterprise Linux and potentially other RPM based Linux distros. If you have windows you will likely need additional patching tooling there. I am not a fan of single tools that do everything in this area. I would go with the best tools for the Operating Systems you want to offer and abstract them away through Ansible primitives. Monitoring and governance could be provided by CloudForms. It also supports other Clouds so if you are a multi-cloud organization, this can provide a layer to manage those various clouds. Governance is about policies. You need a rule-set and if those rules are violated then at a minimum people need to be notified. In addition taking action, shutting off non-compliant systems is also something to consider, depends on requirements really. For monitoring you really need something predictive that is going in the direction of an AI. What you know won&#39;t kill you, it is what you don&#39;t. Insights looks at security, configuration, even at platform level against a rule-set that is generated using an AI approach. The rule-sets come from support cases, knowledge base articles and common best practice at Red Hat. The intelligence is these rules are constantly enhanced, created and updated. Therefore if another customer hits an issue, you wouldn&#39;t have to as a rule could be triggered that could warn ahead of time based on an issue someone else experienced. Pretty cool right? How does this all come together at consumer level? Think about all the services and additional capabilities you could provide that are of value besides giving someone a dumb VM connected to the latest RPMs, like generic public cloud. You could provide lifecycle management, patch stages and so on. Governance could be used to enforce specific requirements in a standardized way. You could start to tailor your requirements to fit that of a niche cloud. Insights could be provided as a higher level service, maybe even a higher SLA level. There are many, many possibilities that go well beyond just being boring and doing what public cloud does. Business Process Layer This is your key value add. How you do billing, what processes you are able to expose, capabilities and features to enable. It is basically the logic for what gets exposed through the customer portal. Likely you will need something more sophisticated than Ansible. Business rules are also typically understood by business analysts not developers. Red Hat Decision Maker is based on drools and allows business analysts to implement rule-sets as example without needing to change code or be programmers. Think about how you offer services and what they cost? This is quite dynamic and you definitely need something that business people can change, tweak and understand. Customer Portal Layer Finally we are at the onion. This is what the customer sees. This layer should not have much logic, the intelligence should be in the business process layer. The portal is responsible for allowing customers to consume services that are offered. It is your store front and one that always has enough supply to satisfy every customer. It provides such a good abstraction that most think it is just magic and cannot begin to understand what they are seeing or experiencing. If only the knew what mess lies below? You may think these are lofty or impossible goals, but if you believe that, just don&#39;t start, it won&#39;t work is my advice. You can always be a consumer and have someone else do it for you, no shame in that. Where to get started with customer portal? How about an innovation lab?  Building your customer portal is a great opportunity to work as well as learn from some of the best and brightest opensource developers in the world. The idea is similar to cooking. Sure you can get a recipe, even watch someone cook on YouTube. Following such recipes, probably will result in something decent or even good. But, what if you send yourself or team to a five star kitchen and cook with master chefs? What do you think would happen when your got back to your kitchen? I will tell you. You will cook quite differently. You will change your tools, approach. You may even make changes to the kitchen itself. What would long term results produce? Which method would lead to them cooking better meals? I think it&#39;s obvious. It is the same thing with software development and coding. Red Hat offers something unique here and I think it is perfect for building a cloud portal prototype while learning with Red Hat&#39;s top engineers and software developers at the core of opensource innovation. If this sounds interesting here is a lightning talk on the subject from Jeremy Brown (https://www.youtube.com/watch?v=9BVaTx_RJ9U). The next diagram shows the key layers and technologies used in those layers.  The key to remember is each of these layers, just like the onion are independent and not coupled. Rule # 6: Building loosely coupled layers is key to future cloud longevity. Building the Niche Cloud Layer by Layer What I am going to provide is some basic guides to get going using Red Hat products and technologies. This should serve as a prototype or demo. By no means is this meant to be anything more than allowing you to get your feet wet and understand the concepts above. Infrastructure Layer For getting started purposes I recommend getting a Hetzner Root Server. These are physical servers in the cloud that are very inexpensive, Hetzner is also what I refer to as a niche cloud. They provide metal-as-a-service and a market place where you can auction or purchase used hardware on monthly basis, hence why it is so inexpensive. It is great for prototyping, demo or conceptual work. To build OpenStack layer using RDO on RHEL or CentOS follow my blog here. PaaS Layer The PaaS can either be built using OpenShift Community (OKD) or OpenShift Enterprise. I have provided Ansible playbooks and documentation for deploying OpenShift on OpenStack in GitHub. Management Layer The management layer consists of several technologies and products. I have also provided playbooks and documentation to deploy Red Hat Satellite and Ansible Tower on OpenStack in GitHub. I have not documented Red Hat CloudForms because an image exists for OpenStack. This is pretty easy to get going using documentation provided by Red Hat. Business Process Layer The business process layer is of course highly specific. Nevertheless working with some of my colleagues, we have provided some use cases to help with business process layer. The use cases are implemented in Ansible. They can of course also be consumed via API from Ansible Tower. Below are some of the use cases. Order Infrastructure Project with Quota  Order Instance  Order Application or Service  Order Database  Customer Portal Layer Hopefully you like the idea of running an innovation lab to build prototype for your cloud portal. CloudForms could initially also be used to provided a generic portal. You definitely want to build your own but this could at least provide value in the beginning to get up and running fast while you take time to build a real portal. Below is example of the CloudForms customer portal.  Summary In this article we discussed how to approach building your own niche cloud. The importance of decoupled layers. How the layers build upon one another. We discussed technology and products that could be used to build the layers from a Red Hat perspective. Finally guidelines and ideas were provided to help get you started in building your niche cloud. Below are the important rules worth repeating, that were mentioned throughout this article.  Rule #1: The user doesn&#39;t see any layers, just the onion, but there are many, many layers. Rule #2: Automation is about abstracting complexity, process, individual domain knowledge and making it standard or easily consumable across the cloud. Rule #3: Don&#39;t lead with technology and don&#39;t just choose technology vendors solely because they exist or you have good experience with them. Rule #4: Technology and products can and should be replaced down the road, don&#39;t get attached to them. Rule #5: Anything that is dependent on individuals and heroes should be re-designed and replaced with something standard that is not. Rule # 6: Building loosely coupled layers is key to future cloud longevity.  Happy Niche Clouding! (c) 2018 Keith Tenzer &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Building A Niche Cloud: A Pragmatic Approach">
+<meta property="og:url" content="https://keithtenzer.com/cloud/building-a-niche-cloud-a-pragmatic-approach/">
+
+
+  <meta property="og:description" content="source: https://innolectinc.com/how-smart-is-your-team/teamwork-ants-building-a-house/  Part I: Birth of the Niche Cloud? Part II: Building a Niche Cloud: A Pragmatic Approach  Overview Before getting started you might want to read about the birth of the niche cloud in the first part of this two part series. We have all heard the saying, you cannot teach an old dog new tricks. Yes that is true, but we aren&#39;t thankfully dogs. Learning to do something new of course, requires an open mind-set and a desire for change. Many organizations are getting left out of digital disruption these days because they keep falling back on old outdated ideas, behaviors and habits. Our minds are so full, so occupied and so tired we simply cannot grasp or don&#39;t have the energy for anything new. We spend our time applying what is new to what we know, which is old. In this article lets reset our minds and look at an approach to build a niche cloud from the ground up. Instead of pealing back the onion we will apply layer after layer until we have the onion itself. Of course I realize there is a lot more and this article is just scratching at the surface, nevertheless it is an approach, a basic rule-set and guideline for getting started.  Define your Cloud Layers Each layer must be independent of one another and all layers should be abstracted away behind our onion. When imaging a cloud, the first things is imagine the user and imagine him or her seeing the onion. Rule #1: The user doesn&#39;t see any layers, just the onion, but there are many, many layers.  Layers are necessary to abstract complexity. If you achieve a high enough abstraction level, you have essentially created a cloud, congratulations it really is that easy and yet also so complex thus I really think simplexity is a great way to understand the goal. Every layer obviously requires automation. Ideally you should settle on an automation language and build a platform around your automation. Writing a script, playbook, recipe, package, whatever is not automation. It also isn&#39;t automation if individuals in different groups can perform their tasks automatically. Rule #2: Automation is about abstracting complexity, process, individual domain knowledge and making it standard or easily consumable across the cloud. Automation is important at every layer. It should be used to construct the layers, one by one but it also plays a key role at the business process layer and customer portal layer. This is the area where you will want to invest the most time and create the most value for your customers. As such all tasks or anything running on the cloud, must be implemented in the Automation layer. Below is a diagram illustrating the key cloud layers. The entry point for customers is the portal. Customer are of course developers, users, anyone that will consume a service.  Automation Layer Responsible for deployment of layers and tooling used within them. Each layer should be deployed individually with no coupling to other layers. Layers should be orchestrated into overall workflow, enabling end-to-end cloud deployment. Infrastructure Layer Provides an abstraction on baremetal. Abstracts physical compute, storage and network resources though it is possible to move those abstractions to another layer, for example the PaaS layer. PaaS Layer Provides abstraction for services, applications and their runtimes. Ensures applications are portable and decoupled from infrastructure. PaaS layer provides consistent application layer that is independent of individual clouds, can and may actually span clouds or cloud constructs. Management Layer Provides patching, security vulnerability detection, governance, chargeback, automation platform, analytics and more across cloud(s). Management tooling should be cloud agnostic and not coupled to underlying layers. Management layer should provide interfaces for business process layer. Business Process Layer Integration with backend systems, responsible for defining services, logic, billing and other such rule sets. Responsible for handling customer accounts and customer related activities. Customer Portal Layer Interface and API exposed to end customer. Abstraction of all complexity to provide a service which is simple to understand and consume. This is all about customer experience. Products and Technologies After a discussion around the various layer and their decoupling it is important to decide on technology and products. This is obviously where most people want to start but doing so without understanding the layers and having a strategy around automation, platform capabilities and a technology roadmap would be a major mistake. Rule #3: Don&#39;t lead with technology and don&#39;t just choose technology vendors solely because they exist or you have good experience with them. You should be building your Cloud from the ground-up. Choose your technology based on how it best compliments the required capabilities and of course the desired outcomes. Envision where you want to be several years from now. I am going to provide examples using Red Hat products and technologies to build the layers and show a Red Hat approach. I think it provides a good example for how to create a technology map and map technologies to the various layers. Rule #4: Technology and products can and should be replaced down the road, don&#39;t get attached to them. Automation Layer This is the most important to get right. I think it is a no-brainer actually. Ansible provides a simple, easy language for automation. Ansible Tower provides a powerful platform around Ansible that among other things, gives Ansible an API. Using Ansible Tower would allow automation to be built, consumed and reused among various teams. Another thing I really like about Ansible is it is simple, everyone can take part, understand it and there are no heroics needed to operate. Rule #5: Anything that is dependent on individuals and heroes should be re-designed and replaced with something standard that is not. Infrastructure Layer This layer is responsible for the foundation of your Cloud. It runs on metal and needs to provide the same capabilities you would get from Amazon, Google or Microsoft. OpenStack is a no-brainer but I also think Red Hat OpenStack is a no-brainer. Red Hat OpenStack uses Director which builds an undercloud, manages metal and deploy, manages, upgrades the OpenStack overcloud. Director is built around Ironic and TripleO (OpenStack on OpenStack). Why require separate tools that need to be learned when you simply can use OpenStack to deploy OpenStack. Another critical piece is upgrades. Red Hat offers not only version to version but a fast-forward upgrade that lets you skip versions. Red Hat also provides support for 5 years on a single release. This layer needs to be rock solid and the Achilles heal of OpenStack is upgrade and lifecycle management. The reason you go with OpenStack is to abstract technology and allow you to change technologies without impacting the APIs. OpenStack is maybe the one thing you likely won&#39;t want to change, if done right and as such having a long support lifecycle is crucial. PaaS Layer While there are many, many options, I think the industry has settled on Kubernetes. Besides Google, who announced the project, Red Hat is the only company there since the beginning. Everyone is obviously jumping on the bandwagon and for good reason, every application should and will eventually run in containers. Portability of applications and a much, much faster, more streamlined release cycle alone is driving container adoption. OpenShift is by far the most advanced and enterprise ready Kubernetes. OpenShift is also a platform and this is why it makes a great choice. Kubernetes is just an orchestration layer, you need to build an ecosystem around it (container registry, sdn, security, governance, CI/CD, IaaS plugins and much more). Management Layer This layer is a little less straight forward and there is more room to come to other technology decision points. I think Ansible Tower is a given to provide Ansible-as-a-Platform. Other capabilities needed are patching, vulnerability detection, monitoring, governance and predictive systems management, going in the direction of AI. Clearly this is just a starting point and a lot more will fall into this layer. Satellite would be used for patching of Red Hat Enterprise Linux and potentially other RPM based Linux distros. If you have windows you will likely need additional patching tooling there. I am not a fan of single tools that do everything in this area. I would go with the best tools for the Operating Systems you want to offer and abstract them away through Ansible primitives. Monitoring and governance could be provided by CloudForms. It also supports other Clouds so if you are a multi-cloud organization, this can provide a layer to manage those various clouds. Governance is about policies. You need a rule-set and if those rules are violated then at a minimum people need to be notified. In addition taking action, shutting off non-compliant systems is also something to consider, depends on requirements really. For monitoring you really need something predictive that is going in the direction of an AI. What you know won&#39;t kill you, it is what you don&#39;t. Insights looks at security, configuration, even at platform level against a rule-set that is generated using an AI approach. The rule-sets come from support cases, knowledge base articles and common best practice at Red Hat. The intelligence is these rules are constantly enhanced, created and updated. Therefore if another customer hits an issue, you wouldn&#39;t have to as a rule could be triggered that could warn ahead of time based on an issue someone else experienced. Pretty cool right? How does this all come together at consumer level? Think about all the services and additional capabilities you could provide that are of value besides giving someone a dumb VM connected to the latest RPMs, like generic public cloud. You could provide lifecycle management, patch stages and so on. Governance could be used to enforce specific requirements in a standardized way. You could start to tailor your requirements to fit that of a niche cloud. Insights could be provided as a higher level service, maybe even a higher SLA level. There are many, many possibilities that go well beyond just being boring and doing what public cloud does. Business Process Layer This is your key value add. How you do billing, what processes you are able to expose, capabilities and features to enable. It is basically the logic for what gets exposed through the customer portal. Likely you will need something more sophisticated than Ansible. Business rules are also typically understood by business analysts not developers. Red Hat Decision Maker is based on drools and allows business analysts to implement rule-sets as example without needing to change code or be programmers. Think about how you offer services and what they cost? This is quite dynamic and you definitely need something that business people can change, tweak and understand. Customer Portal Layer Finally we are at the onion. This is what the customer sees. This layer should not have much logic, the intelligence should be in the business process layer. The portal is responsible for allowing customers to consume services that are offered. It is your store front and one that always has enough supply to satisfy every customer. It provides such a good abstraction that most think it is just magic and cannot begin to understand what they are seeing or experiencing. If only the knew what mess lies below? You may think these are lofty or impossible goals, but if you believe that, just don&#39;t start, it won&#39;t work is my advice. You can always be a consumer and have someone else do it for you, no shame in that. Where to get started with customer portal? How about an innovation lab?  Building your customer portal is a great opportunity to work as well as learn from some of the best and brightest opensource developers in the world. The idea is similar to cooking. Sure you can get a recipe, even watch someone cook on YouTube. Following such recipes, probably will result in something decent or even good. But, what if you send yourself or team to a five star kitchen and cook with master chefs? What do you think would happen when your got back to your kitchen? I will tell you. You will cook quite differently. You will change your tools, approach. You may even make changes to the kitchen itself. What would long term results produce? Which method would lead to them cooking better meals? I think it&#39;s obvious. It is the same thing with software development and coding. Red Hat offers something unique here and I think it is perfect for building a cloud portal prototype while learning with Red Hat&#39;s top engineers and software developers at the core of opensource innovation. If this sounds interesting here is a lightning talk on the subject from Jeremy Brown (https://www.youtube.com/watch?v=9BVaTx_RJ9U). The next diagram shows the key layers and technologies used in those layers.  The key to remember is each of these layers, just like the onion are independent and not coupled. Rule # 6: Building loosely coupled layers is key to future cloud longevity. Building the Niche Cloud Layer by Layer What I am going to provide is some basic guides to get going using Red Hat products and technologies. This should serve as a prototype or demo. By no means is this meant to be anything more than allowing you to get your feet wet and understand the concepts above. Infrastructure Layer For getting started purposes I recommend getting a Hetzner Root Server. These are physical servers in the cloud that are very inexpensive, Hetzner is also what I refer to as a niche cloud. They provide metal-as-a-service and a market place where you can auction or purchase used hardware on monthly basis, hence why it is so inexpensive. It is great for prototyping, demo or conceptual work. To build OpenStack layer using RDO on RHEL or CentOS follow my blog here. PaaS Layer The PaaS can either be built using OpenShift Community (OKD) or OpenShift Enterprise. I have provided Ansible playbooks and documentation for deploying OpenShift on OpenStack in GitHub. Management Layer The management layer consists of several technologies and products. I have also provided playbooks and documentation to deploy Red Hat Satellite and Ansible Tower on OpenStack in GitHub. I have not documented Red Hat CloudForms because an image exists for OpenStack. This is pretty easy to get going using documentation provided by Red Hat. Business Process Layer The business process layer is of course highly specific. Nevertheless working with some of my colleagues, we have provided some use cases to help with business process layer. The use cases are implemented in Ansible. They can of course also be consumed via API from Ansible Tower. Below are some of the use cases. Order Infrastructure Project with Quota  Order Instance  Order Application or Service  Order Database  Customer Portal Layer Hopefully you like the idea of running an innovation lab to build prototype for your cloud portal. CloudForms could initially also be used to provided a generic portal. You definitely want to build your own but this could at least provide value in the beginning to get up and running fast while you take time to build a real portal. Below is example of the CloudForms customer portal.  Summary In this article we discussed how to approach building your own niche cloud. The importance of decoupled layers. How the layers build upon one another. We discussed technology and products that could be used to build the layers from a Red Hat perspective. Finally guidelines and ideas were provided to help get you started in building your niche cloud. Below are the important rules worth repeating, that were mentioned throughout this article.  Rule #1: The user doesn&#39;t see any layers, just the onion, but there are many, many layers. Rule #2: Automation is about abstracting complexity, process, individual domain knowledge and making it standard or easily consumable across the cloud. Rule #3: Don&#39;t lead with technology and don&#39;t just choose technology vendors solely because they exist or you have good experience with them. Rule #4: Technology and products can and should be replaced down the road, don&#39;t get attached to them. Rule #5: Anything that is dependent on individuals and heroes should be re-designed and replaced with something standard that is not. Rule # 6: Building loosely coupled layers is key to future cloud longevity.  Happy Niche Clouding! (c) 2018 Keith Tenzer &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Building A Niche Cloud: A Pragmatic Approach">
+  <meta name="twitter:description" content="source: https://innolectinc.com/how-smart-is-your-team/teamwork-ants-building-a-house/  Part I: Birth of the Niche Cloud? Part II: Building a Niche Cloud: A Pragmatic Approach  Overview Before getting started you might want to read about the birth of the niche cloud in the first part of this two part series. We have all heard the saying, you cannot teach an old dog new tricks. Yes that is true, but we aren&#39;t thankfully dogs. Learning to do something new of course, requires an open mind-set and a desire for change. Many organizations are getting left out of digital disruption these days because they keep falling back on old outdated ideas, behaviors and habits. Our minds are so full, so occupied and so tired we simply cannot grasp or don&#39;t have the energy for anything new. We spend our time applying what is new to what we know, which is old. In this article lets reset our minds and look at an approach to build a niche cloud from the ground up. Instead of pealing back the onion we will apply layer after layer until we have the onion itself. Of course I realize there is a lot more and this article is just scratching at the surface, nevertheless it is an approach, a basic rule-set and guideline for getting started.  Define your Cloud Layers Each layer must be independent of one another and all layers should be abstracted away behind our onion. When imaging a cloud, the first things is imagine the user and imagine him or her seeing the onion. Rule #1: The user doesn&#39;t see any layers, just the onion, but there are many, many layers.  Layers are necessary to abstract complexity. If you achieve a high enough abstraction level, you have essentially created a cloud, congratulations it really is that easy and yet also so complex thus I really think simplexity is a great way to understand the goal. Every layer obviously requires automation. Ideally you should settle on an automation language and build a platform around your automation. Writing a script, playbook, recipe, package, whatever is not automation. It also isn&#39;t automation if individuals in different groups can perform their tasks automatically. Rule #2: Automation is about abstracting complexity, process, individual domain knowledge and making it standard or easily consumable across the cloud. Automation is important at every layer. It should be used to construct the layers, one by one but it also plays a key role at the business process layer and customer portal layer. This is the area where you will want to invest the most time and create the most value for your customers. As such all tasks or anything running on the cloud, must be implemented in the Automation layer. Below is a diagram illustrating the key cloud layers. The entry point for customers is the portal. Customer are of course developers, users, anyone that will consume a service.  Automation Layer Responsible for deployment of layers and tooling used within them. Each layer should be deployed individually with no coupling to other layers. Layers should be orchestrated into overall workflow, enabling end-to-end cloud deployment. Infrastructure Layer Provides an abstraction on baremetal. Abstracts physical compute, storage and network resources though it is possible to move those abstractions to another layer, for example the PaaS layer. PaaS Layer Provides abstraction for services, applications and their runtimes. Ensures applications are portable and decoupled from infrastructure. PaaS layer provides consistent application layer that is independent of individual clouds, can and may actually span clouds or cloud constructs. Management Layer Provides patching, security vulnerability detection, governance, chargeback, automation platform, analytics and more across cloud(s). Management tooling should be cloud agnostic and not coupled to underlying layers. Management layer should provide interfaces for business process layer. Business Process Layer Integration with backend systems, responsible for defining services, logic, billing and other such rule sets. Responsible for handling customer accounts and customer related activities. Customer Portal Layer Interface and API exposed to end customer. Abstraction of all complexity to provide a service which is simple to understand and consume. This is all about customer experience. Products and Technologies After a discussion around the various layer and their decoupling it is important to decide on technology and products. This is obviously where most people want to start but doing so without understanding the layers and having a strategy around automation, platform capabilities and a technology roadmap would be a major mistake. Rule #3: Don&#39;t lead with technology and don&#39;t just choose technology vendors solely because they exist or you have good experience with them. You should be building your Cloud from the ground-up. Choose your technology based on how it best compliments the required capabilities and of course the desired outcomes. Envision where you want to be several years from now. I am going to provide examples using Red Hat products and technologies to build the layers and show a Red Hat approach. I think it provides a good example for how to create a technology map and map technologies to the various layers. Rule #4: Technology and products can and should be replaced down the road, don&#39;t get attached to them. Automation Layer This is the most important to get right. I think it is a no-brainer actually. Ansible provides a simple, easy language for automation. Ansible Tower provides a powerful platform around Ansible that among other things, gives Ansible an API. Using Ansible Tower would allow automation to be built, consumed and reused among various teams. Another thing I really like about Ansible is it is simple, everyone can take part, understand it and there are no heroics needed to operate. Rule #5: Anything that is dependent on individuals and heroes should be re-designed and replaced with something standard that is not. Infrastructure Layer This layer is responsible for the foundation of your Cloud. It runs on metal and needs to provide the same capabilities you would get from Amazon, Google or Microsoft. OpenStack is a no-brainer but I also think Red Hat OpenStack is a no-brainer. Red Hat OpenStack uses Director which builds an undercloud, manages metal and deploy, manages, upgrades the OpenStack overcloud. Director is built around Ironic and TripleO (OpenStack on OpenStack). Why require separate tools that need to be learned when you simply can use OpenStack to deploy OpenStack. Another critical piece is upgrades. Red Hat offers not only version to version but a fast-forward upgrade that lets you skip versions. Red Hat also provides support for 5 years on a single release. This layer needs to be rock solid and the Achilles heal of OpenStack is upgrade and lifecycle management. The reason you go with OpenStack is to abstract technology and allow you to change technologies without impacting the APIs. OpenStack is maybe the one thing you likely won&#39;t want to change, if done right and as such having a long support lifecycle is crucial. PaaS Layer While there are many, many options, I think the industry has settled on Kubernetes. Besides Google, who announced the project, Red Hat is the only company there since the beginning. Everyone is obviously jumping on the bandwagon and for good reason, every application should and will eventually run in containers. Portability of applications and a much, much faster, more streamlined release cycle alone is driving container adoption. OpenShift is by far the most advanced and enterprise ready Kubernetes. OpenShift is also a platform and this is why it makes a great choice. Kubernetes is just an orchestration layer, you need to build an ecosystem around it (container registry, sdn, security, governance, CI/CD, IaaS plugins and much more). Management Layer This layer is a little less straight forward and there is more room to come to other technology decision points. I think Ansible Tower is a given to provide Ansible-as-a-Platform. Other capabilities needed are patching, vulnerability detection, monitoring, governance and predictive systems management, going in the direction of AI. Clearly this is just a starting point and a lot more will fall into this layer. Satellite would be used for patching of Red Hat Enterprise Linux and potentially other RPM based Linux distros. If you have windows you will likely need additional patching tooling there. I am not a fan of single tools that do everything in this area. I would go with the best tools for the Operating Systems you want to offer and abstract them away through Ansible primitives. Monitoring and governance could be provided by CloudForms. It also supports other Clouds so if you are a multi-cloud organization, this can provide a layer to manage those various clouds. Governance is about policies. You need a rule-set and if those rules are violated then at a minimum people need to be notified. In addition taking action, shutting off non-compliant systems is also something to consider, depends on requirements really. For monitoring you really need something predictive that is going in the direction of an AI. What you know won&#39;t kill you, it is what you don&#39;t. Insights looks at security, configuration, even at platform level against a rule-set that is generated using an AI approach. The rule-sets come from support cases, knowledge base articles and common best practice at Red Hat. The intelligence is these rules are constantly enhanced, created and updated. Therefore if another customer hits an issue, you wouldn&#39;t have to as a rule could be triggered that could warn ahead of time based on an issue someone else experienced. Pretty cool right? How does this all come together at consumer level? Think about all the services and additional capabilities you could provide that are of value besides giving someone a dumb VM connected to the latest RPMs, like generic public cloud. You could provide lifecycle management, patch stages and so on. Governance could be used to enforce specific requirements in a standardized way. You could start to tailor your requirements to fit that of a niche cloud. Insights could be provided as a higher level service, maybe even a higher SLA level. There are many, many possibilities that go well beyond just being boring and doing what public cloud does. Business Process Layer This is your key value add. How you do billing, what processes you are able to expose, capabilities and features to enable. It is basically the logic for what gets exposed through the customer portal. Likely you will need something more sophisticated than Ansible. Business rules are also typically understood by business analysts not developers. Red Hat Decision Maker is based on drools and allows business analysts to implement rule-sets as example without needing to change code or be programmers. Think about how you offer services and what they cost? This is quite dynamic and you definitely need something that business people can change, tweak and understand. Customer Portal Layer Finally we are at the onion. This is what the customer sees. This layer should not have much logic, the intelligence should be in the business process layer. The portal is responsible for allowing customers to consume services that are offered. It is your store front and one that always has enough supply to satisfy every customer. It provides such a good abstraction that most think it is just magic and cannot begin to understand what they are seeing or experiencing. If only the knew what mess lies below? You may think these are lofty or impossible goals, but if you believe that, just don&#39;t start, it won&#39;t work is my advice. You can always be a consumer and have someone else do it for you, no shame in that. Where to get started with customer portal? How about an innovation lab?  Building your customer portal is a great opportunity to work as well as learn from some of the best and brightest opensource developers in the world. The idea is similar to cooking. Sure you can get a recipe, even watch someone cook on YouTube. Following such recipes, probably will result in something decent or even good. But, what if you send yourself or team to a five star kitchen and cook with master chefs? What do you think would happen when your got back to your kitchen? I will tell you. You will cook quite differently. You will change your tools, approach. You may even make changes to the kitchen itself. What would long term results produce? Which method would lead to them cooking better meals? I think it&#39;s obvious. It is the same thing with software development and coding. Red Hat offers something unique here and I think it is perfect for building a cloud portal prototype while learning with Red Hat&#39;s top engineers and software developers at the core of opensource innovation. If this sounds interesting here is a lightning talk on the subject from Jeremy Brown (https://www.youtube.com/watch?v=9BVaTx_RJ9U). The next diagram shows the key layers and technologies used in those layers.  The key to remember is each of these layers, just like the onion are independent and not coupled. Rule # 6: Building loosely coupled layers is key to future cloud longevity. Building the Niche Cloud Layer by Layer What I am going to provide is some basic guides to get going using Red Hat products and technologies. This should serve as a prototype or demo. By no means is this meant to be anything more than allowing you to get your feet wet and understand the concepts above. Infrastructure Layer For getting started purposes I recommend getting a Hetzner Root Server. These are physical servers in the cloud that are very inexpensive, Hetzner is also what I refer to as a niche cloud. They provide metal-as-a-service and a market place where you can auction or purchase used hardware on monthly basis, hence why it is so inexpensive. It is great for prototyping, demo or conceptual work. To build OpenStack layer using RDO on RHEL or CentOS follow my blog here. PaaS Layer The PaaS can either be built using OpenShift Community (OKD) or OpenShift Enterprise. I have provided Ansible playbooks and documentation for deploying OpenShift on OpenStack in GitHub. Management Layer The management layer consists of several technologies and products. I have also provided playbooks and documentation to deploy Red Hat Satellite and Ansible Tower on OpenStack in GitHub. I have not documented Red Hat CloudForms because an image exists for OpenStack. This is pretty easy to get going using documentation provided by Red Hat. Business Process Layer The business process layer is of course highly specific. Nevertheless working with some of my colleagues, we have provided some use cases to help with business process layer. The use cases are implemented in Ansible. They can of course also be consumed via API from Ansible Tower. Below are some of the use cases. Order Infrastructure Project with Quota  Order Instance  Order Application or Service  Order Database  Customer Portal Layer Hopefully you like the idea of running an innovation lab to build prototype for your cloud portal. CloudForms could initially also be used to provided a generic portal. You definitely want to build your own but this could at least provide value in the beginning to get up and running fast while you take time to build a real portal. Below is example of the CloudForms customer portal.  Summary In this article we discussed how to approach building your own niche cloud. The importance of decoupled layers. How the layers build upon one another. We discussed technology and products that could be used to build the layers from a Red Hat perspective. Finally guidelines and ideas were provided to help get you started in building your niche cloud. Below are the important rules worth repeating, that were mentioned throughout this article.  Rule #1: The user doesn&#39;t see any layers, just the onion, but there are many, many layers. Rule #2: Automation is about abstracting complexity, process, individual domain knowledge and making it standard or easily consumable across the cloud. Rule #3: Don&#39;t lead with technology and don&#39;t just choose technology vendors solely because they exist or you have good experience with them. Rule #4: Technology and products can and should be replaced down the road, don&#39;t get attached to them. Rule #5: Anything that is dependent on individuals and heroes should be re-designed and replaced with something standard that is not. Rule # 6: Building loosely coupled layers is key to future cloud longevity.  Happy Niche Clouding! (c) 2018 Keith Tenzer &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;">
+  <meta name="twitter:url" content="https://keithtenzer.com/cloud/building-a-niche-cloud-a-pragmatic-approach/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2018-10-25T00:00:00-07:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/cloud/building-a-niche-cloud-a-pragmatic-approach/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#cloud" itemprop="item"><span itemprop="name">Cloud</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Building A Niche Cloud: A Pragmatic Approach</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Building A Niche Cloud: A Pragmatic Approach">
+    <meta itemprop="description" content="source: https://innolectinc.com/how-smart-is-your-team/teamwork-ants-building-a-house/Part I: Birth of the Niche Cloud?Part II: Building a Niche Cloud: A Pragmatic ApproachOverviewBefore getting started you might want to read about the birth of the niche cloud in the first part of this two part series.We have all heard the saying, you cannot teach an old dog new tricks. Yes that is true, but we aren&#39;t thankfully dogs. Learning to do something new of course, requires an open mind-set and a desire for change. Many organizations are getting left out of digital disruption these days because they keep falling back on old outdated ideas, behaviors and habits. Our minds are so full, so occupied and so tired we simply cannot grasp or don&#39;t have the energy for anything new. We spend our time applying what is new to what we know, which is old.In this article lets reset our minds and look at an approach to build a niche cloud from the ground up. Instead of pealing back the onion we will apply layer after layer until we have the onion itself. Of course I realize there is a lot more and this article is just scratching at the surface, nevertheless it is an approach, a basic rule-set and guideline for getting started.Define your Cloud LayersEach layer must be independent of one another and all layers should be abstracted away behind our onion. When imaging a cloud, the first things is imagine the user and imagine him or her seeing the onion. Rule #1: The user doesn&#39;t see any layers, just the onion, but there are many, many layers.Layers are necessary to abstract complexity. If you achieve a high enough abstraction level, you have essentially created a cloud, congratulations it really is that easy and yet also so complex thus I really think simplexity is a great way to understand the goal.Every layer obviously requires automation. Ideally you should settle on an automation language and build a platform around your automation. Writing a script, playbook, recipe, package, whatever is not automation. It also isn&#39;t automation if individuals in different groups can perform their tasks automatically. Rule #2: Automation is about abstracting complexity, process, individual domain knowledge and making it standard or easily consumable across the cloud. Automation is important at every layer. It should be used to construct the layers, one by one but it also plays a key role at the business process layer and customer portal layer. This is the area where you will want to invest the most time and create the most value for your customers. As such all tasks or anything running on the cloud, must be implemented in the Automation layer.Below is a diagram illustrating the key cloud layers. The entry point for customers is the portal. Customer are of course developers, users, anyone that will consume a service.Automation LayerResponsible for deployment of layers and tooling used within them. Each layer should be deployed individually with no coupling to other layers. Layers should be orchestrated into overall workflow, enabling end-to-end cloud deployment.Infrastructure LayerProvides an abstraction on baremetal. Abstracts physical compute, storage and network resources though it is possible to move those abstractions to another layer, for example the PaaS layer.PaaS LayerProvides abstraction for services, applications and their runtimes. Ensures applications are portable and decoupled from infrastructure. PaaS layer provides consistent application layer that is independent of individual clouds, can and may actually span clouds or cloud constructs.Management LayerProvides patching, security vulnerability detection, governance, chargeback, automation platform, analytics and more across cloud(s). Management tooling should be cloud agnostic and not coupled to underlying layers. Management layer should provide interfaces for business process layer.Business Process LayerIntegration with backend systems, responsible for defining services, logic, billing and other such rule sets. Responsible for handling customer accounts and customer related activities.Customer Portal LayerInterface and API exposed to end customer. Abstraction of all complexity to provide a service which is simple to understand and consume. This is all about customer experience.Products and TechnologiesAfter a discussion around the various layer and their decoupling it is important to decide on technology and products. This is obviously where most people want to start but doing so without understanding the layers and having a strategy around automation, platform capabilities and a technology roadmap would be a major mistake. Rule #3: Don&#39;t lead with technology and don&#39;t just choose technology vendors solely because they exist or you have good experience with them. You should be building your Cloud from the ground-up. Choose your technology based on how it best compliments the required capabilities and of course the desired outcomes. Envision where you want to be several years from now.I am going to provide examples using Red Hat products and technologies to build the layers and show a Red Hat approach. I think it provides a good example for how to create a technology map and map technologies to the various layers. Rule #4: Technology and products can and should be replaced down the road, don&#39;t get attached to them.Automation LayerThis is the most important to get right. I think it is a no-brainer actually. Ansible provides a simple, easy language for automation. Ansible Tower provides a powerful platform around Ansible that among other things, gives Ansible an API. Using Ansible Tower would allow automation to be built, consumed and reused among various teams. Another thing I really like about Ansible is it is simple, everyone can take part, understand it and there are no heroics needed to operate. Rule #5: Anything that is dependent on individuals and heroes should be re-designed and replaced with something standard that is not.Infrastructure LayerThis layer is responsible for the foundation of your Cloud. It runs on metal and needs to provide the same capabilities you would get from Amazon, Google or Microsoft. OpenStack is a no-brainer but I also think Red Hat OpenStack is a no-brainer. Red Hat OpenStack uses Director which builds an undercloud, manages metal and deploy, manages, upgrades the OpenStack overcloud. Director is built around Ironic and TripleO (OpenStack on OpenStack). Why require separate tools that need to be learned when you simply can use OpenStack to deploy OpenStack. Another critical piece is upgrades. Red Hat offers not only version to version but a fast-forward upgrade that lets you skip versions. Red Hat also provides support for 5 years on a single release. This layer needs to be rock solid and the Achilles heal of OpenStack is upgrade and lifecycle management. The reason you go with OpenStack is to abstract technology and allow you to change technologies without impacting the APIs. OpenStack is maybe the one thing you likely won&#39;t want to change, if done right and as such having a long support lifecycle is crucial.PaaS LayerWhile there are many, many options, I think the industry has settled on Kubernetes. Besides Google, who announced the project, Red Hat is the only company there since the beginning. Everyone is obviously jumping on the bandwagon and for good reason, every application should and will eventually run in containers. Portability of applications and a much, much faster, more streamlined release cycle alone is driving container adoption. OpenShift is by far the most advanced and enterprise ready Kubernetes. OpenShift is also a platform and this is why it makes a great choice. Kubernetes is just an orchestration layer, you need to build an ecosystem around it (container registry, sdn, security, governance, CI/CD, IaaS plugins and much more).Management LayerThis layer is a little less straight forward and there is more room to come to other technology decision points. I think Ansible Tower is a given to provide Ansible-as-a-Platform. Other capabilities needed are patching, vulnerability detection, monitoring, governance and predictive systems management, going in the direction of AI. Clearly this is just a starting point and a lot more will fall into this layer.Satellite would be used for patching of Red Hat Enterprise Linux and potentially other RPM based Linux distros. If you have windows you will likely need additional patching tooling there. I am not a fan of single tools that do everything in this area. I would go with the best tools for the Operating Systems you want to offer and abstract them away through Ansible primitives.Monitoring and governance could be provided by CloudForms. It also supports other Clouds so if you are a multi-cloud organization, this can provide a layer to manage those various clouds. Governance is about policies. You need a rule-set and if those rules are violated then at a minimum people need to be notified. In addition taking action, shutting off non-compliant systems is also something to consider, depends on requirements really.For monitoring you really need something predictive that is going in the direction of an AI. What you know won&#39;t kill you, it is what you don&#39;t. Insights looks at security, configuration, even at platform level against a rule-set that is generated using an AI approach. The rule-sets come from support cases, knowledge base articles and common best practice at Red Hat. The intelligence is these rules are constantly enhanced, created and updated. Therefore if another customer hits an issue, you wouldn&#39;t have to as a rule could be triggered that could warn ahead of time based on an issue someone else experienced. Pretty cool right?How does this all come together at consumer level? Think about all the services and additional capabilities you could provide that are of value besides giving someone a dumb VM connected to the latest RPMs, like generic public cloud. You could provide lifecycle management, patch stages and so on. Governance could be used to enforce specific requirements in a standardized way. You could start to tailor your requirements to fit that of a niche cloud. Insights could be provided as a higher level service, maybe even a higher SLA level. There are many, many possibilities that go well beyond just being boring and doing what public cloud does.Business Process LayerThis is your key value add. How you do billing, what processes you are able to expose, capabilities and features to enable. It is basically the logic for what gets exposed through the customer portal. Likely you will need something more sophisticated than Ansible. Business rules are also typically understood by business analysts not developers. Red Hat Decision Maker is based on drools and allows business analysts to implement rule-sets as example without needing to change code or be programmers. Think about how you offer services and what they cost? This is quite dynamic and you definitely need something that business people can change, tweak and understand.Customer Portal LayerFinally we are at the onion. This is what the customer sees. This layer should not have much logic, the intelligence should be in the business process layer. The portal is responsible for allowing customers to consume services that are offered. It is your store front and one that always has enough supply to satisfy every customer. It provides such a good abstraction that most think it is just magic and cannot begin to understand what they are seeing or experiencing. If only the knew what mess lies below? You may think these are lofty or impossible goals, but if you believe that, just don&#39;t start, it won&#39;t work is my advice. You can always be a consumer and have someone else do it for you, no shame in that.Where to get started with customer portal? How about an innovation lab?Building your customer portal is a great opportunity to work as well as learn from some of the best and brightest opensource developers in the world. The idea is similar to cooking. Sure you can get a recipe, even watch someone cook on YouTube. Following such recipes, probably will result in something decent or even good. But, what if you send yourself or team to a five star kitchen and cook with master chefs? What do you think would happen when your got back to your kitchen?I will tell you. You will cook quite differently. You will change your tools, approach. You may even make changes to the kitchen itself. What would long term results produce? Which method would lead to them cooking better meals? I think it&#39;s obvious.It is the same thing with software development and coding. Red Hat offers something unique here and I think it is perfect for building a cloud portal prototype while learning with Red Hat&#39;s top engineers and software developers at the core of opensource innovation. If this sounds interesting here is a lightning talk on the subject from Jeremy Brown (https://www.youtube.com/watch?v=9BVaTx_RJ9U).The next diagram shows the key layers and technologies used in those layers.The key to remember is each of these layers, just like the onion are independent and not coupled. Rule # 6: Building loosely coupled layers is key to future cloud longevity.Building the Niche Cloud Layer by LayerWhat I am going to provide is some basic guides to get going using Red Hat products and technologies. This should serve as a prototype or demo. By no means is this meant to be anything more than allowing you to get your feet wet and understand the concepts above.Infrastructure LayerFor getting started purposes I recommend getting a Hetzner Root Server. These are physical servers in the cloud that are very inexpensive, Hetzner is also what I refer to as a niche cloud. They provide metal-as-a-service and a market place where you can auction or purchase used hardware on monthly basis, hence why it is so inexpensive. It is great for prototyping, demo or conceptual work.To build OpenStack layer using RDO on RHEL or CentOS follow my blog here.PaaS LayerThe PaaS can either be built using OpenShift Community (OKD) or OpenShift Enterprise. I have provided Ansible playbooks and documentation for deploying OpenShift on OpenStack in GitHub.Management LayerThe management layer consists of several technologies and products. I have also provided playbooks and documentation to deploy Red Hat Satellite and Ansible Tower on OpenStack in GitHub. I have not documented Red Hat CloudForms because an image exists for OpenStack. This is pretty easy to get going using documentation provided by Red Hat.Business Process LayerThe business process layer is of course highly specific. Nevertheless working with some of my colleagues, we have provided some use cases to help with business process layer. The use cases are implemented in Ansible. They can of course also be consumed via API from Ansible Tower. Below are some of the use cases.Order Infrastructure Project with QuotaOrder InstanceOrder Application or ServiceOrder DatabaseCustomer Portal LayerHopefully you like the idea of running an innovation lab to build prototype for your cloud portal. CloudForms could initially also be used to provided a generic portal. You definitely want to build your own but this could at least provide value in the beginning to get up and running fast while you take time to build a real portal. Below is example of the CloudForms customer portal.SummaryIn this article we discussed how to approach building your own niche cloud. The importance of decoupled layers. How the layers build upon one another. We discussed technology and products that could be used to build the layers from a Red Hat perspective. Finally guidelines and ideas were provided to help get you started in building your niche cloud. Below are the important rules worth repeating, that were mentioned throughout this article.Rule #1: The user doesn&#39;t see any layers, just the onion, but there are many, many layers.Rule #2: Automation is about abstracting complexity, process, individual domain knowledge and making it standard or easily consumable across the cloud.Rule #3: Don&#39;t lead with technology and don&#39;t just choose technology vendors solely because they exist or you have good experience with them.Rule #4: Technology and products can and should be replaced down the road, don&#39;t get attached to them.Rule #5: Anything that is dependent on individuals and heroes should be re-designed and replaced with something standard that is not.Rule # 6: Building loosely coupled layers is key to future cloud longevity.Happy Niche Clouding!(c) 2018 Keith Tenzer&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;">
+    <meta itemprop="datePublished" content="2018-10-25T00:00:00-07:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Building A Niche Cloud: A Pragmatic Approach
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2018-10-25T00:00:00-07:00">October 25, 2018</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          27 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h2><img class="alignnone size-full wp-image-12595" src="/assets/2018/10/teamwork-ants-building-a-house.jpg" alt="Teamwork-ants-building-a-house" width="1000" height="739" /></h2>
+<p><em>source: https://innolectinc.com/how-smart-is-your-team/teamwork-ants-building-a-house/</em></p>
+<ul>
+<li><a href="https://keithtenzer.com/2018/10/05/the-birth-of-the-niche-cloud/">Part I: Birth of the Niche Cloud?</a></li>
+<li><a href="https://keithtenzer.com/2018/10/25/building-a-niche-cloud-a-pragmatic-approach/">Part II: Building a Niche Cloud: A Pragmatic Approach</a></li>
+</ul>
+<h2>Overview</h2>
+<p>Before getting started you might want to read about the birth of the niche cloud in the first part of this two part series.</p>
+<p>We have all heard the saying, you cannot teach an old dog new tricks. Yes that is true, but we aren't thankfully dogs. Learning to do something new of course, requires an open mind-set and a desire for change. Many organizations are getting left out of digital disruption these days because they keep falling back on old outdated ideas, behaviors and habits. Our minds are so full, so occupied and so tired we simply cannot grasp or don't have the energy for anything new. We spend our time applying what is new to what we know, which is old.</p>
+<p>In this article lets reset our minds and look at an approach to build a niche cloud from the ground up. Instead of pealing back the onion we will apply layer after layer until we have the onion itself. Of course I realize there is a lot more and this article is just scratching at the surface, nevertheless it is an approach, a basic rule-set and guideline for getting started.</p>
+<p><!--more--></p>
+<h2>Define your Cloud Layers</h2>
+<p>Each layer must be independent of one another and all layers should be abstracted away behind our onion. When imaging a cloud, the first things is imagine the user and imagine him or her seeing the onion. <strong>Rule #1: The user doesn't see any layers, just the onion, but there are many, many layers</strong>.</p>
+<p><img class="alignnone  wp-image-12610" src="/assets/2018/10/simplexity.png" alt="simplexity" width="1385" height="507" /></p>
+<p>Layers are necessary to abstract complexity. If you achieve a high enough abstraction level, you have essentially created a cloud, congratulations it really is that easy and yet also so complex thus I really think simplexity is a great way to understand the goal.</p>
+<p>Every layer obviously requires automation. Ideally you should settle on an automation language and build a platform around your automation. Writing a script, playbook, recipe, package, whatever is not automation. It also isn't automation if individuals in different groups can perform their tasks automatically. <strong>Rule #2: Automation is about abstracting complexity, process, individual domain knowledge and making it standard or easily consumable across the cloud</strong>. Automation is important at every layer. It should be used to construct the layers, one by one but it also plays a key role at the business process layer and customer portal layer. This is the area where you will want to invest the most time and create the most value for your customers. As such all tasks or anything running on the cloud, must be implemented in the Automation layer.</p>
+<p>Below is a diagram illustrating the key cloud layers. The entry point for customers is the portal. Customer are of course developers, users, anyone that will consume a service.</p>
+<p><img class="alignnone  wp-image-12586" src="/assets/2018/10/cloud_layers3.png" alt="cloud_layers" width="1384" height="680" /></p>
+<h3>Automation Layer</h3>
+<p>Responsible for deployment of layers and tooling used within them. Each layer should be deployed individually with no coupling to other layers. Layers should be orchestrated into overall workflow, enabling end-to-end cloud deployment.</p>
+<h3>Infrastructure Layer</h3>
+<p>Provides an abstraction on baremetal. Abstracts physical compute, storage and network resources though it is possible to move those abstractions to another layer, for example the PaaS layer.</p>
+<h3>PaaS Layer</h3>
+<p>Provides abstraction for services, applications and their runtimes. Ensures applications are portable and decoupled from infrastructure. PaaS layer provides consistent application layer that is independent of individual clouds, can and may actually span clouds or cloud constructs.</p>
+<h3>Management Layer</h3>
+<p>Provides patching, security vulnerability detection, governance, chargeback, automation platform, analytics and more across cloud(s). Management tooling should be cloud agnostic and not coupled to underlying layers. Management layer should provide interfaces for business process layer.</p>
+<h3>Business Process Layer</h3>
+<p>Integration with backend systems, responsible for defining services, logic, billing and other such rule sets. Responsible for handling customer accounts and customer related activities.</p>
+<h3>Customer Portal Layer</h3>
+<p>Interface and API exposed to end customer. Abstraction of all complexity to provide a service which is simple to understand and consume. This is all about customer experience.</p>
+<h2>Products and Technologies</h2>
+<p>After a discussion around the various layer and their decoupling it is important to decide on technology and products. This is obviously where most people want to start but doing so without understanding the layers and having a strategy around automation, platform capabilities and a technology roadmap would be a major mistake. <b>Rule #3: Don't lead with technology and don't just choose technology vendors solely because they exist or you have good experience with them</b>. You should be building your Cloud from the ground-up. Choose your technology based on how it best compliments the required capabilities and of course the desired outcomes. Envision where you want to be several years from now.</p>
+<p>I am going to provide examples using Red Hat products and technologies to build the layers and show a Red Hat approach. I think it provides a good example for how to create a technology map and map technologies to the various layers. <strong>Rule #4: Technology and products can and should be replaced down the road, don't get attached to them</strong>.</p>
+<h3>Automation Layer</h3>
+<p>This is the most important to get right. I think it is a no-brainer actually. Ansible provides a simple, easy language for automation. Ansible Tower provides a powerful platform around Ansible that among other things, gives Ansible an API. Using Ansible Tower would allow automation to be built, consumed and reused among various teams. Another thing I really like about Ansible is it is simple, everyone can take part, understand it and there are no heroics needed to operate. <b>Rule #5: Anything that is dependent on individuals and heroes should be re-designed and replaced with something standard that is not.</b></p>
+<h3>Infrastructure Layer</h3>
+<p>This layer is responsible for the foundation of your Cloud. It runs on metal and needs to provide the same capabilities you would get from Amazon, Google or Microsoft. OpenStack is a no-brainer but I also think Red Hat OpenStack is a no-brainer. Red Hat OpenStack uses Director which builds an undercloud, manages metal and deploy, manages, upgrades the OpenStack overcloud. Director is built around Ironic and TripleO (OpenStack on OpenStack). Why require separate tools that need to be learned when you simply can use OpenStack to deploy OpenStack. Another critical piece is upgrades. Red Hat offers not only version to version but a fast-forward upgrade that lets you skip versions. Red Hat also provides support for 5 years on a single release. This layer needs to be rock solid and the Achilles heal of OpenStack is upgrade and lifecycle management. The reason you go with OpenStack is to abstract technology and allow you to change technologies without impacting the APIs. OpenStack is maybe the one thing you likely won't want to change, if done right and as such having a long support lifecycle is crucial.</p>
+<h3><strong>PaaS Layer</strong></h3>
+<p>While there are many, many options, I think the industry has settled on Kubernetes. Besides Google, who announced the project, Red Hat is the only company there since the beginning. Everyone is obviously jumping on the bandwagon and for good reason, every application should and will eventually run in containers. Portability of applications and a much, much faster, more streamlined release cycle alone is driving container adoption. OpenShift is by far the most advanced and enterprise ready Kubernetes. OpenShift is also a platform and this is why it makes a great choice. Kubernetes is just an orchestration layer, you need to build an ecosystem around it (container registry, sdn, security, governance, CI/CD, IaaS plugins and much more).</p>
+<h3>Management Layer</h3>
+<p>This layer is a little less straight forward and there is more room to come to other technology decision points. I think Ansible Tower is a given to provide Ansible-as-a-Platform. Other capabilities needed are patching, vulnerability detection, monitoring, governance and predictive systems management, going in the direction of AI. Clearly this is just a starting point and a lot more will fall into this layer.</p>
+<p>Satellite would be used for patching of Red Hat Enterprise Linux and potentially other RPM based Linux distros. If you have windows you will likely need additional patching tooling there. I am not a fan of single tools that do everything in this area. I would go with the best tools for the Operating Systems you want to offer and abstract them away through Ansible primitives.</p>
+<p>Monitoring and governance could be provided by CloudForms. It also supports other Clouds so if you are a multi-cloud organization, this can provide a layer to manage those various clouds. Governance is about policies. You need a rule-set and if those rules are violated then at a minimum people need to be notified. In addition taking action, shutting off non-compliant systems is also something to consider, depends on requirements really.</p>
+<p>For monitoring you really need something predictive that is going in the direction of an AI. What you know won't kill you, it is what you don't. Insights looks at security, configuration, even at platform level against a rule-set that is generated using an AI approach. The rule-sets come from support cases, knowledge base articles and common best practice at Red Hat. The intelligence is these rules are constantly enhanced, created and updated. Therefore if another customer hits an issue, you wouldn't have to as a rule could be triggered that could warn ahead of time based on an issue someone else experienced. Pretty cool right?</p>
+<p>How does this all come together at consumer level? Think about all the services and additional capabilities you could provide that are of value besides giving someone a dumb VM connected to the latest RPMs, like generic public cloud. You could provide lifecycle management, patch stages and so on. Governance could be used to enforce specific requirements in a standardized way. You could start to tailor your requirements to fit that of a niche cloud. Insights could be provided as a higher level service, maybe even a higher SLA level. There are many, many possibilities that go well beyond just being boring and doing what public cloud does.</p>
+<h3>Business Process Layer</h3>
+<p>This is your key value add. How you do billing, what processes you are able to expose, capabilities and features to enable. It is basically the logic for what gets exposed through the customer portal. Likely you will need something more sophisticated than Ansible. Business rules are also typically understood by business analysts not developers. Red Hat Decision Maker is based on drools and allows business analysts to implement rule-sets as example without needing to change code or be programmers. Think about how you offer services and what they cost? This is quite dynamic and you definitely need something that business people can change, tweak and understand.</p>
+<h3>Customer Portal Layer</h3>
+<p>Finally we are at the onion. This is what the customer sees. This layer should not have much logic, the intelligence should be in the business process layer. The portal is responsible for allowing customers to consume services that are offered. It is your store front and one that always has enough supply to satisfy every customer. It provides such a good abstraction that most think it is just magic and cannot begin to understand what they are seeing or experiencing. If only the knew what mess lies below? You may think these are lofty or impossible goals, but if you believe that, just don't start, it won't work is my advice. You can always be a consumer and have someone else do it for you, no shame in that.</p>
+<p>Where to get started with customer portal? How about an innovation lab?</p>
+<p><img class="alignnone size-full wp-image-12585" src="/assets/2018/10/oil-logo.png" alt="oil-logo" width="200" height="200" /></p>
+<p>Building your customer portal is a great opportunity to work as well as learn from some of the best and brightest opensource developers in the world. The idea is similar to cooking. Sure you can get a recipe, even watch someone cook on YouTube. Following such recipes, probably will result in something decent or even good. But, what if you send yourself or team to a five star kitchen and cook with master chefs? What do you think would happen when your got back to your kitchen?</p>
+<p>I will tell you. You will cook quite differently. You will change your tools, approach. You may even make changes to the kitchen itself. What would long term results produce? Which method would lead to them cooking better meals? I think it's obvious.</p>
+<p>It is the same thing with software development and coding. Red Hat offers something unique here and I think it is perfect for building a cloud portal prototype while learning with Red Hat's top engineers and software developers at the core of opensource innovation. If this sounds interesting here is a lightning talk on the subject from Jeremy Brown (<a href="https://www.youtube.com/watch?v=9BVaTx_RJ9U">https://www.youtube.com/watch?v=9BVaTx_RJ9U</a>).</p>
+<p>The next diagram shows the key layers and technologies used in those layers.</p>
+<p><img class="alignnone  wp-image-12584" src="/assets/2018/10/cloud_layers_with_products2.png" alt="cloud_layers_with_products" width="1304" height="719" /></p>
+<p>The key to remember is each of these layers, just like the onion are independent and not coupled. <strong>Rule # 6: Building loosely coupled layers is key to future cloud longevity</strong>.</p>
+<h2>Building the Niche Cloud Layer by Layer</h2>
+<p>What I am going to provide is some basic guides to get going using Red Hat products and technologies. This should serve as a prototype or demo. By no means is this meant to be anything more than allowing you to get your feet wet and understand the concepts above.</p>
+<h3>Infrastructure Layer</h3>
+<p>For getting started purposes I recommend getting a <a href="https://www.hetzner.com/sb?country=DE">Hetzner Root Server</a>. These are physical servers in the cloud that are very inexpensive, Hetzner is also what I refer to as a niche cloud. They provide metal-as-a-service and a market place where you can auction or purchase used hardware on monthly basis, hence why it is so inexpensive. It is great for prototyping, demo or conceptual work.</p>
+<p>To build OpenStack layer using RDO on RHEL or CentOS follow my blog <a href="https://keithtenzer.com/2018/07/17/openstack-13-queens-lab-installation-and-configuration-guide-for-hetzner-root-servers/">here</a>.</p>
+<h3>PaaS Layer</h3>
+<p>The PaaS can either be built using OpenShift Community (OKD) or OpenShift Enterprise. I have provided Ansible playbooks and documentation for deploying OpenShift on OpenStack in <a href="https://github.com/ktenzer/openshift-on-openstack-123">GitHub</a>.</p>
+<h3>Management Layer</h3>
+<p>The management layer consists of several technologies and products. I have also provided playbooks and documentation to deploy <a href="https://github.com/ktenzer/satellite-on-openstack-123">Red Hat Satellite</a> and <a href="https://github.com/ktenzer/ansible-tower-on-openstack-123">Ansible Tower</a> on OpenStack in GitHub. I have not documented Red Hat CloudForms because an image exists for OpenStack. This is pretty easy to get going using <a href="https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.6/html/installing_red_hat_cloudforms_on_red_hat_openstack_platform/">documentation </a>provided by Red Hat.</p>
+<h3>Business Process Layer</h3>
+<p>The business process layer is of course highly specific. Nevertheless working with some of my colleagues, we have provided some <a href="https://github.com/ktenzer/openshift-and-openstack-use-cases">use cases</a> to help with business process layer. The use cases are implemented in Ansible. They can of course also be consumed via API from Ansible Tower. Below are some of the use cases.</p>
+<p><strong>Order Infrastructure Project with Quota</strong></p>
+<p><img class="alignnone size-full wp-image-12591" src="/assets/2018/10/order_osp_project.png" alt="order_osp_project" width="475" height="544" /></p>
+<p><strong>Order Instance</strong></p>
+<p><img class="alignnone size-full wp-image-12588" src="/assets/2018/10/order_instance.png" alt="order_instance" width="731" height="580" /></p>
+<p><strong>Order Application or Service</strong></p>
+<p><img class="alignnone size-full wp-image-12594" src="/assets/2018/10/order_app_service_li.jpg" alt="order_app_service_LI" width="388" height="570" /></p>
+<p><strong>Order Database</strong></p>
+<p><img class="alignnone size-full wp-image-12590" src="/assets/2018/10/order_db_service.png" alt="order_db_service" width="471" height="505" /></p>
+<p><strong>Customer Portal Layer</strong></p>
+<p>Hopefully you like the idea of running an innovation lab to build prototype for your cloud portal. CloudForms could initially also be used to provided a generic portal. You definitely want to build your own but this could at least provide value in the beginning to get up and running fast while you take time to build a real portal. Below is example of the CloudForms customer portal.</p>
+<p><img class="alignnone  wp-image-12593" src="/assets/2018/10/customerportal_li.jpg" alt="customerportal_LI" width="1239" height="687" /></p>
+<h2>Summary</h2>
+<p>In this article we discussed how to approach building your own niche cloud. The importance of decoupled layers. How the layers build upon one another. We discussed technology and products that could be used to build the layers from a Red Hat perspective. Finally guidelines and ideas were provided to help get you started in building your niche cloud. Below are the important rules worth repeating, that were mentioned throughout this article.</p>
+<ul>
+<li><strong>Rule #1: </strong><strong>The user doesn't see any layers, just the onion, but there are many, many layers.</strong></li>
+<li><strong>Rule #2: Automation is about abstracting complexity, process, individual domain knowledge and making it standard or easily consumable across the cloud.</strong></li>
+<li><b>Rule #3: Don't lead with technology and don't just choose technology vendors solely because they exist or you have good experience with them.</b></li>
+<li><strong>Rule #4: Technology and products can and should be replaced down the road, don't get attached to them.</strong></li>
+<li><b>Rule #5: Anything that is dependent on individuals and heroes should be re-designed and replaced with something standard that is not.</b></li>
+<li><strong>Rule # 6: Building loosely coupled layers is key to future cloud longevity.</strong></li>
+</ul>
+<p>Happy Niche Clouding!</p>
+<p>(c) 2018 Keith Tenzer</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#ansible" class="page__taxonomy-item" rel="tag">Ansible</a><span class="sep">, </span>
+    
+      <a href="/tags/#cloud" class="page__taxonomy-item" rel="tag">Cloud</a><span class="sep">, </span>
+    
+      <a href="/tags/#cloudforms" class="page__taxonomy-item" rel="tag">CloudForms</a><span class="sep">, </span>
+    
+      <a href="/tags/#innovationlabs" class="page__taxonomy-item" rel="tag">innovationlabs</a><span class="sep">, </span>
+    
+      <a href="/tags/#insights" class="page__taxonomy-item" rel="tag">Insights</a><span class="sep">, </span>
+    
+      <a href="/tags/#nichecloud" class="page__taxonomy-item" rel="tag">nichecloud</a><span class="sep">, </span>
+    
+      <a href="/tags/#opensource" class="page__taxonomy-item" rel="tag">opensource</a><span class="sep">, </span>
+    
+      <a href="/tags/#openstack" class="page__taxonomy-item" rel="tag">OpenStack</a><span class="sep">, </span>
+    
+      <a href="/tags/#satellite" class="page__taxonomy-item" rel="tag">Satellite</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#cloud" class="page__taxonomy-item" rel="tag">Cloud</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2018-10-25T00:00:00-07:00">October 25, 2018</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Building+A+Niche+Cloud%3A+A+Pragmatic+Approach%20https%3A%2F%2Fkeithtenzer.com%2Fcloud%2Fbuilding-a-niche-cloud-a-pragmatic-approach%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fcloud%2Fbuilding-a-niche-cloud-a-pragmatic-approach%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fcloud%2Fbuilding-a-niche-cloud-a-pragmatic-approach%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openstack/openstack-14-rocky-lab-installation-and-configuration-guide-for-hetzner-root-servers/" class="pagination--pager" title="OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers
+">Previous</a>
+    
+    
+      <a href="/openshift/getting-started-with-machine-learning/" class="pagination--pager" title="Getting Started with Machine Learning
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>

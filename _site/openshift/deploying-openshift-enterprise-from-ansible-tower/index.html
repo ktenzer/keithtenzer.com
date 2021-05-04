@@ -1,0 +1,880 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.22.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Deploying OpenShift Enterprise from Ansible Tower - KEITHTENZER.COM</title>
+<meta name="description" content="   Overview In this article we will look at how to use Ansible Tower to deploy and manage OpenShift environments. OpenShift of course uses Ansible as its deployment and configuration tool already. While that is great, using Tower provides several major advantages:  UI for OpenShift deployment and configuration management Secure store for credentials RBAC and ability to delegate different responsibilities for OpenShift deployments Easy to visualize and manage multiple OpenShift environments and even versions of OpenShift History, audit trail and detailed logging in central location for all OpenShift environments and deployments   Prepare OpenShift Environment In this example we will be doing an all-in-one deployment of OpenShift. The following steps should be done on OpenShift masters and nodes. Again here we just have one node since it is an all-in-one. CONFIGURE A VMs WITH FOLLOWING:  RHEL 7.2 2 CPUs 4096 RAM 30GB disk for OS 25GB disk for docker images  REGISTER VALID SUBSCRIPTION # subscription-manager register # subscription-manager attach --pool=843298293829382 # subscription-manager repos --disable=&quot;*&quot; #subscription-manager repos \     --enable=&quot;rhel-7-server-rpms&quot; \     --enable=&quot;rhel-7-server-extras-rpms&quot; \     --enable=&quot;rhel-7-server-ose-3.3-rpms&quot; INSTALL REQUIRED TOOLS # yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion UPDATE # yum update -y RESTART OPENSHIFT MASTER # systemctl reboot CONFIGURE DOCKER # yum install -y docker-1.10.3 ENABLE DOCKER DAEMON TO PULL FROM OPENSHIFT REGISTRY # vi /etc/sysconfig/docker OPTIONS=&#39;--selinux-enabled --insecure-registry 172.30.0.0/16&#39; SETUP DOCKER STORAGE FOR OPENSHIFT REGISTRY Note: we will use the second disk for configuring docker storage. # cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF # docker-storage-setup ENABLE AND START DOCKER DAEMON # systemctl enable docker # systemctl start docker Import OpenShift inventory into Ansible Tower These steps should be done directly on the host running Ansible Tower. Create Inventory in Ansible Tower Under inventories add a new inventory.  Create directors for OpenShift inventory # mkdir /root/ose3 Setup ansible-hosts file # vi /root/ose3/ansible-hosts ########################## ### OSEv3 Server Types ### ########################## [OSEv3:children] masters nodes etcd">
+
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:title" content="Deploying OpenShift Enterprise from Ansible Tower">
+<meta property="og:url" content="https://keithtenzer.com/openshift/deploying-openshift-enterprise-from-ansible-tower/">
+
+
+  <meta property="og:description" content="   Overview In this article we will look at how to use Ansible Tower to deploy and manage OpenShift environments. OpenShift of course uses Ansible as its deployment and configuration tool already. While that is great, using Tower provides several major advantages:  UI for OpenShift deployment and configuration management Secure store for credentials RBAC and ability to delegate different responsibilities for OpenShift deployments Easy to visualize and manage multiple OpenShift environments and even versions of OpenShift History, audit trail and detailed logging in central location for all OpenShift environments and deployments   Prepare OpenShift Environment In this example we will be doing an all-in-one deployment of OpenShift. The following steps should be done on OpenShift masters and nodes. Again here we just have one node since it is an all-in-one. CONFIGURE A VMs WITH FOLLOWING:  RHEL 7.2 2 CPUs 4096 RAM 30GB disk for OS 25GB disk for docker images  REGISTER VALID SUBSCRIPTION # subscription-manager register # subscription-manager attach --pool=843298293829382 # subscription-manager repos --disable=&quot;*&quot; #subscription-manager repos \     --enable=&quot;rhel-7-server-rpms&quot; \     --enable=&quot;rhel-7-server-extras-rpms&quot; \     --enable=&quot;rhel-7-server-ose-3.3-rpms&quot; INSTALL REQUIRED TOOLS # yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion UPDATE # yum update -y RESTART OPENSHIFT MASTER # systemctl reboot CONFIGURE DOCKER # yum install -y docker-1.10.3 ENABLE DOCKER DAEMON TO PULL FROM OPENSHIFT REGISTRY # vi /etc/sysconfig/docker OPTIONS=&#39;--selinux-enabled --insecure-registry 172.30.0.0/16&#39; SETUP DOCKER STORAGE FOR OPENSHIFT REGISTRY Note: we will use the second disk for configuring docker storage. # cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF # docker-storage-setup ENABLE AND START DOCKER DAEMON # systemctl enable docker # systemctl start docker Import OpenShift inventory into Ansible Tower These steps should be done directly on the host running Ansible Tower. Create Inventory in Ansible Tower Under inventories add a new inventory.  Create directors for OpenShift inventory # mkdir /root/ose3 Setup ansible-hosts file # vi /root/ose3/ansible-hosts ########################## ### OSEv3 Server Types ### ########################## [OSEv3:children] masters nodes etcd">
+
+
+
+
+
+  <meta name="twitter:site" content="@keithtenzer">
+  <meta name="twitter:title" content="Deploying OpenShift Enterprise from Ansible Tower">
+  <meta name="twitter:description" content="   Overview In this article we will look at how to use Ansible Tower to deploy and manage OpenShift environments. OpenShift of course uses Ansible as its deployment and configuration tool already. While that is great, using Tower provides several major advantages:  UI for OpenShift deployment and configuration management Secure store for credentials RBAC and ability to delegate different responsibilities for OpenShift deployments Easy to visualize and manage multiple OpenShift environments and even versions of OpenShift History, audit trail and detailed logging in central location for all OpenShift environments and deployments   Prepare OpenShift Environment In this example we will be doing an all-in-one deployment of OpenShift. The following steps should be done on OpenShift masters and nodes. Again here we just have one node since it is an all-in-one. CONFIGURE A VMs WITH FOLLOWING:  RHEL 7.2 2 CPUs 4096 RAM 30GB disk for OS 25GB disk for docker images  REGISTER VALID SUBSCRIPTION # subscription-manager register # subscription-manager attach --pool=843298293829382 # subscription-manager repos --disable=&quot;*&quot; #subscription-manager repos \     --enable=&quot;rhel-7-server-rpms&quot; \     --enable=&quot;rhel-7-server-extras-rpms&quot; \     --enable=&quot;rhel-7-server-ose-3.3-rpms&quot; INSTALL REQUIRED TOOLS # yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion UPDATE # yum update -y RESTART OPENSHIFT MASTER # systemctl reboot CONFIGURE DOCKER # yum install -y docker-1.10.3 ENABLE DOCKER DAEMON TO PULL FROM OPENSHIFT REGISTRY # vi /etc/sysconfig/docker OPTIONS=&#39;--selinux-enabled --insecure-registry 172.30.0.0/16&#39; SETUP DOCKER STORAGE FOR OPENSHIFT REGISTRY Note: we will use the second disk for configuring docker storage. # cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF # docker-storage-setup ENABLE AND START DOCKER DAEMON # systemctl enable docker # systemctl start docker Import OpenShift inventory into Ansible Tower These steps should be done directly on the host running Ansible Tower. Create Inventory in Ansible Tower Under inventories add a new inventory.  Create directors for OpenShift inventory # mkdir /root/ose3 Setup ansible-hosts file # vi /root/ose3/ansible-hosts ########################## ### OSEv3 Server Types ### ########################## [OSEv3:children] masters nodes etcd">
+  <meta name="twitter:url" content="https://keithtenzer.com/openshift/deploying-openshift-enterprise-from-ansible-tower/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2016-11-23T00:00:00-08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://keithtenzer.com/openshift/deploying-openshift-enterprise-from-ansible-tower/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Keith Tenzer",
+      "url": "https://keithtenzer.com/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          KEITHTENZER.COM
+          <span class="site-subtitle">Cloud Computing and Code</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/about/index.html">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/conferences-and-events/index.html">Conferences and Events</a>
+            </li><li class="masthead__menu-item">
+              <a href="/videos/index.html">Videos</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/categories/#openshift" itemprop="item"><span itemprop="name">Openshift</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Deploying OpenShift Enterprise from Ansible Tower</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Principal Solutions Architect at Red Hat</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
+
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Deploying OpenShift Enterprise from Ansible Tower">
+    <meta itemprop="description" content="  OverviewIn this article we will look at how to use Ansible Tower to deploy and manage OpenShift environments. OpenShift of course uses Ansible as its deployment and configuration tool already. While that is great, using Tower provides several major advantages:UI for OpenShift deployment and configuration managementSecure store for credentialsRBAC and ability to delegate different responsibilities for OpenShift deploymentsEasy to visualize and manage multiple OpenShift environments and even versions of OpenShiftHistory, audit trail and detailed logging in central location for all OpenShift environments and deploymentsPrepare OpenShift EnvironmentIn this example we will be doing an all-in-one deployment of OpenShift. The following steps should be done on OpenShift masters and nodes. Again here we just have one node since it is an all-in-one.CONFIGURE A VMs WITH FOLLOWING:RHEL 7.22 CPUs4096 RAM30GB disk for OS25GB disk for docker imagesREGISTER VALID SUBSCRIPTION# subscription-manager register# subscription-manager attach --pool=843298293829382# subscription-manager repos --disable=&quot;*&quot;#subscription-manager repos \    --enable=&quot;rhel-7-server-rpms&quot; \    --enable=&quot;rhel-7-server-extras-rpms&quot; \    --enable=&quot;rhel-7-server-ose-3.3-rpms&quot;INSTALL REQUIRED TOOLS# yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completionUPDATE# yum update -yRESTART OPENSHIFT MASTER# systemctl rebootCONFIGURE DOCKER# yum install -y docker-1.10.3ENABLE DOCKER DAEMON TO PULL FROM OPENSHIFT REGISTRY# vi /etc/sysconfig/dockerOPTIONS=&#39;--selinux-enabled --insecure-registry 172.30.0.0/16&#39;SETUP DOCKER STORAGE FOR OPENSHIFT REGISTRYNote: we will use the second disk for configuring docker storage.# cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setupDEVS=/dev/vdbVG=docker-vgEOF# docker-storage-setupENABLE AND START DOCKER DAEMON# systemctl enable docker# systemctl start dockerImport OpenShift inventory into Ansible TowerThese steps should be done directly on the host running Ansible Tower.Create Inventory in Ansible TowerUnder inventories add a new inventory.Create directors for OpenShift inventory# mkdir /root/ose3Setup ansible-hosts file# vi /root/ose3/ansible-hosts############################# OSEv3 Server Types #############################[OSEv3:children]mastersnodesetcd">
+    <meta itemprop="datePublished" content="2016-11-23T00:00:00-08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Deploying OpenShift Enterprise from Ansible Tower
+</h1>
+          
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2016-11-23T00:00:00-08:00">November 23, 2016</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <h3><img class="alignnone  wp-image-6050" src="/assets/2016/11/ansible-tower-logotype-large-rgb-fullgrey-300x124.png" alt="ansible-tower-logotype-large-rgb-fullgrey-300x124" width="375" height="155" /> <img class="alignnone  wp-image-5506" src="/assets/2016/11/plus_sign.gif" alt="plus_sign" width="113" height="113" /> <img class="alignnone  wp-image-5513" src="/assets/2016/11/openshiftlogo.png" alt="openshiftlogo" width="148" height="172" /></h3>
+<h3>Overview</h3>
+<p>In this article we will look at how to use Ansible Tower to deploy and manage OpenShift environments. OpenShift of course uses Ansible as its deployment and configuration tool already. While that is great, using Tower provides several major advantages:</p>
+<ul>
+<li>UI for OpenShift deployment and configuration management</li>
+<li>Secure store for credentials</li>
+<li>RBAC and ability to delegate different responsibilities for OpenShift deployments</li>
+<li>Easy to visualize and manage multiple OpenShift environments and even versions of OpenShift</li>
+<li>History, audit trail and detailed logging in central location for all OpenShift environments and deployments</li>
+</ul>
+<p><!--more--></p>
+<h3>Prepare OpenShift Environment</h3>
+<p>In this example we will be doing an all-in-one deployment of OpenShift. The following steps should be done on OpenShift masters and nodes. Again here we just have one node since it is an all-in-one.</p>
+<h4>CONFIGURE A VMs WITH FOLLOWING:</h4>
+<ul>
+<li>RHEL 7.2</li>
+<li>2 CPUs</li>
+<li>4096 RAM</li>
+<li>30GB disk for OS</li>
+<li>25GB disk for docker images</li>
+</ul>
+<h4>REGISTER VALID SUBSCRIPTION</h4>
+<pre># subscription-manager register</pre>
+<pre># subscription-manager attach --pool=843298293829382</pre>
+<pre class="nowrap"># subscription-manager repos --disable="*"</pre>
+<pre class="nowrap">#subscription-manager repos \
+    --enable="rhel-7-server-rpms" \
+    --enable="rhel-7-server-extras-rpms" \
+    --enable="rhel-7-server-ose-3.3-rpms"</pre>
+<h4>INSTALL REQUIRED TOOLS</h4>
+<pre class="nowrap"># yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion</pre>
+<h4>UPDATE</h4>
+<pre class="nowrap"># yum update -y</pre>
+<h4>RESTART OPENSHIFT MASTER</h4>
+<pre class="nowrap"># systemctl reboot</pre>
+<h4>CONFIGURE DOCKER</h4>
+<pre class="nowrap"># yum install -y docker-1.10.3</pre>
+<h4>ENABLE DOCKER DAEMON TO PULL FROM OPENSHIFT REGISTRY</h4>
+<pre># vi /etc/sysconfig/docker
+OPTIONS='--selinux-enabled --insecure-registry 172.30.0.0/16'</pre>
+<h4>SETUP DOCKER STORAGE FOR OPENSHIFT REGISTRY</h4>
+<p>Note: we will use the second disk for configuring docker storage.</p>
+<pre class="nowrap"># cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup
+DEVS=/dev/vdb
+VG=docker-vg
+EOF</pre>
+<pre class="nowrap"># docker-storage-setup</pre>
+<h4>ENABLE AND START DOCKER DAEMON</h4>
+<pre># systemctl enable docker</pre>
+<pre># systemctl start docker</pre>
+<h3>Import OpenShift inventory into Ansible Tower</h3>
+<p>These steps should be done directly on the host running Ansible Tower.</p>
+<h4>Create Inventory in Ansible Tower</h4>
+<p>Under inventories add a new inventory.</p>
+<p><img class="alignnone size-full wp-image-6025" src="/assets/2016/11/ans_group.png" alt="ans_group" width="1832" height="498" /></p>
+<h4>Create directors for OpenShift inventory</h4>
+<pre># mkdir /root/ose3</pre>
+<h4>Setup ansible-hosts file</h4>
+<pre># vi /root/ose3/ansible-hosts
+##########################
+### OSEv3 Server Types ###
+##########################
+[OSEv3:children]
+masters
+nodes
+etcd
+
+##############################
+### host group for masters ###
+##############################
+[masters]
+ose3-master2.lab.com
+
+###################################
+### host group for etcd servers ###
+###################################
+[etcd]
+ose3-master2.lab.com
+
+##################################################
+### host group for nodes, includes region info ###
+##################################################
+[nodes]
+ose3-master2.lab.com openshift_schedulable=True</pre>
+<h4>Create directory for group_vars</h4>
+<p>Note: this is required because Tower import tool does not yet support [groupname:vars] directly in inventory file.</p>
+<pre># mkdir /root/ose3/group_vars</pre>
+<h4>Setup OpenShift parameters using group_vars file</h4>
+<pre># vi /root/ose3/group_Vars/OSEv3
+ansible_ssh_user: root
+os_sdn_network_plugin_name: 'redhat/openshift-ovs-subnet'
+deployment_type: openshift-enterprise
+openshift_master_default_subdomain: apps.lab.com
+openshift_master_identity_providers: [{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_node_kubelet_args: {'maximum-dead-containers': ['100'], 'maximum-dead-containers-per-container': ['2'], 'minimum-container-ttl-duration': ['10s'], 'max-pods': ['110'], 'image-gc-high-threshold': ['90'], 'image-gc-low-threshold': ['80']}
+logrotate_scripts: [{"name": "syslog", "path": "/var/log/cron\n/var/log/maillog\n/var/log/messages\n/var/log/secure\n/var/log/spooler\n", "options": ["daily", "rotate 7", "compress", "sharedscripts", "missingok"], "scripts": {"postrotate": "/bin/kill -HUP `cat /var/run/syslogd.pid 2&gt; /dev/null` 2&gt; /dev/null || true"}}]
+openshift_docker_options: "--log-opt max-size=1M --log-opt max-file=3"
+openshift_node_iptables_sync_period: 5s
+openshift_master_pod_eviction_timeout: 3m
+osm_controller_args: {'resource-quota-sync-period': ['10s']}
+osm_api_server_args: {'max-requests-inflight': ['400']}
+openshift_use_dnsmasq: false</pre>
+<h4>Import OpenShift inventory</h4>
+<pre># tower-manage inventory_import --source=/root/ose --inventory-name="OSE_3.3" --overwrite --overwrite-vars</pre>
+<p>After import is complete you should see inventory. Under OSE_3.3 inventory, a group called OSEv3 should be visible. If you edit the OSEv3 group you should see the variables used to drive OpenShift deployment. Here you can easily change things in order to update or change OpenShift deployment.</p>
+<p><img class="alignnone size-full wp-image-6031" src="/assets/2016/11/ansible_inv2.png" alt="ansible_inv2" width="1836" height="579" /></p>
+<p>Under the OSEv3 group you should see all the OpenShift server groups and under those the actual systems.</p>
+<p><img class="alignnone size-full wp-image-6075" src="/assets/2016/11/ansible_inv1.png" alt="ansible_inv1" width="942" height="509" /></p>
+<h3>Configure Ansible Tower</h3>
+<h4>Create Project in Tower</h4>
+<p>Under projects add a new project. Add Github URL to <a href="https://github.com/openshift/openshift-ansible">ansible-openshift</a> project. Ensure you add the correct branch. OpenShift v3.3 correlates to branch release-1.3. You should add a separate project for every release.</p>
+<p>Note: make sure you check what version of ansible-openshift correlates to version of OpenShift you want to deploy!</p>
+<p><img class="alignnone size-full wp-image-5999" src="/assets/2016/11/ans1.png" alt="ans1" width="1846" height="728" /></p>
+<h4>Add credentials for OpenShift nodes</h4>
+<p>Under settings-&gt;credentials add new credentials called OSE.</p>
+<p>Note: In this example I added the root user and password but you can use non-root user or ssh keys instead of password. In fact there is already a group_var parameter to use sudo.</p>
+<p><img class="alignnone size-full wp-image-6004" src="/assets/2016/11/ans_pwd.png" alt="ans_pwd" width="1839" height="568" /></p>
+<h4>Add job template</h4>
+<p>Under job templates add a new template. Select the inventory, project and machine credentials. Select playbooks/byo/config.yaml for the playbook.</p>
+<p><img class="alignnone size-full wp-image-6021" src="/assets/2016/11/ans_template.png" alt="ans_template" width="1771" height="592" /></p>
+<p>Deploy OpenShift</p>
+<p>To deploy or update your OpenShift deployment you simply need to run the playbook from Tower by clicking the rocket next to your job template.</p>
+<p><img class="alignnone size-full wp-image-6037" src="/assets/2016/11/ans_deploy.png" alt="ans_deploy" width="1871" height="400" /></p>
+<p>You can follow the deployment status by looking at the job in Tower.</p>
+<p><img class="alignnone size-full wp-image-6041" src="/assets/2016/11/ans_job.png" alt="ans_job" width="1866" height="770" /></p>
+<h3>Summary</h3>
+<p>In this article we looked at how to deploy OpenShift using Ansible Tower. The default method for deploying and managing OpenShift is Ansible Core. Tower however gives you a lot of advantages providing central management, credentials store, RBAC, maintain multiple versions or multiple OpenShift environments and of course the more you do with ansible the more sense it makes to start using Tower. I hope you found this article informative and interesting. Looking forward to hearing your thoughts and feedback.</p>
+<p>Happy OpenShifting!</p>
+<p>(c) 2016 Keith Tenzer</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#ansible" class="page__taxonomy-item" rel="tag">Ansible</a><span class="sep">, </span>
+    
+      <a href="/tags/#automation" class="page__taxonomy-item" rel="tag">Automation</a><span class="sep">, </span>
+    
+      <a href="/tags/#kubernetes" class="page__taxonomy-item" rel="tag">Kubernetes</a><span class="sep">, </span>
+    
+      <a href="/tags/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a><span class="sep">, </span>
+    
+      <a href="/tags/#tower" class="page__taxonomy-item" rel="tag">Tower</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#openshift" class="page__taxonomy-item" rel="tag">OpenShift</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2016-11-23T00:00:00-08:00">November 23, 2016</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Deploying+OpenShift+Enterprise+from+Ansible+Tower%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fdeploying-openshift-enterprise-from-ansible-tower%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fdeploying-openshift-enterprise-from-ansible-tower%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fdeploying-openshift-enterprise-from-ansible-tower%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/openshift/openshift-enterprise-3-3-all-in-one-lab-environment-with-jenkins-build-pipeline/" class="pagination--pager" title="OpenShift Enterprise 3.3: all-in-one Lab Environment with Jenkins Build Pipeline
+">Previous</a>
+    
+    
+      <a href="/ceph/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/" class="pagination--pager" title="Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide
+">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-service-mesh-getting-started-guide/" rel="permalink">OpenShift Service Mesh Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-04-27T00:00:00-07:00">April 27, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+
+
+
+
+Overview
+In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+
+Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ansible/windows-automation-with-ansible-getting-started-guide/" rel="permalink">Windows Automation with Ansible: Getting Started Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-19T00:00:00-07:00">May 19, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party sof...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/general/red-hat-subscription-reporting-guide/" rel="permalink">Red Hat Subscription Reporting Guide
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2020-05-13T00:00:00-07:00">May 13, 2020</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+source: https://www.cio.com/article/3199910/zuora-blazes-a-new-trail-to-the-subscription-economy-and-a-post-erp-world.html
+Overview
+This article will look a...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/keithtenzer"" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+      
+        
+          <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+      
+        
+      
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Keith Tenzer. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+
+  </body>
+</html>
