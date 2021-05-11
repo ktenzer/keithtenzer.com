@@ -16,7 +16,7 @@ minimal_mistakes_skin    : "air" # "air", "aqua", "contrast", "dark", "dirt", "n
 
 # Site Settings
 locale                   : "en-US"
-title                    : "KEITHTENZER.COM"
+title                    : "Keith Tenzer's Blog"
 title_separator          : "-"
 subtitle                 : Cloud Computing and Code
 name                     : "Keith Tenzer"
