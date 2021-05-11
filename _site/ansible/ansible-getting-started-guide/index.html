@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>Ansible Getting Started Guide - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>Ansible Getting Started Guide - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview Automation is one of the most critical areas of improvement in most organizations. Today, most companies are in the process or re-inventing themselves in one way or another to add software development capabilities and as such, take full advantage of the digitalization of everything. Software development release cycles are changing in order to release faster. Continuous delivery, where every change is potentially it&#39;s own release is becoming the new standard. Infrastructure is following suit, after all, continuous delivery is not about just software changes but all changes and infrastructure plays a key roll. For any of this to work of course, 100% automation is required. To achieve that goal, an automation language that is easy and applicable to development and operations is needed. Ansible is that language and if you are not on-board yet, now is your chance not to miss the train because it is leaving the station. Ansible is easy, Ansible is powerful and Ansible is flexible. This guide will show that and get you up and running with Ansible before your coffee gets cold.  In this article we will dive into Ansible and learn the basics to get up and running faster, creating playbooks the right way. This article will focus on those who are new to Ansible but it may also provide value to those that are already writing their own playbooks. Pre-requisites  Several VMs or hosts, I recommend 5. One to be Ansible management host and other four managed nodes. RHEL or CentOS 7.3  Ansible Basics  Ansible Engine - The Ansible runtime and CLI which executes playbooks. The engine runs on a management node, from where you want to drive automation. Playbook - A series or group of tasks that automate a process. Playbooks are written in YAML. Inventory - Determines what hosts you want to run playbook against. Inventories can be dynamic or static. Configuration - The configuration for Ansible is stored in ansible.cfg by default under /etc/ansible/ansible.cfg. It determines default settings for Ansible, where the inventory is located and much more. You can have many ansible.cfg files. Role - Ansible way to build re-usable automation components. A role groups together playbooks, templates, variables and everything needed to automate a given process in a pre-packaged unit of work. Ansible Galaxy - Ansible roles provided by the Ansible community. Not only can you get access to 1000s of roles but you can share as well. Ansible Modules - Used in Ansible to perform tasks, install software, enable services, etc. Modules are provided with Ansible (core modules) and also provided by the community. They are mostly written in python which is used by Ansible itself. Ansible Tower - API and UI for Ansible to handle scheduling, reporting, visualization and support teamwork for organizations running many playbooks across many teams.  All exercises and examples should be carried out on the Ansible management node. Install Ansible In order to install Ansible you need minimum python 2.6 or greater. Check Python version. # yum list installed python Create Ansible user. # useradd ansible -h /home/ansible # passwd ansible Install Ansible. $ sudo yum install -y ansible Create Inventory file. The inventory file stores managed nodes and is used to execute playbooks or commands against a group of hosts. You can have nested groups and add variables but let&#39;s just start with a simple inventory. $ vi inventory">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Ansible Getting Started Guide">
 <meta property="og:url" content="https://keithtenzer.com/ansible/ansible-getting-started-guide/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

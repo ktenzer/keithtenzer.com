@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>Auto Scaling Applications with OpenStack Heat - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>Auto Scaling Applications with OpenStack Heat - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will look at how to build a auto scaling application in OpenStack using Heat. This article builds on the following previous articles: OpenStack Kilo Setup and Configuration Auto Scaling Instances with OpenStack  As discussed in previous articles, Heat is the orchestration framework that not only automates provisioning but also provides policies around auto scaling. This article will build on previous article that showed how to automatically scale up or down instances. Here we will take things one step further and scale-up as well as scale-down a simple PHP web application. In addition to using Ceilometer to determine when a application should be scaled based on CPU load, Neutron will be used to provide not only networking but also Load Balancer As-a-Service (LBAAS). While you can of course use an external load balancer, out-of-the-box OpenStack uses ha-proxy. You can get access to Heat templates below or directly from GitHub: https://github.com/ktenzer/openstack-heat-templates. Update Ceilometer Collection Interval By default Ceilometer will collect CPU data from instances every 10 minutes. For this example we want to change that to 60 seconds. Change the interval to 60 in the pipeline.yaml file and restart OpenStack services. #vi /etc/ceilometer/pipeline.yaml [code language=&quot;java&quot;] - name: cpu_source interval: 60 meters: - &amp;amp;amp;quot;cpu&amp;amp;amp;quot; sinks: - cpu_sink [/code] #openstack-service restart Heat Stack Environment The Heat stack environment describes the unit we are dealing with and the unit of scale. The environment usually contains one or more instances and their dependencies. In this case the environment is a single instance that is a member of a load balancer. Metadata is used to create an association between all instances that are part of the stack template. This is important for metering and determining scaling events. #vi /etc/heat/templates/lb-env.yaml heat_template_version: 2014-10-16 description: A load-balancer server parameters:   image:     type: string     description: Image used for servers   key_name:     type: string     description: SSH key to connect to the servers   flavor:     type: string     description: flavor used by the servers   pool_id:     type: string     description: Pool to contact   user_data:     type: string     description: Server user_data   metadata:     type: json   network:     type: string     description: Network used by the server">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Auto Scaling Applications with OpenStack Heat">
 <meta property="og:url" content="https://keithtenzer.com/openstack/auto-scaling-applications-with-openstack-heat/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

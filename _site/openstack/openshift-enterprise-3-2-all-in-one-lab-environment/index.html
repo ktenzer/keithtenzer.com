@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>OpenShift Enterprise 3.2: all-in-one Lab Environment - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>OpenShift Enterprise 3.2: all-in-one Lab Environment - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will setup a OpenShift Enterprise 3.2 all-in-one configuration. We will also setup the integration with CloudForms that allows additional management of OpenShift environments. OpenShift has several different roles: masters, nodes, etcd and load balancers. An all-in-one setup means running all service on a single system. Since we are only using a single system a load balancer or ha-proxy won&#39;t be configured. If you would like to read more about OpenShift I can recommend the following:  General OpenShift Product Blogs Persistent Storage OpenShift Networking Part I OpenShift Networking Part II   Prerequisites Configure a VM with following:  RHEL 7.2 2 CPUs 4096 RAM 30GB disk for OS 25GB disk for docker images  # subscription-manager repos --disable=&quot;*&quot; # subscription-manager repos \     --enable=&quot;rhel-7-server-rpms&quot; \     --enable=&quot;rhel-7-server-extras-rpms&quot; \     --enable=&quot;rhel-7-server-ose-3.2-rpms&quot; # yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion # yum update -y # yum install -y atomic-openshift-utils # systemctl reboot # yum install -y docker-1.10.3 # vi /etc/sysconfig/docker OPTIONS=&#39;--selinux-enabled --insecure-registry 172.30.0.0/16&#39; # cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF # docker-storage-setup # systemctl enable docker # systemctl start docker # ssh-keygen # ssh-copy-id -i /root/.ssh/id_rsa-pub ose3-master.lab.com DNS Setup DNS is a requirement for OpenShift Enterprise. In fact most issues you may run into are a result of not having a properly working DNS environment. For OpenShift you can either use dnsmasq or bind. I recommend using bind but in this article I will cover both options. DNSMASQ A colleague Ivan Mckinely was nice enough to create an ansible playbook for deploying dnsmasq. To deploy dnsmasq run following steps on OpenShift master. # git clone https://github.com/ivanthelad/ansible-aos-scripts.git #cd ansible-aos-scripts Edit inventory file and set dns to IP of the system that should be providing DNS. Also ensure nodes and masters have correct IPs for your OpenShift servers. In our case 192.168.122.60 is master, node and DNS. #vi inventory">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenShift Enterprise 3.2: all-in-one Lab Environment">
 <meta property="og:url" content="https://keithtenzer.com/openstack/openshift-enterprise-3-2-all-in-one-lab-environment/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

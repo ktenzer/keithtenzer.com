@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>Application Containers: Kubernetes and Docker from Scratch - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>Application Containers: Kubernetes and Docker from Scratch - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will look at how to configure a Kubernetes cluster using the Docker container format on CentOS or RHEL 7.1. For a detailed overview on Kubernetes and Docker take a look at this article. A Kubernetes cluster is comprised of a master and N nodes. The master acts as a control plane for the cluster and in this case also exposes a private Docker registry. A Kubernetes node runs Docker container images.  Requirements In this article we will setup a master and one node. At minimum two hosts will be required. Kubernetes also has the following networking requirements:  all containers can communicate with all other containers without NAT all nodes can communicate with all containers (and vice-versa) without NAT the IP that a container sees itself as is the same IP that others see it as  In order to meet these networking requirements an overlay network  must be configured. Two commonly used overlay networks for Kuberentes are Flannel and Open vSwitch. In this article we will use Flannel. Setup Kubernetes Master Creating a Kubernetes master means configuring Kubernetes, Etcd, Flannel, Docker and a private Docker registry. The private Docker registry is used by the nodes in order to pull images. Install packages and enable services #yum update -y #yum install -y docker docker-registry etcd kubernetes flannel #for SERVICES in docker.service docker-registry etcd kube-apiserver kube-controller-manager kube-scheduler flanneld     do systemctl enable $SERVICES  done  Configure Private Docker Registry #vi /etc/sysconfig/docker INSECURE_REGISTRY=&#39;--insecure-registry kube-master.lab.com:5000&#39;  Configure Kuberentes API Server #vi /etc/kubernetes/apiserver KUBE_API_ADDRESS=&quot;--address=0.0.0.0&quot; KUBE_API_PORT=&quot;--port=8080&quot; KUBE_ETCD_SERVERS=&quot;--etcd_servers=http://kube-master.lab.com:4001&quot;  Configure Kubernetes Master #vi /etc/kubernetes/config KUBE_MASTER=&quot;--master=http://kube-master.lab.com:8080&quot;  Configure Kubernetes Nodes (kubelets) #vi /etc/kubernetes/controller-manager KUBELET_ADDRESSES=&quot;--machines=kube-node1.lab.com&quot; Configure ETCD #vi /etc/etcd/etcd.conf ETCD_LISTEN_PEER_URLS=&quot;http://localhost:2380,http://localhost:7001&quot; ETCD_LISTEN_CLIENT_URLS=&quot;http://0.0.0.0:4001,http://0.0.0.0:2379&quot; #systemctl start etcd Configure Overlay Network using Flannel #vi /etc/sysconfig/flanneld FLANNEL_ETCD=&quot;http://kube-master.lab.com:4001&quot; FLANNEL_ETCD_KEY=&quot;/flannel/network&quot; FLANNEL_OPTIONS=&quot;eth0&quot; #vi /root/flannel-config.json {    &quot;Network&quot;: &quot;10.100.0.0/16&quot;,    &quot;SubnetLen&quot;: 24,    &quot;SubnetMin&quot;: &quot;10.100.50.0&quot;,    &quot;SubnetMax&quot;: &quot;10.100.199.0&quot;,    &quot;Backend&quot;: {    &quot;Type&quot;: &quot;vxlan&quot;,    &quot;VNI&quot;: 1    }  } curl -L http://kube-master.lab.com:4001/v2/keys/flannel/network/config -XPUT --data-urlencode value@flannel-config.json Download Docker Images to private registry #systemctl start docker #systemctl start docker-registry #for IMAGE in rhel6 rhel7  kubernetes/kube2sky:1.1 kubernetes/pause:go    do docker pull $IMAGE    docker tag $IMAGE kube-master.lab.com:5000/$IMAGE    docker push kube-master.lab.com:5000/$IMAGES done systemctl reboot Setup Kubernetes Node In this example we will setup a Kubernetes node from scratch. It is also possible to use a container OS like RHEL Atomic as a Kubernetes node. RHEL Atomic is an OS optimized for running containers. Choosing whether to use RHEL Atomic or a standard RHEL depends greatly on your specific requirements. Install Packages and enable services #yum update -y #yum install -y docker docker-registry etcd kubernetes flannel #for SERVICES in docker.service kubelet kube-proxy flanneld    do  systemctl enable $SERVICES done Configure Kubernets Master #vi /etc/kubernetes/config KUBE_MASTER=&quot;--master=http://kube-master.lab.com:8080&quot; Configure Kubernetes Node (kubelet) #vi /etc/kubernetes/kubelet KUBELET_ADDRESS=&quot;--address=0.0.0.0&quot; KUBELET_PORT=&quot;--port=10250&quot; KUBELET_HOSTNAME=&quot;&quot; KUBELET_API_SERVER=&quot;--api_servers=http://kube-master.lab.com:8080&quot; Configure Docker #vi /etc/sysconfig/docker ADD_REGISTRY=&#39;--add-registry registry.access.redhat.com&#39; ADD_REGISTRY=&#39;--add-registry kube-master.lab.com:5000&#39; Configure Flannel #vi /etc/sysconfig/flanneld FLANNEL_ETCD=&quot;http://kube-master.lab.com:4001&quot; FLANNEL_ETCD_KEY=&quot;/flannel/network&quot; FLANNEL_OPTIONS=&quot;eth0&quot; #systemctl reboot Summary In this article we went through the steps of building a Kubernetes cluster from scratch on RHEL or CentOS 7.1. As you have seen standing up a Kubernetes cluster can be done very easily. Hopefully you have found this article helpful, feedback is always greatly appreciated. Happy Containerizing!  (c) 2015 Keith Tenzer">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Application Containers: Kubernetes and Docker from Scratch">
 <meta property="og:url" content="https://keithtenzer.com/containers/application-containers-kubernetes-and-docker-from-scratch/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

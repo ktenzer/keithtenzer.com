@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>Rename network interfaces in RHEL 7 - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>Rename network interfaces in RHEL 7 - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview RHEL 7 has a new feature called &quot;consistent network device naming&quot;. The idea is to regardless of NIC hardware have consistent interface names and not names which can be change based on underlying hardware. Traditionally interface names were enumerated as eth[0,1,2...]. In many environments administrators would like to use names that refer to the purpose of the network interface especially when a host bridges into various networks e.g. mgmt[0,1,2...], storage[0,1,2...] or client[0,1,2...]. This post we show how to change interface names in RHEL 7 and CentOS 7. Change Interface Names The below procedure disables &quot;consistent network device naming&quot; and renames interfaces.   vi /etc/default/grub   [code language=&quot;text&quot;] GRUB_TIMEOUT=5 GRUB_DISTRIBUTOR=”$(sed ‘s, release .*$,,g’ /etc/system-release)” GRUB_DEFAULT=saved GRUB_DISABLE_SUBMENU=true GRUB_TERMINAL_OUTPUT=”console” GRUB_CMDLINE_LINUX=”rd.lvm.lv=rootvg/usrlv rd.lvm.lv=rootvg/swaplv crashkernel=auto vconsole.keymap=us rd.lvm.lv=rootvg/rootlv vconsole.font=latarcyrheb-sun16 rhgb quiet” GRUB_DISABLE_RECOVERY=”true” [/code] Change the GRUB_CMDLINE_LINUX and regenerate grub.cfg:   GRUB_CMDLINE_LINUX=”rd.lvm.lv=rootvg/usrlv rd.lvm.lv=rootvg/swaplv crashkernel=auto vconsole.keymap=us rd.lvm.lv=rootvg/rootlv vconsole.font=latarcyrheb-sun16 rhgb quiet net.ifnames=0 biosdevname=0“     grub2-mkconfig -o /boot/grub2/grub.cfg   Update the names of the network scripts   mv /etc/sysconfig/network-scripts/ifcfg-eno00012224 /etc/sysconfig/network-scripts/ifcfg-mgmt0   [code language=&quot;text&quot;] TYPE=Ethernet BOOTPROTO=none DEFROUTE=yes IPV4_FAILURE_FATAL=no IPV6INIT=yes IPV6_AUTOCONF=yes IPV6_DEFROUTE=yes IPV6_FAILURE_FATAL=no NAME=mgmt0 UUID=ecfe9674-774e-4c5a-a3a6-a84336306b62 ONBOOT=yes IPADDR0=10.10.10.90 PREFIX0=24 GATEWAY0=10.10.10.1 DNS1=10.10.10.5 DNS2=10.10.10.6 DOMAIN=mydomain.com HWADDR=00:50:56:B4:6D:57 IPV6_PEERDNS=yes IPV6_PEERROUTES=yes DEVICE=mgmt0 [/code] Reboot system with reconfiguration   shutdown -r now   (c) 2014 Keith Tenzer">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Rename network interfaces in RHEL 7">
 <meta property="og:url" content="https://keithtenzer.com/rhel/rename-network-interfaces-in-rhel-7/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

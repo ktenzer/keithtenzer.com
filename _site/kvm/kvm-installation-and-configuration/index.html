@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>KVM Installation and Configuration - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>KVM Installation and Configuration - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview KVM (Kernel Virtual Machine) is a Linux kernel module that allows a user space process to utilize hardware virtualization capabilities. When people refer to KVM they are usually talking about the hypervisor but there are in fact three components (or balls our penguin seems to be juggling): KVM (hardware acceleration), Qemu (hypervisor), and Libvirt (management library). KVM and Qemu started as separate projects but their code streams have been merged and hence the qemu-kvm package. In order to communicate with the KVM hypervisor libvirt is used which also has support for the management of other hypervisors such as ESX. Install KVM KVM consists of many packages, most notable are qemu-kvm, libvirt, virt-manager and virt-viewer. The virt-manager and virt-viewer packages are optional and only required for the GUI.   yum groupinstall &quot;Virtualisation Tools&quot; &quot;Virtualization Platform&quot;     yum install python-virtinst     yum install virt-manager virt-viewer     yum install qemu-kvm   Configure libvirtd This step is mainly for development environments or management tools that require tcp access to libvirtd. In order to use the libvirt APIs we need to enable access through tcp and configure authentication. In this example we will use SASL authentication.   vi /etc/libvirt/libvirtd.conf   [code language=&quot;text&quot;] listen_tls = 0 listen_tcp = 1 tcp_port=”16509” listen_addr=”&lt;IP&gt;” auth_tcp = “sasl” [/code] Note: you can disable authentication by setting auth_tcp=&quot;none&quot; but this is only recommended for development or test environments. Configure Authentication Credentials KVM has various authentication options and protocol support. Documentation regarding libvirt and remote connections as well as authentication can be found on the libvirt website. The most secure way to do things is with TLS and certificates however in the below example we are just using tcp and standard SASL user/password authentication. Create a SASL user and password for the libvirt service.   saslpasswd2 -a libvirt kvmuser   Add authentication credentials so you are not prompted for credentials. This is critical for remote access tools requiring access over tcp.   vi /etc/libvirt/auth.conf   [code language=&quot;text&quot;] [credentials-test] authname=kvmuser password=mypassword [auth-libvirt-192.168.8.132] credentials=test [/code] Upon adding credentials make sure you restart libvirtd.   service libvirtd restart   In order to test the credentials use the vrish cli command with the &quot;no_verify&quot; option. If things are working correctly you should not be prompted for credentials and get a list of virtual machines.   virsh -c qemu+tcp:///system?no_verify=1 list   (c) 2014 Keith Tenzer">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="KVM Installation and Configuration">
 <meta property="og:url" content="https://keithtenzer.com/kvm/kvm-installation-and-configuration/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

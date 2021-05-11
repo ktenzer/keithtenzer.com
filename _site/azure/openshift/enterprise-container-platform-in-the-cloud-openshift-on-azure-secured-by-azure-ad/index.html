@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>Enterprise Container Platform in the Cloud: OpenShift on Azure secured by Azure AD - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>Enterprise Container Platform in the Cloud: OpenShift on Azure secured by Azure AD - Keith Tenzer’s Blog</title>
 <meta name="description" content="   Overview This article is a collaboration from Rolf Masuch (Microsoft) and Keith Tenzer (Red Hat). It is based on our work together in the field with enterprise customers. In this article we will explore how to deploy a production ready OpenShift enterprise container platform on the Microsoft Azure Cloud. The entire deployment is completely automated using Ansible and ARM (Azure Resource Manager). Everything is template driven using APIs. The bennefit of this approach is the ability to build-up and tear-down a complete OpenShift environment in the Azure cloud before your coffee gets cold. Since OpenShift already uses Ansible as its installation and configuration management tool, it made sense to stick with Ansible as opposed to using other tools such as Power Shell. A Red Hat colleague, Ivan McKinley created an Ansible playbook that builds out all the required Azure infrastructure components and integrates the existing OpenShift installation playbook. The result is an optimally configure OpenShift environment on the Azure Cloud. We have used this recipe to deploy real production Environments for customers and it leverages both Microsoft as well as Red Hat best practices.  You can access and contribute improvements to the Ansible playbook under Ivan&#39;s Github repository: https://github.com/ivanthelad/ansible-azure The following, related articles might also be of Interest in case you want a basic understanding of OpenShift.  OpenShift v3.2 All-in-one Lab Environment OpenShift Basic Release Deployment Scenarios  The pre-requisites for deploying OpenShift on Azure are a valid OpenShift subscription and a valid Azure subscription.  If you don&#39;t already have a OpenShift Subscription you can purchase one or get an eval by talking to your partner or Red Hat account manager. If you don&#39;t already have a Microsoft Azure Subscription you can start one here.  Deploying to Azure Install Fedora 24 workstation for use as deployment workstation. You need very recent versions of python 2.7 (2.7.12) and unfortunately it isn&#39;t available in RHEL or CentOS at writing of this article so we used Fedora. Install Python and Dependencies # sudo yum install python # sudo yum install python-pip # sudo dnf install python-devel # sudo dnf install redhat-rpm-config # sudo dnf install openssl-devel Install Azure CLI # sudo dnf install npm # sudo npm install azure-cli -g # sudo pip install --upgrade pip # sudo pip install azure==2.0.0rc5 Authenticate Azure CLI [ktenzer@ktenzer ansible-azure]$ azure login  info: Executing command login  \info: To sign in, use a web browser to open the page https://aka.ms/devicelogin. Enter the code CB8P5ZCKP to authenticate.  -info: Added subscription Pay-As-You-Go  info: Added subscription ITS - RedHat Openshift  info: Setting subscription &quot;Pay-As-You-Go&quot; as default  +  info: login command OK List Azure Resource Groups In order to list resource groups you need your Azure subscription id. You can view this by logging into Azure portal with your user. [ktenzer@ktenzer ansible-azure]$ azure group list --subscription &lt;subscription id&gt;  info: Executing command group list  + Listing resource groups  data: Name Location Provisioning State Tags:  data: ------------- ---------- ------------------ -----  data: OpenShift_POC westeurope Succeeded null  data: Shared westeurope Succeeded null  info: group list command OK Install Ansible Core # sudo dnf install ansible Clone OpenShift Azure Ansible Playbooks # git clone https://github.com/ivanthelad/ansible-azure.git Update Playbook parameters # cd ansible-azure # cp group_vars/all_example group_vars/all # vi group_vars/all resource_group_name: &lt;new resource group name&gt; ## Azure AD user. ad_username: &lt;Azure user e.g. keith.tenzer@domain.onmicrosoft.com&gt; ### Azure AD password ad_password: &lt;Azure Password&gt; #### Azure Subscription ID subscriptionID: &quot;&lt;subscription id from Azure&gt;&quot; ## user to login to the jump host. this user will only be created on the jumphost adminUsername: &lt;username e.g. ktenzer&gt; ## user pwd for jump host ## Password for the jump host adminPassword: &lt;password&gt; ##### Public key for jump host ### Access to environment only allowed through jumphost sshkey: &lt;ssh key e.g. cat /home/ktenzer/.ssh/id_rsa.pub&gt;">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Enterprise Container Platform in the Cloud: OpenShift on Azure secured by Azure AD">
 <meta property="og:url" content="https://keithtenzer.com/azure/openshift/enterprise-container-platform-in-the-cloud-openshift-on-azure-secured-by-azure-ad/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

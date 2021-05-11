@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>Cloud Systems Management: Satellite 6.2 Getting Started Guide - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>Cloud Systems Management: Satellite 6.2 Getting Started Guide - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will look at how to install Satellite 6.2 and configure a base environment. This article builds on a similar article I published for Satellite 6.1. In addition to installing and configuring Satellite we will also look at one of the long awaited new features remote-cmd execution.  If you are coming from Satellite 5 world then you will want to familiarize yourself with the concepts and how they apply in Satellite 6. The biggest change is around how you manage content through stages (life-cycle enviornments) but there is also a lot more.  source: https://www.windowspro.de/sites/windowspro.de/files/imagepicker/6/Red_Hat_Satellite_6_Life_Cycle.png Features Satellite 6.2 continues to build on that release and provides the following features:   Automated Workflows -- This includes remote execution, scheduling for remote execution jobs and expanded bootstrap and provisioning options.   Air-gapped security and federation -- Inter-Satellite sync is now available to export RPM content from one Satellite to import into another   Software Management Improvements -- Simplified Smart Variable management is now available.   Capsule improvements -- Users now have deeper insight into Capsule health and overall performance; Capsules are lighter-weight and can be configured to store only the content that has been requested by its clients; and a new Reference Architecture including deploying a Highly Available Satellite Capsule is now available.   Atomic OSTree and containers -- Mirror, provision and manage RHEL Atomic hosts and content with Satellite; mirror container repositories such as Red Hat Registry, DockerHub™ and other 3rd-party sources; and Satellite provides a secure, curated point of entry for container content   Enhanced documentation -- Both new and improved documentation is available. (https://access.redhat.com/documentation/red-hat-satellite/)   New Guides   Virtual Instance Guide (How to configure virt-who)   Hammer CLI Guide (How to use Satellite’s CLI)   Content Management Guide (How to easily manage Satellite’s content )   Quickstart Guide (How to get up and running quickly)          Improved/more user-friendly documentation      User Guide split to make more topical and easier to follow:   Server Administration Guide   Host Configuration Guide   “Cheat Sheets” available for specific topics (Hammer)   Updated Feature Overviews     Prerequisites In order to install Satellite we need a subscription and of course RHEL 6 or 7. subscription-manager register subscription-manager list --available subscription-manager attach --pool=934893843989289 subscription-manager repos --disable &quot;*&quot; RHEL 6 subscription-manager repos --enable=rhel-6-server-rpms \ --enable=rhel-server-rhscl-6-rpms \ --enable=rhel-6-server-satellite-6.2-rpms RHEL 7 subscription-manager repos --enable=rhel-7-server-rpms \ --enable=rhel-server-rhscl-7-rpms \ --enable=rhel-7-server-satellite-6.2-rpms Update all packages. # yum update -y Add Firewall rules. RHEL 6 # iptables -A INPUT -m state --state NEW -p udp --dport 53 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 53 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p udp --dport 67 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p udp --dport 69 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 80 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 443 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 5647 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 8140 -j ACCEPT \ &amp;&amp; iptables-save &gt; /etc/sysconfig/iptables RHEL 7 # firewall-cmd --add-service=RH-Satellite-6 # firewall-cmd --permanent --add-service=RH-Satellite-6 NTP # yum install chrony">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Cloud Systems Management: Satellite 6.2 Getting Started Guide">
 <meta property="og:url" content="https://keithtenzer.com/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>Storage for Containers using NetApp ONTAP NAS – Part V - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>Storage for Containers using NetApp ONTAP NAS – Part V - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will look at how you can configure and dynamically provision ONTAP NAS Storage for containerized applications in a Kubernetes/OpenShift environment. This article is a work from Kapil Arora (Cloud Platform Architect @NetApp).  Storage for Containers Overview – Part I Storage for Containers using Gluster – Part II Storage for Containers using Container Native Storage – Part III Storage for Containers using Ceph – Part IV Storage for Containers using NetApp ONTAP NAS – Part V Storage for Containers using NetApp SolidFire – Part VI  NetApp recently released an open source project known as Trident, the first external storage provisioner for Kubernetes leveraging on-premises storage. Trident enables the use of the new storage class concept in Kubernetes, acting as a provisioning controller that watches for PVCs (persistent volume requests) and creates them on-demand. This means that when a pod requests storage from a storage class that Trident is responsible for, it will provision a volume that meets those requirements and make it available to the pod in real-time. To learn more  check-out these  Trident videos.  This is how it works:  The OpenShift/Kubernetes Administrator deploys and configures Trident with NetApp ONTAP NAS and defines StorageClasses and Quotas. The developer creates a PVC  with the respective StorageClass. Trident dynamically provisions storage for the developer.  Installation and Configuration Instructions Following are the steps to install and configure NetApp ONTAP NAS backend with Trident in your OpenShift environment: 1) Ensure OpenShift 3.4+, or OpenShift Origin 1.4+ Create a service account for trident. oc create serviceaccount trident oc adm policy add-cluster-role-to-user storage-admin system:serviceaccount:myproject:trident oc adm policy add-scc-to-user anyuid system:serviceaccount:myproject:trident oc adm policy add-role-to-user edit system:serviceaccount:myproject:trident You can find detailed  instructions here. 2) Install &#39;kubectl&#39; client for Trident install script curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl chmod +x ./kubectl  sudo mv ./kubectl /usr/local/bin/kubectl  You can find detailed instructions here. 3) Download and untar the Trident installer bundle. 4) Install nfs utils on all your OpenShift nodes if not already installed. $ sudo yum install -y nfs-utils 5) Configure the ONTAP backend. A sample is provided here sample-input/backend-ontap-nas.json. Copy the edited file to setup/backed.json  https://gist.github.com/kapilarora/ce450bf8840f57ce5f152a45689785aa 6) Execute Trident installer script. $ ./install_trident.sh --namespace myproject --serviceaccount trident 7) Wait until the deployment is complte. You should see Trident deployment when you execute &#39;oc get deployment&#39; and trident pod when you execute &#39;oc get pods&#39; 8) If you face issues, check this troubleshooting session. 9) Register you backend with Trident $ cat setup/backend.json | kubectl exec -i -- post.sh backend 10) Edit storage-class-nfs-gold.yaml to configure your storage class. https://gist.github.com/kapilarora/f7c921fca4c4a42c59ac5df89162fdba 11) Create storage class in openshift: $ oc create -f  storage-class-nfs-gold.yaml 12) Trident is now installed and we have also defined a storage class for ONTAP NAS. 13) Now Storage is dynamically provisioned when we create a PVC. e.g. Make sure you provide the right ONTAP NFS export policy as per your environment. https://gist.github.com/kapilarora/565ed2647a4368dd863948dd417e5a65 Application use-case Let us look at how we can deploy a Wordpress application backed by a MySQL database. In the below example we use Trident to dynamically provision ONTAP NAS storage for our Wordpress (+ MySQL) application using PVCs and nfs-gold StorageClass.  https://gist.github.com/kapilarora/93eb209182c027db2588a1898e869cc2 NetApp ONTAP NetApp ONTAP is a unified enterprise storage system which supports both File and Block storage  and comes in many flavours like AFF (All Flash version), FAS (Fabric Attached Storage), ONTAP Select (Virtualized) and ONTAP Cloud (in Public cloud AWS/Azure).    Why NetApp ONTAP? NetApp ONTAP offers following key benefits for the most demanding applications:     Predictable high performance Consistent low latency and excellent response time Inline efficiency, achieved by inline deduplication and compression Instant, efficient and efficient database clones for QA and dev-test environments Backup and recovery using Snapshot technology Disaster recovery solutions using SnapMirror(enterprise replication technology) Scalability, reliability and non-disruptive operations  Summary With NetApp Trident dynamic provisioner ONTAP NAS storage can be provisioned on-demand for your containerized applications. Trident can help you deploy Stateful containerized applications  e.g.  Databases with NetApp ONTAP enterprise storage References  NetApp Trident GitHub project NetApp thePub website Join NetApp on Slack NetApp Trident and OpenShift Trident Videos  Happy ONTAPing! (c) 2017 Keith Tenzer">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Storage for Containers using NetApp ONTAP NAS – Part V">
 <meta property="og:url" content="https://keithtenzer.com/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview  In this article we will focus on installing and configuring OpenStack Rocky using RDO and the packstack installer. RDO is a community platform around Red Hat’s Enterprise OpenStack Distribution. It allows you to test the latest OpenStack capabilities on a stable platform such as Red Hat Enterprise Linux (RHEL) or CentOS. This guide will take you through setting up Hetzner root server, preparing environment for OpenStack, installing the OpenStack Rocky release, adding a floating ip subnet through OVS, configuring networking, security groups, flavors, images and are other OpenStack related services. The outcome is a working OpenStack environment based on the Rocky release that you can use as a baseline for testing your applications using OpenStack capabilities. The installation will create an all-in-one deployment however you can use this guide to create a multi-node deployment as well.  Root Server Specs CPU: Intel(R) Xeon(R) CPU E5-1650 v3 @ 3.50GHz (6 cores) Memory: 128GB RAM Disk: 2 x 480GB SSD Network: 1Gbit IPV4 Adresses: 1 x IPV4 + /29 Subnet (6 IPs) Hetzner is a hosting providing and auctions off used hardware for very competitive prices on a per/month basis (https://www.hetzner.de/sb). Hetzner provides one IP for each root server that is accessible via internet. It is a /32 so if you want additional IPs, like you would for OpenStack to use as floating ips you need to order additional subnet. You can order an additional subnet as I have done. Hetzner will route that subnet through the host IP of the /32. This requires creating an additional OVS bridge in OpenStack and this guide will go through that configuration. Configure Root Server As mentioned, Hetzner will give you access to your root server via IP and provide ability to manage the root server. Basic things like put root server in rescue mode or reboot. You can provide public ssh key or use password to access system. Please don&#39;t use password, this is the internet, bad things can and will happen. Enter Rescue Mode In order to install OS or repair it you need to get into rescue mode.    Configure Hetzner Firewall. While server is rebootting you can modify your servers firewall rules for incoming traffic. By default firewall allows port 22 for SSH and nothing else. Firewall settings can be modified under your server&#39;s settings in Hetzner&#39;s web UI https://robot.your-server.de/server. For OpenStack I would recommend 80, 443, 22 and ICMP.  If you plan on running OpenShift on OpenStack you need to add some additional rules.  Connect to root server via ssh and private key. # ssh -i .ssh/id_rsa.pub Create Root Server Configuration. The root server in this case has two disks. They are being configured in non-redundant RAID 1 (stripping) configuration. OpenStack requires decent disk performance, I found when using mirroring it was not enough. If you want redundant configuration or decent performance, you need to pay extra for SSDs. Since we will setup LVM partitions, creating one for Cinder (cinder-volumes) is a good idea. You don&#39;t want to use loop back driver for Cinder. Finally you can provide your own image (if you want to use RHEL, you must do so). My colleague Andy Neeb also automated deployment using Hetzner API. If you are interested in automated deployment here is his Github repository: https://github.com/andyneeb/ansible-hetzner. [CENTOS] # vi config.txt">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers">
 <meta property="og:url" content="https://keithtenzer.com/openstack/openstack-14-rocky-lab-installation-and-configuration-guide-for-hetzner-root-servers/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

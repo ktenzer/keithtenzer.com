@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>How to Create a RHEL 8 Image for Hetzner Root Servers - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>How to Create a RHEL 8 Image for Hetzner Root Servers - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article I will explain how to create your own custom RHEL 8 image for hetzner root servers. Hetzner offers new and used physical servers on a per/month basis (https://www.hetzner.de/sb). They offer extremely competitive pricing. These servers are perfect for demo or lab environments where you are operating your own platform and want it running 24/7! Hetzner unfortunately does not offer RHEL images however, does provide a means for bringing your own image. A colleague of mine, Ingo Boernig, already shared a blog on how to do this for RHEL 7.5. This article with cover RHEL 8.0.  Install RHEL 8 in a VM Download RHEL 8 ISO DVD from https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.0/x86_64/product-software. Using KVM virt-manager (or another hypervisor) install RHEL 8 in a VM.  Once the VM boots follow the installation and use defaults. Select minimal server from the software selection. Also configure network to boot using DHCP.  Prepare RHEL 8 VM for Hetzner Log into the VM using ssh or console. Hetzner only supports one boot kernel. As such we will remove the rescue kernel. # rm /boot/vmlinuz-0-rescue-adcc72dfe3ed4c049ffff0ec950a90d9 # rm /boot/initramfs-0-rescue-adcc72dfe3ed4c049ffff0ec950a90d9.img Hetzner creates a ram disk and uses the dracut tool. It expects dracut to be installed under /sbin. This is not the case with RHEL 8 so we will add a symlink. # ln -s /usr/bin/dracut /sbin/dracut Finally create a tar zip of the RHEL 8 OS. The image needs to be called CentOS-75-el-x86_64-minimal.tar.xz because Hetzner is expecting certain image names but I assure you this will be RHEL 8. # tar cJvf CentOS-75-el-x86_64-minimal.tar.xz --exclude=/dev \ --exclude=/proc --exclude=/sys --exclude=/CentOS-75-el-x86_64-minimal.tar.xz / Deploy Image on Hetzner Server In order to install OS or repair it you need to get into Hetner server rescue mode.    Using secure copy, upload the image to the Hetzner server /root directory. # scp CentOS-75-el-x86_64-minimal.tar.xz root@hetzner_ip:/root Log into your Hetzner server using your ssh key. You should be placed into rescue mode. Create a Hetzner configuration and use your custom image root@rescue# vi config.txt">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="How to Create a RHEL 8 Image for Hetzner Root Servers">
 <meta property="og:url" content="https://keithtenzer.com/cloud/how-to-create-a-rhel-8-image-for-hetzner-root-servers/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

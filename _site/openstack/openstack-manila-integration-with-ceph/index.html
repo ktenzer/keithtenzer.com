@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>OpenStack Manila Integration with Ceph - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>OpenStack Manila Integration with Ceph - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will configure OpenStack Manila using CephFS as a storage backend. OpenStack Manila is an OpenStack project providing file services. Manila is storage backend agnostic and you can have many different kinds of storage backends, similar to Cinder. CephFS is a POSIX-Compliant file system that uses the Ceph storage cluster to store data. CephFS works by providing a Metadata Server (MDS) that collectively manages filesystem namespaces. It also coordinates access to Ceph Object Storage Damones (OSDs). Ceph MDS has two modes: active or passive. There are several documented active/passive MDS configurations and multi-mds or active/active MDS that can be configured when a single MDS becomes a bottleneck. Clients can mount CephFS filesystems using the ceph-fuse client or kernel kernel driver. Integrating Ceph with OpenStack Series:  Integrating Ceph with OpenStack Cinder, Glance and Nova Integrating Ceph with Swift Integrating Ceph with Manila  Prerequisites The following are required to configure OpenStack Manila with CephFS:  Already configured Ceph cluster (Jewel or higher). See here to setup Ceph cluster. Already configured OpenStack (Mitaka or higher). See here to setup OpenStack.   Configure CephFS [All Ceph Nodes] Add repository for ceph tools. # subscription-manager repos --enable=rhel-7-server-rhceph-2-tools-rpms [Ceph Ansible Node] Update Ansible inventory file and add metadata server. #vi /etc/host/ansible ... [mdss] ceph2 ... Note: For non-lab environment you definitely wan&#39;t to configure multiple MDS servers. One is active and additional servers are passive. Run Ansible. # su - ansible $ cd /usr/share/ceph-ansible $ ansible-playbook site.yml -vvvv PLAY RECAP ********************************************************************  ceph1 : ok=369 changed=1 unreachable=0 failed=0  ceph2 : ok=364 changed=11 unreachable=0 failed=0  ceph3 : ok=369 changed=1 unreachable=0 failed=0 [Ceph Monitor Node] Check CephFS metadata server. # ceph mds stat e24: 1/1/1 up {0=ceph2=up:active} Create keyring and cephx authentication key for Manila service. # read -d &#39;&#39; MON_CAPS &lt;&lt; EOF allow r, allow command &quot;auth del&quot;, allow command &quot;auth caps&quot;, allow command &quot;auth get&quot;, allow command &quot;auth get-or-create&quot; EOF">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenStack Manila Integration with Ceph">
 <meta property="og:url" content="https://keithtenzer.com/openstack/openstack-manila-integration-with-ceph/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

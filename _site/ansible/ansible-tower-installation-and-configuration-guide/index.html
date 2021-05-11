@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>Ansible Tower Installation and Configuration Guide - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>Ansible Tower Installation and Configuration Guide - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will setup and configure Ansible Tower on Red Hat Enterprise Linux (RHEL). By now unless you are hiding under a rock, you have heard about Ansible. Ansible is quickly becoming the standard automation language used in enterprises for automating everything. Ansible is powerful, simple, easy to learn and these of course are the main reasons it becoming the standard everywhere. Ansible has two components: Ansible core and Ansible Tower. Core provides the Ansible runtime that executes playbooks (yaml files defining tasks and roles) against inventories (group of hosts). Ansible Tower provides management, visibility, job scheduling, credentials, RBAC, auditing / compliance and more. Installing Ansible Tower also installs Ansible core so you kill two birds with one stone.  Prerequisites Before starting you need to deploy a host or VM with RHEL 7.3. Once the host is configured and on the network, you can register it with subscription-manager and enable the required repositories. For Ansible Tower you need rhel-7-server-rpms, rhel-7-server-extras-rpms and EPEL. # subscription-manager register # subscription-manager list --available # subscription-manager attach --pool=&lt;pool id&gt; # subscription-manager repos --disable=* # subscription-manager repos --enable=rhel-7-server-rpms \ --enable=rhel-7-server-extras-rpms Install and configure EPEL repositories. yum install http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm Install Ansible # yum install -y ansible Install Ansible Tower Download latest Ansible Tower release. # curl -k -O https://releases.ansible.com/awx/setup/ansible-tower-setup-latest.tar.gz Extract tarball. # gunzip ansible-tower-setup-latest.tar.gz # tar xvf ansible-tower-setup-latest.tar Configure Ansible Tower. Ansible Tower uses an Ansible playbook to deploy itself (what a great idea). As such configuration parameters or groupvars are stored in inventory file. # cd ansible-tower-setup-3.1.2 # vi inventory">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Ansible Tower Installation and Configuration Guide">
 <meta property="og:url" content="https://keithtenzer.com/ansible/ansible-tower-installation-and-configuration-guide/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

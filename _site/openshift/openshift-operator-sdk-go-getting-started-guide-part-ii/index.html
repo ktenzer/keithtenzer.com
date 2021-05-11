@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>OpenShift Operator SDK: Go Getting Started Guide Part II - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>OpenShift Operator SDK: Go Getting Started Guide Part II - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will provide a hands-on guide to building your very first operator in Go. Using the Operator SDK we will learn how to create boilerplate code, build and deploy an operator. This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end.  OpenShift Operator Getting Started Part I OpenShift Operator SDK: Go Getting Started Guide Part II OpenShift Operator SDK: Ansible Getting Started Guide Part III OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV   Setup Development Environment There are some prerequisites needed to build the operator-sdk and eventually your own operators. In this case I am using Fedora Linux. Install Docker 17.03+ Add the docker ce repositories. Note: you can also use podman and buildah instead of Docker for those that want a complete and clean divorce. $ sudo dnf -y install dnf-plugins-core $ sudo dnf config-manager \     --add-repo \     https://download.docker.com/linux/fedora/docker-ce.repo Install docker-ce $ sudo dnf -y install docker-ce docker-ce-cli $ sudo systemctl start docker $ sudo systemctl enable docker Install Go 1.13+ Download Go and extract it to /usr/local $ curl -O https://dl.google.com/go/go1.13.6.linux-amd64.tar.gz $ sudo tar -C /usr/local -xzf go1.13.6.linux-amd64.tar.gz Update bash profile and set GOPATH/GOBIN $ vi ~/.bash_profile">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenShift Operator SDK: Go Getting Started Guide Part II">
 <meta property="og:url" content="https://keithtenzer.com/openshift/openshift-operator-sdk-go-getting-started-guide-part-ii/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

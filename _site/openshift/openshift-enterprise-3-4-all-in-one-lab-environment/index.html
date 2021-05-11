@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>OpenShift Enterprise 3.4: all-in-one Lab Environment - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>OpenShift Enterprise 3.4: all-in-one Lab Environment - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will setup a OpenShift Enterprise 3.4 all-in-one configuration. OpenShift has several different roles: masters, nodes, etcd and load balancers. An all-in-one setup means running all service on a single system. Since we are only using a single system a load balancer or ha-proxy won&#39;t be configured. If you would like to read more about OpenShift I can recommend the following:  General OpenShift Product Blogs Persistent Storage OpenShift Networking Part I OpenShift Networking Part II Aggregate Logging, Metrics, CloudForms and Jenkins Integration Deployment Scenarios OpenShift on Azure   Prerequisites Configure a VM with following:  RHEL 7.3 2 CPUs 4096 RAM 30GB disk for OS 25GB disk for docker images  # subscription-manager repos --disable=&quot;*&quot; # subscription-manager repos \     --enable=&quot;rhel-7-server-rpms&quot; \     --enable=&quot;rhel-7-server-extras-rpms&quot; \     --enable=&quot;rhel-7-server-ose-3.4-rpms&quot; # yum install wget git net-tools bind-utils iptables-services bridge-utils bash-completion # yum update -y # yum install -y atomic-openshift-utils # yum install atomic-openshift-excluder atomic-openshift-docker-excluder # atomic-openshift-excluder unexclude # yum install -y docker # vi /etc/sysconfig/docker OPTIONS=&#39;--selinux-enabled --insecure-registry 172.30.0.0/16&#39; # cat &lt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF # docker-storage-setup # systemctl enable docker # systemctl start docker # ssh-keygen # ssh-copy-id -i /root/.ssh/id_rsa-pub ose3-master.lab.com #vi /etc/hosts">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenShift Enterprise 3.4: all-in-one Lab Environment">
 <meta property="og:url" content="https://keithtenzer.com/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

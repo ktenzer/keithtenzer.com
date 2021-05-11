@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>OpenShift Application Certificate Management with Let’s Encrypt - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>OpenShift Application Certificate Management with Let’s Encrypt - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this short article we will look at a solution for application certificates in OpenShift. Let&#39;s Encrypt is a non-profit certificate authority and provides easy on-demand TLS certificates. Each application you create that you want to expose to users will of course have it&#39;s own URL and require a TLS certificate. It can be quite tedious to manage these certificates and deploy them manually. Kubernetes platforms also require an innovative, built-in native approach to properly mitigate complexity. Thankfully a fellow RHatter (Tomáš Nožička) has created a k8s admission controller that integrates with let&#39;s encrypt. A k8s admission controller is a pattern for extending kubernetes platform capabilities by reacting to API events in real-time.  In this case the admission controller watches the route APIs. If a new route is added, plus has the right annotation, the admission controller will automatically register the route with Let&#39;s Encrypt, wait for the certificate and finally configure the certificate automatically in the route. Tomáš has provided the code and yaml for an easy deployment in the following Github repository: https://github.com/tnozicka/openshift-acme. While hee does provide documentation there are a few additional steps that need explanation when creating a route. I decided to as such put it all together in a simple concise post.  Configure Let&#39;s Encrypt OpenShift Admission Controller Here we will enable the k8s admission controller on the entire cluster but it is possible to limit the scope to individual namespaces. See Github repository for more information. Create new project $ oc new-project acme Deploy Controller $ oc apply -fhttps://raw.githubusercontent.com/tnozicka/openshift-acme/master/deploy/cluster-wide/{clusterrole,serviceaccount,issuer-letsencrypt-live,deployment}.yaml Create Service Account and Role Binding $ oc create clusterrolebinding openshift-acme --clusterrole=openshift-acme \ --serviceaccount=&quot;$( oc project -q ):openshift-acme&quot; --dry-run -o yaml | \ oc apply -f - Add Certificate to Application Route Now that the k8s admission controller is deployed we will create a route. In OpenShift a route is how we expose a service to the outside world. Since we will provide a custom TLS certificate, route termination should be on the edge. As such we can use http from the router edge to the service. Create Route $ vi letsencrypt_route.yaml kind: Route apiVersion: route.openshift.io/v1 metadata:   name: meet   labels:     app: jitsi   annotations:     openshift.io/host.generated: &#39;true&#39;     kubernetes.io/tls-acme: &quot;true&quot; spec:   host: meet-jitsi.apps.ocp4.keithtenzer.com   to:     kind: Service     name: web     weight: 100   port:     targetPort: http   tls:     termination: edge   wildcardPolicy: None  Validate Route As soon as the ACME admission controller sees a route with the annotation kubernetes.io/tls-acme: &quot;true&quot; it will register URL with Let&#39;s Encrypt. A temporary route will be created so once the certificate is accepted it can be pulled down and added to route.  Once process completes the temporary exposer route is removed and the certificate and private key are added to the original route.  It&#39;s that easy and you now have a valid certificate for your application in OpenShift. Summary In this article we showed how to setup application certificates in an OpenShift enviornment using a k8s admission controller. This solution also shows the value of a k8s admission controller being able to customize and adapt the environment to an organizations governance model. (c) 2020 Keith Tenzer">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenShift Application Certificate Management with Let’s Encrypt">
 <meta property="og:url" content="https://keithtenzer.com/openshift/openshift-application-certificate-management-with-lets-encrypt/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

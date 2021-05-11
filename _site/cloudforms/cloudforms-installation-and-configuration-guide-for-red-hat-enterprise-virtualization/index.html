@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>CloudForms Installation and Configuration Guide for Red Hat Virtualization - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>CloudForms Installation and Configuration Guide for Red Hat Virtualization - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will deploy CloudForms 4.2 on Red Hat Enterprise Virtualization (RHV). We will also show how to configure CloudForms in order to properly manage a RHV cluster and it&#39;s hosts as well as virtual machines. Before you begin a RHV cluster is needed. If you haven&#39;t set one up, here is a guide on how to build a basic two node RHV cluster.  Install CloudForms CloudForms is provided by Red Hat as a virtual applicance. Red Hat provides appliances for many infrastructure platforms such as RHV, VMware, Hyper-V, OpenStack, AWS, GCE and Azure. In this case we will download the RHV virtual appliance. Download Image Image should be downloaded to the CFME appliance using your RHN login. https://access.redhat.com/downloads/content/167/ver=/cf-me---4.2/4.2/x86_64/product-software Add Appliance into RHV Export Domain In order to import an appliance it needs to be copied to export domain or imported to export domain using CLI. # cp cfme-rhevm-5.7.2.1-1.x86_64.rhevm.ova /usr/share/export/30621071-3dba-401d-9605-02a914b4069a Once copied to export domain we need to extract the appliance and set permissions. # cd /usr/share/export/30621071-3dba-401d-9605-02a914b4069a/ # tar xvf cfme-rhevm-5.3-15.x86_64.rhevm.ova # chown -R 36:36 images/ # chown -R 36:36 master/ Import CFME Appliance as Template Once the appliance is in the export domain we can import it as an appliance using the RHV-M management console. Under export domain and template, choose the import option.   We can provide our CFME template with a new name.  Once import completes the status will change to &quot;OK&quot;.  Create CloudForms Virtual Machine Under &quot;Virtual Machines&quot;, select &quot;new&quot; in the RHV-M management console. For template choose the newly imported CFME template.  Add Additional Disk for CloudForms Database Under CFME &quot;Virtual Machine&quot; Disks select &quot;new&quot; to add a new disk. I would recommend 30GB but this is based on how much data is to be collected and for how long.  Configure Appliance Start CFME VM from RHV-M management console. Login as &quot;root/smartvm&quot; and run &quot;appliance_console&quot; to configure CloudForms.  Configure static network settings  Configure local database  Make sure you create an internal database  Choose a disk, this should be the 30GB disk we added  Choose &quot;N&quot; to run standalone database server  Create database region and choose password  Restart the CFME appliance  Below are the basic settings that should be configured  Configure RHV for CloudForms In order for CloudForms to report capacity &amp; utilization we need to configure access from RHV-M. Login to RHV-M host using ssh as root Connect to RHV-M database # su - postgres As postgres user add a new role for CloudForms. As of this article CloudForms needs superuser but there is an RFE to enable read-only access in future. $ psql -U postgres CREATE ROLE cfme LOGIN UNENCRYPTED PASSWORD &#39;redhat01&#39; \ SUPERUSER VALID UNTIL &#39;infinity&#39;; \q &nbsp; Open firewall ports to allow communication to database # firewall-cmd --add-port=5432/tcp --permanent # firewall-cmd --reload Ensure PostgreSQL is exposing port and listening to all interfaces # vi /var/lib/pgsql/data/pg_hba.conf host all all 0.0.0.0/0 md5 # vi /var/lib/pgsql/data/postgresql.conf listen_addresses = &#39;*&#39; Restart PostgreSQL database # service postgresql reload Configure RHV Provider in CloudForms Connect to CloudForms management console Using browser you can simply hit the IP of CloudForms appliance using https. Login with &quot;admin/smartvm&quot;.  Add RHV Provider Under providers, choose &quot;Infrastructure Providers&quot; and &quot;new&quot;. Add the default credentials using IP or name of RHV-M host. The user should be admin@internal for RHV-M. Once that is complete, go to the &quot;C&amp; U Database&quot; tab. Here you will enter the IP or name for the RHV-M host and the superuser credentials you created above. In this example &quot;cfme/redhat01&quot;. Configure Hypervisors CloudForms requires access to hypervisors for certain capabilities like &quot;smart state analysis&quot;. Ability to peer inside VM images in order to for example, check security vulnerabilities. In this environment there are two hypervisor hosts (rhevh01.lab and rhevh02.lab). Configure RHEVH01 Under RHV infrastructure provider select host rhevh01.lab and configure.  Configure RHEVH02 Under RHV infrastructure provider select host rhevh02.lab and configure.  Enable Capacity and Utilization On upper far right in CloudForms management console under user, select &quot;Configuration&quot;. Enable the Capacity and Utilization roles underthe &quot;Server: EVM&quot;. C &amp; U  Set SmartProxy Affinity Under &quot;Zone: Default Zone&quot; associate all hosts and datastores.  Enable Capacity and Utilization Collection of RHV Environment Under &quot;CFME:Region&quot; enable collection for all clusters and datastores.  At this point CloudForms is collecting capacity and utilization statistics and after a few hours you should start seeing data under VM. You can also use planning to forecast and model various growth scenarios. Summary In this article we installed and configured the CloudForms appliance on an existing RHV cluster. We prepared RHV-M for CloudForms data collection. Configured a new infrastructure provider for RHV in CloudForms. Finally we enabled capacity and utilization for RHV within CloudForms. Happy CloudForming! (c) 2017 Keith Tenzer &nbsp;">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="CloudForms Installation and Configuration Guide for Red Hat Virtualization">
 <meta property="og:url" content="https://keithtenzer.com/cloudforms/cloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

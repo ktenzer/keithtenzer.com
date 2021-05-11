@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>RHV 4.1 Lab Installation and Configuration Guide - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>RHV 4.1 Lab Installation and Configuration Guide - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will setup a Red Hat Enterprise Virtualization (RHV) environment. RHV is based on upstream opensource projects KVM and Ovirt. RHV is composed of Red Hat Enterprise Linux (RHEL which includes KVM) and Red Hat Enterprise Virtualization Management (RHV-M), based on Ovirt. As of this article the latest version is RHV 4.1. RHV has of late become very interesting to customers looking for alternatives to VMware. Below are a few reasons why you should be interested in RHV:  100% opensource no proprietary code and no proprietary licencing. Best Hypervisor for running Red Hat Enterprise Linux (RHEL). Integrated and built with RHEL, uses SELinux to secure Hypervisor. RHV leads VMware in SPECvirt performance and price per performance (last results 2013). RHV scales vertically and performs extremely well on 4 or even 8 socket servers. All features are included in RHV subscription, no licensing for extra capabilities. KVM is future proof and is the defacto standard for OpenStack and modern virtualizations platforms.   Preparation In this configuration I am using two physical servers. Each has a dual-core CPU and 16GB RAM. Specifically I am using two Intel NUCs which make a great, portable lab environments. In my environment I named the Hypervisor hosts rhevh01.lab and rhevh02.lab. [RHEVH01 and RHEVH02] Install RHEL 7.3 on both nodes. Enable subscription and configure repositories. # subscription-manager register # subscription-manager list --available # subscription-manager attach --pool= # subscription-manager repos --disable=* # subscription-manager repos --enable=rhel-7-server-rpms \  --enable=rhel-7-server-rhv-4.1-mgmt-agent-rpms Disable firewalld and NetworkManager # systemctl stop firewalld # systemctl disable firewalld # systemctl stop NetworkManager #systemctl disable NetworkManager Update. #yum update -y #systemctl reboot Configure NFS. RHV requires shared storage in order to cluster Hypervisors. In this case we will expose the local storage of both nodes as NFS shares. # yum install nfs-utils rpcbind # systemctl enable rpcbind # systemctl enable nfs-server # systemctl start rpcbind # systemctl start nfs-server Configure and export NFS share. # mkdir /usr/share/rhev # chown -R 36:36 /usr/share/rhev # chmod -R 0755 /usr/share/rhev # vi /etc/exports  /usr/share/rhev 192.168.2.0/24(rw) # exportfs -a RHV Installation There are two different installations approaches for the hypervisor and management. RHV as mentioned earlier consists of the Hypervisor host(s) (RHEL + KVM) and a system running the management software (RHV-M). Hypervisor Options  Use RHEL Use RHEV-H (Based on RHEL but designed to run as a Hypervisor, only software required for running Hypervisor installed)  RHV-M Options  Install RHV-M on separate VM or physical server. Use Hosted-engine which deploys RHV-M on the actual RHV cluster. In this example we will choose hosted-engine and this is my personal preference because RHV-M automatically gets all the capabilities and benefits of running on RHV, such as HA.  Install hosted engine [RHEVH01] Install hosted-engine software and dependencies. [root@rhevh01 ~]# yum install -y ovirt-hosted-engine-setup [root@rhevh01 ~]# yum install -y rhevm-appliance Install screen for using with setup. # yum -y install screen Start screen session. This is used in event you have network connection issue during setup. # screen Deploy hosted-engine on hypervisor host. # hosted-engine --deploy &nbsp; &nbsp; Select nfs3 for storage and configure OVF using cloud-init [ INFO ] Stage: Setup validation --== CONFIGURATION PREVIEW ==-- Bridge interface : eno1 Engine FQDN : rhevm.lab Bridge name : ovirtmgmt Host address : rhevh01.lab SSH daemon port : 22 Firewall manager : iptables Gateway address : 192.168.0.1 Host name for web application : hosted_engine_1 Storage Domain type : nfs3 Host ID : 1 Image size GB : 50 Storage connection : 192.168.0.21:/usr/share/rhev Console type : vnc Memory size MB : 4096 MAC address : 00:16:3e:3c:79:9b Boot type : disk Number of CPUs : 2 OVF archive (for disk boot) : /usr/share/ovirt-engine-appliance/rhevm-appliance-4.0.20170307.0-1.el7ev.ova Appliance version : 4.0.20170307.0-1.el7ev Restart engine VM after engine-setup: True CPU Type : model_Haswell-noTSX Please confirm installation settings (Yes, No)[Yes]: Note: If deployment fails it may be because of conflict in version of ebtables. Check if you have ebtables version &gt; 2.0.10-13 (optional). qpm -qa | grep ebtables # yum downgrade ebtables-2.0.10-13.el7.x86_64 Configure RHV cluster in RHV-M Once we have installed the hosted-engine we can complete the setup and configure both nodes in a RHV cluster. [RHV-M Console] Connect to RHV-M management console. Note: The hostname of RHV-M not IP needs to be used to access the management console. http://rhevm.lab/ovirt-engine  Select Datacenter-&gt;Hosts-&gt;New.  RHV-M will configure the second node and bring it into the cluster.  Add iptables rules to allow NFS. This is specific to this setup as we are cheap and lazy. We are using local disks on Hypervisor hosts for storage. [RHEVH01 and RHEVH02] # vi /etc/sysconcfig/iptables">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="RHV 4.1 Lab Installation and Configuration Guide">
 <meta property="og:url" content="https://keithtenzer.com/rhev/rhev-4-1-lab-installation-and-configuration-guide/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

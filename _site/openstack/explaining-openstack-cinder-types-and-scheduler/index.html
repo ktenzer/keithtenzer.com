@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>Explaining OpenStack Cinder Types and Scheduler - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>Explaining OpenStack Cinder Types and Scheduler - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview OpenStack Cinder is responsible for handling block storage in the context of OpenStack. Cinder provides a standard API and interface that allows storage companies to create their own drivers in order to integrate storage capabilities into OpenStack in a consistent way. Each storage pool exposed to OpenStack Cinder is a backend and you can have many storage backends. You can also have many of the same kind of storage backends. In this article we will look at two advanced features Cinder provides: types and the scheduler. Cinder types essentially allow us to label Cinder storage backends. This allows for building out storage services that have expected characteristics and capabilities. The Cinder driver exposes those storage capabilities to Cinder. The Cinder scheduler is responsible for deciding where to create Cinder volumes when we have more than one of the same kind of storage backend. This is done by looking at the filter rules in order to identify the most appropriate storage backend. More about filter rules can be found here.  Prerequisites In order to follow along you will need an OpenStack environment. The easiest thing to do is setup an all-in-one environment with RDO. Those steps are documented here. If you want to use Ceph and don&#39;t have an environment or things setup properly then you can follow below guides:  Ceph setup Ceph OpenStack configuration  Configure Storage Backends [OpenStack Controller] Add two disks to OpenStack controller.  For all-in-one setup this is straight-forward. If you have multiple controllers then it needs to be a controller running openstack-cinder-volume service. Create LVM Storage Backends. Authenticate to OpenStack using keystone source file. # source /root/keystonerc_admin Determine appropriate block device names for newly added disks. The below commands can be useful. In this case the two disks are vdb and vdc. # blkid # lsblk Create physical volumes and volume groups. # pvcreate /dev/vdb # vgcreate lvm-1 /dev/vdb # pvcreate /dev/vdc # vgcreate lvm-2 /dev/vdc Update Cinder configuration and add LVM backends. # vi /etc/cinder/cinder.conf default_volume_type = rbd enabled_backends = lvm1,lvm2,rbd">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Explaining OpenStack Cinder Types and Scheduler">
 <meta property="og:url" content="https://keithtenzer.com/openstack/explaining-openstack-cinder-types-and-scheduler/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

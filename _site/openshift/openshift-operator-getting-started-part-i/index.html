@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>OpenShift Operator Getting Started Part I - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>OpenShift Operator Getting Started Part I - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview In this article we will introduce the concept of Operators, the Operator Framework and Operator Lifecycle Management. This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end.  OpenShift Operator Getting Started Part I OpenShift Operator SDK: Go Getting Started Guide Part II OpenShift Operator SDK: Ansible Getting Started Guide Part III OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV  First, what exactly is an Operator? An Operator is a method of packaging, deploying and managing a Kubernetes application. source: https://coreos.com/operators/ Or simply, it is the application that can deploy itself, manage itself and update itself. Welcome to the brave new world, where we don’t spend time doing repetitive manually tasks, but rather put our knowledge into software so it can do it for us, better.  The Kubernetes Operator pattern was introduced by CoreOS engineers in 2016 as again, a way to implement and inject application specific domain knowledge into the running of containerized applications. The idea was to couple Service Reliability Engineering (SRE) output with the application and provide a standard programmable path to do so. SRE teams as you likely know, operate applications by creating software. Most organizations unfortunately don’t have the luxury of having highly paid software engineers to run their applications, nor the time to build such software. Now, with Operators and the Operator Framework, there is a way for vendors or customers to provide that domain knowledge using a standardized reusable approach. The result is applications that run themselves or come with their own pre-programmed built-in SRE team. This is obviously a huge game-changer and differentiator for operating applications. In my opinion it is the only way to deal with the increased complexity we see today. This is the reason eventually, that every application will likely be deployed in containers on Kubernetes. It is simply no longer, with today’s complexity, possible for application domain knowledge to exist in a few people’s heads, that in turn need to operate application lifecycle manually. Think of an operator as the new Linux “Package Manager” and Kubernetes as the new “Linux”. Introducing the Operator Framework The Operator Framework is a toolkit to make it easy to build, scale and run operators. It includes the SDK, Operator Lifecycle Manager and Metering. Operator SDK – Provides tooling to build and package operators. It abstracts Kubernetes API.  Operator Lifecycle Manager – Management control plane for operators. It governs who can access/deploy a given operator, namespaces where operators can run and lifecycle management, such as updates to an operator.  Metering – Provides ability to record historical usage which in turn can be used for operator reporting. Understanding How It All Works Using the Operator SDK we create operators. An operator can be written in Go or Ansible. An operator provides one or more custom resource definitions (CRDs) to allow users to interact with the application using the standard kubernetes API. A CRD is simply an extention to the kubernetes API. It also provides a custom resource (CR) for how a user interacts with the CRD. In addition the operator provides methods for how to install, delete and update itself. The operator has the ability to watch CRDs. If a user creates, deletes or updates a CR, the operator will see that and call the necessary functions. Those functions can be implemented in Go or Ansible. Yep all you need to build an operator end-to-end is Ansible knowledge! Once you have an operator that can be deployed, it is time to look into Operator Lifecycle Management. OpenShift comes with OLM already built-in but it can also be added to any standard kubernetes cluster. OLM has the concept of a catalog. This is essentially an operator that provides one or more application bundles. OpenShift has several built-in catalogs. $ oc get catalogsource -n openshift-marketplace NAME                      DISPLAY                   TYPE   PUBLISHER          AGE certified-operators       Certified Operators       grpc   Red Hat            18d community-operators       Community Operators       grpc   Red Hat            18d  redhat-operators          Red Hat Operators         grpc   Red Hat            18d Red Hat, ISVs, Partners, anyone can bundle their application operators into a catalog. Operator Hub simply lists the applications exposed by a catalog via OLM. Each application bundle is composed of the operator, it&#39;s own k8s objects and a manifest. The manifest is exposed via the cluster server version (CSV) CRD and consumed in OLM. This allows for flexibility to version operators and their manifests separately. Summary In this article we discussed the Operator Framework for Kubernetes and OpenShift. A powerful framework for building, packaging and deploying kubernetes-native applications. The Operator Framework consists of the Operator SDK, Operator Lifecycle Management and Metering. Through Operators and the Operator Lifecycle Management the full power of kubernetes can be utilized, allowing application operators to have a built-in SRE approach which in turn increases application availability, programability and efficiency. Happy Operatoring! (c) 2020 Keith Tenzer &nbsp; &nbsp; &nbsp; &nbsp;">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenShift Operator Getting Started Part I">
 <meta property="og:url" content="https://keithtenzer.com/openshift/openshift-operator-getting-started-part-i/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">

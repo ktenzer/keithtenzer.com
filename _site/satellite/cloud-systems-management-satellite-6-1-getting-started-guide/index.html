@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>Cloud Systems Management: Satellite 6.1 Getting Started Guide - KEITHTENZER.COM</title>
+<!-- begin _includes/seo.html --><title>Cloud Systems Management: Satellite 6.1 Getting Started Guide - Keith Tenzer’s Blog</title>
 <meta name="description" content="Overview Satellite is responsible for system and configuration management. Satellite 6 offers a new architecture based off best-of-breed opensource projects: Foreman (provisioning), Katello (content management), Pulp (content management), Puppet (configuration management) and Candlepin (subscription management). Satellite 6 provides ITIL equivalent of media library for RPMs, ISOs, Puppet modules and container images. It allows you to build a standard operating environment (SOE) that defines how systems and applications are provisioned as well as maintained. Satellite 6 allows an organization the ability to manage all content through defined life-cycles. Control through RBAC can be defined so that different groups can control various aspects of a SOE. In this article we will focus on how to install and configure Satellite 6.1.  Installing Satellite 6.1 Before installing Satellite 6.1 it is recommend to install RHEL 7.1 minimum OS. In this guide we will configure a Satellite 6.1 server and capsule on the same system. #subscription-manager register #subscription-manager list --available #subscription-manager attach --pool=8a85f9844b5685ed014b6e02a0c3144e #subscription-manager repos --disable=* #subscription-manager repos --enable rhel-7-server-rpms --enable rhel-server-rhscl-7-rpms --enable rhel-7-server-satellite-6.1-rpms Update all packages and install Katello. #yum update -y #yum install -y katello Run the Katello installer and provide information about the environment. In this environment the Satellite 6.1 server is located on 192.168.122.0/24 network and has static hostname sat6.lab.com. In order to provision new servers Satellite requires DNS and DHCP. You can use external DNS and DHCP but in this example we are having Satellite configure both locally. katello-installer -v -d --foreman-admin-password redhat \ --capsule-dns true --capsule-dns-interface eth0 --capsule-dns-zone lab.com \ --capsule-dns-forwarders 192.168.122.1 --capsule-dns-reverse 122.168.192.in-addr.arpa \ --capsule-dhcp true --capsule-dhcp-interface eth0 --capsule-dhcp-range &quot;192.168.122.200 192.168.122.250&quot; \ --capsule-dhcp-gateway 192.168.122.1 --capsule-dhcp-nameservers 192.168.122.70 \ --capsule-tftp true --capsule-tftp-servername $(hostname) \ --capsule-puppet true --capsule-puppetca true Configuring Satellite 6.1 The first step in configuration is to open the necessary firewall ports. #firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \ &amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \ &amp;&amp; firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \ &amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \ &amp;&amp; firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner root -j ACCEPT \ &amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner root -j ACCEPT \ &amp;&amp; firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 1 -o lo -p tcp -m tcp --dport 9200 -j DROP \ &amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 1 -o lo -p tcp -m tcp --dport 9200 -j DROP Allow HTTPS access from the web UI. #firewall-cmd --permanent --add-service=https Reload the firewall rules so they are active. # firewall-cmd --reload At this point you should be able to reach the web UI using HTTPS. In this environment the url is https://sat6.lab.com. Next we need to setup the hammer CLI. Configure hammer so that we automatically pass authentication credentials. mkdir ~/.hammer cat &gt; .hammer/cli_config.yml &lt;&lt;EOF :foreman:     :host: &#39;https://sat-$GUID.rhpds.opentlc.com/&#39;     :username: &#39;admin&#39;     :password: &#39;redhat&#39;">
 
 
@@ -21,7 +21,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="KEITHTENZER.COM">
+<meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Cloud Systems Management: Satellite 6.1 Getting Started Guide">
 <meta property="og:url" content="https://keithtenzer.com/satellite/cloud-systems-management-satellite-6-1-getting-started-guide/">
 
@@ -83,7 +83,7 @@
 
 
 
-  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="KEITHTENZER.COM Feed">
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Keith Tenzer's Blog Feed">
 
 
 <!-- https://t.co/dKP3o1e -->
@@ -143,7 +143,7 @@
       <nav id="site-nav" class="greedy-nav">
         
         <a class="site-title" href="/">
-          KEITHTENZER.COM
+          Keith Tenzer's Blog
           <span class="site-subtitle">Cloud Computing and Code</span>
         </a>
         <ul class="visible-links"><li class="masthead__menu-item">
