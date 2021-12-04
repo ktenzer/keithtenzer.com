@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://keithtenzer.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://keithtenzer.com/" rel="alternate" type="text/html" /><updated>2021-12-03T17:59:57-08:00</updated><id>https://keithtenzer.com/feed.xml</id><title type="html">Keith Tenzer’s Blog</title><subtitle></subtitle><author><name>Keith Tenzer</name></author><entry><title type="html">Building Ansible Operators 1-2-3</title><link href="https://keithtenzer.com/openshift/building-ansible-operators-1-2-3/" rel="alternate" type="text/html" title="Building Ansible Operators 1-2-3" /><published>2021-12-03T00:00:00-08:00</published><updated>2021-12-03T00:00:00-08:00</updated><id>https://keithtenzer.com/openshift/building-ansible-operators-1-2-3</id><content type="html" xml:base="https://keithtenzer.com/openshift/building-ansible-operators-1-2-3/">&lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://keithtenzer.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://keithtenzer.com/" rel="alternate" type="text/html" /><updated>2021-12-03T21:44:58-08:00</updated><id>https://keithtenzer.com/feed.xml</id><title type="html">Keith Tenzer’s Blog</title><subtitle></subtitle><author><name>Keith Tenzer</name></author><entry><title type="html">Building Ansible Operators 1-2-3</title><link href="https://keithtenzer.com/openshift/building-ansible-operators-1-2-3/" rel="alternate" type="text/html" title="Building Ansible Operators 1-2-3" /><published>2021-12-03T00:00:00-08:00</published><updated>2021-12-03T00:00:00-08:00</updated><id>https://keithtenzer.com/openshift/building-ansible-operators-1-2-3</id><content type="html" xml:base="https://keithtenzer.com/openshift/building-ansible-operators-1-2-3/">&lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
 &lt;p&gt;In this article we will go step by step in build a Kubernetes Operator using Ansible and the Operator Framework. Operators provide ability to not only deploy an application but also manage the entire lifecycle while also baking in higher degrees of intelligence and resilience. Before we get to the Operator lets briefly revisit the ways we can deploy and manage applications in k8s.&lt;/p&gt;
 &lt;ul&gt;
   &lt;li&gt;Deployment Config&lt;/li&gt;
@@ -9,6 +9,7 @@
 
 &lt;p&gt;A deployment config is the simplest method but there is no way to parameterize unless you are doing it through Ansible k8s module or something else that handles that. A deployment template does provide parameterization but is only available on OpenShift and also doesn’t handle packaging or management of the application itself. Helm provides parameterization and also packaging but doesn’t provide application lifecycle management or allow for building extended intelligence or resilience. Operators provide the full package and provide the pattern to improve operability over time. Some suggest just use the simplest tool for the job so if you just need to deploy an app for example, don’t need parameterization make a deployment config. Personally my view is that with Ansible, Operators are just about as easy as a deployment config but with so much added benefit that is always makes sense to take this approach from the beginning.
 My hope and goal with this article is to maybe influence a few more Operators so let’s see what we can accomplish.&lt;/p&gt;
+
 &lt;h2 id=&quot;pre-requisites&quot;&gt;Pre-requisites&lt;/h2&gt;
 &lt;p&gt;Your starting point should be an application you can deploy using a yaml deployment config. From there the next thing is to setup a development environment for building Operators using the Operator Framework.
 &lt;a href=&quot;https://docs.openshift.com/container-platform/4.8/operators/operator_sdk/ansible/osdk-ansible-quickstart.html&quot;&gt;Operator Pre-requisites&lt;/a&gt;
@@ -18,13 +19,16 @@ Once you have operator-sdk and openshift or kubectl client you need some Ansible
 &lt;pre&gt;$ sudo dnf install -y python-ansible-runner&lt;/pre&gt;
 &lt;pre&gt;$ sudo pip install ansible-runner-http&lt;/pre&gt;
 &lt;pre&gt;$ sudo pip install openshift&lt;/pre&gt;
-&lt;p&gt;## Create Operator Boiler Plate Code
- Before we can begin coding the Operator we need boiler plate code and thankfully the operator sdk does that for us.&lt;/p&gt;
+
+&lt;h2 id=&quot;create-operator-scaffolding&quot;&gt;Create Operator Scaffolding&lt;/h2&gt;
+&lt;p&gt;Before we can begin coding the Operator we need boiler plate code and thankfully the operator sdk does that for us.&lt;/p&gt;
 &lt;pre&gt;$ operator-sdk init --plugins=ansible --domain=kubecraft.com&lt;/pre&gt;
 &lt;pre&gt;$ operator-sdk create api     --group cache     --version v1     --kind Kubecraft     --generate-role&lt;/pre&gt;
+
 &lt;h2 id=&quot;customizing-operator&quot;&gt;Customizing Operator&lt;/h2&gt;
 &lt;p&gt;At this point we need an application and what I always do is create a deployment yaml to ensure I have all the pieces and test deploying my application to k8s before building Operator. In this example we will use an app called &lt;a href=&quot;https://github.com/ktenzer/kubecraftadmin&quot;&gt;Kubekraft&lt;/a&gt;. It is a fun app that connects k8s world to minecraft through a minecraft websocket server. Browse to the yaml folder and you will see the deployment.yaml. This is what we will use to build out our Operator.
 Under &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;roles/kubecraft/tasks&lt;/code&gt; directory we create tasks in Ansible to deploy what we had in the deployment yaml which is a deployment, service and route. In addition we added a task to get the application domain dynamically so we can build our route properly.&lt;/p&gt;
+
 &lt;h2 id=&quot;testing-operator&quot;&gt;Testing Operator&lt;/h2&gt;
 &lt;p&gt;The operator sdk provides a simple way to test the operator locally. Once we have our tasks complete under the role we simply need to create a new project, run the operator locally and create a custom resource (CR) which executes our role and tasks we defined.&lt;/p&gt;
 
@@ -48,12 +52,12 @@ In a new terminal create CR. Also note that our operator expects user input a co
 &lt;pre&gt;$ sudo make docker-build docker-push IMG=quay.io/ktenzer/kubecraft-operator:latest&lt;/pre&gt;
 &lt;p&gt;If you are using quay.io as your registry make sure to login and make the image public so it can be accessed.&lt;/p&gt;
 
-&lt;h2 id=&quot;running-operator&quot;&gt;Running operator&lt;/h2&gt;
+&lt;h2 id=&quot;running-operator&quot;&gt;Running Operator&lt;/h2&gt;
 &lt;p&gt;Now that we have the operator tested and the image built we can simply deploy it, create a CR and rule the world!
  The operator sdk makes this really easy and streamlines everything into a single command.&lt;/p&gt;
 &lt;pre&gt;$ make deploy IMG=quay.io/ktenzer/kubecraft-operator:latest&lt;/pre&gt;
 
-&lt;h2 id=&quot;create-operator-bundle&quot;&gt;Create operator bundle&lt;/h2&gt;
+&lt;h2 id=&quot;create-operator-bundle&quot;&gt;Create Operator Bundle&lt;/h2&gt;
 &lt;p&gt;The operator bundle allows integration with operator lifecycle manager (olm) which provides a facility for upgrading operator seamlessly as well as integrating with operator hub. First we will generate the bundle boiler plate.&lt;/p&gt;
 &lt;pre&gt;$ make bundle&lt;/pre&gt;
 &lt;p&gt;If you want to change anything, like add image you can update &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;bundle/manifests&lt;/code&gt; clusterserviceversion. When your ready you will build bundle and then push it to your repository. Remember if using quay.io to make it public.&lt;/p&gt;
@@ -70,6 +74,7 @@ In a new terminal create CR. Also note that our operator expects user input a co
 NAME        READY   UP-TO-DATE   AVAILABLE   AGE
 kubecraft   1/1     1            1           5s
 &lt;/pre&gt;
+
 &lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
 &lt;p&gt;In this article we created an operator using the operator sdk and Ansible. We saw how to take a simple deployment yaml file and turn it into a fully managed operator. Finally we created a bundle showing the integration with operator lifecycle manager and operator hub. Hopefully this article helps you get started with Ansible operators and next time you deploy an application in k8s you would consider the operator approach.&lt;/p&gt;
 
