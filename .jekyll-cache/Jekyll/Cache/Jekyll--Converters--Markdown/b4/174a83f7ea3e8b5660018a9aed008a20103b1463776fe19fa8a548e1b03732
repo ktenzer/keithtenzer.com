@@ -1,0 +1,122 @@
+I"?*<h3><img class="alignnone size-full wp-image-4639" src="/assets/2016/09/cephopenstack.png" alt="cephopenstack" width="320" height="178" /></h3>
+<h3>Overview</h3>
+<p>In this article we will discuss why Ceph is Perfect fit for OpenStack. We will see how to integrate three prominent OpenStack use cases with Ceph: Cinder (block storage), Glance (images) and Nova (VM virtual disks).</p>
+<p>Integrating Ceph with OpenStack Series:</p>
+<ul>
+<li><a href="https://keithtenzer.com/2016/09/12/openstack-integrating-ceph-as-storage-backend/">Integrating Ceph with OpenStack Cinder, Glance and Nova</a></li>
+<li><a href="https://keithtenzer.com/2017/03/30/openstack-swift-integration-with-ceph/">Integrating Ceph with Swift</a></li>
+<li><a href="https://keithtenzer.com/2017/03/28/openstack-manila-integration-with-ceph/">Integrating Ceph with Manila</a></li>
+</ul>
+<p>Ceph provides unified scale-out storage, using commodity x86 hardware, that is self-healing and intelligently anticipates failures. It has become the defacto standard for software-defined storage. Ceph being an OpenSource project has enabled many vendors the ability to provide Ceph based software-defined storage systems. Ceph is not just limited to Companies like Red Hat, Suse, Mirantis, Ubuntu, etc. Integrated solutions from SanDisk, Fujitsu, HP, Dell, Samsung and many more exist today. There are even large-scale community built environments, <a href="https://www.openstack.org/summit/vancouver-2015/summit-videos/presentation/ceph-at-cern-a-year-in-the-life-of-a-petabyte-scale-block-storage-service">Cern </a>comes to mind, that provide storage services for 10,000s of VMs.</p>
+<p><!--more--></p>
+<p>Ceph is by no means limited to OpenStack, however this is where Ceph started gaining traction. Looking at latest OpenStack user survey, Ceph is by a large margin the clear leader for OpenStack storage. Page 42 in <a href="https://www.openstack.org/assets/survey/April-2016-User-Survey-Report.pdf">OpenStack April 2016 User Survey</a> reveals Ceph is 57% of OpenStack storage. The next is LVM (local storage) with 28% followed by NetApp with 9%. If we remove LVM, Ceph leads any other storage company by 48%, that is incredible. Why is that?</p>
+<p>There are several reasons but I will give you my top three:</p>
+<ul>
+<li><strong>Ceph is a scale-out unified storage platform</strong>. OpenStack needs two things from storage: ability to scale with OpenStack itself and do so regardless of block (Cinder), File (Manila) or Object (Swift). Traditional storage vendors need to provide two or three different storage systems to achieve this. They don't scale the same and in most cases only scale-up in never-ending migration cycles. Their management capabilities are never truly integrated across broad spectrum of storage use-cases.</li>
+<li><strong>Ceph is cost-effective</strong>. Ceph leverages Linux as an operating system instead of something proprietary. You can choose not only whom you purchase Ceph from, but also where you get your hardware. It can be same vendor or different. You can purchase commodity hardware, or even buy integrated solution of Ceph + Hardware from single vendor. There are even hyper-converged options for Ceph that are emerging (running Ceph services on compute nodes).</li>
+<li><strong>Ceph is OpenSource project just like OpenStack</strong>. This allows for a much tighter integration and cross-project development. Proprietary vendors are always playing catch-up since they have secrets to protect and their influence is usually limited in Opensource communities, especially in OpenStack context.</li>
+</ul>
+<p>Below is an architecture Diagram that shows all the different OpenStack components that need storage. It shows how they integrate with Ceph and how Ceph provides a unified storage system that scales to fill all these use cases.</p>
+<p><img class="alignnone  wp-image-4666" src="/assets/2016/09/ceph-openstack.jpg" alt="ceph-openstack" width="622" height="388" /></p>
+<p>source: <a href="http://image.slidesharecdn.com/peanutbutterandjellyredhatsummit2016-160712040211/95/peanut-butter-and-jelly-mapping-the-deep-integration-between-ceph-and-openstack-25-638.jpg?cb=1468296361">Red Hat Summit 2016</a></p>
+<p>If you are interested in more topics relating to ceph and OpenStack I recommend following: <a href="http://ceph.com/category/ceph-and-openstack/">http://ceph.com/category/ceph-and-openstack/</a></p>
+<p>Ok enough talking about why Ceph and OpenStack are so great, lets get our hands dirty and see how to hook it up!</p>
+<p>If you don't have a Ceph environment you can follow this <a href="https://keithtenzer.com/2016/09/12/ceph-1-3-lab-installation-and-configuration-guide/">article</a> on how to set one up quickly.</p>
+<h3>Glance Integration</h3>
+<p>Glance is the image service within OpenStack. By default images are stored locally on controllers and then copied to compute hosts when requested. The compute hosts cache the images but they need to be copied again, every time an image is updated.</p>
+<p>Ceph provides backend for Glance allowing images to be stored in Ceph, instead of locally on controller and compute nodes. This greatly reduces network traffic for pulling images and increases performance since Ceph can clone images instead of copying them. In addition it makes migrating between OpenStack deployments or concepts like multi-site OpenStack much simpler.</p>
+<p>Install ceph client used by Glance.</p>
+<pre>[root@osp9 ~]# yum install -y python-rbd</pre>
+<p>Create Ceph user and set home directory to /etc/ceph.</p>
+<pre>[root@osp9 ~]# mkdir /etc/ceph
+[root@osp9 ~]# useradd ceph
+[root@osp9 ~]# passwd ceph</pre>
+<p>Add ceph user to sudoers.</p>
+<pre class="screen">cat &lt;&lt; EOF &gt;/etc/sudoers.d/ceph
+ceph ALL = (root) NOPASSWD:ALL
+Defaults:ceph !requiretty
+EOF</pre>
+<p>On Ceph admin node.</p>
+<p>Create Ceph RBD Pool for Glance images.</p>
+<pre>[ceph@ceph1 ~]$ sudo ceph osd pool create images 128</pre>
+<p>Create keyring that will allow Glance access to pool.</p>
+<pre>[ceph@ceph1 ~]$ sudo ceph auth get-or-create client.images mon 'allow r' osd 'allow class-read object_prefix rdb_children, allow rwx pool=images' -o /etc/ceph/ceph.client.images.keyring</pre>
+<p>Copy the keyring to /etc/ceph on OpenStack controller.</p>
+<pre>[ceph@ceph1 ~]$ scp /etc/ceph/ceph.client.images.keyring root@osp9.lab:/etc/ceph</pre>
+<p>Copy /etc/ceph/ceph.conf configuration to OpenStack controller.</p>
+<pre>[ceph@ceph1 ~]$ scp /etc/ceph/ceph.conf root@osp9.lab:/etc/ceph</pre>
+<p>Set permissions so Glance can access Ceph keyring.</p>
+<pre>[root@osp9 ~(keystone_admin)]# chgrp glance /etc/ceph/ceph.client.images.keyring
+[root@osp9 ~(keystone_admin)]#<span style="line-height:1.7;">chmod 0640 /etc/ceph/ceph.client.images.keyring</span></pre>
+<p>Add keyring file to Ceph configuration.</p>
+<pre>[root@osp9 ~(keystone_admin)]# vi /etc/ceph/ceph.conf
+[client.images]
+keyring = /etc/ceph/ceph.client.images.keyring</pre>
+<p>Create backup of original Glance configuration.</p>
+<pre>[root@osp9 ~(keystone_admin)]# cp /etc/glance/glance-api.conf /etc/glance/glance-api.conf.orig</pre>
+<p>Update Glance configuration.</p>
+<pre>[root@osp9 ~]# vi /etc/glance/glance-api.conf
+[glance_store]
+stores = glance.store.rbd.Store
+default_store = rbd
+rbd_store_pool = images
+rbd_store_user = images
+rbd_store_ceph_conf = /etc/ceph/ceph.conf</pre>
+<p>Restart Glance.</p>
+<pre>[root@osp9 ~(keystone_admin)]# systemctl restart openstack-glance-api</pre>
+<p>Download Cirros images and add it into Glance.</p>
+<pre>[root@osp9 ~(keystone_admin)]# wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img</pre>
+<p>Convert QCOW2 to RAW. It is recommended for Ceph to always use RAW format.</p>
+<pre>[root@osp9 ~(keystone_admin)]#qemu-img convert cirros-0.3.4-x86_64-disk.img cirros-0.3.4-x86_64-disk.raw</pre>
+<p>Add image to Glance.</p>
+<pre>[root@osp9 ~(keystone_admin)]#glance image-create --name "Cirros 0.3.4" --disk-format raw --container-format bare --visibility public --file cirros-0.3.4-x86_64-disk.raw</pre>
+<pre>+------------------+--------------------------------------+
+| Property | Value |
++------------------+--------------------------------------+
+| checksum | ee1eca47dc88f4879d8a229cc70a07c6 |
+| container_format | bare |
+| created_at | 2016-09-07T12:29:23Z |
+| disk_format | qcow2 |
+| id | a55e9417-67af-43c5-a342-85d2c4c483f7 |
+| min_disk | 0 |
+| min_ram | 0 |
+| name | Cirros 0.3.4 |
+| owner | dd6a4ed994d04255a451da66b68a8057 |
+| protected | False |
+| size | 13287936 |
+| status | active |
+| tags | [] |
+| updated_at | 2016-09-07T12:29:27Z |
+| virtual_size | None |
+| visibility | public |
++------------------+--------------------------------------+</pre>
+<p>Check that glance image exists in Ceph.</p>
+<pre>[ceph@ceph1 ceph-config]$ sudo rbd ls images
+a55e9417-67af-43c5-a342-85d2c4c483f7</pre>
+<pre>[ceph@ceph1 ceph-config]$ sudo rbd info images/a55e9417-67af-43c5-a342-85d2c4c483f7
+rbd image 'a55e9417-67af-43c5-a342-85d2c4c483f7':
+ size 12976 kB in 2 objects
+ order 23 (8192 kB objects)
+ block_name_prefix: rbd_data.183e54fd29b46
+ format: 2
+ features: layering, striping
+ flags:
+ stripe unit: 8192 kB
+ stripe count: 1</pre>
+<h3>Cinder Integration</h3>
+<p>Cinder is the block storage service in OpenStack. Cinder provides an abstraction around block storage and allows vendors to integrate by providing a driver. In Ceph, each storage pool can be mapped to a different Cinder backend. This allows for creating storage services such as gold, silver or bronze. You can decide for example that gold should be fast SSD disks that are replicated three times, while silver only should be replicated two times and bronze should use slower disks with erasure coding.</p>
+<p>Create Ceph pool for cinder volumes.</p>
+<pre>[ceph@ceph1 ~]$ sudo ceph osd pool create volumes 128</pre>
+<p>Create keyring to grant cinder access.</p>
+<pre>[ceph@ceph1 ~]$ sudo ceph auth get-or-create client.volumes mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=volumes, allow rx pool=images' -o /etc/ceph/ceph.client.volumes.keyring</pre>
+<p>Copy keyring to OpenStack controllers.</p>
+<pre>[ceph@ceph1 ~]$ scp /etc/ceph/ceph.client.volumes.keyring root@osp9.lab:/etc/ceph</pre>
+<p>Create file that contains just the authentication key on OpenStack controllers.</p>
+<pre>[ceph@ceph1 ~]$ sudo ceph auth get-key client.volumes |ssh osp9.lab tee client.volumes.key</pre>
+<p>Set permissions on keyring file so it can be accessed by Cinder.</p>
+<pre>[root@osp9 ~(keystone_admin)]# chgrp cinder /etc/ceph/ceph.client.volumes.keyring
+[root@osp9 ~(keystone_admin)]# chmod 0640 /etc/ceph/ceph.client.volumes.keyring</pre>
+<p>Add keyring to Ceph configuration file on OpenStack controllers.</p>
+<pre>[root@osp9 ~(keystone_admin)]#vi /etc/ceph/ceph.conf
+</pre>
+:ET

@@ -1,0 +1,83 @@
+I"�<h3><img class="alignnone  wp-image-5052" src="/assets/2017/02/1015767.png" alt="1015767" width="309" height="309" /></h3>
+<h3>Overview</h3>
+<p>Ceph has become the defacto standard for software-defined storage. Ceph is 100% opensource, built on open standards and as such is offered by many vendors not just Red Hat. If you are new to Ceph or software-defined storage, I would recommend the following article before proceeding to understand some high-level concepts:</p>
+<p><a href="https://keithtenzer.com/2016/09/09/ceph-the-future-of-storage/">Ceph - the future of storage</a></p>
+<p>In this article we will configure a Red Hat Ceph 2.0 cluster and set it up for object storage. We will configure RADOS Gateway (RGW), Red Hat Storage Console (RHCS) and show how to configure the S3 and Swift interfaces of the RGW. Using python we will access both the S3 and Swift interfaces.</p>
+<p>If you are interested in configuring Ceph for OpenStack see the following article:</p>
+<p><a href="https://keithtenzer.com/2016/09/12/openstack-integrating-ceph-as-storage-backend/">OpenStack - Integrating Ceph as Storage Backend</a><br />
+<!--more--></p>
+<h3>Prerequisites</h3>
+<p>Ceph has a few different components to be aware of: monitors (mons), storage or osd nodes (osds), Red Hat Storage Console (RHSC), RHSC agents, Calamari, clients and gateways.</p>
+<p><strong>Monitors</strong> - maintain maps (crush, pg, osd, etc) and cluster state. Monitors use <a href="https://en.wikipedia.org/wiki/Paxos_(computer_science)">Paxos</a> to establish consensus.</p>
+<p><strong>Storage or OSD Node</strong> - Provides one or more OSDs. Each OSD represents a disk and has a running daemon process controlled by systemctl. There are two types of disks in Ceph: data and journal. The journal enable Ceph to commit small writes quickly and guarantees atomic compound operations. Journals can be collocated with data on same disks or separate. Splitting journals out to SSDs provides higher performance for certain use cases such as block.</p>
+<p><strong>Red Hat Storage Console (optional)</strong> - UI and dashboard that can monitor multiple clusters and monitor not only Ceph but Gluster as well.</p>
+<p><strong>RHSC Agents (optional)</strong> - Each monitor and osd node runs an agent that reports to the RHSC.</p>
+<p><strong>Calamari (optional)</strong> - Runs on one of the monitors to get statistics on ceph cluster and provides rest endpoint. RHSC talks to calamari.</p>
+<p><strong>Clients</strong> - Ceph provides an RBD (RADOS Block Device) client for block storage, CephFS for file storage and a fuse client as well. The RADOS GW itself can be viewed as a Ceph client. Each client requires authentication if cephx is enabled. Cephx is based on kerberos.</p>
+<p><strong>Gateways (optional)</strong> - Ceph is based on RADOS (Reliable Atomic Distributed Object Store). The RADOS Gateway is a web server that provides s3 and swift endpoints and sends those requests to Ceph via RADOS. Similarily there is an ISCSI Gateway that provides ISCSI target to clients and talks to Ceph via RADOS. Ceph itself is of course an object store that supports not only object but file and block clients as well.</p>
+<p>Red Hat recommends at minimum three monitors and 10 storage nodes. All of which should be physical not virtual machines. For the gateways and RHSC, VMs can be used. Since the purpose of this article is about building a lab environment we are doing everything on just three VMs. The VMs should be configured as follows with Red Hat Enterprise Linux (7.2 or 7.3):</p>
+<ul>
+<li>ceph1: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.81/24.</li>
+<li>ceph2: 4096 MB RAM, 2 Cores, 30GB root disk , 2 X 100 GB data disk, 192.168.122.82/24.</li>
+<li>ceph3: 4096 MB RAM, 2 Cores, 30GB root disk, 2 X 100 GB data disk, 192.168.122.83/24.</li>
+</ul>
+<p>Note: this entire environment runs on my 12GB thinkpad laptop. If memory is tight you can cut ceph2 down to 2048MB RAM.</p>
+<p>The roles will be devided across the nodes as follows:</p>
+<ul>
+<li>Ceph1: RHSC, Rados Gateway, Monitor and OSD</li>
+<li>Ceph2: Calamari, Monitor and OSD</li>
+<li>Ceph3: Monitor and OSD</li>
+</ul>
+<p><img class="alignnone size-full wp-image-6489" src="/assets/2017/02/ceph_lab_setup1.png" alt="ceph_lab_setup" width="580" height="287" /></p>
+<h3>Install Ceph Cluster</h3>
+<p>Register subscription and enable repositories.</p>
+<pre># subscription-manager register
+# subscription-manager list --available
+# subscription-manager attach --pool=8a85f981weuweu63628333293829
+# subscription-manager repos --disable=*
+# subscription-manager repos --enable=rhel-7-server-rpms
+# subscription-manager repos --enable=rhel-7-server-rhceph-2-mon-rpms
+# subscription-manager repos --enable=rhel-7-server-rhceph-2-osd-rpms
+# subscription-manager repos --enable=rhel-7-server-rhscon-2-agent-rpms</pre>
+<p>Note: If you are using centos you will need to install ansible and get the ceph-ansible playbooks from <a href="https://github.com/ceph/ceph-ansible.git">github</a>.</p>
+<p><strong>Disable firewall</strong></p>
+<p>Since this is a lab environment we can make life a bit easier. If you are interested in enabling firewall then follow official documentation <a href="https://access.redhat.com/webassets/avalon/d/Red_Hat_Ceph_Storage-2-Installation_Guide_for_Red_Hat_Enterprise_Linux-en-US/Red_Hat_Ceph_Storage-2-Installation_Guide_for_Red_Hat_Enterprise_Linux-en-US.pdf">here</a>.</p>
+<pre>#systemctl stop firewalld
+#systemctl disable firewalld</pre>
+<p><strong>Configure NTP</strong></p>
+<p>Time synchronization is absolutely critical for Ceph. Make sure it is reliable.</p>
+<pre># yum install -y ntp
+# systemctl enable ntpd
+# systemctl start ntpd</pre>
+<p>Test to ensure ntp is working properly.</p>
+<pre># ntpq -p</pre>
+<p><strong>Update hosts file</strong></p>
+<p>If dns is working you can skip this step.</p>
+<pre>#vi /etc/hosts
+192.168.122.81 ceph1.lab.com ceph1
+192.168.122.82 ceph2.lab.com ceph2
+192.168.122.83 ceph3.lab.com ceph3</pre>
+<p><strong>Create Ansible User</strong></p>
+<p>Ceph 2.0 now uses ansible to deploy, configure and update. A user is required that has sudo permissions.</p>
+<pre># useradd ansible
+# passwd ansible</pre>
+<pre><span style="font-weight:400;">#cat &lt;&lt; EOF &gt; /etc/sudoers.d/ansible</span>
+<span style="font-weight:400;">ansible ALL = (root) NOPASSWD:ALL</span>
+<span style="font-weight:400;">Defaults:ansible !requiretty
+EOF</span></pre>
+<p><strong>Enable repositories for RHSC</strong></p>
+<pre class="screen"># subscription-manager repos --enable=rhel-7-server-rhscon-2-installer-rpms</pre>
+<pre class="screen"># subscription-manager repos --enable=rhel-7-server-rhscon-2-main-rpms</pre>
+<p>Install Ceph-Ansible</p>
+<pre><span style="font-weight:400;"># yum install -y ceph-ansible</span></pre>
+<p><strong>Setup ssh keys for ansible user</strong></p>
+<pre># su - ansible
+$ ssh-keygen
+$ ssh-copy-id ceph1
+$ ssh-copy-id ceph2
+$ ssh-copy-id ceph3
+$ <span style="font-weight:400;">mkdir ~/ceph-ansible-keys</span></pre>
+<p><strong>Update Ansible Hosts file</strong></p>
+<pre>$ sudo vi /etc/ansible/hosts
+</pre>
+:ET

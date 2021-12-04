@@ -1,0 +1,14 @@
+I"@<h3><a href="https://keithtenzer.files.wordpress.com/2015/09/tipsandtricks.jpg"><img class="alignnone size-medium wp-image-1272" src="/assets/2015/09/tipsandtricks.jpg?w=300" alt="tipsandtricks" width="300" height="136" /></a></h3>
+<h3>Overview</h3>
+<p>In this article we will look at some common OpenStack Kilo configuration optimizations and other tricks. This is by no means a comprehensive guide, just things I have stumbled across that if documented would have saved me time. I continue to update this blog with things I learned. If you have some valuable tips or tricks then let me know so I can add those?<br />
+<!--more--></p>
+<h3>Nested Virtualization</h3>
+<p>Many run OpenStack on KVM for testing, learning, training or even demos. In order to get acceptable performance, the Hypervisor and guest must be configured to support Nested Virtualization.</p>
+<p>Ensure KVM is enabled</p>
+<pre style="padding-left:30px;">#lsmod | grep -i kvm
+kvm_intel 148081 6 
+kvm 461126 1 kvm_intel</pre>
+<pre style="padding-left:30px;">#modinfo kvm_intel | grep -i nested
+parm: nested:bool
+</pre>
+:ET

@@ -1,0 +1,74 @@
+I"�<h3><img class="alignnone size-full wp-image-3655" src="/assets/2016/11/screenshot-from-2016-08-04-144007.png?w=440" alt="Screenshot from 2016-08-04 14:40:07" /></h3>
+<h3>Overview</h3>
+<p>In this article we will setup a OpenShift Enterprise 3.3 all-in-one configuration. We will also configure OpenShift router, registry, aggregate logging, metrics, CloudForms integration and finally an integrated jenkins build pipeline.</p>
+<p>OpenShift has several different roles: masters, nodes, etcd and load balancers. An all-in-one setup means running all service on a single system. Since we are only using a single system, a load balancer or ha-proxy won’t be configured. If you would like to read more about OpenShift I can recommend the following:</p>
+<ul>
+<li><a href="https://blog.openshift.com/">General OpenShift Product Blogs</a></li>
+<li><a href="https://keithtenzer.com/2015/08/20/openshift-v3-unlocking-the-power-of-persistent-storage/">Persistent Storage</a></li>
+<li><a href="http://www.opensourcerers.org/openshift-3-1-networking-from-a-containerworkload-point-of-view-part-1-container-networking-on-a-plain-docker-host/">OpenShift Networking Part I</a></li>
+<li><a href="http://www.opensourcerers.org/openshift-networking-from-a-containerworkload-point-of-view-part-2-container-networking-on-an-openshift-node/">OpenShift Networking Part II</a></li>
+</ul>
+<p><!--more--></p>
+<h3>Prerequisites</h3>
+<h4>Configure a VM with following:</h4>
+<ul>
+<li>RHEL 7.2</li>
+<li>2 CPUs</li>
+<li>4096 RAM</li>
+<li>30GB disk for OS</li>
+<li>25GB disk for docker images</li>
+</ul>
+<h4>Register valid subscription</h4>
+<pre># subscription-manager register</pre>
+<pre># subscription-manager attach --pool=843298293829382</pre>
+<pre class="nowrap"># subscription-manager repos --disable="*"</pre>
+<pre class="nowrap">#subscription-manager repos \
+    --enable="rhel-7-server-rpms" \
+    --enable="rhel-7-server-extras-rpms" \
+    --enable="rhel-7-server-ose-3.3-rpms"</pre>
+<h4>Install required tools</h4>
+<pre class="nowrap"># yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion</pre>
+<h4>Update</h4>
+<pre class="nowrap"># yum update -y</pre>
+<h4>Install OpenShift tools</h4>
+<pre class="nowrap"># yum install -y atomic-openshift-utils</pre>
+<h4>Restart OpenShift master</h4>
+<pre class="nowrap"># systemctl reboot</pre>
+<h4>Configure Docker</h4>
+<pre class="nowrap"># yum install -y docker-1.10.3</pre>
+<h4>Enable Docker daemon to pull from OpenShift registry</h4>
+<pre># vi /etc/sysconfig/docker
+OPTIONS='--selinux-enabled --insecure-registry 172.30.0.0/16'</pre>
+<h4>Setup Docker storage for OpenShift registry</h4>
+<p>Note: we will use the second disk for configuring docker storage.</p>
+<pre class="nowrap"># cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup
+DEVS=/dev/vdb
+VG=docker-vg
+EOF</pre>
+<pre class="nowrap"># docker-storage-setup</pre>
+<h4>Enable and start Docker daemon</h4>
+<pre># systemctl enable docker</pre>
+<pre># systemctl start docker</pre>
+<h4>Setup ssh access without password for Ansible</h4>
+<pre># ssh-keygen</pre>
+<pre># ssh-copy-id -i /root/.ssh/id_rsa.pub ose3-master.lab.com</pre>
+<h3>DNS Setup</h3>
+<p>DNS is a requirement for OpenShift Enterprise. In fact most issues you may run into are a result of not having a properly working DNS environment. For OpenShift you can either use dnsmasq or bind. I recommend using dnsmasq but in this article I will cover both options.</p>
+<p>Note: Since OpenShift also has skydns for providing DNS services to containers running on port 53 you need to setup dnsmasq or bind on a separate system. The OpenShift environment should resolv to that DNS server.</p>
+<h4>Option 1: DNSMASQ</h4>
+<p>A colleague Ivan Mckinely was nice enough to create an ansible playbook for deploying dnsmasq. To deploy dnsmasq run following steps on OpenShift master.</p>
+<pre># git clone https://github.com/ivanthelad/ansible-aos-scripts.git</pre>
+<pre>#cd ansible-aos-scripts</pre>
+<p><strong>Edit inventory file and set dns to IP of the system that should be providing DNS</strong></p>
+<p>Also ensure nodes and masters have correct IPs for your OpenShift servers. In our case 192.168.122.60 is master, node and DNS.</p>
+<pre>#vi inventory
+# ip of DNS server
+[dns] 192.168.122.59
+# ip of OpenShift nodes
+[nodes] 192.168.122.60
+# ip of OpenShift masters
+[masters] 192.168.122.60</pre>
+<p><strong>Configure dnsmasq and add wildcard DNS so all hosts with</strong></p>
+<pre># vi playbooks/roles/dnsmasq/templates/dnsmasq.conf
+</pre>
+:ET

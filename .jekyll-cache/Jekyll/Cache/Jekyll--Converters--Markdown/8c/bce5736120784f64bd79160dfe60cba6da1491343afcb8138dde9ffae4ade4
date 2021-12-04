@@ -1,0 +1,190 @@
+I"�?<h3><a href="https://keithtenzer.files.wordpress.com/2015/09/scale.png"><img class="alignnone size-full wp-image-1222" src="/assets/2015/09/scale.png" alt="scale" width="288" height="175" /></a></h3>
+<h3>Overview</h3>
+<p>Intelligently and automatically scaling applications based on resource requirements is at the heart of the OpenStack value proposition. It is one of the key capabilities that differentiate cloud vs traditional infrastructure such as VMware. For those of us who have been in IT a while auto scaling was always a white unicorn, often discussed but never actually seen. In this article we will talk about how to do this in OpenStack using Heat and Ceilometer.<br />
+<!--more--></p>
+<h3>Heat</h3>
+<p>Orchestration and automation within OpenStack is handled by Heat. It is the brains of your cloud. Heat provides a declarative structure for defining IT processes using YAML. You could say the value of OpenStack is implemented by Heat as this is where your business processes exist. Heat will let you automatically provision infrastructure (compute, network and storage)  based on YAML templates. In addition Heat also lets you create policies around running infrastructure. One such policy is around auto scaling.</p>
+<h3>Ceilometer</h3>
+<p>Collecting and persisting utilization measurements within OpenStack is handled by Ceilometer. OpenStack attempts to handle IT infrastructure as a utility and as such metering is a critical aspect. Furthermore, enabling billing systems to provide pay-as-you-go consumption models, requires exact metering. Beyond billing, such metering is also key for auto scaling. Decisions made by Heat on when to scale applications, are based on data collected by Ceilometer.</p>
+<h3>Auto Scaling Heat Templates</h3>
+<p>A lot of the configuration information in this article comes from article written by <a href="https://blog.berendt.io/simple-auto-scaling-environment-with-heat/https://blog.berendt.io/simple-auto-scaling-environment-with-heat/">Christian Berendt</a>. In this auto scaling example, Heat and Ceilometer will be used to scale CPU bound virtual machines. Heat has the concept of a stack which is simply the environment itself. The Heat stack template describes the process or logic around how a Heat stack will be built and managed. This is where you can create an auto scaling group and configure Ceilometer thresholds. The environment template explains how to create the stack itself, what image or volume to use, network configuration, software to install and everything an instance or instances need to properly function. You can put everything into the Heat stack template, but separating the Heat stack template from the environment is much cleaner, at least in more complex configurations such as auto scaling.</p>
+<h4>Environment Template</h4>
+<p>Below we will create an environment template for a cirros image. The instance template will create an instance based on Cirros image, configure a cinder volume, add IP from private network, add floating IP from public network, add security group, private ssh-key and generate 100% CPU load through user-data. Note: you will need to make changes below depending on your OpenStack configuration. The OpenStack installation and configuration used for these examples can be found in this <a href="http://keithtenzer.com/2015/09/01/openstack-kilo-lab-installation-and-configuration-guide/">article</a>.</p>
+<pre style="padding-left:30px;">#vi /etc/heat/templates/cirros.yaml</pre>
+<p>[code language="java"]</p>
+<p>heat_template_version: 2014-10-16<br />
+description: A base Cirros 0.3.4 server</p>
+<p>resources:<br />
+  server:<br />
+    type: OS::Nova::Server<br />
+    properties:<br />
+      block_device_mapping:<br />
+        - device_name: vda<br />
+          delete_on_termination: true<br />
+          volume_id: { get_resource: volume }<br />
+      flavor: m1.nano<br />
+      key_name: admin<br />
+      networks:<br />
+        - port: { get_resource: port }</p>
+<p>  port:<br />
+    type: OS::Neutron::Port<br />
+    properties:<br />
+      network: private<br />
+      security_groups:<br />
+        - all</p>
+<p>  floating_ip:<br />
+    type: OS::Neutron::FloatingIP<br />
+    properties:<br />
+      floating_network: public</p>
+<p>  floating_ip_assoc:<br />
+    type: OS::Neutron::FloatingIPAssociation<br />
+    properties:<br />
+      floatingip_id: { get_resource: floating_ip }<br />
+      port_id: { get_resource: port }</p>
+<p>  volume:<br />
+    type: OS::Cinder::Volume<br />
+    properties:<br />
+      image: 'Cirros 0.3.4'<br />
+      size: 1</p>
+<p>[/code]</p>
+<p>Now that we have an environment template, we need to create a Heat resource type and link it to above file /etc/heat/templates/cirros.yaml.</p>
+<pre style="padding-left:30px;">#vi /root/environment.yaml</pre>
+<p>[code language="java"]</p>
+<p>resource_registry:</p>
+<p>    &quot;OS::Nova::Server::Cirros&quot;: &quot;file:///etc/heat/templates/cirros.yaml&quot;</p>
+<p>[/code]</p>
+<h4>Stack Template</h4>
+<p>Below we will define our Heat stack template. We will create the following resources: scaleup_group, scaleup_policy and cpu_alarm_high. The scaleup_group explains how the instance should be scaled and also defines the environment (OS::Nova::Server::Cirros) that points to the environment yaml file "/etc/heat/templates/cirros.yaml". The scaleup_policy defines how to handle a scale-up event. Finally we have a threshold, the cpu_alarm_high resource is used to trigger a scale-up event. Here we define the threshold and actions provided by Ceilometer.</p>
+<pre style="padding-left:30px;">#vi /root/example.yaml</pre>
+<p>[code language="java"]</p>
+<p>heat_template_version: 2014-10-16<br />
+description: Example auto scale group, policy and alarm<br />
+resources:<br />
+  scaleup_group:<br />
+    type: OS::Heat::AutoScalingGroup<br />
+    properties:<br />
+      cooldown: 60<br />
+      desired_capacity: 1<br />
+      max_size: 3<br />
+      min_size: 1<br />
+      resource:<br />
+        type: OS::Nova::Server::Cirros</p>
+<p>  scaleup_policy:<br />
+    type: OS::Heat::ScalingPolicy<br />
+    properties:<br />
+      adjustment_type: change_in_capacity<br />
+      auto_scaling_group_id: { get_resource: scaleup_group }<br />
+      cooldown: 60<br />
+      scaling_adjustment: 1</p>
+<p>  scaledown_policy:<br />
+    type: OS::Heat::ScalingPolicy<br />
+    properties:<br />
+      adjustment_type: change_in_capacity<br />
+      auto_scaling_group_id: { get_resource: scaleup_group }<br />
+      cooldown: 60<br />
+      scaling_adjustment: -1</p>
+<p>  cpu_alarm_high:<br />
+    type: OS::Ceilometer::Alarm<br />
+    properties:<br />
+      meter_name: cpu_util<br />
+      statistic: avg<br />
+      period: 60<br />
+      evaluation_periods: 1<br />
+      threshold: 50<br />
+      alarm_actions:<br />
+        - {get_attr: [scaleup_policy, alarm_url]}<br />
+      comparison_operator: gt</p>
+<p>  cpu_alarm_low:<br />
+    type: OS::Ceilometer::Alarm<br />
+    properties:<br />
+      meter_name: cpu_util<br />
+      statistic: avg<br />
+      period: 60<br />
+      evaluation_periods: 1<br />
+      threshold: 10<br />
+      alarm_actions:<br />
+        - {get_attr: [scaledown_policy, alarm_url]}<br />
+      comparison_operator: lt<br />
+[/code]</p>
+<h3>Update Ceilometer Collection Interval</h3>
+<p>By default Ceilometer will collect CPU data from instances every 10 minutes. For this example we want to change that to 60 seconds. Change the interval to 60 in the pipeline.yaml file and restart OpenStack services.</p>
+<pre style="padding-left:30px;">#vi /etc/ceilometer/pipeline.yaml</pre>
+<p>[code language="java"]</p>
+<p>- name: cpu_source<br />
+interval: 60<br />
+meters:<br />
+- &quot;cpu&quot;<br />
+sinks:<br />
+- cpu_sink</p>
+<p>[/code]</p>
+<pre style="padding-left:30px;">#openstack-service restart</pre>
+<h3>Running Heat Stack</h3>
+<p>At this point we are ready to run our auto scaling Heat stack. The expected results should be that a single Cirros instance is launched. It should have private and floating IPs.</p>
+<pre style="padding-left:30px;">#heat stack-create example -f /root/example.yaml -e /root/environment.yaml
+ +--------------------------------------+------------+--------------------+----------------------+
+ | id | stack_name | stack_status | creation_time |
+ +--------------------------------------+------------+--------------------+----------------------+
+ | 6fca513c-25a1-4849-b7ab-909e37f52eca | example | CREATE_IN_PROGRESS | 2015-08-31T16:18:02Z |
+ +--------------------------------------+------------+--------------------+----------------------+</pre>
+<p>Heat will create the stack and launch the one cirros instance.</p>
+<pre style="padding-left:30px;">#nova list
+ +--------------------------------------+-------------------------------------------------------+--------+------------+-------------+--------------------------------------+
+ | ID | Name | Status | Task State | Power State | Networks |
+ +--------------------------------------+-------------------------------------------------------+--------+------------+-------------+--------------------------------------+
+ | 3f627c84-06aa-4782-8c12-29409964cc73 | ex-qeki-3azno6me5gvm-pqmr5zd6kuhm-server-gieck7uoyrwc | ACTIVE | - | Running | private=10.10.1.156, 192.168.122.234 |
+ +--------------------------------------+-------------------------------------------------------+--------+------------+-------------+--------------------------------------+</pre>
+<p>Heat will also create two cpu alarms which are used to trigger scale-up or scale-down events.</p>
+<pre>ceilometer alarm-list
++--------------------------------------+-------------------------------------+-------------------+----------+---------+------------+--------------------------------+------------------+
+| Alarm ID | Name | State | Severity | Enabled | Continuous | Alarm condition | Time constraints |
++--------------------------------------+-------------------------------------+-------------------+----------+---------+------------+--------------------------------+------------------+
+| 04b4f845-f5b6-4c5a-8af0-59e03c22e6fa | example-cpu_alarm_high-rd5kysmlahvx | ok | low | True | True | cpu_util &gt; 50.0 during 1 x 60s | None |
+| ac81cd81-20b3-45f9-bea4-e51f00499602 | example-cpu_alarm_low-6t65kswutupz | ok | low | True | True | cpu_util &lt; 10.0 during 1 x 60s | None |
++--------------------------------------+-------------------------------------+-------------------+----------+---------+------------+--------------------------------+------------------+</pre>
+<h3>Automatically Scaling Up</h3>
+<p>Heat will scale instances up based on the cpu_alarm_high threshold. Once CPU utilization is above 50% instances will be scaled up. In order to generate CPU load, log into the instance and run the "dd" command.</p>
+<pre style="padding-left:30px;">$ssh -i admin.pem cirros@192.168.122.232
+$sudo -i
+#dd if=/dev/zero of=/dev/null &amp;
+#dd if=/dev/zero of=/dev/null &amp;
+#dd if=/dev/zero of=/dev/null &amp;</pre>
+<p>Upon running "dd" commands we should have close to 100% CPU utilization in our cirros instance. After 60 seconds we should see that Heat has scaled and we have two instances.</p>
+<pre style="padding-left:30px;">#ceilometer alarm-list
++--------------------------------------+-------------------------------------+-------+----------+---------+------------+--------------------------------+------------------+
+| Alarm ID | Name | State | Severity | Enabled | Continuous | Alarm condition | Time constraints |
++--------------------------------------+-------------------------------------+-------+----------+---------+------------+--------------------------------+------------------+
+| 04b4f845-f5b6-4c5a-8af0-59e03c22e6fa | example-cpu_alarm_high-rd5kysmlahvx | ok | low | True | True | cpu_util &gt; 50.0 during 1 x 60s | None |
+| ac81cd81-20b3-45f9-bea4-e51f00499602 | example-cpu_alarm_low-6t65kswutupz | alarm | low | True | True | cpu_util &lt; 10.0 during 1 x 60s | None |
++--------------------------------------+-------------------------------------+-------+----------+---------+------------+--------------------------------+------------------+</pre>
+<pre style="padding-left:30px;">#nova list
+ +--------------------------------------+-------------------------------------------------------+--------+------------+-------------+--------------------------------------+
+ | ID | Name | Status | Task State | Power State | Networks |
+ +--------------------------------------+-------------------------------------------------------+--------+------------+-------------+--------------------------------------+
+ | 3f627c84-06aa-4782-8c12-29409964cc73 | ex-qeki-3azno6me5gvm-pqmr5zd6kuhm-server-gieck7uoyrwc | ACTIVE | - | Running | private=10.10.1.156, 192.168.122.234 |
+ | 0f69dfbe-4654-474f-9308-1b64de3f5c18 | ex-qeki-qmvor5rkptj7-krq7i66h6n7b-server-b4pk3dzjvbpi | ACTIVE | - | Running | private=10.10.1.157, 192.168.122.235 |
+ +--------------------------------------+-------------------------------------------------------+--------+------------+-------------+--------------------------------------+</pre>
+<p>After additional 60 seconds we should see that Heat has scaled again and we have three instances. Since three is the maximum for this configuration, we will not scale any higher.</p>
+<pre style="padding-left:30px;">#nova list
+ +--------------------------------------+-------------------------------------------------------+--------+------------+-------------+--------------------------------------+
+ | ID | Name | Status | Task State | Power State | Networks |
+ +--------------------------------------+-------------------------------------------------------+--------+------------+-------------+--------------------------------------+
+ | 3f627c84-06aa-4782-8c12-29409964cc73 | ex-qeki-3azno6me5gvm-pqmr5zd6kuhm-server-gieck7uoyrwc | ACTIVE | - | Running | private=10.10.1.156, 192.168.122.234 |
+ | 0e805e75-aa6f-4375-b057-2c173b68f172 | ex-qeki-gajdwmu2cgm2-vckf4g2gpwis-server-r3smbhtqij76 | ACTIVE | - | Running | private=10.10.1.158, 192.168.122.236 |
+ | 0f69dfbe-4654-474f-9308-1b64de3f5c18 | ex-qeki-qmvor5rkptj7-krq7i66h6n7b-server-b4pk3dzjvbpi | ACTIVE | - | Running | private=10.10.1.157, 192.168.122.235 |
+ +--------------------------------------+-------------------------------------------------------+--------+------------+-------------+--------------------------------------+</pre>
+<h3>Automatically Scaling Down</h3>
+<p>Heat will scale instances down based on the cpu_alarm_low threshold. Once CPU utilization is below 10% instances will be scaled down. We can simply kill the "dd" processes and watch Heat scale instances back down.</p>
+<p>After stopping ""dd" processes we should see that the cpu_alarm_low event is triggered. This will cause Heat to scale down and remove instance.</p>
+<pre>#ceilometer alarm-list
++--------------------------------------+-------------------------------------+-------+----------+---------+------------+--------------------------------+------------------+
+| Alarm ID | Name | State | Severity | Enabled | Continuous | Alarm condition | Time constraints |
++--------------------------------------+-------------------------------------+-------+----------+---------+------------+--------------------------------+------------------+
+| 04b4f845-f5b6-4c5a-8af0-59e03c22e6fa | example-cpu_alarm_high-rd5kysmlahvx | ok | low | True | True | cpu_util &gt; 50.0 during 1 x 60s | None |
+| ac81cd81-20b3-45f9-bea4-e51f00499602 | example-cpu_alarm_low-6t65kswutupz | alarm | low | True | True | cpu_util &lt; 10.0 during 1 x 60s | None |
++--------------------------------------+-------------------------------------+-------+----------+---------+------------+--------------------------------+------------------+</pre>
+<p>After a few minutes we should be back to a single instance.</p>
+<h3>Summary</h3>
+<p>In this article we talked about how Heat and Ceilometer work together within OpenStack, providing the brains behind your cloud. We looked at a typical cloud use case around auto scaling and how to configure auto scaling through Heat. Hopefully you found this article informative. As always any feedback is greatly appreciated and as we say at Red Hat, sharing is caring.</p>
+<p>Happy Auto Scaling!</p>
+<p>(c) 2015 Keith Tenzer</p>
+:ET

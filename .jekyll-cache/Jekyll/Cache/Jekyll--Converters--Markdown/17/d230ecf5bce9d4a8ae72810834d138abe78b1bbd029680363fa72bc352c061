@@ -1,0 +1,22 @@
+I"¤<p><img class="alignnone  wp-image-5495" src="/assets/2019/11/openshift-logotype-svg.png" alt="openshift-logotype-svg" width="163" height="174" /><img class="alignnone  wp-image-5500" src="/assets/2019/11/heavy-plus-sign.png" alt="heavy-plus-sign" width="116" height="116" /><img class="alignnone  wp-image-14328" src="/assets/2019/11/image11.png" alt="image11" width="329" height="156" /></p>
+<h2>Overview</h2>
+<p>Volume snapshots are the ability to create snapshots of persistent volumes in kubernetes using the container storage interface (csi) driver. The csi driver allows storage solutions to integrate into kubernetes and expose their technologies. Snapshots of course, have been and are a key technology when discussing data workloads because they enable backup/restore seamlessly, on-demand and in a split second. Even though volume snapshots are in the alpha stage, several storage providers already have integrations, including one that is very interesting, Ceph RDB.</p>
+<p><!--more--></p>
+<p>Ceph is a software-defined storage platform that is rock solid, very mature and provides file, block as well as object storage. In this case we will using block storage. In Ceph block is provided through rbd (Rados Block Device). A container-native storage solution called Rook, based completely on kubernetes operators provides a container-native deployment of Ceph on Kubernetes or OpenShift. In this article we are using OpenShift 4.2 GA and a internal beta release of OpenShift Container Storage (based on Rook).</p>
+<h2>How it Works</h2>
+<p>The CSI driver allows for a snapshotter to be implemented. The snapshotter runs as a side-car container and watches the kubernetes API for snapshot related events from the CSI driver. In order to create a volume snapshot a volume snapshot class must exist. This is similar to the storage class but defines the snapshotter and access to the appropriate CSI driver. Once a volume snapshot class exists a volume snapshot can be created for a given persistent volume claim (pvc). The volume snapshot will then trigger the snapshot operation on the storage device, in this case Ceph RBD. The volume snapshot allows the snapshotter to provide metadata about the snapshot contents to the end-user.</p>
+<p><img class="alignnone  wp-image-14305" src="/assets/2019/11/snapshotter.png" alt="snapshotter" width="884" height="459" /></p>
+<h2>Volume Snapshot Backup</h2>
+<p>Now that we understand the basics we will see how to actually create a backup. We will deploy a mariadb database on persistent storage using Ceph RBD, create a table in the database with some records, setup a volume snapshot class and finally perform a volume snapshot of the database.</p>
+<h4>Deploy Mariadb database</h4>
+<p>We deployed a persistent mariadb database using ceph rbd provisioner.</p>
+<p><img class="alignnone size-full wp-image-14307" src="/assets/2019/11/mariadb.png" alt="mariadb" width="2150" height="838" /></p>
+<h4>Add table and records to database</h4>
+<p>Connect to database.</p>
+<pre>$ oc rsh -n databases mariadb-6-rswv6</pre>
+<pre>sh-4.2$ mysql -u root
+Welcome to the MariaDB monitor. Commands end with ; or \g.
+Your MariaDB connection id is 20
+Server version: 10.2.22-MariaDB MariaDB Server
+</pre>
+:ET

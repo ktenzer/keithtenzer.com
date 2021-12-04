@@ -1,0 +1,90 @@
+I"G/<h2></h2>
+<p><!-- wp:image {"id":12890,"width":79,"height":83,"sizeSlug":"large","linkDestination":"media"} --></p>
+<figure class="wp-block-image size-large is-resized"><a href="https://keithtenzer.files.wordpress.com/2018/12/OpenShift-LogoType.svg_.png"><img src="/assets/2021/04/OpenShift-LogoType.svg_.png?w=959" alt="" class="wp-image-12890" width="79" height="83" /></a></figure>
+<p><!-- /wp:image --></p>
+<p><a href="https://keithtenzer.files.wordpress.com/2018/12/OpenShift-LogoType.svg_.png"><!-- /wp:image --></a><!-- /wp:image --></p>
+<p><a href="https://keithtenzer.files.wordpress.com/2021/04/istio.png"><!-- /wp:image --></a></p>
+<h2><!-- /wp:image --></h2>
+<h2>Overview</h2>
+<p>In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you might be asking yourself, why do I need a Service Mesh? If you have a microservice architecture then you likely have many services that interact with one another in various ways. If a downstream service breaks, how will you know? How can you trace an error through all services to find out where it originated? How will you manage exposing new APIs/capabilities to users? Service Mesh provides the answer to those questions providing 1) Visibility across all microservices 2) Traceability through all of the microservice interactions and 3) Ruleset governing service versions and capabilities that are introduced into the environment. OpenShift Service Mesh uses Istio as the mesh, Kiali for the dashboard and Jaeger for traceability. </p>
+<p><!--more--></p>
+<h2>Install OpenShift Service Mesh</h2>
+<p>OpenShift Service Mesh enables visibility of traffic as is traverses all services within the mesh. In case of an error you can not only see what service is actually the source for the error but also are able to trace the API communications between services. Finally it allows us to implement rules, like balancing traffic between multiple ratings API endpoints or even sending specific users to an API version. You can even create a chaos monkey using the ruleset that will inject various errors so you can observe how failures are handled. A Service Mesh is critical for any complex microservice application and without it you are literally flying blind while adding technical debt unable to manage or monitor service interactions properly.</p>
+<p><strong>Create a new project</strong></p>
+<p>First we will create a project for hosting the service mesh control plane.</p>
+<pre>$ oc new-project bookinfo-mesh</pre>
+<p><strong>Install OpenShift Service Mesh</strong></p>
+<p>Under the project booking-mesh go to Operator Hub and install Red Hat OpenShift Service Mesh, Red Hat OpenShift Jaeger and Kiali Operator.</p>
+<p><!-- wp:image {"id":14769,"sizeSlug":"large","linkDestination":"media"} --></p>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/04/operators_servicemesh.png"><img class="wp-image-14769" src="/assets/2021/04/operators_servicemesh.png?w=1024" alt="" /></a></figure>
+<p><!-- /wp:image --></p>
+<p><strong>Configure OpenShift Service Mesh</strong></p>
+<p>Create a service mesh control plane using defaults.</p>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/04/booking_mesh-1.png"><img class="wp-image-14742" src="/assets/2021/04/booking_mesh-1.png?w=1024" alt="" /></a>Create a service mesh member. Update the yaml and change namespace under controlPlaneRef to bookinfo-mesh.</figure>
+<pre>apiVersion: maistra.io/v1<br />kind: ServiceMeshMember<br />metadata:<br />  namespace: bookinfo-mesh<br />  name: default<br />spec:<br />  controlPlaneRef:<br />    name: basic<br />    namespace: bookinfo-mesh</pre>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/04/mesh_role.png"><img class="wp-image-14744" src="/assets/2021/04/mesh_role.png?w=1024" alt="" /></a>Finally create a service member role adding name of the project that will access the service mesh..</figure>
+<div>
+<pre>apiVersion: maistra.io/v1<br />kind: ServiceMeshMemberRoll<br />metadata:<br />  namespace: bookinfo-mesh<br />  name: default<br />spec:<br />  members:<br />    - bookinfo</pre>
+</div>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/04/mesh_member_role.png"><img class="wp-image-14746" src="/assets/2021/04/mesh_member_role.png?w=1024" alt="" /></a></figure>
+<h2>Deploy Demo Application</h2>
+<p>In order to look into the capabilities provided by the OpenShift Service Mesh we will deploy a simple book review app. The application is static but shows reviews for a book and has several microservices. The product page is the entry point service. It provides information on books and their reviews. It accesses book reviews through the reviews service which is also accesses the ratings service downstream to allow users to give a book a rating. It also gets details about a book via the details service. Like a true polyglot all services are written in a different programming language. The ratings service provides three different API versions, v1 doesn't display ratings, v2 shows ratings in black and v3 shows ratings in red. The idea is all about innovating quickly and getting real user feedback to take the app in the right direction.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2021/04/demoapp.png"><img class="wp-image-14764" src="/assets/2021/04/demoapp.png?w=1024" alt="" /></a></p>
+<p><strong>Create a project for the book app.</strong></p>
+<p>Create a project to host the book app.</p>
+<pre>$ oc new-project bookinfo</pre>
+<p><strong>Deploy book app.</strong></p>
+<pre>$ oc apply -n bookinfo -f https://raw.githubusercontent.com/Maistra/istio/maistra-2.0/samples/bookinfo/platform/kube/bookinfo.yaml</pre>
+<p><strong>Create a service mesh gateway.</strong></p>
+<p>Once the app is deployed we need to create a gateway and setup the URI matches.</p>
+<pre>$ oc apply -n bookinfo -f https://raw.githubusercontent.com/Maistra/istio/maistra-2.0/samples/bookinfo/networking/bookinfo-gateway.yaml</pre>
+<p><strong>Create service mesh rule set.</strong></p>
+<p>Since the ratings service has 3 API versions we need some rules to govern the traffic.</p>
+<pre>$ oc apply -n bookinfo -f https://raw.githubusercontent.com/Maistra/istio/maistra-2.0/samples/bookinfo/networking/destination-rule-all.yaml</pre>
+<p><strong>Access the application.</strong></p>
+<p>Get the route to the application and add the /productpage to access via web browser.</p>
+<pre><code>$ export GATEWAY_URL=$(oc -n istio-system get route istio-ingressgateway -o jsonpath='{.spec.host}')<br />$ echo $GATEWAY_URL</code></pre>
+<p>http://istio-ingressgateway-bookinfo-mesh.apps.ocp4.rh-southwest.com/productpage</p>
+<p><!-- wp:image {"id":14775,"sizeSlug":"large","linkDestination":"media"} --></p>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/04/bookinfo2.png"><img class="wp-image-14775" src="/assets/2021/04/bookinfo2.png?w=1024" alt="" /></a></figure>
+<p><!-- /wp:image --></p>
+<p><!-- wp:image {"id":14752,"sizeSlug":"large","linkDestination":"media"} --></p>
+<p><!-- /wp:image -->If you refresh the web page you should see the ratings change between no ratings, black and red. This is because the ruleset is sending traffic to all three API endpoints (v1, v2 and v3).</p>
+<h2>Update Service Mesh Ruleset</h2>
+<p>As mentioned we can create rules that enable us to send certain traffic to a different API endpoint. This could be for a canary deployment where we want to test how users interact with different capabilities (red or black ratings stars), to perform a blue/green deployment upgrading to a newer API version or even sending different users to different APIs.</p>
+<p>In this case we will simply apply a new rule that only sends traffic to v2 (black) and v3 (red) ratings API.</p>
+<p><strong>Apply a new ruleset.</strong></p>
+<pre><code>$ oc replace -f https://raw.githubusercontent.com/istio/istio/master/samples/bookinfo/networking/virtual-service-reviews-v2-v3.yaml</code></pre>
+<p>Now when you access the book app and refresh you should see it switched between red and black ratings.</p>
+<p>Looking at Kiali versioned app graph we can see that traffic is only going to v2 and v3 as we would expect.</p>
+<p><!-- wp:image {"id":14760,"sizeSlug":"large","linkDestination":"media"} --></p>
+<figure class="wp-block-image size-large"><!-- wp:image {"id":14784,"sizeSlug":"large","linkDestination":"media"} -->&lt;/p&gt;
+<p> </p>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/04/kiali_ratings_v2_v3-1.png"><img class="wp-image-14784" src="/assets/2021/04/kiali_ratings_v2_v3-1.png?w=1024" alt="" /></a></figure>
+<p><!-- /wp:image --></p>
+</figure>
+<p><!-- /wp:image --></p>
+<h2>Troubleshooting Errors</h2>
+<p>As mentioned one of the key values of the OpenShift Service Mesh is the visualization and tracing. In order to generate an error we will scale down the ratings v1 deployment to 0.</p>
+<pre>$ oc scale deployment/ratings-v1 -n bookinfo --replicas 0</pre>
+<p><a href="https://keithtenzer.files.wordpress.com/2021/04/bookinfo_error.png"><img class="wp-image-14752" src="/assets/2021/04/bookinfo_error.png?w=1024" alt="" /></a></p>
+<p>You should now see that the ratings service is currently unavailable when you refresh the app in a browser.</p>
+<p><strong>Check Kiali dashboard.</strong></p>
+<p>You can access Kiali via route under networking in the bookinfo-mesh project. In Kiali we clearly see the issue is the reviews service as we would expect. </p>
+<p><!-- wp:image {"id":14751,"sizeSlug":"large","linkDestination":"media"} --></p>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/04/kali_error.png"><img class="wp-image-14751" src="/assets/2021/04/kali_error.png?w=1024" alt="" /></a></figure>
+<p><!-- /wp:image --></p>
+<p><strong>Open Jaeger to trace the calls that are failing.</strong></p>
+<p>Next we can dig into the requests by opening distributed tracing (Jaeger) from the Kiali dashboard. We can see the flow of all calls grouped and identify all request to the ratings service that are throwing an error. We see a 503 is returned which means service in unavailable.</p>
+<p><!-- wp:image {"id":14753,"sizeSlug":"large","linkDestination":"media"} --></p>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/04/jaeger_error.png"><img class="wp-image-14753" src="/assets/2021/04/jaeger_error.png?w=1024" alt="" /></a></figure>
+<p><!-- /wp:image --></p>
+<p><!-- wp:paragraph --></p>
+<p>Kiali dashboard also shows request response (latency in ms) for slowest 50%, 95% and 99% of requests. This allows us to not only see the average latency but compare it to the slowest requests which indicates if we have spikes that could cause user slowness that we might not easily see when looking at just the average.</p>
+<p><!-- /wp:paragraph --> <!-- wp:image {"id":14779,"sizeSlug":"large","linkDestination":"media"} --></p>
+<figure class="wp-block-image size-large"><a href="https://keithtenzer.files.wordpress.com/2021/04/kali_error2.png"><img class="wp-image-14779" src="/assets/2021/04/kali_error2.png?w=337" alt="" /></a></figure>
+<h2>Summary</h2>
+<p>In this article we discussed the capabilities OpenShift Service Mesh provides for microservice applications. We deployed a service mesh and a book demo polyglot application that leverages the OpenShift Service Mesh. Using Kiali we saw how to gain visibility into our microservice application and easily identify problems as well as trends. Through Jaeger and distributed tracing we were able to identify the exact API causing error conditions. Microservice architectures provide a lot of value but they are harder to manage, control and troubleshoot in certain aspects than their monolithic peers which is why OpenShift Service Mesh is so critical.</p>
+<p>(c) 2021 Keith Tenzer</p>
+<p><!-- /wp:image --></p>
+:ET

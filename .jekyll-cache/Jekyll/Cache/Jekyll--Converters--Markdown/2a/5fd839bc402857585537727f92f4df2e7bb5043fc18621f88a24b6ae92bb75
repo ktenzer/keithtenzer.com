@@ -1,0 +1,85 @@
+I"»<h2><img class="alignnone  wp-image-2609" style="color:var(--color-text);font-size:16px;font-weight:400;" src="/assets/2020/05/ansible_2.png" alt="ansible_2" width="185" height="185" /><img class="alignnone size-full wp-image-12472" style="color:var(--color-text);font-size:16px;font-weight:400;" src="/assets/2020/05/plus_sign.gif" alt="plus_sign" width="161" height="161" /><img class="alignnone  wp-image-14629" src="/assets/2020/05/cropped-windows-logo1.png" alt="cropped-Windows-logo1" width="179" height="179" /></h2>
+<h2>Overview</h2>
+<p>In this article we will focus on how to get started with automation of windows using Ansible. Specifically we will look at installing 3rd party software and OS updates. Automation is the basis for cloud-computing or cloud-native patterns and breeds a culture of innovation. Let's face it, we cannot innovate, if we are stuck doing mundane tasks and manual labor. Ansible has revolutionized automation because until Ansible, automating was rather complicated and required lots of domain knowledge. Ansible provides an automation language that the entire organization can use because it is so easy and so flexible. The best thing about Ansible though it it brings teams together and fosters a devops culture. It brings the Linux and Windows world together!</p>
+<p><!--more--></p>
+<h2>How Ansible Works</h2>
+<p>Ansible provides a runtime for executing playbooks. A playbook is simply a group of plays which are essentially steps executed in order. A play is one or more tasks. A task is simply the execution of an Ansible module. An Ansible module is python code that does something, like install a software package, update the system, change a configuration file, check if something is set correctly, etc. There are 1000s of Ansible modules and a huge community around it.</p>
+<p>In order to run a playbook against hosts you need an inventory which is simply a grouping of hosts and host vars (parameters). That is about it for the basics. Below is a diagram showing the Ansible automation engine architecture.</p>
+<p><img class="alignnone  wp-image-14622" src="/assets/2020/05/ansible_arch.png" alt="ansible_arch" width="1059" height="740" /></p>
+<p>This guide assumes you know some Ansible or are familar with the basics. If not I created an Ansible getting started guide <a href="https://keithtenzer.com/2017/11/09/ansible-getting-started-guide/">here</a>. I highly recommend giving it a look before proceeding.</p>
+<h2>Prerequisites</h2>
+<p>In order for a windows host to be managed by Ansible there are a few prerequisites</p>
+<ul>
+<li>Powershell version 3.0 or higher (Should be fine with Windows 2012 or higher)</li>
+<li>.NET Framework 4.0 or higher (should be fine with Windows 2012 or higher)</li>
+<li>Windows Remote Management Listener or SSH (cygwin)</li>
+<li>Windows 7, 8.1, and 10, and server OSs including Windows Server 2008, 2008 R2, 2012, 2012 R2, 2016, and 2019</li>
+<li>Chocolatey for installing 3rd party software</li>
+<li>WSUS for updating OS packages and patching</li>
+</ul>
+<h2>Install Chocalatey and WSUS</h2>
+<p>There are various tools that can be used. I recommend using Chocolatey for installing packages and WSUS for OS updates/patching.</p>
+<p><strong>Install Chocalately</strong></p>
+<p>Using powershell we can install chocalately.</p>
+<pre>PS C:\windows\system32&gt; Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))</pre>
+<p><strong>Install WSUS</strong></p>
+<p>Open server manager. In the top right under manage you can add or change roles.</p>
+<p><img class="alignnone  wp-image-14632" src="/assets/2020/05/server_manager.png" alt="server_manager" width="814" height="429" /></p>
+<p>Under server roles select Windows Service Update Services. This will install WSUS. Once installed there will be a WSUS option in server manager. You can select it and configure what packages should be updated, etc.</p>
+<p><img class="alignnone  wp-image-14633" src="/assets/2020/05/wsus.png" alt="wsus" width="844" height="409" /></p>
+<p>Open WSUS and check that the computer is showing up under 'All Computers'. If not and you are running outside of domain you may need the following fix.</p>
+<pre>c:\&gt; net stop wuauserv
+c:\&gt; regsvr32 /s wuapi.dll
+c:\&gt; regsvr32 /s wups.dll
+c:\&gt; regsvr32 /s wuaueng.dll
+c:\&gt; regsvr32 /s wucltui.dll
+c:\&gt; regsvr32 /s msxml3.dll
+c:\&gt; cd %windir%\SoftwareDistribution
+c:\&gt; rd /s/q DataStore
+c:\&gt; mkdir DataStore
+c:\&gt; rd /s/q Download
+c:\&gt; mkdir Download
+c:\&gt; net start wuauserv
+c:\&gt; reg delete HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate /v AccountDomainSid /f
+c:\&gt; reg delete HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate /v PingID /f
+c:\&gt; reg delete HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate /v SusClientId /f
+c:\&gt; wuauclt /resetauthorization
+c:\&gt; wuauclt /detectnow
+c:\&gt; wuauclt /reportnow</pre>
+<h2>Configuring Windows Remote Management for Ansible</h2>
+<p>Ansible requires no agents. It uses what the OS provides for communication. In Windows you can use SSH or Windows Remote Management (WinRM). Since SSH is more or less bolted on, WinRM is usually the preferred choice.</p>
+<p><strong>Test to ensure WinRM is working</strong></p>
+<p>First install WinRM if it isn't installed. Execute the hostname command through WinRM.</p>
+<pre>PS C:\windows\system32&gt; winrs -r:http://:5985/wsman -u: -p: hostname
+win2012</pre>
+<p>Optionally you can also test WinRM by making a remote desktop connection from another windows host.</p>
+<p>Note: you may run into an issue where you get an authentication error and a CredSSL issue if you have an older windows version. This can also happen if you don't have a valid SSL certificate. If you run into this issue, update your registry.</p>
+<pre>c:\&gt;reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System\CredSSP\Parameters" /f /v AllowEncryptionOracle /t REG_DWORD /d 2</pre>
+<p><strong>Enable basic auth</strong></p>
+<p>There are several authentication methods. In this example we will use basic authentication which is username/password. This is of course the least secure method.</p>
+<pre><span class="l l-Scalar l-Scalar-Plain">PS C:\&gt; Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true</span></pre>
+<p><strong>Update WinRMÂ </strong></p>
+<p>A script is provided by Ansible community to check WinRM and make necessary changes to allow Ansible to connect. In this case we are using basic authentication but likely you will want to use something more secure. The script can be found <a href="https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1">here</a> and other authentication options are documented in the script header.</p>
+<p>Open a powershell command prompt.</p>
+<p>Store URL path to script.</p>
+<pre>PS C:\&gt; $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"</pre>
+<p>Store location for the script</p>
+<pre>PS C:\&gt; $file = "$env:temp\ConfigureRemotingForAnsible.ps1"</pre>
+<p>Download script and output to file locally.</p>
+<pre>PS C:\&gt; (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)</pre>
+<p>Execute the script.</p>
+<pre>PS C:\&gt; powershell.exe -ExecutionPolicy ByPass -File $file
+Ok.</pre>
+<p><strong>Check WinRM connection</strong></p>
+<pre>PS C:\windows\system32&gt; winrm enumerate winrm/config/Listener
+Listener
+Address = *
+Transport = HTTP
+Port = 5985
+Hostname
+Enabled = true
+URLPrefix = wsman
+CertificateThumbprint
+ListeningOn = 10.10.1.139, 127.0.0.1, ::1, fe80::5efe:10.10.1.139%22, fe80::8155:327a:aeaf:365a%12
+</pre>
+:ET

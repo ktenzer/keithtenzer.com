@@ -1,0 +1,55 @@
+I"k<h3>Overview</h3>
+<p>We have by now all heard plenty about Linux containers and for good reason. Containers change the way applications are operated and allow us to deploy applications at unprecedented speeds. Containers pick up where Virtual Machines left off, at the application layer. In this article we will focus on the journey to a container driven world and explore the phases along the way. <!--more--></p>
+<h3>Container Rules</h3>
+<p>Before beginning our journey it is important to understand basic container rules:</p>
+<ul>
+<li>A container should run one and only one application process</li>
+<li>Containers are immutable, if something needs to be changed the container is thrown away and re-created</li>
+<li>Containers are insulated from one another but not isolated in same way as VIrtual Machines</li>
+<li>Containers share same Linux Kernel</li>
+</ul>
+<h3>Application Discovery</h3>
+<p>The first phase inolves indentifying applications. Not all applications are ideal to run in containers. Similar to cloud infrastructure such as OpenStack, containers require a certain application design. An application should exhibit the following behavior:</p>
+<ul>
+<li style="text-align:left;">Application functionality should be broken into components
+<ul>
+<li style="text-align:left;">components should be standalone services and have no dependencies on any other components</li>
+<li style="text-align:left;">all services should communicate with one another using external RESTful APIs</li>
+</ul>
+</li>
+<li style="text-align:left;">Application state change should be handled by using message buses or a distributed key/value store</li>
+<li style="text-align:left;">Application must scale horizontally not vertically</li>
+<li style="text-align:left;">Heavy components like databases should be operated on bare-metal or in Virtual Machines that can scale vertically</li>
+</ul>
+<p>For the purpose of this article I chose to containerize an application that displays these characteristics. <a href="http://integra.emitrom.com/">Integra</a> is an integration, automation and orchestration platform. It exposes application capabilities through providers that provide standalone micro-services with a RESTful frontend. The Integra reactor is the brain and allows automation architects to build workflows from capabilities exposed by providers. There are providers for applicaitons, databases, hypervisors, storage systems and much more. The idea behind Integra is automate everything with no compromises. Integra sees no difference between backup, provisioning or other common tasks. Everything is a workflow that can be automated using a standard toolset.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/05/integra_architecture.jpg"><img class="  wp-image-894 aligncenter" src="/assets/2015/05/integra_architecture.jpg?w=280" alt="Integra_Architecture" width="968" height="1037" /></a></p>
+<p>Since Integra is composed of many services it is important to place each service in its own container. This means the reactor and every provider, even the CLI get its own container. The container will need to provide all dependencies in order to run the application including exposing ports. Each service or component of an application should use a different unique port. For Docker alone it doesn't matter as much but once we get into Kubernetes and pods this becomes very important since containers within a pod share same IP address.</p>
+<h3>Running Application in Container</h3>
+<p>Running applications in containers is not that much different than outside of a container. A container can run one command so typically we would create a small start script to lauch the application. Below is the start script run-integra.sh I am using for the Integra reactor:</p>
+<pre style="padding-left:30px;">#!/bin/sh
+ pgrep -f "rest-1.0.2-uber.jar" | awk '{system("kill " $1)}'
+ exec /usr/bin/java -jar /integra/rest-1.0.2-uber.jar</pre>
+<p>Before building our application container it is important to test and ensure things are working. Below are the commands I used to test the Integra reactor.</p>
+<pre style="padding-left:30px;"># docker pull debian</pre>
+<pre style="padding-left:30px;"># docker run -i -t debian /bin/bash</pre>
+<p>At this point we are inside the container running debian as the base OS.</p>
+<pre style="padding-left:30px;">root@b4a37b0d8040:/# apt-get update</pre>
+<pre style="padding-left:30px;">root@b4a37b0d8040:/# apt-get install -y openjdk-7-jre</pre>
+<p>We have now installed the application dependencies and can test the Integra reactor inside the container. Next we need to copy the application JAR to the container using the container id (long format).</p>
+<pre style="padding-left:30px;"># docker ps
+CONTAINER     ID IMAGE         COMMAND       CREATED         STATUS
+b4a37b0d8040  debian:latest    "/bin/bash"   5 minutes ago   Up 5 minutes</pre>
+<pre class="lang-sh prettyprint prettyprinted" style="padding-left:30px;"><code><span class="pln"># docker inspect -f b4a37b0d8040
+b4a37b0d8040a0d624b7edc264425693a7e0e50444f72d09a54209ff6461b377</span></code></pre>
+<pre class="lang-sh prettyprint prettyprinted" style="padding-left:30px;"><code><span class="pln">cp </span></code>rest-1.0.2-uber.jar /var/lib/docker/devicemapper/mnt/b4a37b0d8040a0d624b7edc264425693a7e0e50444f72d09a54209ff6461b377/rootfs</pre>
+<p>Now that we have copied the JAR file from our host OS to the container we can run the Integra reactor and ensure it works.</p>
+<pre style="padding-left:30px;">root@b4a37b0d8040:/# java -jar rest-1.0.2-uber.jar</pre>
+<p>Finally we are ready to build our Docker application container!</p>
+<h3>Building Docker Image</h3>
+<p>Docker provides a standard for packaging containers. While container technology has been around for a long time in both Unix and Linux the tooling and portability that Docker provides is certainly game-changing. Docker uses a Dockerfile to define the container image. A docker image is a grouping of layers. In our example we have essentially three layers: the base OS (Debian), required dependencies (Java) and our application (JAR). Besides providing software layering a Dockerfile also enables us to expose application ports, run-time environment parameters and a tooling for executing standard OS commands. Below is the Dockerfile used to build the Integra Reactor.</p>
+<pre style="padding-left:30px;"># vi Dockerfile
+# Integra Reactor
+# VERSION 0.0.1
+FROM debian MAINTAINER Keith Tenzer &lt;maintainer@domain.com&gt;
+</pre>
+:ET

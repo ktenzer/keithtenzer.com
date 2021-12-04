@@ -1,0 +1,32 @@
+I"d<h3><img class="alignnone size-full wp-image-3363" src="/assets/2016/07/openstack-neutron-fits-like-lego.jpg" alt="OpenStack-Neutron-Fits-like-Lego" width="300" height="289" /></h3>
+<h3>Overview</h3>
+<p>In this article we will take a deeper look into OpenStack networking and try to understand general networking concepts . We will look at how various networking concepts are implemented within OpenStack and also discuss SDNs, network scalability and HA.</p>
+<p><!--more--></p>
+<p>The most complex service within OpenStack is certainly Neutron. Networking principles have not changed, however Neutron provides a lot of new abstractions that make is rather difficult to follow or understand traffic flows. On top of that there are many, many ways to build Network architectures within Neutron and a huge 3rd party ecosystem exists around Neutron that can make things even more confusing.</p>
+<h3>Networking Basics</h3>
+<p>You cannot really start a discussion around networking basics without mentioning the OSI model so that is where we will begin as well.</p>
+<p><img class="alignnone size-full wp-image-1768" src="/assets/2016/07/basics_osimodel.jpg" alt="basics_osimodel" width="400" height="251" /></p>
+<p>The OSI model identifies 7 layers, for the purposes of Neutron we are primarily concerned with layer 1 (physical), layer 2 (data link ), layer 3 (network) and layer 4 (transport). Ethernet data is transmitted in packets on layer 1. An Ethernet frame is encapsulated within a packet on layer 2.</p>
+<p><img class="alignnone size-full wp-image-1780" src="/assets/2016/07/ethernet_frame.png" alt="ethernet_frame" width="699" height="215" /></p>
+<p>Ethernet frames have source and destination MAC addresses however do not include routing information. Layer 2 can only broadcast on the local network segment. It does have a place holder for VLAN ID so traffic can be delivered to correct network segment based on VLAN. A VLAN is nothing more than a logical representation of a layer 2 segment.</p>
+<p><img class="alignnone size-full wp-image-1783" src="/assets/2016/07/simple_lan.png" alt="simple_lan" width="770" height="559" /></p>
+<p>Each host on the layer 2 network segment can communicate with one another using Ethernet frame and specifying source / destination MAC address. ARP (Address Resolution Protocol) is used to find out the location of a MAC address.</p>
+<p><img class="alignnone size-full wp-image-1827" src="/assets/2016/07/arp_example.png" alt="arp_example" width="930" height="687" /></p>
+<p>Once a MAC address has been discovered it is cached on the clients and stored in the ARP cache.</p>
+<p><img class="alignnone size-full wp-image-1788" src="/assets/2016/07/arp_cache.png" alt="arp_cache" width="699" height="280" /></p>
+<p>Traffic bound for MAC addresses that don't exist on layer 2 network segment must be routed over layer 3. In other words layer 3 simply connects multiple layer 2 networks together.</p>
+<p><img class="alignnone size-full wp-image-1797" src="/assets/2016/07/lan_with_router.png" alt="lan_with_router" width="765" height="671" /></p>
+<p>In this example we have three class C (255.255.255.0) network subnets. Communication between subnets requires layer 3 routing. Communication within subnet uses layer 2 ethernet frame and ARP. ICMP (Internet Control Messaging Protocol) works at layer 3, tools that use ICMP are ping and mtr. Layer 3 traffic traverses networks and each device has a routing table that understands the next hop.</p>
+<p><img class="alignnone size-full wp-image-1843" src="/assets/2016/07/ip.png" alt="IP" width="761" height="532" /></p>
+<p>We can look at the routing table and using commands like "ip route get", "traceroute" and "tracepath" we can understand traffic patterns within layer 3 network.</p>
+<p>Layer 4 is of course where we get into TCP (Transmission Control Protocol) and UDP (User Datagram Protocol).</p>
+<p>TCP is a reliable protocol that ensures flow control, retransmission and ordered delivery of packets. Ports or socket streams are used to uniquely identify applications communicating with one another. Port range that exists is 1 - 65535 with 1-1023 being reserved for system ports. The default ephemeral port range in Linux is 32768 - 61000.</p>
+<p>UDP unlike TCP is a connectionless protocol. Since delivery and sequential ordering are not guaranteed, UDP is not a reliable protocol. Common applications important in OpenStack ecosystem that use UDP are DHCP, DNS, NTP and VXLAN.</p>
+<h3>Network Tunneling</h3>
+<p>Tunneling allows a network to support a service or protocol that isnt natively supported within network. Tunneling works by encapsulating metadata into IP packet header. It allows for connecting dissimilar networks, encapsulating services like IPV6 in IPV4 and securely connecting non-trusted networks such as is the case with VPNs. Open vSwitch (out-of-box) SDN provided with OpenStack supports following tunneling protocols: GRE,  (Generic Routing Encapsulation) VXLAN (Virtual Extensible LAN) and GENEVE (General Network Virtualization Encapsulation).</p>
+<h3>Network Namespaces</h3>
+<p>Linux network namespaces allow for more granular segregation of software-defined networks. Since namespaces are logically segregated there is no overlap of ip ranges. In order to see networking within namespace commands such as ip, ping, tcdump, etc need to be executed within namespace.</p>
+<p>To list network namespaces use below command.</p>
+<pre># ip netns show
+</pre>
+:ET

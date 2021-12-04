@@ -1,0 +1,75 @@
+I"<p><img class="alignnone  wp-image-5511" src="/assets/2016/10/msazurelogo.png" alt="msazurelogo" width="318" height="164" /> <img class="alignnone  wp-image-5506" src="/assets/2016/10/plus_sign.gif" alt="plus_sign" width="102" height="102" /> <img class="alignnone  wp-image-5513" src="/assets/2016/10/openshiftlogo.png" alt="openshiftlogo" width="145" height="168" /></p>
+<h3>Overview</h3>
+<p>This article is a collaboration from Rolf Masuch (Microsoft) and Keith Tenzer (Red Hat). It is based on our work together in the field with enterprise customers.</p>
+<p>In this article we will explore how to deploy a production ready OpenShift enterprise container platform on the Microsoft Azure Cloud. The entire deployment is completely automated using Ansible and <a href="https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/">ARM</a> (Azure Resource Manager). Everything is template driven using APIs. The bennefit of this approach is the ability to build-up and tear-down a complete OpenShift environment in the Azure cloud before your coffee gets cold.</p>
+<p>Since OpenShift already uses Ansible as its installation and configuration management tool, it made sense to stick with Ansible as opposed to using other tools such as Power Shell. A Red Hat colleague, Ivan McKinley created an Ansible playbook that builds out all the required Azure infrastructure components and integrates the existing OpenShift installation playbook. The result is an optimally configure OpenShift environment on the Azure Cloud. We have used this recipe to deploy real production Environments for customers and it leverages both Microsoft as well as Red Hat best practices.</p>
+<p><!--more--></p>
+<p>You can access and contribute improvements to the Ansible playbook under Ivan's Github repository:</p>
+<p><a href="https://github.com/ivanthelad/ansible-azure">https://github.com/ivanthelad/ansible-azure</a></p>
+<p>The following, related articles might also be of Interest in case you want a basic understanding of OpenShift.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2016/08/04/openshift-enterprise-3-2-all-in-one-lab-environment/">OpenShift v3.2 All-in-one Lab Environment</a></li>
+<li><a href="https://keithtenzer.com/2016/08/11/openshift-v3-basic-release-deployment-scenarios/">OpenShift Basic Release Deployment Scenarios</a></li>
+</ul>
+<p>The pre-requisites for deploying OpenShift on Azure are a valid OpenShift subscription and a valid Azure subscription.</p>
+<ul>
+<li>If you don't already have a OpenShift Subscription you can purchase one or get an eval by talking to your partner or Red Hat account manager.</li>
+<li>If you don't already have a Microsoft Azure Subscription you can start one <a href="https://azure.microsoft.com/en-us/free/">here</a>.</li>
+</ul>
+<h3>Deploying to Azure</h3>
+<p>Install Fedora 24 workstation for use as deployment workstation. You need very recent versions of python 2.7 (2.7.12) and unfortunately it isn't available in RHEL or CentOS at writing of this article so we used Fedora.</p>
+<h4>Install Python and Dependencies</h4>
+<pre># sudo yum install python
+# sudo yum install python-pip
+# sudo dnf install python-devel
+# sudo dnf install redhat-rpm-config
+# sudo dnf install openssl-devel</pre>
+<h4>Install Azure CLI</h4>
+<pre># sudo dnf install npm
+# sudo npm install azure-cli -g
+# sudo pip install --upgrade pip
+# sudo pip install azure==2.0.0rc5</pre>
+<h4>Authenticate Azure CLI</h4>
+<pre>[ktenzer@ktenzer ansible-azure]$ azure login
+ info: Executing command login
+ \info: To sign in, use a web browser to open the page https://aka.ms/devicelogin. Enter the code CB8P5ZCKP to authenticate.
+ -info: Added subscription Pay-As-You-Go
+ info: Added subscription ITS - RedHat Openshift
+ info: Setting subscription "Pay-As-You-Go" as default
+ +
+ info: login command OK</pre>
+<h4>List Azure Resource Groups</h4>
+<p>In order to list resource groups you need your Azure subscription id. You can view this by logging into Azure portal with your user.</p>
+<pre>[ktenzer@ktenzer ansible-azure]$ azure group list --subscription &lt;subscription id&gt;
+ info: Executing command group list
+ + Listing resource groups
+ data: Name Location Provisioning State Tags:
+ data: ------------- ---------- ------------------ -----
+ data: OpenShift_POC westeurope Succeeded null
+ data: Shared westeurope Succeeded null
+ info: group list command OK</pre>
+<h4>Install Ansible Core</h4>
+<pre># sudo dnf install ansible</pre>
+<h4>Clone OpenShift Azure Ansible Playbooks</h4>
+<pre># git clone https://github.com/ivanthelad/ansible-azure.git</pre>
+<h4>Update Playbook parameters</h4>
+<pre># cd ansible-azure</pre>
+<pre># cp group_vars/all_example group_vars/all</pre>
+<pre># vi group_vars/all
+resource_group_name: &lt;new resource group name&gt;
+## Azure AD user.
+ad_username: &lt;Azure user e.g. keith.tenzer@domain.onmicrosoft.com&gt;
+### Azure AD password
+ad_password: &lt;Azure Password&gt;
+#### Azure Subscription ID
+subscriptionID: "&lt;subscription id from Azure&gt;"
+## user to login to the jump host. this user will only be created on the jumphost
+adminUsername: &lt;username e.g. ktenzer&gt;
+## user pwd for jump host
+## Password for the jump host
+adminPassword: &lt;password&gt;
+##### Public key for jump host
+### Access to environment only allowed through jumphost
+sshkey: &lt;ssh key e.g. cat /home/ktenzer/.ssh/id_rsa.pub&gt;
+</pre>
+:ET

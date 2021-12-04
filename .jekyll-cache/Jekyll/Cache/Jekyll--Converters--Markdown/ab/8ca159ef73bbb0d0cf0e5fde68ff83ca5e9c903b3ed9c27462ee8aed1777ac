@@ -1,0 +1,43 @@
+I"t<h3>Overview</h3>
+<p>Containers are a burning hot topic right now. Several open source technologies have come together to allow containers to be operated at scale and in the enterprise. In this article I will talk about these technologies and explain how to build container infrastructure at scale with OpenStack. There are three main components that come together to create container-based infrastructure: Red Hat Enterprise Linux Atomic Host (RHEL Atomic), Docker and Google's Kubernetes. RHEL Atomic provides an optimized operating system for running containers. Docker delivers container portability and a packaging standard. Kubernetes adds orchestration and management of Docker containers across a massively scalable cluster of RHEL Atomic hosts.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/04/red_hat_container_architecture.png"><img class="  wp-image-816 aligncenter" src="/assets/2015/04/red_hat_container_architecture.png?w=300" alt="red_hat_container_architecture" width="1270" height="639" /></a><br />
+<!--more--></p>
+<h3>RHEL Atomic</h3>
+<p><a href="http://www.projectatomic.io/">RHEL Atomic</a> is an optimized container operating system based on Red Hat Enterprise Linux 7 (RHEL 7). The name atomic refers to how updates are managed. RHEL Atomic does not use yum but rather OSTree for managing updates. Software updates are handled atomically across the entire system. Not only this but you can rollback to the systems previous state if the new upgraded state is for some reason not desired. The intention is to reduce risk during upgrades and make the entire process seamless. When we consider the density of containers vs virtual machines to be around 10X, upgrades and maintenance become that much more critical.</p>
+<p>RHEL Atomic provides both Docker and Kubernetes. Underneath the hood it leverages SELinux (security), Cgroups (process isolation) and Namespaces (network isolation). It is an Operating System that is optimized to run containers. In addition RHEL Atomic provides enterprise features such as security, isolation, performance and management to the containerized world.</p>
+<h3>Docker</h3>
+<p><a href="https://www.docker.com/">Docker</a> is often a misused term when referring to containers. Docker is not a container, instead it is a platform for running containers. Docker provides a packaging format, tool-set and all the plumbing needed for running containers within a single host. Docker also provides a hub for sharing Docker images.</p>
+<p>Docker images consist of a Base-OS and various layers that allow one to build an application stack (application and its dependencies). Docker images are immutable, you don't update them. Instead you create a new image by adding or making changes to the various layers. This is the future of application deployment and is not only more efficient but magnitudes faster than the traditional approach with virtual machines.</p>
+<p>Red Hat is providing a docker repository for certified, tested, secure and supported Docker images similar to how RPMs are currently provided.</p>
+<p>All Docker images run in a container and all the containers share the same Linux kernel, RHEL Atomic.</p>
+<h3>Kubernetes</h3>
+<p><a href="http://kubernetes.io/">Kubernetes</a> is an orchestration engine built around Docker. It allows administrators to manage Docker containers at scale across many physical or virtual hosts. Kubernetes has three main components: master, node or minion and pod.</p>
+<h4>Master</h4>
+<p>The Kubernetes master is the control plane and provides several services. The scheduler handles placement of pods. It also provides a replication controller that ensures pods are replicated according to policy. The master also maintains the state of the cluster and relies on ETCD which is a distributed key/value store for those capabilities. Finally Restful APIs for performing operations on nodes, pods, replication controllers and services are provided by the Kubernetes master.</p>
+<h4> Node</h4>
+<p>The Kubernetes node or minion as it is often referred to runs pods. Placement of pod on a Kubernetes node is as mentioned determined by the scheduler on the Kubernetes master. The Kubernetes node runs several important services: kubelet and kube-proxy. The kubelet is responsible for node level pod management. In addition Kubernetes allows for the creation of services that expose applications to the outside world. The kube-proxy is responsible for managing Kubernetes services within a node. Since pods are meant to be mortal, the idea behind services is providing an abstraction that lives independently of a pod.</p>
+<h4>Pod</h4>
+<p>The Kubernetes pod is one or more tightly coupled containers that are scheduled onto the same host. Containers within pods share some resources such as storage and networking. A pod provides a single unit of horizontal scaling and replication across the Kubernetes cluster.</p>
+<p>Now that we have a good feel for the components involved it is time to sink our teeth into Kubernetes. First I would like to recognize two colleagues <a href="https://github.com/shetze/RHEL-Atomic-Demo-Kit">Sebastian Hetze</a> and <a href="https://github.com/scollier/SATraining">Scott Collier</a>. I have used their initial work around Kubernetes configurations in this article as my basis.</p>
+<h3>Configure Kubernetes Nodes in OpenStack</h3>
+<p>Kubernetes nodes or minions can be deployed and configured automatically on OpenStack. If more compute power is required for our container infrastructure we simply need to deploy additional Kubernetes nodes. OpenStack is the perfect infrastructure for running containers at scale. Below are the steps required to deploy Kubernetes nodes on OpenStack.</p>
+<ul>
+<li>Download the <a href="https://access.redhat.com/downloads/content/271/ver=/rhel---7/7.1.0/x86_64/product-downloads">RHEL Atomic</a> cloud image (QCOW2)</li>
+<li>Add RHEL Atomic Cloud Image to Glance in OpenStack</li>
+<li>Create atomic security group</li>
+</ul>
+<pre style="padding-left:30px;">#neutron security-group-create atomic --description "RHEL Atomic security group"</pre>
+<pre style="padding-left:30px;">#neutron security-group-rule-create atomic --protocol tcp --port-range-min 10250 --port-range-max 10250 --direction ingress --remote-ip-prefix 0.0.0.0/0</pre>
+<pre style="padding-left:30px;">#neutron security-group-rule-create atomic --protocol tcp --port-range-min 4001 --port-range-max 4001 --direction egress --remote-ip-prefix 0.0.0.0/0</pre>
+<pre style="padding-left:30px;">#neutron security-group-rule-create atomic --protocol tcp --port-range-min 5000 --port-range-max 5000 --direction egress --remote-ip-prefix 0.0.0.0/0</pre>
+<pre style="padding-left:30px;">#neutron security-group-rule-create --protocol icmp --direction ingress default</pre>
+<ul>
+<li>Create user-data to automate deployment using cloud-init</li>
+</ul>
+<pre style="padding-left:30px;">#cloud-config
+hostname: atomic01.lab.com
+password: redhat
+ssh_pwauth: True
+chpasswd: { expire: False }
+</pre>
+:ET

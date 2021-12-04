@@ -1,0 +1,32 @@
+I"�<h2><img class="alignnone  wp-image-14414" src="/assets/2020/01/red-hat-ansible-tower-vector-logo.png" alt="red-hat-ansible-tower-vector-logo" width="250" height="139" /><img class="alignnone size-full wp-image-12472" src="/assets/2020/01/plus_sign.gif" alt="plus_sign" width="161" height="161" /><img class="alignnone  wp-image-14413" src="/assets/2020/01/edge_logo.png" alt="edge_logo" width="136" height="139" /></h2>
+<h2>Overview</h2>
+<p>In this article we will look at providing an automation platform for edge computing. Generally I would say edge computing is about moving data-handling away from centralized systems, towards local sources of data capture. An edge can be a remote office, server, laptop, tablet, smartphone or IoT anything endpoint. Edge computing is really just taking distributed computing one step further and removing the requirement to have always-connected network segments.</p>
+<p><!--more--></p>
+<p>There are many use cases for edge computing, from classical retail, travel, logistics, banking, virtually every market segment has a need for edge computing. The trend is that the edges is becoming increasingly more intelligent, requiring a much more complicated software-stack, similar to what we observe in a centralized IT environment. In order to manage, maintain and update edge services an automation platform is obviously critical. Ansible as an automation language and Ansible Tower offer the perfect platform for edge computing.</p>
+<h2>Retail Edge Use Case</h2>
+<p>In order to take a closer look, lets now focus on an edge use case in retail. If we look at a classical retail environment, we have centralized IT, remote stores and distribution warehouses. You might think brick and mortar is dead but not so fast. Customers still want to try things out or see them in person (especially with food/clothes) before buying. They also desire advice and service with higher-end, more technically advanced items. Classical retailers want their customers to frequent their stores, as such they need to offer them a more personal experience and a reason to visit the store. Offering their customers exactly what they want, when they want it, for the right price is a good start.  In order to do this however, retailers need to understand their customers much better than even Google. Once they understand a customer they need a just in time offering which requires perfect logistics execution from warehouses. They need to provide their customers excellent experiences in the store, for example knowing how many customers are shopping in a given store or waiting in a checkout line to dynamically react to changing demands.</p>
+<p>Ultimately it all requires a lot of intelligence and software in the store because that is where the customers are going to be (hopefully). The challenge though is that retailers still need to manage the stores centrally, while providing each store a certain degree of autonomy. A store must also be fully operational, even if it's connection to central IT is severed.  Not all stores will want to roll out services or updates on a fixed schedule and being able to rollout completely new stores, in an expected time frame, requires a complete automation strategy.</p>
+<p>Ansible Automation, specifically Ansible Tower provides the perfect automation platform to enable central management and through a feature called isolated nodes, provides the store it's autonomy. In addition Ansible Tower also provides a powerful role-based access model and job scheduler to further enable autonomy. Automation playbooks can be provided as-a-service, using Ansible Tower Survey's, allowing for easy consumption. Update, rollout of new services or even a new store is just a click away and it needs to be as time-to-market is of the essence. The below illustration shows a typical retail environment with two centralized datacenters and X stores.</p>
+<p><img class="alignnone  wp-image-14394" src="/assets/2020/01/retail_automation_platform.png" alt="retail_automation_platform" width="776" height="437" /></p>
+<p>In this example we see Ansible Tower (the platform for automation) is deployed centrally in both datacenters. Each store has its own instance group with its own nodes. This allows stores to scale independently of one another. In addition Ansible Tower allows for isolated nodes which are nodes that have a special piece of software allowing them to execute jobs locally. This means Ansible jobs are no longer affected by network latencies or connectivity issues between the central datacenter and the store.</p>
+<h2>Deploy Ansible Tower with Isolated Nodes</h2>
+<p>Before starting you will need two RHEL 8 systems and of course they need to be entitled with subscriptions.</p>
+<p>Register with subscription manager and enable repos.</p>
+<pre># subscription-manager register
+# subscription-manager list --available
+# subscription-manager attach --pool=&lt;pool id&gt;
+# subscription-manager repos --disable=*
+# subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms \
+--enable=ansible-2.8-for-rhel-8-x86_64-rpms \
+--enable=rhel-8-for-x86_64-appstream-rpms</pre>
+<p>There are a few ways you can deploy Ansible Tower, my recommendation is to use the setup bundle. Download latest setup bundle on the system you want to run Tower.</p>
+<pre># curl -O https://releases.ansible.com/ansible-tower/setup-bundle/ansible-tower-setup-bundle-latest.el8.tar.gz</pre>
+<p>Extract the setup bundle.</p>
+<pre># gunzip ansible-tower-setup-bundle-latest.el8.tar.gz 
+# tar xvf ansible-tower-setup-bundle-latest.el8.tar</pre>
+<p>Ansible Tower uses (who would've thought) Ansible to install itself. As such the installation configuration is an Ansible inventory file.</p>
+<p>Setup Ansible Tower inventory file.</p>
+<pre># cd ansible-tower-setup-bundle-3.6.2-1</pre>
+<pre># vi inventory
+</pre>
+:ET

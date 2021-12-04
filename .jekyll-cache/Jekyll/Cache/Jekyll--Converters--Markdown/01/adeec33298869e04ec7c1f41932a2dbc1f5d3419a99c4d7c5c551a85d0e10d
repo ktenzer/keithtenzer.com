@@ -1,0 +1,94 @@
+I"�<h3><img class="alignnone size-full wp-image-2609" src="/assets/2016/05/ansible_2.png" alt="ansible_2" width="225" height="225" /></h3>
+<h3>Overview</h3>
+<p>In this article we will look at how Ansible can be leveraged within OpenStack to provide enhanced capabilities around software deployment. Before we get into the details lets understand the challenge. There are typically two layers of automation: provisioning and deployment. Provisioning is all about the underlying infrastructure a particular application might require. Deployment is about installing and configuring the application after the infrastructure exists. OpenStack Heat is the obvious choice for automating provisioning. Heat integrates with other OpenStack services and provides the brains, that bring OpenStack powered cloud to life. While Heat is great for provisioning infrastructure, software deployment is not one of its strengths and trying to orchestrate complex software deployments can be rather clunky. That is where Ansible comes into play and as you will see in this article, they fit together perfectly.<br />
+<!--more--></p>
+<p>Ansible has two components: Ansible core and Ansible Tower. Ansible core provides the ansible runtime and allows execution of playbooks (YAML definitions of what is being orchestrated). What is missing in Ansible core is the management layer, that enhances team collaboration, extensibility, scalability and visibility. Beyond management, Ansible Tower provides the ability to drive Ansible dynamically through APIs. This is a key requirement for OpenStack and dynamic infrastructure.</p>
+<p>Through callbacks we can trigger Ansible playbook runs from within OpenStack Heat. Ansible Tower dynamically discovers instances running on OpenStack as Heat provisions them. Ansible Tower is then able to run playbooks against newly provisioned instances dynamically. The result is an end-to-end automation process, that deploys an entire application including its infrastructure stack. Roles can and ideally should be separated, between infrastructure provisioning and software deployment. Heat templates control provisioning created often by OpenStack administrators. Ansible playbook controls software deployment managed by devops teams. In this article we will see how all that fits together. We will not only deploy Ansible Tower on OpenStack, but also walk through a deployment of an all-in-one WordPress application. In this scenario OpenStack <span style="line-height:1.7;">Heat is used to deploy a CentOS image with a private and floating ip. Ansible Tower is then triggered directly from Heat using an API callback, the instance is discovered within Ansible Tower and the appropriate playbook for deploying the WordPress application is executed.</span></p>
+<h3>OpenStack Installation and Configuration</h3>
+<p>Installing OpenStack is not covered in this article, however to stand-up an OpenStack lab environment based on Liberty follow this <a href="https://keithtenzer.com/2016/01/04/openstack-liberty-lab-installation-and-configuration-guide/">guide</a>. If you are using your own environment ensure you follow the configuration steps in the above guide after OpenStack is deployed or pass the correct parameters into Heat templates that are representative of your environment.</p>
+<p>[OpenStack]</p>
+<ul>
+<li>Add CentOS Cloud Image to Glance.</li>
+</ul>
+<pre style="padding-left:30px;"># curl -O http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2</pre>
+<pre style="padding-left:30px;"># glance image-create --name "CentOS_7" --disk-format qcow2 --container-format bare --visibility public --file CentOS-7-x86_64-GenericCloud.qcow2</pre>
+<p>Note: if your CentOS image is named differently, you need to update Heat templates below.</p>
+<ul>
+<li>Create Flavor for Ansible Tower</li>
+</ul>
+<pre style="padding-left:30px;"># nova flavor-create m2.small 50 4096 20 4</pre>
+<ul>
+<li>Create Flavor for WordPress Applicaiton</li>
+</ul>
+<pre style="padding-left:30px;"># nova flavor-create m2.tiny 51 1024 10 1</pre>
+<p>Note: if your flavors are named differently, you need to update Heat templates below.</p>
+<h3>Setup Ansible Tower on OpenStack</h3>
+<p>As mentioned, Ansible Tower provides management, reporting and most important API callbacks. It makes Ansible core even more powerful. In this case Tower is used primarily for API callback and dynamic inventory. This allows us to make an API call from Heat upon completion of infrastructure provision that 1) dynamically updates Ansible inventory with newly created instance IPs 2) run playbook on newly created instance through ssh using private key from OpenStack.</p>
+<p>There are two options for deploying Ansible Tower in OpenStack: using Heat template I have provided or deploying an instance and manually configuring tower. Both options are documented in this article. Here we are of course using CentOS, however RHEL will work as well assuming you have subscriptions.</p>
+<p>[OpenStack]</p>
+<h4>Option 1: Deploy Ansible Tower from Heat Template</h4>
+<pre style="padding-left:30px;"># vi /root/centos-tower.yaml</pre>
+<pre style="padding-left:30px;">heat_template_version: 2013-05-23
+description: CentOS Ansible Tower
+parameters:
+  server_name:
+    type: string
+    description: Name of server
+    default: tower
+  image:
+    type: string
+    description: Image used for servers
+    default: CentOS_7
+  key_name:
+    type: string
+    description: SSH key to connect to the servers
+    default: admin
+  flavor:
+    type: string
+    description: flavor used by the web servers
+    default: m2.small
+  private_net_id:
+    type: string
+    default: 431aa0f5-2790-403b-84e0-7cb88b836782
+    description: Id of the private network for the compute server
+  private_subnet_id:
+    type: string
+    default: d7b6fb94-f083-4347-a75a-8025c06b5a31
+    description: Id of the private sub network for the compute server
+  public_net_id:
+    type: string
+    default: c55f71f6-5b6c-4c1a-a56e-8420a8652f50
+    description: Id of the public network for the compute server 
+ 
+resources:
+  webserver:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: server_name }
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: server_port }
+      user_data: |
+        #!/bin/bash -v
+        curl -O http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-6.noarch.rpm
+        rpm -ivh epel-release-7-6.noarch.rpm
+        yum install -y ansible
+        cd /root
+        curl -O http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-2.4.5.tar.gz
+        tar xvzf ansible-tower-setup-latest.tar.gz
+        cd ansible-tower-setup-2*
+        cat &lt;&lt; EOF &gt; tower_setup_conf.yml
+        admin_password: redhat01
+        database: internal
+        munin_password: redhat01
+        pg_password: redhat01
+        primary_machine: localhost
+        redis_password: redhat01
+        EOF
+        sed -i 's/Defaults    requiretty/Defaults    !requiretty/g' /etc/sudoers
+        ./configure -o tower_setup_conf.yml
+        ./setup.sh
+</pre>
+:ET

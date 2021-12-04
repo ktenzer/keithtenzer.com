@@ -1,0 +1,32 @@
+I"<h2><img class="alignnone  wp-image-14187" src="/assets/2019/10/hetzner.png" alt="hetzner" width="284" height="65" /><img class="alignnone  wp-image-12472" src="/assets/2019/10/plus_sign.gif" alt="plus_sign" width="84" height="84" /><img class="alignnone  wp-image-14188" src="/assets/2019/10/rhel-linux-8.jpg" alt="rhel-linux-8" width="99" height="74" /></h2>
+<h2>Overview</h2>
+<p>In this article I will explain how to create your own custom RHEL 8 image for hetzner root servers. Hetzner offers new and used physical servers on a per/month basis (<a href="https://www.hetzner.de/sb">https://www.hetzner.de/sb</a>). They offer extremely competitive pricing. These servers are perfect for demo or lab environments where you are operating your own platform and want it running 24/7!</p>
+<p>Hetzner unfortunately does not offer RHEL images however, does provide a means for bringing your own image. A colleague of mine, Ingo Boernig, already shared a blog on how to do this for <a href="http://boernig.de/wordpress/2018/07/03/running-rhel-on-hetzner-hosted-servers/">RHEL 7.5</a>. This article with cover RHEL 8.0.</p>
+<p><!--more--></p>
+<h2>Install RHEL 8 in a VM</h2>
+<p>Download RHEL 8 ISO DVD from <a href="https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.0/x86_64/product-software">https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.0/x86_64/product-software</a>. Using KVM virt-manager (or another hypervisor) install RHEL 8 in a VM.</p>
+<p><img class="alignnone size-full wp-image-14181" src="/assets/2019/10/rhel8-1.png" alt="rhel8-1" width="468" height="421" /></p>
+<p>Once the VM boots follow the installation and use defaults. Select minimal server from the software selection. Also configure network to boot using DHCP.</p>
+<p><img class="alignnone size-full wp-image-14182" src="/assets/2019/10/rhel8-2.png" alt="rhel8-2" width="1920" height="1053" /></p>
+<h2>Prepare RHEL 8 VM for Hetzner</h2>
+<p>Log into the VM using ssh or console.</p>
+<p>Hetzner only supports one boot kernel. As such we will remove the rescue kernel.</p>
+<pre># rm /boot/vmlinuz-0-rescue-adcc72dfe3ed4c049ffff0ec950a90d9
+# rm /boot/initramfs-0-rescue-adcc72dfe3ed4c049ffff0ec950a90d9.img</pre>
+<p>Hetzner creates a ram disk and uses the dracut tool. It expects dracut to be installed under /sbin. This is not the case with RHEL 8 so we will add a symlink.</p>
+<pre># ln -s /usr/bin/dracut /sbin/dracut</pre>
+<p>Finally create a tar zip of the RHEL 8 OS. The image needs to be called CentOS-75-el-x86_64-minimal.tar.xz because Hetzner is expecting certain image names but I assure you this will be RHEL 8.</p>
+<pre># tar cJvf CentOS-75-el-x86_64-minimal.tar.xz --exclude=/dev \
+--exclude=/proc --exclude=/sys --exclude=/CentOS-75-el-x86_64-minimal.tar.xz /</pre>
+<h2>Deploy Image on Hetzner Server</h2>
+<p>In order to install OS or repair it you need to get into Hetner server rescue mode.</p>
+<p><img class="alignnone size-full wp-image-12310" src="/assets/2019/10/hetzner_1.png?w=440" alt="hetzner_1" /></p>
+<p><img class="alignnone size-full wp-image-12311" src="/assets/2019/10/hetzner_2.png?w=440" alt="hetzner_2" /></p>
+<p><img class="alignnone size-full wp-image-12312" src="/assets/2019/10/hetzner_3.png?w=440" alt="hetzner_3" /></p>
+<p>Using secure copy, upload the image to the Hetzner server /root directory.</p>
+<pre># scp CentOS-75-el-x86_64-minimal.tar.xz root@hetzner_ip:/root</pre>
+<p>Log into your Hetzner server using your ssh key. You should be placed into rescue mode.</p>
+<p>Create a Hetzner configuration and use your custom image</p>
+<pre>root@rescue# vi config.txt
+</pre>
+:ET

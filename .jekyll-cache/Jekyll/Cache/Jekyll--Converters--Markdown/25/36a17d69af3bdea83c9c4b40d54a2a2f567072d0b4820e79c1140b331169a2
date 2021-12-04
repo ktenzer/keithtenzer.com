@@ -1,0 +1,5297 @@
+I"�C<p>This page displays the site’s tags in alphabetical order and shows how many posts there are per tag, makes anchor links for each tag, then outputs posts by tag in reverse chronological order.</p>
+
+<h3 id="posts-by-tag">Posts by tag</h3>
+
+<ul class="tag-box">
+	
+		
+		
+		<li><a href="#aws">AWS <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#cloud">Cloud <span class="size">(25)</span></a></li>
+	
+		
+		
+		<li><a href="#devops">DevOps <span class="size">(6)</span></a></li>
+	
+		
+		
+		<li><a href="#java">Java <span class="size">(4)</span></a></li>
+	
+		
+		
+		<li><a href="#security">Security <span class="size">(5)</span></a></li>
+	
+		
+		
+		<li><a href="#clustered data ontap">Clustered Data ONTAP <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#netapp">NetApp <span class="size">(5)</span></a></li>
+	
+		
+		
+		<li><a href="#openstack">OpenStack <span class="size">(37)</span></a></li>
+	
+		
+		
+		<li><a href="#red hat rdo">Red Hat RDO <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#storage">Storage <span class="size">(11)</span></a></li>
+	
+		
+		
+		<li><a href="#linux">Linux <span class="size">(35)</span></a></li>
+	
+		
+		
+		<li><a href="#red hat">Red Hat <span class="size">(14)</span></a></li>
+	
+		
+		
+		<li><a href="#kvm">KVM <span class="size">(16)</span></a></li>
+	
+		
+		
+		<li><a href="#cloud computing">Cloud Computing <span class="size">(5)</span></a></li>
+	
+		
+		
+		<li><a href="#virtualization">Virtualization <span class="size">(5)</span></a></li>
+	
+		
+		
+		<li><a href="#ova">OVA <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#amazon">Amazon <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#openshift">OpenShift <span class="size">(34)</span></a></li>
+	
+		
+		
+		<li><a href="#hyper-v">Hyper-V <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#rhev">RHEV <span class="size">(3)</span></a></li>
+	
+		
+		
+		<li><a href="#vmware">VMware <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#dashboard">Dashboard <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#horizon">Horizon <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#python">Python <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ceph">Ceph <span class="size">(8)</span></a></li>
+	
+		
+		
+		<li><a href="#rhel">RHEL <span class="size">(7)</span></a></li>
+	
+		
+		
+		<li><a href="#rhel osp">RHEL OSP <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#docker">Docker <span class="size">(18)</span></a></li>
+	
+		
+		
+		<li><a href="#kubernetes">Kubernetes <span class="size">(34)</span></a></li>
+	
+		
+		
+		<li><a href="#lxc">LXC <span class="size">(4)</span></a></li>
+	
+		
+		
+		<li><a href="#rhel atomic">RHEL Atomic <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#api">API <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#fabric8">Fabric8 <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ha">HA <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#pacemaker">Pacemaker <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#cloud management">cloud management <span class="size">(3)</span></a></li>
+	
+		
+		
+		<li><a href="#governance">governance <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#manageiq">ManageIQ <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#containers">Containers <span class="size">(28)</span></a></li>
+	
+		
+		
+		<li><a href="#continous delivery">Continous Delivery <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#paas">PaaS <span class="size">(6)</span></a></li>
+	
+		
+		
+		<li><a href="#ephemeral storage">Ephemeral Storage <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#nfs">NFS <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#persistent storage">Persistent Storage <span class="size">(3)</span></a></li>
+	
+		
+		
+		<li><a href="#centos">CentOS <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#kilo">Kilo <span class="size">(4)</span></a></li>
+	
+		
+		
+		<li><a href="#packstack">Packstack <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#rdo">RDO <span class="size">(9)</span></a></li>
+	
+		
+		
+		<li><a href="#auto-scaling">Auto-Scaling <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#ceilometer">Ceilometer <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#cloud automation">cloud automation <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#heat">Heat <span class="size">(5)</span></a></li>
+	
+		
+		
+		<li><a href="#configuration management">configuration management <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#foreman">Foreman <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#katello">Katello <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#puppet">Puppet <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#satellite 6">Satellite 6 <span class="size">(4)</span></a></li>
+	
+		
+		
+		<li><a href="#system management">system management <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#ha-proxy">HA-PROXY <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#lbaas">LBAAS <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#load balancer">Load Balancer <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#director">Director <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ironic">Ironic <span class="size">(3)</span></a></li>
+	
+		
+		
+		<li><a href="#rhel osp 7">RHEL OSP 7 <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#openstack director">OpenStack Director <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#tripleo">TripleO <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#blog">blog <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#keith tenzer">keith tenzer <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#opensource">opensource <span class="size">(8)</span></a></li>
+	
+		
+		
+		<li><a href="#technology">technology <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#liberty">Liberty <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#rhev-h">RHEV-H <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#rhev-m">RHEV-M <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#keystone">Keystone <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ldap">LDAP <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#l3 ha">L3 HA <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#neutron">neutron <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#ovs">OVS <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ansible tower">Ansible Tower <span class="size">(5)</span></a></li>
+	
+		
+		
+		<li><a href="#cloudforms">CloudForms <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#mitaka">mitaka <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#software-defined-storage">Software-defined-storage <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ceph">ceph <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#software-defined-storage">software-defined-storage <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#cinder">Cinder <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#microsoft">Microsoft <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#jenkins">Jenkins <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ansible">Ansible <span class="size">(5)</span></a></li>
+	
+		
+		
+		<li><a href="#tower">Tower <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#automation">Automation <span class="size">(7)</span></a></li>
+	
+		
+		
+		<li><a href="#ceph-ansible">ceph-ansible <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#object storage">object storage <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#radosgw">radosgw <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#software-defined storage">software-defined storage <span class="size">(3)</span></a></li>
+	
+		
+		
+		<li><a href="#azure">Azure <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#crs">CRS <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#gluster">Gluster <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#heketi">heketi <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#newton">Newton <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#cephfs">CephFS <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#manila">Manila <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#container native storage">Container Native Storage <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#cloud storage">cloud storage <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#swift">Swift <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#nas">NAS <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ontap">ONTAP <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#iscsi">ISCSI <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#solidfire">SolidFire <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#rbd">RBD <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#rhosp">RHOSP <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#playbook">Playbook <span class="size">(3)</span></a></li>
+	
+		
+		
+		<li><a href="#chargeback">Chargeback <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#metering">Metering <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#showback">Showback <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#nt">NT <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#rhv-h">RHV-H <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#rhv-m">RHV-M <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#virtual machine">Virtual Machine <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#windows">Windows <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#ocata">Ocata <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#egress">egress <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#networking">networking <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#automaiton">automaiton <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#galaxy">galaxy <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#roles">roles <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#yaml">yaml <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#pike">Pike <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#iaas">IaaS <span class="size">(4)</span></a></li>
+	
+		
+		
+		<li><a href="#business continuance">Business Continuance <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#disaster recovery">Disaster Recovery <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#dr">DR <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#open service broker api">Open Service Broker API <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#service broker">Service Broker <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#service catalog">Service Catalog <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#services">Services <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#insights">Insights <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#hetzner">Hetzner <span class="size">(3)</span></a></li>
+	
+		
+		
+		<li><a href="#queens">Queens <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#future">future <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#niche cloud">niche cloud <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#public cloud">public cloud <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#rocky">Rocky <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#innovationlabs">innovationlabs <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#nichecloud">nichecloud <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#satellite">Satellite <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#machinelearning">MachineLearning <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ai">AI <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#deepspeech">Deepspeech <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#cnv">cnv <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#container native virtualization">Container Native Virtualization <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#kubevirt">Kubevirt <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#virtual machines">Virtual Machines <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#vitualization">Vitualization <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#code">code <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#concurrency">concurrency <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#golang">Golang <span class="size">(3)</span></a></li>
+	
+		
+		
+		<li><a href="#microservice">microservice <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#quarkus">Quarkus <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#scalability">scalability <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#continuous development">continuous development <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#continuous improvement">continuous improvement <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ci/cd">ci/cd <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#development">development <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#stein">Stein <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#ipi">IPI <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#ocs">OCS <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#rook">Rook <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#snapshot">Snapshot <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#volume">volume <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#andi neeb">andi neeb <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#andreas neeb">andreas neeb <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#friend">friend <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#life">life <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#mentor">mentor <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#red hatter">red hatter <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#edge">Edge <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#edge computing">Edge Computing <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#isolated nodes">Isolated Nodes <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#go">Go <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#operator">Operator <span class="size">(4)</span></a></li>
+	
+		
+		
+		<li><a href="#operator framework">Operator Framework <span class="size">(4)</span></a></li>
+	
+		
+		
+		<li><a href="#coronavirus">coronavirus <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#culture">culture <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#globalization">globalization <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#remote">remote <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#letsencypt">LetsEncypt <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#certificates">Certificates <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#cloud-native">cloud-native <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#olm">olm <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#operator lifecycle management">Operator Lifecycle Management <span class="size">(2)</span></a></li>
+	
+		
+		
+		<li><a href="#operator-sdk">operator-sdk <span class="size">(3)</span></a></li>
+	
+		
+		
+		<li><a href="#reporting">Reporting <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#subscription">Subscription <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#istio">istio <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#jaeger">jaeger <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#kiali">kiali <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#polyglot">polyglot <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#service mesh">service mesh <span class="size">(1)</span></a></li>
+	
+		
+		
+		<li><a href="#operators">Operators <span class="size">(1)</span></a></li>
+	
+</ul>
+
+<h4 id="aws">AWS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">18 Jan 21</span>:  <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/">OpenShift 4 AWS IPI Installation Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Dec 14</span>:  <a href="/cloud/aws-security-lessons-learned/">AWS Security Lessons Learned</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="cloud">Cloud</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Feb 20</span>:  <a href="/openshift/openstack-16-train-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 16 (Train) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">28 Oct 19</span>:  <a href="/openstack/openstack-15-stein-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 15 (Stein) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">18 Jun 19</span>:  <a href="/code/powerful-but-simple-ci-cd-with-azure-devops-and-go/">Powerful but Simple CI/CD with Azure DevOps and Go</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Oct 18</span>:  <a href="/cloud/building-a-niche-cloud-a-pragmatic-approach/">Building A Niche Cloud: A Pragmatic Approach</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Oct 18</span>:  <a href="/openstack/openstack-14-rocky-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Oct 18</span>:  <a href="/cloud/the-birth-of-the-niche-cloud/">The Birth of the Niche Cloud?</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Feb 18</span>:  <a href="/openshift/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/">OpenShift on OpenStack 1-2-3: Bringing IaaS and PaaS Together</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Feb 18</span>:  <a href="/openstack/openstack-12-pike-lab-installation-and-configuration-guide-with-hetzner-root-servers/">OpenStack 12 (Pike) Lab Installation and Configuration Guide with Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">15 Sep 17</span>:  <a href="/openstack/openstack-11-ocata-lab-installation-and-configuration-guide/">OpenStack 11 (Ocata) Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 May 17</span>:  <a href="/cloudforms/cloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization/">CloudForms Installation and Configuration Guide for Red Hat Virtualization</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Mar 17</span>:  <a href="/cloudforms/deploying-cloudforms-in-the-azure-cloud/">Deploying CloudForms in the Azure Cloud</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Oct 16</span>:  <a href="/azure/openshift/enterprise-container-platform-in-the-cloud-openshift-on-azure-secured-by-azure-ad/">Enterprise Container Platform in the Cloud: OpenShift on Azure secured by Azure AD</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 16</span>:  <a href="/openstack/openstack-mitaka-lab-installation-and-configuration-guide/">OpenStack Mitaka Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Aug 16</span>:  <a href="/openshift/openshift-v3-basic-release-deployment-scenarios/">OpenShift v3: Basic Release Deployment Scenarios</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">30 May 16</span>:  <a href="/openstack/red-hat-openstack-platform-8-lab-configuration-using-openstack-director/">Red Hat OpenStack Platform 8 Lab Configuration using OpenStack Director</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Jan 16</span>:  <a href="/openstack/openstack-liberty-lab-installation-and-configuration-guide/">OpenStack Liberty Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Dec 15</span>:  <a href="/general/2015-in-review/">2015 in review</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Jul 15</span>:  <a href="/cloudforms/governing-the-cloud-with-cloudforms/">Governing the Cloud with CloudForms</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Jan 15</span>:  <a href="/cloudforms/red-hat-cloudforms-overview-and-setup/">Red Hat CloudForms Overview and Setup</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Jan 15</span>:  <a href="/general/to-cloud-or-not-to-cloud-that-is-the-question/">To cloud or not to cloud...that is the question</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">10 Dec 14</span>:  <a href="/openstack/building-storage-services-in-openstack-on-netapp-part-iii-of-iii/">Building Storage Services in OpenStack on NetApp - Part III of III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 Dec 14</span>:  <a href="/openstack/building-storage-services-in-openstack-on-netapp-part-ii-of-iii/">Building Storage Services in OpenStack on NetApp - Part II of III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Dec 14</span>:  <a href="/openstack/creating-storage-services-in-openstack-on-netapp-part-i-of-iii/">Building Storage Services in OpenStack on NetApp - Part I of III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Dec 14</span>:  <a href="/cloud/aws-security-lessons-learned/">AWS Security Lessons Learned</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="devops">DevOps</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">24 Jun 19</span>:  <a href="/code/ci-cd-with-ansible-tower-and-github/">CI/CD with Ansible Tower and GitHub</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">18 Jun 19</span>:  <a href="/code/powerful-but-simple-ci-cd-with-azure-devops-and-go/">Powerful but Simple CI/CD with Azure DevOps and Go</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Aug 17</span>:  <a href="/openshift/openshift-3-6-fast-track-everything-you-need-nothing-you-dont/">OpenShift 3.6 Fast Track: Everything You Need, Nothing You Don't</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Aug 16</span>:  <a href="/openshift/openshift-v3-basic-release-deployment-scenarios/">OpenShift v3: Basic Release Deployment Scenarios</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Aug 15</span>:  <a href="/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Dec 14</span>:  <a href="/cloud/aws-security-lessons-learned/">AWS Security Lessons Learned</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="java">Java</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">04 May 15</span>:  <a href="/containers/kubernetes-container-orchestration-through-java-apis/">Kubernetes Container Orchestration through Java APIs</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Jan 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples/">Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">30 Dec 14</span>:  <a href="/kvm/kvm-development-guide/">KVM Development Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Dec 14</span>:  <a href="/cloud/aws-security-lessons-learned/">AWS Security Lessons Learned</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="security">Security</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">15 Jun 18</span>:  <a href="/satellite/satellite-on-openstack-1-2-3-systems-management-in-the-cloud/">Satellite on OpenStack 1-2-3: Systems Management in the Cloud</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Feb 18</span>:  <a href="/cloudforms/security-and-vulnerability-scanning-of-container-images/">Security and Vulnerability Scanning of Container Images</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Dec 15</span>:  <a href="/cloudforms/detecting-security-vulnerabilities-in-docker-container-images/">Detecting Security Vulnerabilities in Docker Container Images</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Jul 15</span>:  <a href="/cloudforms/governing-the-cloud-with-cloudforms/">Governing the Cloud with CloudForms</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Dec 14</span>:  <a href="/cloud/aws-security-lessons-learned/">AWS Security Lessons Learned</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="clustered data ontap">Clustered Data ONTAP</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">09 Dec 14</span>:  <a href="/openstack/building-storage-services-in-openstack-on-netapp-part-ii-of-iii/">Building Storage Services in OpenStack on NetApp - Part II of III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Dec 14</span>:  <a href="/openstack/creating-storage-services-in-openstack-on-netapp-part-i-of-iii/">Building Storage Services in OpenStack on NetApp - Part I of III</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="netapp">NetApp</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire– Part VI</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">10 Dec 14</span>:  <a href="/openstack/building-storage-services-in-openstack-on-netapp-part-iii-of-iii/">Building Storage Services in OpenStack on NetApp - Part III of III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 Dec 14</span>:  <a href="/openstack/building-storage-services-in-openstack-on-netapp-part-ii-of-iii/">Building Storage Services in OpenStack on NetApp - Part II of III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Dec 14</span>:  <a href="/openstack/creating-storage-services-in-openstack-on-netapp-part-i-of-iii/">Building Storage Services in OpenStack on NetApp - Part I of III</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="openstack">OpenStack</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Feb 20</span>:  <a href="/openshift/openstack-16-train-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 16 (Train) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">28 Oct 19</span>:  <a href="/openstack/openstack-15-stein-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 15 (Stein) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Dec 18</span>:  <a href="/openshift/its-a-paas-vanilla-kubernetes-vs-openshift-on-openstack-lab-setup-guide/">It's a PaaS: Vanilla Kubernetes vs OpenShift on OpenStack Lab Setup Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Oct 18</span>:  <a href="/cloud/building-a-niche-cloud-a-pragmatic-approach/">Building A Niche Cloud: A Pragmatic Approach</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Oct 18</span>:  <a href="/openstack/openstack-14-rocky-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 Jul 18</span>:  <a href="/openstack/openstack-13-queens-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 13 (Queens) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">15 Jun 18</span>:  <a href="/satellite/satellite-on-openstack-1-2-3-systems-management-in-the-cloud/">Satellite on OpenStack 1-2-3: Systems Management in the Cloud</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Mar 18</span>:  <a href="/openshift/disaster-recovery-with-containers-you-bet/">Disaster Recovery with Containers? You Bet!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Feb 18</span>:  <a href="/openshift/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/">OpenShift on OpenStack 1-2-3: Bringing IaaS and PaaS Together</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Feb 18</span>:  <a href="/openstack/openstack-12-pike-lab-installation-and-configuration-guide-with-hetzner-root-servers/">OpenStack 12 (Pike) Lab Installation and Configuration Guide with Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">15 Sep 17</span>:  <a href="/openstack/openstack-11-ocata-lab-installation-and-configuration-guide/">OpenStack 11 (Ocata) Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 May 17</span>:  <a href="/openstack/explaining-openstack-cinder-types-and-scheduler/">Explaining OpenStack Cinder Types and Scheduler</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Apr 17</span>:  <a href="/openstack/red-hat-openstack-platform-10-newton-installation-and-configuration-guide/">Red Hat OpenStack Platform 10 (Newton) Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">30 Mar 17</span>:  <a href="/openstack/openstack-swift-integration-with-ceph/">OpenStack Swift Integration with Ceph</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">28 Mar 17</span>:  <a href="/openstack/openstack-manila-integration-with-ceph/">OpenStack Manila Integration with Ceph</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Mar 17</span>:  <a href="/openstack/openstack-10-newton-lab-installation-and-configuration-guide/">OpenStack 10 (Newton) Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 16</span>:  <a href="/openstack/openstack-mitaka-lab-installation-and-configuration-guide/">OpenStack Mitaka Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">18 Jul 16</span>:  <a href="/openstack/openstack-networking-101-for-non-network-engineers/">OpenStack Networking 101 for non-Network engineers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 May 16</span>:  <a href="/ansible/openstack-heat-and-ansible-automation-born-in-the-cloud/">OpenStack Heat and Ansible - Automation Born in the Cloud</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Apr 16</span>:  <a href="/openstack/openstack-neutron-configuring-l3-ha/">OpenStack Neutron: Configuring L3 HA</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Jan 16</span>:  <a href="/openstack/openstack-liberty-lab-installation-and-configuration-guide/">OpenStack Liberty Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Oct 15</span>:  <a href="/openstack/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Oct 15</span>:  <a href="/openstack/auto-scaling-applications-with-openstack-heat/">Auto Scaling Applications with OpenStack Heat</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Sep 15</span>:  <a href="/openstack/openstack-tips-and-tricks/">OpenStack Tips and Tricks</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">02 Sep 15</span>:  <a href="/openstack/auto-scaling-instances-with-openstack/">Auto Scaling Instances with OpenStack</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 15</span>:  <a href="/openstack/openstack-kilo-lab-installation-and-configuration-guide/">OpenStack Kilo Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">15 Apr 15</span>:  <a href="/containers/containers-at-scale-with-kubernetes-on-openstack/">Containers at Scale with Kubernetes on OpenStack</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Mar 15</span>:  <a href="/openstack/enterprise-openstack-rhel-osp/">Enterprise OpenStack: RHEL OSP</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Feb 15</span>:  <a href="/openstack/building-custom-dashboards-in-openstack-horizon/">Building Custom Dashboards in OpenStack Horizon</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Jan 15</span>:  <a href="/openstack/openstack-multiple-node-configurations/">OpenStack Multiple Node Configurations</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Jan 15</span>:  <a href="/cloudforms/red-hat-cloudforms-overview-and-setup/">Red Hat CloudForms Overview and Setup</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Jan 15</span>:  <a href="/general/to-cloud-or-not-to-cloud-that-is-the-question/">To cloud or not to cloud...that is the question</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Dec 14</span>:  <a href="/kvm/kvm-installation-and-configuration/">KVM Installation and Configuration</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">10 Dec 14</span>:  <a href="/openstack/building-storage-services-in-openstack-on-netapp-part-iii-of-iii/">Building Storage Services in OpenStack on NetApp - Part III of III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 Dec 14</span>:  <a href="/openstack/building-storage-services-in-openstack-on-netapp-part-ii-of-iii/">Building Storage Services in OpenStack on NetApp - Part II of III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Dec 14</span>:  <a href="/openstack/creating-storage-services-in-openstack-on-netapp-part-i-of-iii/">Building Storage Services in OpenStack on NetApp - Part I of III</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="red hat rdo">Red Hat RDO</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Dec 14</span>:  <a href="/openstack/creating-storage-services-in-openstack-on-netapp-part-i-of-iii/">Building Storage Services in OpenStack on NetApp - Part I of III</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="storage">Storage</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Nov 19</span>:  <a href="/openshift/getting-started-with-volume-snapshots-in-openshift-4-and-kubernetes-1-12/">Getting Started with Volume Snapshots in OpenShift 4 and OpenShift Container Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 May 17</span>:  <a href="/openstack/explaining-openstack-cinder-types-and-scheduler/">Explaining OpenStack Cinder Types and Scheduler</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers Using Ceph RBD - Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire– Part VI</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">24 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Mar 17</span>:  <a href="/openshift/storage-for-containers-overview-part-i/">Storage for Containers Overview - Part I</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">12 Sep 16</span>:  <a href="/2016/09/12/openstack-integrating-ceph-as-storage-backend/">OpenStack: Integrating Ceph as Storage Backend</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Aug 15</span>:  <a href="/openshift/openshift-v3-unlocking-the-power-of-persistent-storage/">OpenShift v3: Unlocking the Power of Persistent Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">10 Dec 14</span>:  <a href="/openstack/building-storage-services-in-openstack-on-netapp-part-iii-of-iii/">Building Storage Services in OpenStack on NetApp - Part III of III</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="linux">Linux</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Feb 20</span>:  <a href="/openshift/openstack-16-train-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 16 (Train) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Jan 20</span>:  <a href="/openshift/openshift-operator-sdk-go-getting-started-guide-part-ii/">OpenShift Operator SDK: Go Getting Started Guide Part II</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">28 Oct 19</span>:  <a href="/openstack/openstack-15-stein-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 15 (Stein) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">30 Jan 19</span>:  <a href="/openshift/container-native-virtualization-kubevirt-the-future-for-virtual-machines-is-here/">Container Native Virtualization (Kubevirt): The Future for Virtual Machines is Here!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Dec 18</span>:  <a href="/openshift/its-a-paas-vanilla-kubernetes-vs-openshift-on-openstack-lab-setup-guide/">It's a PaaS: Vanilla Kubernetes vs OpenShift on OpenStack Lab Setup Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Oct 18</span>:  <a href="/openstack/openstack-14-rocky-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 Jul 18</span>:  <a href="/openstack/openstack-13-queens-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 13 (Queens) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Feb 18</span>:  <a href="/openstack/openstack-12-pike-lab-installation-and-configuration-guide-with-hetzner-root-servers/">OpenStack 12 (Pike) Lab Installation and Configuration Guide with Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Dec 17</span>:  <a href="/containers/containers-in-large-it-enterprises/">Containers in Large IT Enterprises</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Aug 17</span>:  <a href="/rhv/keep-your-servers-and-run-your-applications-forever-with-red-hat-virtualization-powered-by-kvm/">Keep Your Servers and Run Your Applications Forever with Red Hat Virtualization powered by KVM</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 May 17</span>:  <a href="/openstack/explaining-openstack-cinder-types-and-scheduler/">Explaining OpenStack Cinder Types and Scheduler</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">02 May 17</span>:  <a href="/rhev/rhev-4-1-lab-installation-and-configuration-guide/">RHV 4.1 Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Mar 17</span>:  <a href="/openstack/openstack-10-newton-lab-installation-and-configuration-guide/">OpenStack 10 (Newton) Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 16</span>:  <a href="/openstack/openstack-mitaka-lab-installation-and-configuration-guide/">OpenStack Mitaka Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">18 Jul 16</span>:  <a href="/openstack/openstack-networking-101-for-non-network-engineers/">OpenStack Networking 101 for non-Network engineers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">30 May 16</span>:  <a href="/openstack/red-hat-openstack-platform-8-lab-configuration-using-openstack-director/">Red Hat OpenStack Platform 8 Lab Configuration using OpenStack Director</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Apr 16</span>:  <a href="/openshift/openshift-enterprise-3-1-lab-setup/">OpenShift Enterprise 3.1 Lab Setup</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Jan 16</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-management-options/">Red Hat Enterprise Virtualization (RHEV) - Management Options</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Dec 15</span>:  <a href="/general/2015-in-review/">2015 in review</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Dec 15</span>:  <a href="/cloudforms/detecting-security-vulnerabilities-in-docker-container-images/">Detecting Security Vulnerabilities in Docker Container Images</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">02 Sep 15</span>:  <a href="/openstack/auto-scaling-instances-with-openstack/">Auto Scaling Instances with OpenStack</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 15</span>:  <a href="/openstack/openstack-kilo-lab-installation-and-configuration-guide/">OpenStack Kilo Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Aug 15</span>:  <a href="/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">22 Jun 15</span>:  <a href="/clustering/pacemaker-the-open-source-high-availability-cluster/">Pacemaker - The Open Source, High Availability Cluster</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">18 Jun 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-hypervisor-host-options/">Red Hat Enterprise Virtualization (RHEV) - Hypervisor Host Options</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 May 15</span>:  <a href="/containers/application-containers-a-practical-howto-guide/">Application Containers: A Practical HowTo Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 May 15</span>:  <a href="/containers/kubernetes-container-orchestration-through-java-apis/">Kubernetes Container Orchestration through Java APIs</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">15 Apr 15</span>:  <a href="/containers/containers-at-scale-with-kubernetes-on-openstack/">Containers at Scale with Kubernetes on OpenStack</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Jan 15</span>:  <a href="/openstack/openstack-multiple-node-configurations/">OpenStack Multiple Node Configurations</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Jan 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples/">Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Jan 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-home-lab-configuration/">Red Hat Enterprise Virtualization (RHEV) Home Lab Configuration</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">30 Dec 14</span>:  <a href="/kvm/kvm-development-guide/">KVM Development Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Dec 14</span>:  <a href="/kvm/kvm-installation-and-configuration/">KVM Installation and Configuration</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">12 Dec 14</span>:  <a href="/rhel/rename-network-interfaces-in-rhel-7/">Rename network interfaces in RHEL 7</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="red hat">Red Hat</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 May 20</span>:  <a href="/general/red-hat-subscription-reporting-guide/">Red Hat Subscription Reporting Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">10 Jan 20</span>:  <a href="/general/my-mentor-and-friend-andi-neeb/">My Mentor and Friend Andi Neeb</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Oct 16</span>:  <a href="/azure/openshift/enterprise-container-platform-in-the-cloud-openshift-on-azure-secured-by-azure-ad/">Enterprise Container Platform in the Cloud: OpenShift on Azure secured by Azure AD</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Dec 15</span>:  <a href="/general/2015-in-review/">2015 in review</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 15</span>:  <a href="/openstack/openstack-kilo-lab-installation-and-configuration-guide/">OpenStack Kilo Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Mar 15</span>:  <a href="/openstack/enterprise-openstack-rhel-osp/">Enterprise OpenStack: RHEL OSP</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Jan 15</span>:  <a href="/openstack/openstack-multiple-node-configurations/">OpenStack Multiple Node Configurations</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Jan 15</span>:  <a href="/cloudforms/red-hat-cloudforms-overview-and-setup/">Red Hat CloudForms Overview and Setup</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Jan 15</span>:  <a href="/general/to-cloud-or-not-to-cloud-that-is-the-question/">To cloud or not to cloud...that is the question</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">12 Jan 15</span>:  <a href="/rhev/rhev-importing-ova-templates/">RHEV - Importing OVA Templates</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Jan 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples/">Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Jan 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-home-lab-configuration/">Red Hat Enterprise Virtualization (RHEV) Home Lab Configuration</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Dec 14</span>:  <a href="/kvm/kvm-installation-and-configuration/">KVM Installation and Configuration</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">12 Dec 14</span>:  <a href="/rhel/rename-network-interfaces-in-rhel-7/">Rename network interfaces in RHEL 7</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="kvm">KVM</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">17 Jul 18</span>:  <a href="/openstack/openstack-13-queens-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 13 (Queens) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Feb 18</span>:  <a href="/openstack/openstack-12-pike-lab-installation-and-configuration-guide-with-hetzner-root-servers/">OpenStack 12 (Pike) Lab Installation and Configuration Guide with Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Aug 17</span>:  <a href="/rhv/keep-your-servers-and-run-your-applications-forever-with-red-hat-virtualization-powered-by-kvm/">Keep Your Servers and Run Your Applications Forever with Red Hat Virtualization powered by KVM</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 May 17</span>:  <a href="/openstack/explaining-openstack-cinder-types-and-scheduler/">Explaining OpenStack Cinder Types and Scheduler</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 May 17</span>:  <a href="/cloudforms/cloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization/">CloudForms Installation and Configuration Guide for Red Hat Virtualization</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">02 May 17</span>:  <a href="/rhev/rhev-4-1-lab-installation-and-configuration-guide/">RHV 4.1 Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Mar 17</span>:  <a href="/openstack/openstack-10-newton-lab-installation-and-configuration-guide/">OpenStack 10 (Newton) Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Jan 16</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-management-options/">Red Hat Enterprise Virtualization (RHEV) - Management Options</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Oct 15</span>:  <a href="/openstack/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Sep 15</span>:  <a href="/openstack/openstack-tips-and-tricks/">OpenStack Tips and Tricks</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 15</span>:  <a href="/openstack/openstack-kilo-lab-installation-and-configuration-guide/">OpenStack Kilo Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">18 Jun 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-hypervisor-host-options/">Red Hat Enterprise Virtualization (RHEV) - Hypervisor Host Options</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Mar 15</span>:  <a href="/openstack/enterprise-openstack-rhel-osp/">Enterprise OpenStack: RHEL OSP</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Jan 15</span>:  <a href="/openstack/openstack-multiple-node-configurations/">OpenStack Multiple Node Configurations</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Jan 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples/">Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Jan 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-home-lab-configuration/">Red Hat Enterprise Virtualization (RHEV) Home Lab Configuration</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="cloud computing">Cloud Computing</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Feb 20</span>:  <a href="/openshift/openstack-16-train-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 16 (Train) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 Jul 18</span>:  <a href="/openstack/openstack-13-queens-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 13 (Queens) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">15 Jun 18</span>:  <a href="/satellite/satellite-on-openstack-1-2-3-systems-management-in-the-cloud/">Satellite on OpenStack 1-2-3: Systems Management in the Cloud</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Mar 15</span>:  <a href="/openstack/enterprise-openstack-rhel-osp/">Enterprise OpenStack: RHEL OSP</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Jan 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples/">Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="virtualization">Virtualization</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Feb 20</span>:  <a href="/openshift/openstack-16-train-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 16 (Train) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Aug 17</span>:  <a href="/rhv/keep-your-servers-and-run-your-applications-forever-with-red-hat-virtualization-powered-by-kvm/">Keep Your Servers and Run Your Applications Forever with Red Hat Virtualization powered by KVM</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">02 May 17</span>:  <a href="/rhev/rhev-4-1-lab-installation-and-configuration-guide/">RHV 4.1 Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">18 Jun 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-hypervisor-host-options/">Red Hat Enterprise Virtualization (RHEV) - Hypervisor Host Options</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Jan 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-management-rhev-m-overview-apis-and-code-examples/">Red Hat Enterprise Virtualization Management (RHEV-M) - Overview, APIs and Code Examples</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ova">OVA</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">12 Jan 15</span>:  <a href="/rhev/rhev-importing-ova-templates/">RHEV - Importing OVA Templates</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="amazon">Amazon</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">21 Jan 15</span>:  <a href="/cloudforms/red-hat-cloudforms-overview-and-setup/">Red Hat CloudForms Overview and Setup</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Jan 15</span>:  <a href="/general/to-cloud-or-not-to-cloud-that-is-the-question/">To cloud or not to cloud...that is the question</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="openshift">OpenShift</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">03 Dec 21</span>:  <a href="/openshift/building-ansible-operators-1-2-3/">Building Ansible Operators 1-2-3</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Apr 21</span>:  <a href="/openshift/openshift-service-mesh-getting-started-guide/">OpenShift Service Mesh Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">18 Jan 21</span>:  <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/">OpenShift 4 AWS IPI Installation Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">OpenShift Operator SDK: Ansible Getting Started Guide Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Jan 20</span>:  <a href="/openshift/openshift-operator-sdk-go-getting-started-guide-part-ii/">OpenShift Operator SDK: Go Getting Started Guide Part II</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Nov 19</span>:  <a href="/openshift/getting-started-with-volume-snapshots-in-openshift-4-and-kubernetes-1-12/">Getting Started with Volume Snapshots in OpenShift 4 and OpenShift Container Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">13 Jun 19</span>:  <a href="/cloud-native/the-coffee-is-getting-cold-its-time-to-go-getting-started-building-microservice/">The Coffee is Getting Cold, It's Time to GO - Getting Started Building Microservices</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">30 Jan 19</span>:  <a href="/openshift/container-native-virtualization-kubevirt-the-future-for-virtual-machines-is-here/">Container Native Virtualization (Kubevirt): The Future for Virtual Machines is Here!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Dec 18</span>:  <a href="/openshift/its-a-paas-vanilla-kubernetes-vs-openshift-on-openstack-lab-setup-guide/">It's a PaaS: Vanilla Kubernetes vs OpenShift on OpenStack Lab Setup Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 May 18</span>:  <a href="/openshift/openshift-getting-started-with-the-service-broker/">OpenShift: Getting Started with the Service Broker</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Mar 18</span>:  <a href="/openshift/disaster-recovery-with-containers-you-bet/">Disaster Recovery with Containers? You Bet!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Feb 18</span>:  <a href="/openshift/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/">OpenShift on OpenStack 1-2-3: Bringing IaaS and PaaS Together</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Feb 18</span>:  <a href="/cloudforms/security-and-vulnerability-scanning-of-container-images/">Security and Vulnerability Scanning of Container Images</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Dec 17</span>:  <a href="/containers/containers-in-large-it-enterprises/">Containers in Large IT Enterprises</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Oct 17</span>:  <a href="/openshift/openshift-accessing-external-services-using-egress-router/">OpenShift: Accessing External Services using Egress Router</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Aug 17</span>:  <a href="/openshift/openshift-3-6-fast-track-everything-you-need-nothing-you-dont/">OpenShift 3.6 Fast Track: Everything You Need, Nothing You Don't</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 Jul 17</span>:  <a href="/cloudforms/openshift-showback-reporting-using-cloudforms/">OpenShift Showback Reporting using CloudForms</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers Using Ceph RBD - Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire– Part VI</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">13 Mar 17</span>:  <a href="/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">OpenShift Enterprise 3.4: all-in-one Lab Environment</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Nov 16</span>:  <a href="/openshift/deploying-openshift-enterprise-from-ansible-tower/">Deploying OpenShift Enterprise from Ansible Tower</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Nov 16</span>:  <a href="/openshift/openshift-enterprise-3-3-all-in-one-lab-environment-with-jenkins-build-pipeline/">OpenShift Enterprise 3.3: all-in-one Lab Environment with Jenkins Build Pipeline</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Oct 16</span>:  <a href="/azure/openshift/enterprise-container-platform-in-the-cloud-openshift-on-azure-secured-by-azure-ad/">Enterprise Container Platform in the Cloud: OpenShift on Azure secured by Azure AD</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Aug 16</span>:  <a href="/openshift/openshift-v3-basic-release-deployment-scenarios/">OpenShift v3: Basic Release Deployment Scenarios</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Aug 16</span>:  <a href="/openstack/openshift-enterprise-3-2-all-in-one-lab-environment/">OpenShift Enterprise 3.2: all-in-one Lab Environment</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Dec 15</span>:  <a href="/cloudforms/detecting-security-vulnerabilities-in-docker-container-images/">Detecting Security Vulnerabilities in Docker Container Images</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Aug 15</span>:  <a href="/openshift/openshift-v3-unlocking-the-power-of-persistent-storage/">OpenShift v3: Unlocking the Power of Persistent Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Aug 15</span>:  <a href="/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Jan 15</span>:  <a href="/general/to-cloud-or-not-to-cloud-that-is-the-question/">To cloud or not to cloud...that is the question</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="hyper-v">Hyper-V</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">21 Jan 15</span>:  <a href="/cloudforms/red-hat-cloudforms-overview-and-setup/">Red Hat CloudForms Overview and Setup</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rhev">RHEV</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">01 Aug 17</span>:  <a href="/rhv/keep-your-servers-and-run-your-applications-forever-with-red-hat-virtualization-powered-by-kvm/">Keep Your Servers and Run Your Applications Forever with Red Hat Virtualization powered by KVM</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 May 17</span>:  <a href="/cloudforms/cloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization/">CloudForms Installation and Configuration Guide for Red Hat Virtualization</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Jan 15</span>:  <a href="/cloudforms/red-hat-cloudforms-overview-and-setup/">Red Hat CloudForms Overview and Setup</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="vmware">VMware</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">21 Jan 15</span>:  <a href="/cloudforms/red-hat-cloudforms-overview-and-setup/">Red Hat CloudForms Overview and Setup</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="dashboard">Dashboard</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">16 Feb 15</span>:  <a href="/openstack/building-custom-dashboards-in-openstack-horizon/">Building Custom Dashboards in OpenStack Horizon</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="horizon">Horizon</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">16 Feb 15</span>:  <a href="/openstack/building-custom-dashboards-in-openstack-horizon/">Building Custom Dashboards in OpenStack Horizon</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="python">Python</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">16 Feb 15</span>:  <a href="/openstack/building-custom-dashboards-in-openstack-horizon/">Building Custom Dashboards in OpenStack Horizon</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ceph">Ceph</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Nov 19</span>:  <a href="/openshift/getting-started-with-volume-snapshots-in-openshift-4-and-kubernetes-1-12/">Getting Started with Volume Snapshots in OpenShift 4 and OpenShift Container Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers Using Ceph RBD - Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">30 Mar 17</span>:  <a href="/openstack/openstack-swift-integration-with-ceph/">OpenStack Swift Integration with Ceph</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">28 Mar 17</span>:  <a href="/openstack/openstack-manila-integration-with-ceph/">OpenStack Manila Integration with Ceph</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Feb 17</span>:  <a href="/ceph/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">12 Sep 16</span>:  <a href="/2016/09/12/openstack-integrating-ceph-as-storage-backend/">OpenStack: Integrating Ceph as Storage Backend</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 Sep 16</span>:  <a href="/storage/ceph-the-future-of-storage/">Ceph: the future of Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Mar 15</span>:  <a href="/openstack/enterprise-openstack-rhel-osp/">Enterprise OpenStack: RHEL OSP</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rhel">RHEL</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 May 20</span>:  <a href="/general/red-hat-subscription-reporting-guide/">Red Hat Subscription Reporting Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">28 Oct 19</span>:  <a href="/openstack/openstack-15-stein-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 15 (Stein) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">02 May 17</span>:  <a href="/rhev/rhev-4-1-lab-installation-and-configuration-guide/">RHV 4.1 Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 15</span>:  <a href="/openstack/openstack-kilo-lab-installation-and-configuration-guide/">OpenStack Kilo Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">22 Jun 15</span>:  <a href="/clustering/pacemaker-the-open-source-high-availability-cluster/">Pacemaker - The Open Source, High Availability Cluster</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">18 Jun 15</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-hypervisor-host-options/">Red Hat Enterprise Virtualization (RHEV) - Hypervisor Host Options</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Mar 15</span>:  <a href="/openstack/enterprise-openstack-rhel-osp/">Enterprise OpenStack: RHEL OSP</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rhel osp">RHEL OSP</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">31 Mar 15</span>:  <a href="/openstack/enterprise-openstack-rhel-osp/">Enterprise OpenStack: RHEL OSP</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="docker">Docker</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">21 Mar 18</span>:  <a href="/openshift/disaster-recovery-with-containers-you-bet/">Disaster Recovery with Containers? You Bet!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Dec 17</span>:  <a href="/containers/containers-in-large-it-enterprises/">Containers in Large IT Enterprises</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Aug 17</span>:  <a href="/openshift/openshift-3-6-fast-track-everything-you-need-nothing-you-dont/">OpenShift 3.6 Fast Track: Everything You Need, Nothing You Don't</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire– Part VI</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">24 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">13 Mar 17</span>:  <a href="/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">OpenShift Enterprise 3.4: all-in-one Lab Environment</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Mar 17</span>:  <a href="/openshift/storage-for-containers-overview-part-i/">Storage for Containers Overview - Part I</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Nov 16</span>:  <a href="/openshift/openshift-enterprise-3-3-all-in-one-lab-environment-with-jenkins-build-pipeline/">OpenShift Enterprise 3.3: all-in-one Lab Environment with Jenkins Build Pipeline</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Aug 16</span>:  <a href="/openshift/openshift-v3-basic-release-deployment-scenarios/">OpenShift v3: Basic Release Deployment Scenarios</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Aug 16</span>:  <a href="/openstack/openshift-enterprise-3-2-all-in-one-lab-environment/">OpenShift Enterprise 3.2: all-in-one Lab Environment</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Dec 15</span>:  <a href="/cloudforms/detecting-security-vulnerabilities-in-docker-container-images/">Detecting Security Vulnerabilities in Docker Container Images</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Aug 15</span>:  <a href="/openshift/openshift-v3-unlocking-the-power-of-persistent-storage/">OpenShift v3: Unlocking the Power of Persistent Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Aug 15</span>:  <a href="/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Jun 15</span>:  <a href="/containers/application-containers-kubernetes-and-docker-from-scratch/">Application Containers: Kubernetes and Docker from Scratch</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 May 15</span>:  <a href="/containers/application-containers-a-practical-howto-guide/">Application Containers: A Practical HowTo Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">15 Apr 15</span>:  <a href="/containers/containers-at-scale-with-kubernetes-on-openstack/">Containers at Scale with Kubernetes on OpenStack</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="kubernetes">Kubernetes</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">18 Jan 21</span>:  <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/">OpenShift 4 AWS IPI Installation Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">OpenShift Operator SDK: Ansible Getting Started Guide Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Jan 20</span>:  <a href="/openshift/openshift-operator-sdk-go-getting-started-guide-part-ii/">OpenShift Operator SDK: Go Getting Started Guide Part II</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Nov 19</span>:  <a href="/openshift/getting-started-with-volume-snapshots-in-openshift-4-and-kubernetes-1-12/">Getting Started with Volume Snapshots in OpenShift 4 and OpenShift Container Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">13 Jun 19</span>:  <a href="/cloud-native/the-coffee-is-getting-cold-its-time-to-go-getting-started-building-microservice/">The Coffee is Getting Cold, It's Time to GO - Getting Started Building Microservices</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">30 Jan 19</span>:  <a href="/openshift/container-native-virtualization-kubevirt-the-future-for-virtual-machines-is-here/">Container Native Virtualization (Kubevirt): The Future for Virtual Machines is Here!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Dec 18</span>:  <a href="/openshift/its-a-paas-vanilla-kubernetes-vs-openshift-on-openstack-lab-setup-guide/">It's a PaaS: Vanilla Kubernetes vs OpenShift on OpenStack Lab Setup Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Dec 18</span>:  <a href="/openshift/getting-started-with-machine-learning/">Getting Started with Machine Learning</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 May 18</span>:  <a href="/openshift/openshift-getting-started-with-the-service-broker/">OpenShift: Getting Started with the Service Broker</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Mar 18</span>:  <a href="/openshift/disaster-recovery-with-containers-you-bet/">Disaster Recovery with Containers? You Bet!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Feb 18</span>:  <a href="/openshift/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/">OpenShift on OpenStack 1-2-3: Bringing IaaS and PaaS Together</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Dec 17</span>:  <a href="/containers/containers-in-large-it-enterprises/">Containers in Large IT Enterprises</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Oct 17</span>:  <a href="/openshift/openshift-accessing-external-services-using-egress-router/">OpenShift: Accessing External Services using Egress Router</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Aug 17</span>:  <a href="/openshift/openshift-3-6-fast-track-everything-you-need-nothing-you-dont/">OpenShift 3.6 Fast Track: Everything You Need, Nothing You Don't</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 Jul 17</span>:  <a href="/cloudforms/openshift-showback-reporting-using-cloudforms/">OpenShift Showback Reporting using CloudForms</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers Using Ceph RBD - Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">24 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">13 Mar 17</span>:  <a href="/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">OpenShift Enterprise 3.4: all-in-one Lab Environment</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Mar 17</span>:  <a href="/openshift/storage-for-containers-overview-part-i/">Storage for Containers Overview - Part I</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Nov 16</span>:  <a href="/openshift/deploying-openshift-enterprise-from-ansible-tower/">Deploying OpenShift Enterprise from Ansible Tower</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Nov 16</span>:  <a href="/openshift/openshift-enterprise-3-3-all-in-one-lab-environment-with-jenkins-build-pipeline/">OpenShift Enterprise 3.3: all-in-one Lab Environment with Jenkins Build Pipeline</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Aug 16</span>:  <a href="/openshift/openshift-v3-basic-release-deployment-scenarios/">OpenShift v3: Basic Release Deployment Scenarios</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Aug 16</span>:  <a href="/openstack/openshift-enterprise-3-2-all-in-one-lab-environment/">OpenShift Enterprise 3.2: all-in-one Lab Environment</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Apr 16</span>:  <a href="/openshift/openshift-enterprise-3-1-lab-setup/">OpenShift Enterprise 3.1 Lab Setup</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Aug 15</span>:  <a href="/openshift/openshift-v3-unlocking-the-power-of-persistent-storage/">OpenShift v3: Unlocking the Power of Persistent Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Aug 15</span>:  <a href="/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Jun 15</span>:  <a href="/containers/application-containers-kubernetes-and-docker-from-scratch/">Application Containers: Kubernetes and Docker from Scratch</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 May 15</span>:  <a href="/containers/application-containers-a-practical-howto-guide/">Application Containers: A Practical HowTo Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 May 15</span>:  <a href="/containers/kubernetes-container-orchestration-through-java-apis/">Kubernetes Container Orchestration through Java APIs</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">15 Apr 15</span>:  <a href="/containers/containers-at-scale-with-kubernetes-on-openstack/">Containers at Scale with Kubernetes on OpenStack</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="lxc">LXC</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">01 Jun 15</span>:  <a href="/containers/application-containers-kubernetes-and-docker-from-scratch/">Application Containers: Kubernetes and Docker from Scratch</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 May 15</span>:  <a href="/containers/application-containers-a-practical-howto-guide/">Application Containers: A Practical HowTo Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 May 15</span>:  <a href="/containers/kubernetes-container-orchestration-through-java-apis/">Kubernetes Container Orchestration through Java APIs</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">15 Apr 15</span>:  <a href="/containers/containers-at-scale-with-kubernetes-on-openstack/">Containers at Scale with Kubernetes on OpenStack</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rhel atomic">RHEL Atomic</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">15 Apr 15</span>:  <a href="/containers/containers-at-scale-with-kubernetes-on-openstack/">Containers at Scale with Kubernetes on OpenStack</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="api">API</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">04 May 15</span>:  <a href="/containers/kubernetes-container-orchestration-through-java-apis/">Kubernetes Container Orchestration through Java APIs</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="fabric8">Fabric8</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">04 May 15</span>:  <a href="/containers/kubernetes-container-orchestration-through-java-apis/">Kubernetes Container Orchestration through Java APIs</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ha">HA</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">22 Jun 15</span>:  <a href="/clustering/pacemaker-the-open-source-high-availability-cluster/">Pacemaker - The Open Source, High Availability Cluster</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="pacemaker">Pacemaker</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">22 Jun 15</span>:  <a href="/clustering/pacemaker-the-open-source-high-availability-cluster/">Pacemaker - The Open Source, High Availability Cluster</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="cloud management">cloud management</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">15 Jun 18</span>:  <a href="/satellite/satellite-on-openstack-1-2-3-systems-management-in-the-cloud/">Satellite on OpenStack 1-2-3: Systems Management in the Cloud</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 May 17</span>:  <a href="/cloudforms/cloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization/">CloudForms Installation and Configuration Guide for Red Hat Virtualization</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Jul 15</span>:  <a href="/cloudforms/governing-the-cloud-with-cloudforms/">Governing the Cloud with CloudForms</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="governance">governance</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">14 Jul 15</span>:  <a href="/cloudforms/governing-the-cloud-with-cloudforms/">Governing the Cloud with CloudForms</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="manageiq">ManageIQ</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">11 May 17</span>:  <a href="/cloudforms/cloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization/">CloudForms Installation and Configuration Guide for Red Hat Virtualization</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Jul 15</span>:  <a href="/cloudforms/governing-the-cloud-with-cloudforms/">Governing the Cloud with CloudForms</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="containers">Containers</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">03 Dec 21</span>:  <a href="/openshift/building-ansible-operators-1-2-3/">Building Ansible Operators 1-2-3</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Apr 21</span>:  <a href="/openshift/openshift-service-mesh-getting-started-guide/">OpenShift Service Mesh Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">OpenShift Operator SDK: Ansible Getting Started Guide Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Jan 20</span>:  <a href="/openshift/openshift-operator-sdk-go-getting-started-guide-part-ii/">OpenShift Operator SDK: Go Getting Started Guide Part II</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">13 Jun 19</span>:  <a href="/cloud-native/the-coffee-is-getting-cold-its-time-to-go-getting-started-building-microservice/">The Coffee is Getting Cold, It's Time to GO - Getting Started Building Microservices</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Dec 18</span>:  <a href="/openshift/its-a-paas-vanilla-kubernetes-vs-openshift-on-openstack-lab-setup-guide/">It's a PaaS: Vanilla Kubernetes vs OpenShift on OpenStack Lab Setup Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Dec 18</span>:  <a href="/openshift/getting-started-with-machine-learning/">Getting Started with Machine Learning</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 May 18</span>:  <a href="/openshift/openshift-getting-started-with-the-service-broker/">OpenShift: Getting Started with the Service Broker</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Mar 18</span>:  <a href="/openshift/disaster-recovery-with-containers-you-bet/">Disaster Recovery with Containers? You Bet!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Feb 18</span>:  <a href="/openshift/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/">OpenShift on OpenStack 1-2-3: Bringing IaaS and PaaS Together</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Feb 18</span>:  <a href="/cloudforms/security-and-vulnerability-scanning-of-container-images/">Security and Vulnerability Scanning of Container Images</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">08 Oct 17</span>:  <a href="/openshift/openshift-accessing-external-services-using-egress-router/">OpenShift: Accessing External Services using Egress Router</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Aug 17</span>:  <a href="/openshift/openshift-3-6-fast-track-everything-you-need-nothing-you-dont/">OpenShift 3.6 Fast Track: Everything You Need, Nothing You Don't</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 Jul 17</span>:  <a href="/cloudforms/openshift-showback-reporting-using-cloudforms/">OpenShift Showback Reporting using CloudForms</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers Using Ceph RBD - Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire– Part VI</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">13 Mar 17</span>:  <a href="/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">OpenShift Enterprise 3.4: all-in-one Lab Environment</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Nov 16</span>:  <a href="/openshift/openshift-enterprise-3-3-all-in-one-lab-environment-with-jenkins-build-pipeline/">OpenShift Enterprise 3.3: all-in-one Lab Environment with Jenkins Build Pipeline</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Oct 16</span>:  <a href="/azure/openshift/enterprise-container-platform-in-the-cloud-openshift-on-azure-secured-by-azure-ad/">Enterprise Container Platform in the Cloud: OpenShift on Azure secured by Azure AD</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Aug 16</span>:  <a href="/openstack/openshift-enterprise-3-2-all-in-one-lab-environment/">OpenShift Enterprise 3.2: all-in-one Lab Environment</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Apr 16</span>:  <a href="/openshift/openshift-enterprise-3-1-lab-setup/">OpenShift Enterprise 3.1 Lab Setup</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Dec 15</span>:  <a href="/cloudforms/detecting-security-vulnerabilities-in-docker-container-images/">Detecting Security Vulnerabilities in Docker Container Images</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Aug 15</span>:  <a href="/openshift/openshift-v3-unlocking-the-power-of-persistent-storage/">OpenShift v3: Unlocking the Power of Persistent Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Aug 15</span>:  <a href="/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="continous delivery">Continous Delivery</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">03 Aug 15</span>:  <a href="/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="paas">PaaS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Dec 18</span>:  <a href="/openshift/its-a-paas-vanilla-kubernetes-vs-openshift-on-openstack-lab-setup-guide/">It's a PaaS: Vanilla Kubernetes vs OpenShift on OpenStack Lab Setup Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Mar 18</span>:  <a href="/openshift/disaster-recovery-with-containers-you-bet/">Disaster Recovery with Containers? You Bet!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Feb 18</span>:  <a href="/openshift/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/">OpenShift on OpenStack 1-2-3: Bringing IaaS and PaaS Together</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Dec 17</span>:  <a href="/containers/containers-in-large-it-enterprises/">Containers in Large IT Enterprises</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Aug 15</span>:  <a href="/openshift/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">OpenShift Enterprise v3 Lab Configuration: Innovate Faster, Deliver Sooner</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ephemeral storage">Ephemeral Storage</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">20 Aug 15</span>:  <a href="/openshift/openshift-v3-unlocking-the-power-of-persistent-storage/">OpenShift v3: Unlocking the Power of Persistent Storage</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="nfs">NFS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">20 Aug 15</span>:  <a href="/openshift/openshift-v3-unlocking-the-power-of-persistent-storage/">OpenShift v3: Unlocking the Power of Persistent Storage</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="persistent storage">Persistent Storage</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">24 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Mar 17</span>:  <a href="/openshift/storage-for-containers-overview-part-i/">Storage for Containers Overview - Part I</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">20 Aug 15</span>:  <a href="/openshift/openshift-v3-unlocking-the-power-of-persistent-storage/">OpenShift v3: Unlocking the Power of Persistent Storage</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="centos">CentOS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">01 Sep 15</span>:  <a href="/openstack/openstack-kilo-lab-installation-and-configuration-guide/">OpenStack Kilo Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="kilo">Kilo</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">09 Nov 15</span>:  <a href="/openstack/advanced-deployment-with-tripleo-and-openstack-director/">Advanced Deployment with TripleO and OpenStack Director</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Oct 15</span>:  <a href="/openstack/auto-scaling-applications-with-openstack-heat/">Auto Scaling Applications with OpenStack Heat</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Sep 15</span>:  <a href="/openstack/openstack-tips-and-tricks/">OpenStack Tips and Tricks</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 15</span>:  <a href="/openstack/openstack-kilo-lab-installation-and-configuration-guide/">OpenStack Kilo Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="packstack">Packstack</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">01 Sep 15</span>:  <a href="/openstack/openstack-kilo-lab-installation-and-configuration-guide/">OpenStack Kilo Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rdo">RDO</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">28 Oct 19</span>:  <a href="/openstack/openstack-15-stein-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 15 (Stein) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Oct 18</span>:  <a href="/openstack/openstack-14-rocky-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 Jul 18</span>:  <a href="/openstack/openstack-13-queens-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 13 (Queens) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Feb 18</span>:  <a href="/openstack/openstack-12-pike-lab-installation-and-configuration-guide-with-hetzner-root-servers/">OpenStack 12 (Pike) Lab Installation and Configuration Guide with Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Mar 17</span>:  <a href="/openstack/openstack-10-newton-lab-installation-and-configuration-guide/">OpenStack 10 (Newton) Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 16</span>:  <a href="/openstack/openstack-mitaka-lab-installation-and-configuration-guide/">OpenStack Mitaka Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Jan 16</span>:  <a href="/openstack/openstack-liberty-lab-installation-and-configuration-guide/">OpenStack Liberty Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Sep 15</span>:  <a href="/openstack/openstack-tips-and-tricks/">OpenStack Tips and Tricks</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Sep 15</span>:  <a href="/openstack/openstack-kilo-lab-installation-and-configuration-guide/">OpenStack Kilo Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="auto-scaling">Auto-Scaling</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Oct 15</span>:  <a href="/openstack/auto-scaling-applications-with-openstack-heat/">Auto Scaling Applications with OpenStack Heat</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">02 Sep 15</span>:  <a href="/openstack/auto-scaling-instances-with-openstack/">Auto Scaling Instances with OpenStack</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ceilometer">Ceilometer</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Oct 15</span>:  <a href="/openstack/auto-scaling-applications-with-openstack-heat/">Auto Scaling Applications with OpenStack Heat</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">02 Sep 15</span>:  <a href="/openstack/auto-scaling-instances-with-openstack/">Auto Scaling Instances with OpenStack</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="cloud automation">cloud automation</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">02 Sep 15</span>:  <a href="/openstack/auto-scaling-instances-with-openstack/">Auto Scaling Instances with OpenStack</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="heat">Heat</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">09 May 16</span>:  <a href="/ansible/openstack-heat-and-ansible-automation-born-in-the-cloud/">OpenStack Heat and Ansible - Automation Born in the Cloud</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 Nov 15</span>:  <a href="/openstack/advanced-deployment-with-tripleo-and-openstack-director/">Advanced Deployment with TripleO and OpenStack Director</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Oct 15</span>:  <a href="/openstack/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">05 Oct 15</span>:  <a href="/openstack/auto-scaling-applications-with-openstack-heat/">Auto Scaling Applications with OpenStack Heat</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">02 Sep 15</span>:  <a href="/openstack/auto-scaling-instances-with-openstack/">Auto Scaling Instances with OpenStack</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="configuration management">configuration management</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">16 Sep 15</span>:  <a href="/satellite/cloud-systems-management-satellite-6-1-getting-started-guide/">Cloud Systems Management: Satellite 6.1 Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="foreman">Foreman</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">23 Aug 16</span>:  <a href="/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">Cloud Systems Management: Satellite 6.2 Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Sep 15</span>:  <a href="/satellite/cloud-systems-management-satellite-6-1-getting-started-guide/">Cloud Systems Management: Satellite 6.1 Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="katello">Katello</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">23 Aug 16</span>:  <a href="/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">Cloud Systems Management: Satellite 6.2 Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Sep 15</span>:  <a href="/satellite/cloud-systems-management-satellite-6-1-getting-started-guide/">Cloud Systems Management: Satellite 6.1 Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="puppet">Puppet</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">23 Aug 16</span>:  <a href="/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">Cloud Systems Management: Satellite 6.2 Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Sep 15</span>:  <a href="/satellite/cloud-systems-management-satellite-6-1-getting-started-guide/">Cloud Systems Management: Satellite 6.1 Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="satellite 6">Satellite 6</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">15 Jun 18</span>:  <a href="/satellite/satellite-on-openstack-1-2-3-systems-management-in-the-cloud/">Satellite on OpenStack 1-2-3: Systems Management in the Cloud</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">06 Jul 17</span>:  <a href="/ansible/ansible-tower-and-satellite-end-to-end-automation-for-the-enterprise/">Ansible Tower and Satellite: End to End Automation for the Enterprise</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Aug 16</span>:  <a href="/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">Cloud Systems Management: Satellite 6.2 Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Sep 15</span>:  <a href="/satellite/cloud-systems-management-satellite-6-1-getting-started-guide/">Cloud Systems Management: Satellite 6.1 Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="system management">system management</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">15 Jun 18</span>:  <a href="/satellite/satellite-on-openstack-1-2-3-systems-management-in-the-cloud/">Satellite on OpenStack 1-2-3: Systems Management in the Cloud</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Sep 15</span>:  <a href="/satellite/cloud-systems-management-satellite-6-1-getting-started-guide/">Cloud Systems Management: Satellite 6.1 Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ha-proxy">HA-PROXY</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Oct 15</span>:  <a href="/openstack/auto-scaling-applications-with-openstack-heat/">Auto Scaling Applications with OpenStack Heat</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="lbaas">LBAAS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Oct 15</span>:  <a href="/openstack/auto-scaling-applications-with-openstack-heat/">Auto Scaling Applications with OpenStack Heat</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="load balancer">Load Balancer</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Oct 15</span>:  <a href="/openstack/auto-scaling-applications-with-openstack-heat/">Auto Scaling Applications with OpenStack Heat</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="director">Director</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">14 Oct 15</span>:  <a href="/openstack/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ironic">Ironic</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">20 Apr 17</span>:  <a href="/openstack/red-hat-openstack-platform-10-newton-installation-and-configuration-guide/">Red Hat OpenStack Platform 10 (Newton) Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 Nov 15</span>:  <a href="/openstack/advanced-deployment-with-tripleo-and-openstack-director/">Advanced Deployment with TripleO and OpenStack Director</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">14 Oct 15</span>:  <a href="/openstack/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rhel osp 7">RHEL OSP 7</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">14 Oct 15</span>:  <a href="/openstack/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="openstack director">OpenStack Director</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">20 Apr 17</span>:  <a href="/openstack/red-hat-openstack-platform-10-newton-installation-and-configuration-guide/">Red Hat OpenStack Platform 10 (Newton) Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 Nov 15</span>:  <a href="/openstack/advanced-deployment-with-tripleo-and-openstack-director/">Advanced Deployment with TripleO and OpenStack Director</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="tripleo">TripleO</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">20 Apr 17</span>:  <a href="/openstack/red-hat-openstack-platform-10-newton-installation-and-configuration-guide/">Red Hat OpenStack Platform 10 (Newton) Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 Nov 15</span>:  <a href="/openstack/advanced-deployment-with-tripleo-and-openstack-director/">Advanced Deployment with TripleO and OpenStack Director</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="blog">blog</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">31 Dec 15</span>:  <a href="/general/2015-in-review/">2015 in review</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="keith tenzer">keith tenzer</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">31 Dec 15</span>:  <a href="/general/2015-in-review/">2015 in review</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="opensource">opensource</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Mar 20</span>:  <a href="/general/the-great-human-experiment-global-disconnection-from-coronavirus/">The Great Human Experiment: Global Disconnection from Coronavirus</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">28 Oct 19</span>:  <a href="/openstack/openstack-15-stein-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 15 (Stein) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">24 Jun 19</span>:  <a href="/code/ci-cd-with-ansible-tower-and-github/">CI/CD with Ansible Tower and GitHub</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">30 Jan 19</span>:  <a href="/openshift/container-native-virtualization-kubevirt-the-future-for-virtual-machines-is-here/">Container Native Virtualization (Kubevirt): The Future for Virtual Machines is Here!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Oct 18</span>:  <a href="/cloud/building-a-niche-cloud-a-pragmatic-approach/">Building A Niche Cloud: A Pragmatic Approach</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Oct 18</span>:  <a href="/openstack/openstack-14-rocky-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Dec 15</span>:  <a href="/general/2015-in-review/">2015 in review</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="technology">technology</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Oct 18</span>:  <a href="/cloud/the-birth-of-the-niche-cloud/">The Birth of the Niche Cloud?</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">31 Dec 15</span>:  <a href="/general/2015-in-review/">2015 in review</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="liberty">Liberty</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">04 Jan 16</span>:  <a href="/openstack/openstack-liberty-lab-installation-and-configuration-guide/">OpenStack Liberty Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rhev-h">RHEV-H</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">11 Jan 16</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-management-options/">Red Hat Enterprise Virtualization (RHEV) - Management Options</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rhev-m">RHEV-M</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">02 May 17</span>:  <a href="/rhev/rhev-4-1-lab-installation-and-configuration-guide/">RHV 4.1 Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">11 Jan 16</span>:  <a href="/rhev/red-hat-enterprise-virtualization-rhev-management-options/">Red Hat Enterprise Virtualization (RHEV) - Management Options</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="keystone">Keystone</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Mar 16</span>:  <a href="/openstack/openstack-keystone-integrating-ldap-with-ipa/">OpenStack Keystone: Integrating LDAP with IPA</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ldap">LDAP</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Mar 16</span>:  <a href="/openstack/openstack-keystone-integrating-ldap-with-ipa/">OpenStack Keystone: Integrating LDAP with IPA</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="l3 ha">L3 HA</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">25 Apr 16</span>:  <a href="/openstack/openstack-neutron-configuring-l3-ha/">OpenStack Neutron: Configuring L3 HA</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="neutron">neutron</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">18 Jul 16</span>:  <a href="/openstack/openstack-networking-101-for-non-network-engineers/">OpenStack Networking 101 for non-Network engineers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Apr 16</span>:  <a href="/openstack/openstack-neutron-configuring-l3-ha/">OpenStack Neutron: Configuring L3 HA</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ovs">OVS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">25 Apr 16</span>:  <a href="/openstack/openstack-neutron-configuring-l3-ha/">OpenStack Neutron: Configuring L3 HA</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ansible tower">Ansible Tower</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 Jan 20</span>:  <a href="/ansible/automation-on-the-edge-ansible-tower-with-isolated-nodes/">Automation on the Edge - Ansible Tower with Isolated Nodes</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">24 Jun 19</span>:  <a href="/code/ci-cd-with-ansible-tower-and-github/">CI/CD with Ansible Tower and GitHub</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">06 Jul 17</span>:  <a href="/ansible/ansible-tower-installation-and-configuration-guide/">Ansible Tower Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">06 Jul 17</span>:  <a href="/ansible/ansible-tower-and-satellite-end-to-end-automation-for-the-enterprise/">Ansible Tower and Satellite: End to End Automation for the Enterprise</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 May 16</span>:  <a href="/ansible/openstack-heat-and-ansible-automation-born-in-the-cloud/">OpenStack Heat and Ansible - Automation Born in the Cloud</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="cloudforms">CloudForms</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">25 Oct 18</span>:  <a href="/cloud/building-a-niche-cloud-a-pragmatic-approach/">Building A Niche Cloud: A Pragmatic Approach</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">04 Aug 16</span>:  <a href="/openstack/openshift-enterprise-3-2-all-in-one-lab-environment/">OpenShift Enterprise 3.2: all-in-one Lab Environment</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="mitaka">mitaka</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">01 Sep 16</span>:  <a href="/openstack/openstack-mitaka-lab-installation-and-configuration-guide/">OpenStack Mitaka Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="software-defined-storage">Software-defined-storage</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">09 Sep 16</span>:  <a href="/storage/ceph-the-future-of-storage/">Ceph: the future of Storage</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ceph">ceph</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">12 Sep 16</span>:  <a href="/storage/ceph-1-3-lab-installation-and-configuration-guide/">Ceph 1.3 Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="software-defined-storage">software-defined-storage</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">12 Sep 16</span>:  <a href="/storage/ceph-1-3-lab-installation-and-configuration-guide/">Ceph 1.3 Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="cinder">Cinder</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">31 May 17</span>:  <a href="/openstack/explaining-openstack-cinder-types-and-scheduler/">Explaining OpenStack Cinder Types and Scheduler</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">12 Sep 16</span>:  <a href="/2016/09/12/openstack-integrating-ceph-as-storage-backend/">OpenStack: Integrating Ceph as Storage Backend</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="microsoft">Microsoft</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">14 Oct 16</span>:  <a href="/azure/openshift/enterprise-container-platform-in-the-cloud-openshift-on-azure-secured-by-azure-ad/">Enterprise Container Platform in the Cloud: OpenShift on Azure secured by Azure AD</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="jenkins">Jenkins</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">21 Nov 16</span>:  <a href="/openshift/openshift-enterprise-3-3-all-in-one-lab-environment-with-jenkins-build-pipeline/">OpenShift Enterprise 3.3: all-in-one Lab Environment with Jenkins Build Pipeline</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ansible">Ansible</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">03 Dec 21</span>:  <a href="/openshift/building-ansible-operators-1-2-3/">Building Ansible Operators 1-2-3</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">OpenShift Operator SDK: Ansible Getting Started Guide Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">24 Jun 19</span>:  <a href="/code/ci-cd-with-ansible-tower-and-github/">CI/CD with Ansible Tower and GitHub</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Oct 18</span>:  <a href="/cloud/building-a-niche-cloud-a-pragmatic-approach/">Building A Niche Cloud: A Pragmatic Approach</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Nov 16</span>:  <a href="/openshift/deploying-openshift-enterprise-from-ansible-tower/">Deploying OpenShift Enterprise from Ansible Tower</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="tower">Tower</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">12 Dec 17</span>:  <a href="/ansible/ansible-tower-cluster-configuration-guide/">Ansible Tower Cluster Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Nov 16</span>:  <a href="/openshift/deploying-openshift-enterprise-from-ansible-tower/">Deploying OpenShift Enterprise from Ansible Tower</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="automation">Automation</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">19 May 20</span>:  <a href="/ansible/windows-automation-with-ansible-getting-started-guide/">Windows Automation with Ansible: Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">13 Jan 20</span>:  <a href="/ansible/automation-on-the-edge-ansible-tower-with-isolated-nodes/">Automation on the Edge - Ansible Tower with Isolated Nodes</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">12 Dec 17</span>:  <a href="/ansible/ansible-tower-cluster-configuration-guide/">Ansible Tower Cluster Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">06 Jul 17</span>:  <a href="/ansible/ansible-tower-installation-and-configuration-guide/">Ansible Tower Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">06 Jul 17</span>:  <a href="/ansible/ansible-tower-and-satellite-end-to-end-automation-for-the-enterprise/">Ansible Tower and Satellite: End to End Automation for the Enterprise</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Nov 16</span>:  <a href="/openshift/deploying-openshift-enterprise-from-ansible-tower/">Deploying OpenShift Enterprise from Ansible Tower</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ceph-ansible">ceph-ansible</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">03 Feb 17</span>:  <a href="/ceph/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="object storage">object storage</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">30 Mar 17</span>:  <a href="/openstack/openstack-swift-integration-with-ceph/">OpenStack Swift Integration with Ceph</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Feb 17</span>:  <a href="/ceph/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="radosgw">radosgw</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">03 Feb 17</span>:  <a href="/ceph/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="software-defined storage">software-defined storage</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">24 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Mar 17</span>:  <a href="/openshift/storage-for-containers-overview-part-i/">Storage for Containers Overview - Part I</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">03 Feb 17</span>:  <a href="/ceph/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">Red Hat Ceph Storage 2.0 Lab + Object Storage Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="azure">Azure</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">18 Jun 19</span>:  <a href="/code/powerful-but-simple-ci-cd-with-azure-devops-and-go/">Powerful but Simple CI/CD with Azure DevOps and Go</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Mar 17</span>:  <a href="/cloudforms/deploying-cloudforms-in-the-azure-cloud/">Deploying CloudForms in the Azure Cloud</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="crs">CRS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">24 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="gluster">Gluster</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">29 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">24 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="heketi">heketi</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">24 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="newton">Newton</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">20 Apr 17</span>:  <a href="/openstack/red-hat-openstack-platform-10-newton-installation-and-configuration-guide/">Red Hat OpenStack Platform 10 (Newton) Installation and Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Mar 17</span>:  <a href="/openstack/openstack-10-newton-lab-installation-and-configuration-guide/">OpenStack 10 (Newton) Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="cephfs">CephFS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">28 Mar 17</span>:  <a href="/openstack/openstack-manila-integration-with-ceph/">OpenStack Manila Integration with Ceph</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="manila">Manila</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">28 Mar 17</span>:  <a href="/openstack/openstack-manila-integration-with-ceph/">OpenStack Manila Integration with Ceph</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="container native storage">Container Native Storage</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">29 Mar 17</span>:  <a href="/openshift/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="cloud storage">cloud storage</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">30 Mar 17</span>:  <a href="/openstack/openstack-swift-integration-with-ceph/">OpenStack Swift Integration with Ceph</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="swift">Swift</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">30 Mar 17</span>:  <a href="/openstack/openstack-swift-integration-with-ceph/">OpenStack Swift Integration with Ceph</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="nas">NAS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ontap">ONTAP</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="iscsi">ISCSI</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire– Part VI</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="solidfire">SolidFire</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire– Part VI</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rbd">RBD</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Nov 19</span>:  <a href="/openshift/getting-started-with-volume-snapshots-in-openshift-4-and-kubernetes-1-12/">Getting Started with Volume Snapshots in OpenShift 4 and OpenShift Container Storage</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">07 Apr 17</span>:  <a href="/openshift/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers Using Ceph RBD - Part IV</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rhosp">RHOSP</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">20 Apr 17</span>:  <a href="/openstack/red-hat-openstack-platform-10-newton-installation-and-configuration-guide/">Red Hat OpenStack Platform 10 (Newton) Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="playbook">Playbook</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">12 Dec 17</span>:  <a href="/ansible/ansible-tower-cluster-configuration-guide/">Ansible Tower Cluster Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 Nov 17</span>:  <a href="/ansible/ansible-getting-started-guide/">Ansible Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">06 Jul 17</span>:  <a href="/ansible/ansible-tower-installation-and-configuration-guide/">Ansible Tower Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="chargeback">Chargeback</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">17 Jul 17</span>:  <a href="/cloudforms/openshift-showback-reporting-using-cloudforms/">OpenShift Showback Reporting using CloudForms</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="metering">Metering</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">17 Jul 17</span>:  <a href="/cloudforms/openshift-showback-reporting-using-cloudforms/">OpenShift Showback Reporting using CloudForms</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="showback">Showback</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">17 Jul 17</span>:  <a href="/cloudforms/openshift-showback-reporting-using-cloudforms/">OpenShift Showback Reporting using CloudForms</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="nt">NT</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">01 Aug 17</span>:  <a href="/rhv/keep-your-servers-and-run-your-applications-forever-with-red-hat-virtualization-powered-by-kvm/">Keep Your Servers and Run Your Applications Forever with Red Hat Virtualization powered by KVM</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rhv-h">RHV-H</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">01 Aug 17</span>:  <a href="/rhv/keep-your-servers-and-run-your-applications-forever-with-red-hat-virtualization-powered-by-kvm/">Keep Your Servers and Run Your Applications Forever with Red Hat Virtualization powered by KVM</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rhv-m">RHV-M</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">01 Aug 17</span>:  <a href="/rhv/keep-your-servers-and-run-your-applications-forever-with-red-hat-virtualization-powered-by-kvm/">Keep Your Servers and Run Your Applications Forever with Red Hat Virtualization powered by KVM</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="virtual machine">Virtual Machine</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">01 Aug 17</span>:  <a href="/rhv/keep-your-servers-and-run-your-applications-forever-with-red-hat-virtualization-powered-by-kvm/">Keep Your Servers and Run Your Applications Forever with Red Hat Virtualization powered by KVM</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="windows">Windows</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">19 May 20</span>:  <a href="/ansible/windows-automation-with-ansible-getting-started-guide/">Windows Automation with Ansible: Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">01 Aug 17</span>:  <a href="/rhv/keep-your-servers-and-run-your-applications-forever-with-red-hat-virtualization-powered-by-kvm/">Keep Your Servers and Run Your Applications Forever with Red Hat Virtualization powered by KVM</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ocata">Ocata</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">15 Sep 17</span>:  <a href="/openstack/openstack-11-ocata-lab-installation-and-configuration-guide/">OpenStack 11 (Ocata) Lab Installation and Configuration Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="egress">egress</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Oct 17</span>:  <a href="/openshift/openshift-accessing-external-services-using-egress-router/">OpenShift: Accessing External Services using Egress Router</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="networking">networking</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Oct 17</span>:  <a href="/openshift/openshift-accessing-external-services-using-egress-router/">OpenShift: Accessing External Services using Egress Router</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="automaiton">automaiton</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">09 Nov 17</span>:  <a href="/ansible/ansible-getting-started-guide/">Ansible Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="galaxy">galaxy</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">09 Nov 17</span>:  <a href="/ansible/ansible-getting-started-guide/">Ansible Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="roles">roles</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">09 Nov 17</span>:  <a href="/ansible/ansible-getting-started-guide/">Ansible Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="yaml">yaml</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">12 Dec 17</span>:  <a href="/ansible/ansible-tower-cluster-configuration-guide/">Ansible Tower Cluster Configuration Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">09 Nov 17</span>:  <a href="/ansible/ansible-getting-started-guide/">Ansible Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="pike">Pike</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Feb 18</span>:  <a href="/openstack/openstack-12-pike-lab-installation-and-configuration-guide-with-hetzner-root-servers/">OpenStack 12 (Pike) Lab Installation and Configuration Guide with Hetzner Root Servers</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="iaas">IaaS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">20 Dec 18</span>:  <a href="/openshift/its-a-paas-vanilla-kubernetes-vs-openshift-on-openstack-lab-setup-guide/">It's a PaaS: Vanilla Kubernetes vs OpenShift on OpenStack Lab Setup Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 Jul 18</span>:  <a href="/openstack/openstack-13-queens-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 13 (Queens) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">21 Mar 18</span>:  <a href="/openshift/disaster-recovery-with-containers-you-bet/">Disaster Recovery with Containers? You Bet!</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">26 Feb 18</span>:  <a href="/openshift/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/">OpenShift on OpenStack 1-2-3: Bringing IaaS and PaaS Together</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="business continuance">Business Continuance</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">21 Mar 18</span>:  <a href="/openshift/disaster-recovery-with-containers-you-bet/">Disaster Recovery with Containers? You Bet!</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="disaster recovery">Disaster Recovery</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">21 Mar 18</span>:  <a href="/openshift/disaster-recovery-with-containers-you-bet/">Disaster Recovery with Containers? You Bet!</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="dr">DR</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">21 Mar 18</span>:  <a href="/openshift/disaster-recovery-with-containers-you-bet/">Disaster Recovery with Containers? You Bet!</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="open service broker api">Open Service Broker API</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">17 May 18</span>:  <a href="/openshift/openshift-getting-started-with-the-service-broker/">OpenShift: Getting Started with the Service Broker</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="service broker">Service Broker</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">17 May 18</span>:  <a href="/openshift/openshift-getting-started-with-the-service-broker/">OpenShift: Getting Started with the Service Broker</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="service catalog">Service Catalog</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">17 May 18</span>:  <a href="/openshift/openshift-getting-started-with-the-service-broker/">OpenShift: Getting Started with the Service Broker</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="services">Services</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">17 May 18</span>:  <a href="/openshift/openshift-getting-started-with-the-service-broker/">OpenShift: Getting Started with the Service Broker</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="insights">Insights</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">25 Oct 18</span>:  <a href="/cloud/building-a-niche-cloud-a-pragmatic-approach/">Building A Niche Cloud: A Pragmatic Approach</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">15 Jun 18</span>:  <a href="/satellite/satellite-on-openstack-1-2-3-systems-management-in-the-cloud/">Satellite on OpenStack 1-2-3: Systems Management in the Cloud</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="hetzner">Hetzner</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">24 Oct 19</span>:  <a href="/cloud/how-to-create-a-rhel-8-image-for-hetzner-root-servers/">How to Create a RHEL 8 Image for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">16 Oct 18</span>:  <a href="/openstack/openstack-14-rocky-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">17 Jul 18</span>:  <a href="/openstack/openstack-13-queens-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 13 (Queens) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="queens">Queens</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">17 Jul 18</span>:  <a href="/openstack/openstack-13-queens-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 13 (Queens) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="future">future</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Oct 18</span>:  <a href="/cloud/the-birth-of-the-niche-cloud/">The Birth of the Niche Cloud?</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="niche cloud">niche cloud</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Oct 18</span>:  <a href="/cloud/the-birth-of-the-niche-cloud/">The Birth of the Niche Cloud?</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="public cloud">public cloud</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Oct 18</span>:  <a href="/cloud/the-birth-of-the-niche-cloud/">The Birth of the Niche Cloud?</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rocky">Rocky</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">16 Oct 18</span>:  <a href="/openstack/openstack-14-rocky-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 14 (Rocky) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="innovationlabs">innovationlabs</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">25 Oct 18</span>:  <a href="/cloud/building-a-niche-cloud-a-pragmatic-approach/">Building A Niche Cloud: A Pragmatic Approach</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="nichecloud">nichecloud</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">25 Oct 18</span>:  <a href="/cloud/building-a-niche-cloud-a-pragmatic-approach/">Building A Niche Cloud: A Pragmatic Approach</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="satellite">Satellite</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 May 20</span>:  <a href="/general/red-hat-subscription-reporting-guide/">Red Hat Subscription Reporting Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">25 Oct 18</span>:  <a href="/cloud/building-a-niche-cloud-a-pragmatic-approach/">Building A Niche Cloud: A Pragmatic Approach</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="machinelearning">MachineLearning</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">14 Dec 18</span>:  <a href="/openshift/getting-started-with-machine-learning/">Getting Started with Machine Learning</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ai">AI</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">14 Dec 18</span>:  <a href="/openshift/getting-started-with-machine-learning/">Getting Started with Machine Learning</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="deepspeech">Deepspeech</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">14 Dec 18</span>:  <a href="/openshift/getting-started-with-machine-learning/">Getting Started with Machine Learning</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="cnv">cnv</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">30 Jan 19</span>:  <a href="/openshift/container-native-virtualization-kubevirt-the-future-for-virtual-machines-is-here/">Container Native Virtualization (Kubevirt): The Future for Virtual Machines is Here!</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="container native virtualization">Container Native Virtualization</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">30 Jan 19</span>:  <a href="/openshift/container-native-virtualization-kubevirt-the-future-for-virtual-machines-is-here/">Container Native Virtualization (Kubevirt): The Future for Virtual Machines is Here!</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="kubevirt">Kubevirt</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">30 Jan 19</span>:  <a href="/openshift/container-native-virtualization-kubevirt-the-future-for-virtual-machines-is-here/">Container Native Virtualization (Kubevirt): The Future for Virtual Machines is Here!</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="virtual machines">Virtual Machines</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">30 Jan 19</span>:  <a href="/openshift/container-native-virtualization-kubevirt-the-future-for-virtual-machines-is-here/">Container Native Virtualization (Kubevirt): The Future for Virtual Machines is Here!</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="vitualization">Vitualization</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">30 Jan 19</span>:  <a href="/openshift/container-native-virtualization-kubevirt-the-future-for-virtual-machines-is-here/">Container Native Virtualization (Kubevirt): The Future for Virtual Machines is Here!</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="code">code</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 Jun 19</span>:  <a href="/cloud-native/the-coffee-is-getting-cold-its-time-to-go-getting-started-building-microservice/">The Coffee is Getting Cold, It's Time to GO - Getting Started Building Microservices</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="concurrency">concurrency</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 Jun 19</span>:  <a href="/cloud-native/the-coffee-is-getting-cold-its-time-to-go-getting-started-building-microservice/">The Coffee is Getting Cold, It's Time to GO - Getting Started Building Microservices</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="golang">Golang</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">24 Jun 19</span>:  <a href="/code/ci-cd-with-ansible-tower-and-github/">CI/CD with Ansible Tower and GitHub</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">18 Jun 19</span>:  <a href="/code/powerful-but-simple-ci-cd-with-azure-devops-and-go/">Powerful but Simple CI/CD with Azure DevOps and Go</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">13 Jun 19</span>:  <a href="/cloud-native/the-coffee-is-getting-cold-its-time-to-go-getting-started-building-microservice/">The Coffee is Getting Cold, It's Time to GO - Getting Started Building Microservices</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="microservice">microservice</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Apr 21</span>:  <a href="/openshift/openshift-service-mesh-getting-started-guide/">OpenShift Service Mesh Getting Started Guide</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">13 Jun 19</span>:  <a href="/cloud-native/the-coffee-is-getting-cold-its-time-to-go-getting-started-building-microservice/">The Coffee is Getting Cold, It's Time to GO - Getting Started Building Microservices</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="quarkus">Quarkus</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 Jun 19</span>:  <a href="/cloud-native/the-coffee-is-getting-cold-its-time-to-go-getting-started-building-microservice/">The Coffee is Getting Cold, It's Time to GO - Getting Started Building Microservices</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="scalability">scalability</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 Jun 19</span>:  <a href="/cloud-native/the-coffee-is-getting-cold-its-time-to-go-getting-started-building-microservice/">The Coffee is Getting Cold, It's Time to GO - Getting Started Building Microservices</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="continuous development">continuous development</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">18 Jun 19</span>:  <a href="/code/powerful-but-simple-ci-cd-with-azure-devops-and-go/">Powerful but Simple CI/CD with Azure DevOps and Go</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="continuous improvement">continuous improvement</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">18 Jun 19</span>:  <a href="/code/powerful-but-simple-ci-cd-with-azure-devops-and-go/">Powerful but Simple CI/CD with Azure DevOps and Go</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ci/cd">ci/cd</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">24 Jun 19</span>:  <a href="/code/ci-cd-with-ansible-tower-and-github/">CI/CD with Ansible Tower and GitHub</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="development">development</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">24 Jun 19</span>:  <a href="/code/ci-cd-with-ansible-tower-and-github/">CI/CD with Ansible Tower and GitHub</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="stein">Stein</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">28 Oct 19</span>:  <a href="/openstack/openstack-15-stein-lab-installation-and-configuration-guide-for-hetzner-root-servers/">OpenStack 15 (Stein) Lab Installation and Configuration Guide for Hetzner Root Servers</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ipi">IPI</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">29 Oct 19</span>:  <a href="/openshift/automated-infrastructure-in-the-on-premise-datacenter-openshift-4-2-on-openstack-15-stein/">Automated Infrastructure in the On-Premise Datacenter - OpenShift 4.2 on OpenStack 15 (Stein)</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="ocs">OCS</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Nov 19</span>:  <a href="/openshift/getting-started-with-volume-snapshots-in-openshift-4-and-kubernetes-1-12/">Getting Started with Volume Snapshots in OpenShift 4 and OpenShift Container Storage</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="rook">Rook</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Nov 19</span>:  <a href="/openshift/getting-started-with-volume-snapshots-in-openshift-4-and-kubernetes-1-12/">Getting Started with Volume Snapshots in OpenShift 4 and OpenShift Container Storage</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="snapshot">Snapshot</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Nov 19</span>:  <a href="/openshift/getting-started-with-volume-snapshots-in-openshift-4-and-kubernetes-1-12/">Getting Started with Volume Snapshots in OpenShift 4 and OpenShift Container Storage</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="volume">volume</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">08 Nov 19</span>:  <a href="/openshift/getting-started-with-volume-snapshots-in-openshift-4-and-kubernetes-1-12/">Getting Started with Volume Snapshots in OpenShift 4 and OpenShift Container Storage</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="andi neeb">andi neeb</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">10 Jan 20</span>:  <a href="/general/my-mentor-and-friend-andi-neeb/">My Mentor and Friend Andi Neeb</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="andreas neeb">andreas neeb</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">10 Jan 20</span>:  <a href="/general/my-mentor-and-friend-andi-neeb/">My Mentor and Friend Andi Neeb</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="friend">friend</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">10 Jan 20</span>:  <a href="/general/my-mentor-and-friend-andi-neeb/">My Mentor and Friend Andi Neeb</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="life">life</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">10 Jan 20</span>:  <a href="/general/my-mentor-and-friend-andi-neeb/">My Mentor and Friend Andi Neeb</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="mentor">mentor</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">10 Jan 20</span>:  <a href="/general/my-mentor-and-friend-andi-neeb/">My Mentor and Friend Andi Neeb</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="red hatter">red hatter</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">10 Jan 20</span>:  <a href="/general/my-mentor-and-friend-andi-neeb/">My Mentor and Friend Andi Neeb</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="edge">Edge</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 Jan 20</span>:  <a href="/ansible/automation-on-the-edge-ansible-tower-with-isolated-nodes/">Automation on the Edge - Ansible Tower with Isolated Nodes</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="edge computing">Edge Computing</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 Jan 20</span>:  <a href="/ansible/automation-on-the-edge-ansible-tower-with-isolated-nodes/">Automation on the Edge - Ansible Tower with Isolated Nodes</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="isolated nodes">Isolated Nodes</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 Jan 20</span>:  <a href="/ansible/automation-on-the-edge-ansible-tower-with-isolated-nodes/">Automation on the Edge - Ansible Tower with Isolated Nodes</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="go">Go</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Jan 20</span>:  <a href="/openshift/openshift-operator-sdk-go-getting-started-guide-part-ii/">OpenShift Operator SDK: Go Getting Started Guide Part II</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="operator">Operator</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">OpenShift Operator SDK: Ansible Getting Started Guide Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Jan 20</span>:  <a href="/openshift/openshift-operator-sdk-go-getting-started-guide-part-ii/">OpenShift Operator SDK: Go Getting Started Guide Part II</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="operator framework">Operator Framework</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">03 Dec 21</span>:  <a href="/openshift/building-ansible-operators-1-2-3/">Building Ansible Operators 1-2-3</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">OpenShift Operator SDK: Ansible Getting Started Guide Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">27 Jan 20</span>:  <a href="/openshift/openshift-operator-sdk-go-getting-started-guide-part-ii/">OpenShift Operator SDK: Go Getting Started Guide Part II</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="coronavirus">coronavirus</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Mar 20</span>:  <a href="/general/the-great-human-experiment-global-disconnection-from-coronavirus/">The Great Human Experiment: Global Disconnection from Coronavirus</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="culture">culture</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Mar 20</span>:  <a href="/general/the-great-human-experiment-global-disconnection-from-coronavirus/">The Great Human Experiment: Global Disconnection from Coronavirus</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="globalization">globalization</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Mar 20</span>:  <a href="/general/the-great-human-experiment-global-disconnection-from-coronavirus/">The Great Human Experiment: Global Disconnection from Coronavirus</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="remote">remote</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">05 Mar 20</span>:  <a href="/general/the-great-human-experiment-global-disconnection-from-coronavirus/">The Great Human Experiment: Global Disconnection from Coronavirus</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="letsencypt">LetsEncypt</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">03 Apr 20</span>:  <a href="/openshift/openshift-application-certificate-management-with-lets-encrypt/">OpenShift Application Certificate Management with Let's Encrypt</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="certificates">Certificates</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">03 Apr 20</span>:  <a href="/openshift/openshift-application-certificate-management-with-lets-encrypt/">OpenShift Application Certificate Management with Let's Encrypt</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="cloud-native">cloud-native</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="olm">olm</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="operator lifecycle management">Operator Lifecycle Management</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="operator-sdk">operator-sdk</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">OpenShift Operator SDK: Ansible Getting Started Guide Part III</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</a>
+    </li>
+  
+
+  
+    <li>
+       <span class="date">23 Apr 20</span>:  <a href="/openshift/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="reporting">Reporting</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 May 20</span>:  <a href="/general/red-hat-subscription-reporting-guide/">Red Hat Subscription Reporting Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="subscription">Subscription</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">13 May 20</span>:  <a href="/general/red-hat-subscription-reporting-guide/">Red Hat Subscription Reporting Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="istio">istio</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Apr 21</span>:  <a href="/openshift/openshift-service-mesh-getting-started-guide/">OpenShift Service Mesh Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="jaeger">jaeger</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Apr 21</span>:  <a href="/openshift/openshift-service-mesh-getting-started-guide/">OpenShift Service Mesh Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="kiali">kiali</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Apr 21</span>:  <a href="/openshift/openshift-service-mesh-getting-started-guide/">OpenShift Service Mesh Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="polyglot">polyglot</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Apr 21</span>:  <a href="/openshift/openshift-service-mesh-getting-started-guide/">OpenShift Service Mesh Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="service mesh">service mesh</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">27 Apr 21</span>:  <a href="/openshift/openshift-service-mesh-getting-started-guide/">OpenShift Service Mesh Getting Started Guide</a>
+    </li>
+  
+
+</ul>
+
+<h4 id="operators">Operators</h4>
+<ul>
+
+  
+    <li>
+       <span class="date">03 Dec 21</span>:  <a href="/openshift/building-ansible-operators-1-2-3/">Building Ansible Operators 1-2-3</a>
+    </li>
+  
+
+</ul>
+:ET

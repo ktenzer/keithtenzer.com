@@ -1,0 +1,157 @@
+I"�*<h3><img class="alignnone size-full wp-image-8150" src="/assets/2017/04/storage_article_008.jpg" alt="Shipping containers" width="1200" height="400" /></h3>
+<h3>Overview</h3>
+<p>In this article we will look at how to integrate Ceph RBD (Rados Block Device) with Kubernetes and OpenShift. Ceph is of course a scale-out software-defined storage system that provides block, file and object storage. It focuses primarily on cloud-storage use cases. Providing storage for Kubernetes and OpenShift is just one of many use cases that fit very well with Ceph.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2017/03/07/storage-for-containers-overview-part-i/">Storage for Containers Overview – Part I</a></li>
+<li><a href="https://keithtenzer.com/2017/03/24/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a></li>
+<li><a href="https://keithtenzer.com/2017/03/29/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a></li>
+<li><a href="https://keithtenzer.com/2017/04/07/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers using Ceph – Part IV</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire – Part VI</a></li>
+</ul>
+<p><!--more--></p>
+<p>Ceph integrates with Kubernetes and OpenShift using the kubernetes.io/rbd driver or provisioner. As you will see this enables dynamic provisioning, allowing storage to be provisioned automatically when developers or users request it. Essentially a developer or OpenShift user, requests a PVC (Persistent Volume Claim) against a storage-class where the the kubernetes.io/rbd provisionier is configured. A PVC will create a RBD image in a specific RBD pool on Ceph and map it to a PV (Persistent Volume) in OpenShift. Once a container starts, the PV pointing to an RBD image is mounted. RBD client then maps the RBD image to the appropriate OpenShift node and mounts it using desired filesystem (ext4). The wonderful thing is everything happens automatically and the Ceph storage administrators only need to manage OpenShift project quotas for storage. Since each storage-class maps to an RBD pool it is possible to create various storage SLAs (gold, silver, bronze, etc).</p>
+<h3>Prerequisites</h3>
+<p>Before going any further an OpenShift 3.4 or higher cluster is required as well as a Ceph 1.3 or higher cluster. Not to worry, you can set this all up using below guides in a few hours and learn more about OpenShift and Ceph. I ran everything required OpenShift (all-in-one) and Ceph (3 node cluster) on my laptop with 12GB RAM.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2017/03/13/openshift-enterprise-3-4-all-in-one-lab-environment/">OpenShift 3.4 all-in-one lab setup</a></li>
+<li><a href="https://keithtenzer.com/2017/02/03/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">Ceph 2.0 lab setup</a></li>
+</ul>
+<h3>Configuring Ceph</h3>
+<p>In Ceph we need to create an RBD pool for OpenShift and also create a Ceph authx keyring to access the Ceph cluster from OpenShift.</p>
+<p>[Ceph Monitor]</p>
+<p><strong>Create RBD Pool</strong></p>
+<pre>[ceph@ceph1]$ sudo ceph osd pool create ose 128</pre>
+<p>Note: if you don't have enough free PGs (placement groups) you can go with 32 or even 16 for lab setups.</p>
+<p><strong>Create Keyring</strong></p>
+<pre>[ceph@ceph1]$ sudo ceph auth get-or-create client.ose mon 'allow r' \
+osd 'allow class-read object_prefix rdb_children, allow rwx pool=ose' \
+-o /etc/ceph/ceph.client.ose.keyring</pre>
+<p><strong>Copy Keyring file to all OpenShift Nodes</strong></p>
+<pre>[ceph@ceph1]$ scp /etc/ceph/ceph.client.ose.keyring \
+root@192.168.122.60:/etc/ceph</pre>
+<p><strong>Convert Ceph key to base64 for client.admin user</strong></p>
+<pre>[ceph@ceph1]$ sudo ceph auth get client.admin
+ exported keyring for client.admin
+ [client.admin]
+ key = AQA8nJBYZAQDKxAAuSX4mzY1YODtPU8gzmIufQ==
+ caps mds = "allow *"
+ caps mon = "allow *"
+ caps osd = "allow *"</pre>
+<pre>[ceph@ceph1]$  echo AQA8nJBYZAQDKxAAuSX4mzY1YODtPU8gzmIufQ== |base64
+<strong>QVFBOG5KQllaQVFES3hBQXVTWDRtelkxWU9EdFBVOGd6bUl1ZlE9PQo=</strong></pre>
+<p>Note: save the new base64 key you will need it later.</p>
+<p><strong>Convert Ceph key to base64 for client.ose user</strong></p>
+<pre>[ceph@ceph1]$ sudo ceph auth get client.ose
+ exported keyring for client.ose
+ [client.ose]
+ key = AQDvU+ZYooHxHBAANGVNCfRpA24iYiTtMgt/tQ==
+ caps mon = "allow r"
+ caps osd = "allow class-read object_prefix rdb_children, allow rwx pool=ose"</pre>
+<pre>[ceph@ceph1]$ echo AQDvU+ZYooHxHBAANGVNCfRpA24iYiTtMgt/tQ== |base64
+ <strong>QVFEdlUrWllvb0h4SEJBQU5HVk5DZlJwQTI0aVlpVHRNZ3QvdFE9PQo=</strong></pre>
+<p>Note: save the new base64 key you will need it later.</p>
+<h3>Configure Ceph Storage Class in OpenShift</h3>
+<p>[OpenShift Master]</p>
+<p><strong>Install ceph-common on all OpenShift nodes</strong></p>
+<pre class="nowrap">[root@ose3-master ~]# yum install -y ceph-common</pre>
+<p><strong>Create /var/run/ceph directory</strong></p>
+<pre>[root@ose3-master ~]# mkdir /var/run/ceph</pre>
+<p><strong>Create New Project</strong></p>
+<pre>[root@ose3-master ~]# oc login -u admin</pre>
+<pre>[root@ose3-master ~]# oc new-project ceph</pre>
+<p><strong>Create Secret for Ceph client.admin user</strong></p>
+<p>The key in the secret should be the Ceph authx key converted to base64.</p>
+<pre>[root@ose3-master ~]# vi /root/ceph-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ceph-secret
+  namespace: default
+data:
+  key: <strong>QVFBOG5KQllaQVFES3hBQXVTWDRtelkxWU9EdFBVOGd6bUl1ZlE9PQo=</strong></pre>
+<pre>[root@ose3-master ~]# oc create -f /root/ceph-secret.yaml</pre>
+<p>Note: Ceph admin secret should be in default project</p>
+<pre>[root@ose3-master ~]# oc get secret ceph-secret -n default
+ NAME TYPE DATA AGE
+ ceph-secret Opaque 1 25s</pre>
+<p><strong>Create Secret for Ceph client.ose user</strong></p>
+<p>The key in the secret should be the Ceph authx key converted to base64.</p>
+<pre>[root@ose3-master ~]# vi /root/ceph-secret-user.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ceph-secret
+data:
+  key: <strong>QVFEdlUrWllvb0h4SEJBQU5HVk5DZlJwQTI0aVlpVHRNZ3QvdFE9PQo=</strong></pre>
+<pre>[root@ose3-master ~]# oc create -f /root/ceph-secret-user.yaml</pre>
+<p>Note: Ceph admin secret <strong>must</strong> be in the project requesting Ceph storage.</p>
+<p><strong>Create Storage Class for Ceph</strong></p>
+<pre>[root@ose3-master ~]# vi /root/ceph-rbd-storage-class.yaml
+apiVersion: storage.k8s.io/v1beta1
+kind: StorageClass
+metadata:
+  name: ceph
+  annotations:
+    storageclass.beta.kubernetes.io/is-default-class: "true"
+provisioner: kubernetes.io/rbd
+parameters:
+  monitors: 192.168.122.81:6789,192.168.122.82:6789,192.168.122.83:6789
+  adminId: admin
+  adminSecretName: ceph-secret
+  adminSecretNamespace: default
+  pool: ose
+  userId: ose
+  userSecretName: ceph-secret-user</pre>
+<pre>[root@ose3-master ~]# oc create -f /root/ceph-rbd-storage-class.yaml</pre>
+<h3>Dynamic Provisioning using Ceph RBD</h3>
+<p><strong>Create PVC (Persistent Volume Claim) </strong></p>
+<p>Using the storage-class for Ceph we can now create a PVC.</p>
+<pre>[root@ose3-master ~]# vi /root/ceph-pvc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: ceph-claim
+  annotations:
+    volume.beta.kubernetes.io/storage-class: ceph
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi</pre>
+<pre>[root@ose3-master ~]# oc create -f /root/ceph-pvc.yaml</pre>
+<p><strong>Examine PVC and PV</strong></p>
+<p>The PVC will create a RBD image in the ose RBD pool and map it to a PV.</p>
+<pre>[root@ose3-master ~]# oc get pvc
+ NAME STATUS VOLUME CAPACITY ACCESSMODES AGE
+ ceph-claim Bound pvc-792ec052-1ae6-11e7-9752-52540057bf27 2Gi RWO 3s</pre>
+<pre>[root@ose3-master ~]# oc get pv
+ NAME CAPACITY ACCESSMODES RECLAIMPOLICY STATUS CLAIM REASON AGE
+ pvc-792ec052-1ae6-11e7-9752-52540057bf27 2Gi RWO Delete Bound ceph/ceph-claim 50s</pre>
+<p><strong>List RBD Images</strong></p>
+<pre>[root@ose3-master ~]# rbd list -p ose --name client.ose \
+--keyring /etc/ceph/ceph.client.ose.keyring
+ kubernetes-dynamic-pvc-7930af93-1ae6-11e7-9752-52540057bf27</pre>
+<h3>Dynamic Provisioning using OpenShift UI</h3>
+<p>In OpenShift UI login in and go to the project ceph. Under "resources-&gt;storage" you can view the already created PVC.</p>
+<p><img class="alignnone size-full wp-image-9097" src="/assets/2017/04/ceph-pvc.png" alt="ceph-pvc" width="1679" height="354" /></p>
+<p><strong>Request New PVC</strong></p>
+<p>Clicking "create storage" you can choose storage class and create a PVC. This is repeating what we already did with PVC.</p>
+<p><img class="alignnone size-full wp-image-9099" src="/assets/2017/04/ceph-provision.png" alt="ceph-provision" width="965" height="728" /></p>
+<p>Under storage we now see both PVCs.</p>
+<p><img class="alignnone size-full wp-image-9100" src="/assets/2017/04/ceph-pvc2.png" alt="ceph-pvc2" width="1692" height="386" /></p>
+<p><strong>Create MariaDB Persistent Database</strong></p>
+<p>In order to use a PVC we need to mount it's PV in a running Pod. In this case we will click "add to project", search for MariaDB and select the MariaDB persistent template from the OpenShift services catalog.</p>
+<p><img class="alignnone size-full wp-image-9104" src="/assets/2017/04/ceph-prov-mariadb.png" alt="ceph-prov-mariadb" width="622" height="573" /></p>
+<p>On the next screen accept the defaults and create the MariaDB persistent service. Once the MariaDB Pod is deploying, under "resources-&gt;storage" you will see the newly created PVC for mariadb.</p>
+<p><img class="alignnone size-full wp-image-9102" src="/assets/2017/04/ceph-mariadb-provisioned.png" alt="ceph-mariadb-provisioned" width="1680" height="461" /></p>
+<p>Finally we see that the MariaDB persistent Pod is started and passed health as well as readiness checks. At this point any data written to this database will be saved in an RBD image residing on a Ceph storage cluster.</p>
+<p><img class="alignnone size-full wp-image-9106" src="/assets/2017/04/ceph-mariadb-complete.png" alt="ceph-mariadb-complete" width="853" height="432" /></p>
+<h3>Summary</h3>
+<p>In this article we discussed how Ceph RBD integrates with OpenShift and Kubernetes. We saw how to configure Ceph and OpenShift to use RBD through a storage-class. Finally we observed how developers or users can easily consume Ceph storage within OpenShift. Dynamic storage in OpenShift is a huge shift in how we consume storage. I view this as a new beginning in storage. Finally we are really providing storage-as-a-service!</p>
+<p>Happy Cephing in OpenShift!</p>
+<p>(c) 2017 Keith Tenzer</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+:ET

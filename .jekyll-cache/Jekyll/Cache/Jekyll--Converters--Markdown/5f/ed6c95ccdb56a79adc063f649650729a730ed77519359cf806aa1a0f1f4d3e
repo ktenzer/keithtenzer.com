@@ -1,0 +1,153 @@
+I"/;<h3>Overview</h3>
+<p>In this article we will discuss and implement persistent storage in OpenShift v3. If you are new to OpenShift v3 you should first read the <a href="http://keithtenzer.com/2015/08/03/openshift-enterprise-v3-lab-configuration-innovate-faster-deliver-sooner/">OpenShift v3 Lab Configuration</a> article to get going.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ose-arch-diagram.png"><img class="alignnone wp-image-1176" src="/assets/2015/08/ose-arch-diagram.png?w=300" alt="ose-arch-diagram" width="1200" height="732" /></a><br />
+<!--more--></p>
+<p>Docker images are immutable and it is not possible to simply store persistent data within containers. When applications write to the Docker union file system, that data is lost as soon as the container is stopped. Docker provides a solution for persisting data, that allows administrator to mount a mount point existing on the container host (OpenShift node) within the container itself. It is similar to concept of raw device maps in virtual machines except with file systems.OpenShift v3 interfaces with Kubernetes and Kubernetes interfaces with Docker. As such we will mostly be referring to Kubernetes in this article. Kubernetes has a concept of pods which is a grouping of Docker containers that are co-existed. All Docker containers within a pod share same resources, including storage.</p>
+<h3>Ephemeral Storage</h3>
+<p>OpenShift v3 supports using ephemeral storage for all database templates. As mentioned using ephemeral storage means application data is written to the Docker union file system. All data is lost, as soon as the Kubernetes pod and as such container is stopped. In addition, since using ephemeral storage uses the Docker union file system, writes will be slow. If performance is desired, it is recommend to use persistent storage. The use case for ephemeral storage is mainly around automated testing. You don't need performance or to save data in order to test application functionality.</p>
+<h3>Persistent Storage</h3>
+<p>OpenShift v3 supports using persistent storage through Kubernetes storage plugins. Red Hat has contributed plugins for NFS, ISCSI, Ceph RBD and GlusterFS to Kubernetes. OpenShift v3 supports NFS, ISCSI, Ceph RBD or GlusterFS for persistent storage. As mentioned, Kubernetes deploys Docker containers within a pod and as such, is responsible for storage configuration. Details about the implementation of persistent storage in Kubernetes can be found <a href="https://github.com/kubernetes/kubernetes/blob/master/docs/design/persistent-storage.md">here</a>. Kubernetes allows you to create a pool of persistent volumes. Each persistent volume is mapped to a external storage file system. When persistent storage is requested from a pod, Kubernetes will claim a persistent volume from the pool of available volumes. The Kubernetes scheduler decides where to deploy pod. External storage is mounted on that node and presented to all containers within pod. If persistent storage is no longer needed, it can be reclaimed and made available to other pods. OpenShift v3 makes this all seamless to the user and hides the underlying complexity, as we will see.</p>
+<p>Below is a snippet from the Docker configuration of a container using persistent storage. If you didn't have OpenShift v3 and Kubernetes, you would have to deal with this for every single Docker container.</p>
+<p>[code language="java"]<br />
+&quot;Volumes&quot;: {<br />
+   &quot;/dev/termination-log&quot;: &quot;/var/lib/openshift/openshift.local.volumes/pods/6e1d5a40-471b-11e5-9680-525400bca113/containers/mysql/960dd543dc5f790ff2be72858b79c9df20bfae00ec9bffa333cd6e34e7aa36f9&quot;,<br />
+   &quot;/var/lib/mysql/data&quot;: &quot;/var/lib/openshift/openshift.local.volumes/pods/6e1d5a40-471b-11e5-9680-525400bca113/volumes/kubernetes.io~nfs/pv0016&quot;,<br />
+   &quot;/var/run/secrets/kubernetes.io/serviceaccount&quot;: &quot;/var/lib/openshift/openshift.local.volumes/pods/6e1d5a40-471b-11e5-9680-525400bca113/volumes/kubernetes.io~secret/default-token-ck4x7&quot;<br />
+},<br />
+&quot;VolumesRW&quot;: {<br />
+   &quot;/dev/termination-log&quot;: true,<br />
+   &quot;/var/lib/mysql/data&quot;: true,<br />
+   &quot;/var/run/secrets/kubernetes.io/serviceaccount&quot;: false<br />
+},<br />
+&quot;VolumesRelabel&quot;: {<br />
+   &quot;/dev/termination-log&quot;: &quot;&quot;,<br />
+   &quot;/var/lib/mysql/data&quot;: &quot;&quot;,<br />
+   &quot;/var/run/secrets/kubernetes.io/serviceaccount&quot;: &quot;ro&quot;<br />
+}</p>
+<p>[/code]</p>
+<h3>Configure Persistent Storage</h3>
+<p>In order to configure persistent storage, the storage must be available to all OpenShift v3 nodes using NFS, ISCSI, Ceph RDB or GlusterFS. In this example, we will configure an NFS server on the OpenShift v3 master. For a lab environment this is fine but for production environments you will want to use external storage for obvious reasons.</p>
+<h4>Configure NFS Server on OpenShift v3 Master</h4>
+<p>The first step is to install NFS server and start the services.</p>
+<pre>#yum groupinstall -y file-server</pre>
+<pre>#systemctl enable rpcbind</pre>
+<pre>#systemctl enable nfs-server</pre>
+<pre>#systemctl start rpcbind</pre>
+<pre>#systemctl start nfs-server</pre>
+<p>Once the services are running, we need to allow access through iptables. OpenShift v3 uses iptables and not firewalld.</p>
+<pre>#iptables-save &gt; pre-nfs-firewall-rules-server</pre>
+<pre>#iptables -I INPUT -m state --state NEW -p tcp -m multiport --dport 111,892,2049,32803 -s 0.0.0.0/0 -j ACCEPT</pre>
+<pre>#iptables -I INPUT -m state --state NEW -p udp -m multiport --dport 111,892,2049,32769 -s 0.0.0.0/0 -j ACCEPT</pre>
+<pre>#service iptables save</pre>
+<p>Allow SELinux policy for sVirt to write to nfs shares. By default the SELinux sVirt policy prevents containers from writing to NFS shares.</p>
+<pre class="nowrap">#setsebool -P virt_use_nfs 1</pre>
+<h4>Configure NFS Client on OpenShift v3 Nodes</h4>
+<p>On all nodes, we will want to install the nfs-utils so that nodes can mount NFS shares.</p>
+<pre>#yum install -y nfs-utils</pre>
+<h4>Configure Persistent Volumes</h4>
+<p>In order to configure persistent volumes we need to create a JSON or YAML template file. In this example we will use JSON but Kubernetes supports both. We will also create a pool of 20 persistent volumes. From here all steps will be performed on the OpenShift v3 master.</p>
+<p>Create a JSON file that will be used as template for adding persistent volumes. Note: you need to replace the IP address with the IP of your OpenShift v3 master.</p>
+<pre>vi /root/PV.json</pre>
+<pre>{
+ "apiVersion": "v1",
+ "kind": "PersistentVolume",
+ "metadata": {
+ "name": "pv0001"
+},
+"spec": {
+   "capacity": {
+   "storage": "10Gi"
+   },
+   "accessModes": [ "ReadWriteOnce" ],
+   "nfs": {
+      "path": "/mnt/RBD/pv0001",
+      "server": "192.168.122.60"
+   },
+   "persistentVolumeReclaimPolicy": "Recycle"
+   }
+}</pre>
+<p>In order to automate things we will create a for loop, that will create the NFS shares, set permissions and create persistent volumes in OpenShift v3.</p>
+<pre>for i in `seq -w 0001 0020`; do SHARE=/mnt/RBD/pv$i; mkdir -p $SHARE; chmod 777 $SHARE; chown nfsnobody:nfsnobody $SHARE; echo "$SHARE 192.168.122.0/24(rw,all_squash)" &gt;&gt;/etc/exports; sed s/pv0001/pv$i/g /root/PV.json | oc create -f -; done</pre>
+<p>We can now list the persistent storage volumes in OpenShift v3. Notice we have no claims yet.</p>
+<pre>#oc get pv
+NAME   LABELS CAPACITY    ACCESSMODES STATUS    CLAIM         REASON
+pv0001 &lt;none&gt; 10737418240 RWO         Available 
+pv0002 &lt;none&gt; 10737418240 RWO         Available 
+pv0003 &lt;none&gt; 10737418240 RWO         Available 
+pv0004 &lt;none&gt; 10737418240 RWO         Available 
+pv0005 &lt;none&gt; 10737418240 RWO         Available 
+pv0006 &lt;none&gt; 10737418240 RWO         Available 
+pv0007 &lt;none&gt; 10737418240 RWO         Available 
+pv0008 &lt;none&gt; 10737418240 RWO         Available 
+pv0009 &lt;none&gt; 10737418240 RWO         Available 
+pv0010 &lt;none&gt; 10737418240 RWO         Available 
+pv0011 &lt;none&gt; 10737418240 RWO         Available 
+pv0012 &lt;none&gt; 10737418240 RWO         Available 
+pv0013 &lt;none&gt; 10737418240 RWO         Available 
+pv0014 &lt;none&gt; 10737418240 RWO         Available 
+pv0015 &lt;none&gt; 10737418240 RWO         Available 
+pv0016 &lt;none&gt; 10737418240 RWO         Available
+pv0017 &lt;none&gt; 10737418240 RWO         Available 
+pv0018 &lt;none&gt; 10737418240 RWO         Available 
+pv0019 &lt;none&gt; 10737418240 RWO         Available 
+pv0020 &lt;none&gt; 10737418240 RWO         Available</pre>
+<h3>Create OpenShift v3 Application Using Persistent Storage</h3>
+<p>Now that everything is configured, we can do a quick demo of how persistent storage in OpenShift v3 actually works. We will deploy a ruby hello world application from GitHub that uses a persistent MySQL database.</p>
+<p>First create a new project in OpenShift v3. This creates a namespace in Kubernetes.</p>
+<pre>#oc new-project demo</pre>
+<p>Next deploy our ruby hello world application from GitHub. This will deploy a pod that builds the code from GitHub and then using <a href="https://github.com/openshift/source-to-image">STI</a> (Source To Image), will deploy a running pod with our built application. The reason for this is that we have different dependencies required for building and running applications. You are hopefully starting to see the power of OpenShift v3. If not stay tuned!</p>
+<pre>#oc new-app https://github.com/openshift/ruby-hello-world</pre>
+<p>Since we will want to access our application our service also needs to be exposed. OpenShift v3 will configure an HA proxy using router in openVswitch and an Apache vHost. Traffic is routed to the appropriate host based on the service name. The Apache vHost exposes the application based on the service name. Using vHosts allows OpenShift services to use the same ports and thus doesn't require unique ports. Behind the scenes Kubernetes is handling the routing from the OpenShift v3 node to the Docker container.</p>
+<pre>#oc expose service ruby-hello-world</pre>
+<p>We can check OpenShift v3 UI or console to see the status of our build and deployment.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ruby_hello_world_build.png"><img class="alignnone wp-image-1166" src="/assets/2015/08/ruby_hello_world_build.png?w=300" alt="RUBY_HELLO_WORLD_BUILD" width="1187" height="376" /></a></p>
+<p>Once complete we should have a builder pod that has exited with 0 and a running pod.</p>
+<pre>#oc get pods
+NAME                     READY     REASON     RESTARTS AGE
+ruby-hello-world-1-build 0/1       ExitCode:0 0        3m
+ruby-hello-world-3-3gtig 1/1       Running    0        1m</pre>
+<p>If we open a web browser and point it at the service name we should see the application. In this case it won't show us much since we don't yet have a database.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ruby_openshift_wo_db.png"><img class="alignnone wp-image-1169" src="/assets/2015/08/ruby_openshift_wo_db.png?w=300" alt="RUBY_OPENSHIFT_WO_DB" width="1185" height="316" /></a></p>
+<p>Lets add a persistent MySQL database and connect it to our ruby hello world application.</p>
+<pre>#oc process -n openshift mysql-persistent -v DATABASE_SERVICE_NAME=database | oc create -f -</pre>
+<pre>#oc env dc database --list | oc env dc ruby-hello-world -e -</pre>
+<p>A MySQL database will be deployed using persistent storage. Once the database is deployed the pod should be running and the we should also see a persistent storage volume claim.</p>
+<pre>#oc get pods
+NAME                     READY     REASON     RESTARTS AGE
+database-1-2gv6j         1/1       Running    0        1m
+ruby-hello-world-1-build 0/1       ExitCode:0 0        3m
+ruby-hello-world-3-3gtig 1/1       Running    0        1m</pre>
+<pre>#oc get pv
+NAME   LABELS CAPACITY    ACCESSMODES STATUS    CLAIM           REASON
+pv0001 &lt;none&gt; 10737418240 RWO         Available 
+pv0002 &lt;none&gt; 10737418240 RWO         Available 
+pv0003 &lt;none&gt; 10737418240 RWO         Available 
+pv0004 &lt;none&gt; 10737418240 RWO         Available 
+pv0005 &lt;none&gt; 10737418240 RWO         Available 
+pv0006 &lt;none&gt; 10737418240 RWO         Available 
+pv0007 &lt;none&gt; 10737418240 RWO         Available 
+pv0008 &lt;none&gt; 10737418240 RWO         Available 
+pv0009 &lt;none&gt; 10737418240 RWO         Available 
+pv0010 &lt;none&gt; 10737418240 RWO         Available 
+pv0011 &lt;none&gt; 10737418240 RWO         Available 
+pv0012 &lt;none&gt; 10737418240 RWO         Available 
+pv0013 &lt;none&gt; 10737418240 RWO         Available 
+pv0014 &lt;none&gt; 10737418240 RWO         Available 
+pv0015 &lt;none&gt; 10737418240 RWO         Available 
+pv0016 &lt;none&gt; 10737418240 RWO         Bound      demo/database
+pv0017 &lt;none&gt; 10737418240 RWO         Available 
+pv0018 &lt;none&gt; 10737418240 RWO         Available 
+pv0019 &lt;none&gt; 10737418240 RWO         Available 
+pv0020 &lt;none&gt; 10737418240 RWO         Available</pre>
+<p>Once we have verified everything we should also be able to use our ruby hello world application. Lets do a put for a key/value pair.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ruby_with_db_put.png"><img class="alignnone wp-image-1170" src="/assets/2015/08/ruby_with_db_put.png?w=300" alt="RUBY_WITH_DB_PUT" width="1155" height="408" /></a></p>
+<p>In order to demonstrate persistent storage, let us now delete the MySQL database pod. Don't worry the replication controller will automatically deploy a new pod and of course our data will be saved. If we were using ephemeral storage the data would be lost at this step.</p>
+<pre>#oc delete pod database-1-2gv6j</pre>
+<p>Finally lets go back to our ruby hello world application and and do a get for our key "keith". We should see the value is "tenzer" thus confirming persistent storage is working.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/08/ruby_db_get.png"><img class="alignnone wp-image-1171" src="/assets/2015/08/ruby_db_get.png?w=300" alt="RUBY_DB_GET" width="1195" height="462" /></a></p>
+<h3>Summary</h3>
+<p>In this article we have seen the power of OpenShift v3 in delivering a complete platform for building, deploying and running container-based applications. We have discussed the use cases behind ephemeral and persistent storage within OpenShift v3 ecosystem. Finally we have implemented and shown a compelling use case for persistent storage. OpenShift v3 is a platform for building and running next-gen applications using immutable container infrastructure. The goal is to deliver innovation faster. Hopefully this article has given you a glimpse at what is available today and inspired you to try things yourself. If you have any feedback or use cases for OpenShift v3, lets hear it!</p>
+<p>A special thanks goes to Wolfram Richter, a mentor and colleague who helped tremendously in creating the content for this article.</p>
+<p>Happy OpenShifting!</p>
+<p>(c) 2015 Keith Tenzer</p>
+:ET

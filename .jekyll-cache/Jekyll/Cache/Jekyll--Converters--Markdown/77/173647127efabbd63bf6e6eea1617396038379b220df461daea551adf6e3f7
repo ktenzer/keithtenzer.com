@@ -1,0 +1,52 @@
+I"<h3><img class="alignnone  wp-image-5052" src="/assets/2016/09/1015767.png" alt="1015767" width="276" height="276" /></h3>
+<h3>Overview</h3>
+<p>In this article we will setup a Ceph 1.3 cluster for purpose of learning or a lab environment.</p>
+<p>&nbsp;</p>
+<h3>Ceph Lab Environment</h3>
+<p>For this environment you will need three VMs (ceph1, ceph2 and ceph3). Each should have 20GB root disk and 100GB data disk. Ceph has three main components: Admin console, Monitors and OSDs.</p>
+<p><strong>Admin console</strong> - UI and CLI used for managing Ceph cluster. In this environment we will install on ceph1.</p>
+<p><strong>Monitors</strong> - Monitor health of Ceph cluster. One or more monitors forms a paxos part-time parliment, providing extreme reliability and durability of cluster membership. Monitors maintain the various maps: monitor, osd, placement group (pg) and crush. Monitors will be installed on ceph1, ceph2 and ceph3.</p>
+<p><strong>OSDs</strong> - Object storage daemon handles storing data, recovery, backfilling, rebalancing and replication. OSDs sit on top of a disk / filesystem. Bluestore enables OSDs to bypass filesystem but is not an option in Ceph 1.3. An OSD will be installed on ceph1, ceph2 and ceph3.</p>
+<p><!--more--></p>
+<p>On All Cephs nodes.</p>
+<pre>#subscription-manager repos --disable=*</pre>
+<pre class="screen">#subscription-manager repos --enable=rhel-7-server-rpms</pre>
+<pre class="screen">#subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-rhceph-1.3-calamari-rpms --enable=rhel-7-server-rhceph-1.3-installer-rpms --enable=rhel-7-server-rhceph-1.3-tools-rpms</pre>
+<p>Configure firewalld.</p>
+<pre class="screen">sudo systemctl start firewalld
+sudo systemctl enable firewalld</pre>
+<pre class="screen">sudo firewall-cmd --zone=public --add-port=80/tcp --permanent
+sudo firewall-cmd --zone=public --add-port=2003/tcp --permanent
+sudo firewall-cmd --zone=public --add-port=4505-4506/tcp --permanent</pre>
+<pre class="screen">sudo firewall-cmd --zone=public --add-port=6789/tcp --permanent</pre>
+<pre class="screen">sudo firewall-cmd --zone=public --add-port=6800-7300/tcp --permanent</pre>
+<pre class="screen">sudo firewall-cmd --reload</pre>
+<p>Configure NTP.</p>
+<pre class="screen">yum -y install ntp</pre>
+<pre class="screen">systemctl enable ntpd.service</pre>
+<pre class="screen">systemctl start ntpd</pre>
+<p>Ensure NTP is scychronozing.</p>
+<pre class="screen">ntpq -p
+remote refid st t when poll reach delay offset jitter
+ ==============================================================================
+ +privatewolke.co 131.188.3.222 2 u 12 64 1 26.380 -2.334 2.374
+ +ridcully.episod 148.251.68.100 3 u 11 64 1 26.626 -2.425 0.534
+ *s1.kelker.info 213.172.96.14 2 u 12 64 1 26.433 -6.116 1.030
+ sircabirus.von- .STEP. 16 u - 64 0 0.000 0.000 0.000</pre>
+<p>Create ceph user for deployer.</p>
+<pre>#useradd ceph
+#passwd ceph</pre>
+<pre class="screen">#cat &lt;&lt; EOF &gt;/etc/sudoers.d/ceph
+ceph ALL = (root) NOPASSWD:ALL
+Defaults:ceph !requiretty
+EOF</pre>
+<pre class="screen">#chmod 0440 /etc/sudoers.d/ceph</pre>
+<pre>#su - ceph
+#ssh-key-gen
+#ssh-copy-id ceph@ceph1
+#ssh-copy-id ceph@ceph2
+#ssh-copy-id ceph@ceph3</pre>
+<p>Set SELinux to permissive. Ceph 2.0 now supports SELinux but for 1.3 it was not possible out-of-box.</p>
+<pre>#vi /etc/selinux/config
+</pre>
+:ET

@@ -1,0 +1,36 @@
+I"�<h3><img class="alignnone size-full wp-image-8150" src="/assets/2017/03/storage_article_008.jpg" alt="Shipping containers" width="1200" height="400" /></h3>
+<h3>Overview</h3>
+<p>In this article we will focus on a new area of storage for containers called Container Native Storage. This article is a collaboration between Daniel Messer (Technical Marketing Manager Storage @RedHat) and Keith Tenzer (Sr. Solutions Architect @RedHat).</p>
+<ul>
+<li><a href="https://keithtenzer.com/2017/03/07/storage-for-containers-overview-part-i/">Storage for Containers Overview – Part I</a></li>
+<li><a href="https://keithtenzer.com/2017/03/24/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a></li>
+<li><a href="https://keithtenzer.com/2017/03/29/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a></li>
+<li><a href="https://keithtenzer.com/2017/04/07/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers using Ceph – Part IV</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire – Part VI</a></li>
+</ul>
+<p>So What is Container Native Storage?</p>
+<p>Essentially container native storage or CNS is a hyper-converged approach to storage and compute in the context of containers. Each container host or node supplies both compute and storage allowing storage to be completely integrated or absorbed by the platform itself. A software-defined storage system running in containers on the platform, consumes disks provided by nodes and provides a cluster-wide storage abstraction layer. The software-defined storage system then provides capabilities such as high-availability, dynamic provisioning and general storage management. This enables DevOps from a storage perspective, allows storage to grow with the container platform and delivers a high level of efficiency.</p>
+<p><!--more--></p>
+<h3>Container Native Storage Overview</h3>
+<p>CNS is realized by containerizing GlusterFS in a Docker container. This is deployed on a running OpenShift or Kubernetes cluster using native container orchestration provided by the platform. To provide integration with the storage provisioning framework an additional management component is added to GlusterFS called heketi. It serves as an API and CLI front-end for storage lifecyle operations. In addition it supports multiple deployment scenarios. Heketi runs containerized along side the GlusterFS pods on OpenShift or Kubernetes cluster. The entire deployment of this infrastructure is automated using a utility called cns-deploy.</p>
+<h3>Container Native Storage Pre-requisites</h3>
+<p>There are several container orchestration technologies such as Docker Swarm, Marathon (Mesos), Diego (CloudFoundry) and Kubernetes (OpenShift). Container Native Storage applies to Kubernetes and OpenShift as Kubernetes supports both stateless and stateful applications. In order to use CNS you need an OpenShift cluster. To setup OpenShift you can follow this <a href="https://keithtenzer.com/2017/03/13/openshift-enterprise-3-4-all-in-one-lab-environment/">article</a>. As the article focuses on an all-in-one setup, meaning a single VM you will need to make a few minor changes.</p>
+<p><strong>Create minimum of three VMs</strong></p>
+<p>Each VM should have following spec:</p>
+<ul>
+<li>RHEL 7.2 or 7.3</li>
+<li>2 vCPUs</li>
+<li>4GB RAM</li>
+<li>30 GB Root Disk</li>
+<li>25 GB Docker Disk</li>
+<li>3 x 20GB CNS Disks</li>
+</ul>
+<p><strong>Update OpenShift Ansible Inventory</strong></p>
+<p>Since the article only deploys a single VM we need to change the inventory to reflect 3 nodes.</p>
+<pre>...
+# host group for masters
+[masters]
+ose3-master.lab.com
+</pre>
+:ET

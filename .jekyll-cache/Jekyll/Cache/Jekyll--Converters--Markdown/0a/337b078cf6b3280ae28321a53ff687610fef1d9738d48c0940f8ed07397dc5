@@ -1,0 +1,31 @@
+I"x	<h2><img class="alignnone  wp-image-14443" src="/assets/2020/01/38202270.png" alt="38202270" width="173" height="173" /></h2>
+<h2>Overview</h2>
+<p>In this article we will provide a hands-on guide to building your very first operator in Go. Using the Operator SDK we will learn how to create boilerplate code, build and deploy an operator.</p>
+<p>This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2020/04/23/openshift-operator-getting-started-part-i/">OpenShift Operator Getting Started Part I</a></li>
+<li><a href="https://keithtenzer.com/2020/01/27/openshift-operator-sdk-go-getting-started-guide-part-ii/">OpenShift Operator SDK: Go Getting Started Guide Part II</a></li>
+<li><a href="https://keithtenzer.com/2020/04/23/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">OpenShift Operator SDK: Ansible Getting Started Guide Part III</a></li>
+<li><a href="https://keithtenzer.com/2020/04/23/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</a></li>
+</ul>
+<p><!--more--></p>
+<h2>Setup Development Environment</h2>
+<p>There are some prerequisites needed to build the operator-sdk and eventually your own operators. In this case I am using Fedora Linux.</p>
+<p><strong>Install Docker 17.03+</strong></p>
+<p>Add the docker ce repositories. Note: you can also use podman and buildah instead of Docker for those that want a complete and clean divorce.</p>
+<p><code><span class="nb">$ sudo </span>dnf <span class="nt">-y</span> install dnf-plugins-core</code></p>
+<pre class="highlight">$ <code><span class="nb">sudo </span>dnf config-manager <span class="se">\</span>
+    <span class="nt">--add-repo</span> <span class="se">\</span>
+    https://download.docker.com/linux/fedora/docker-ce.repo</code></pre>
+<p>Install docker-ce</p>
+<pre>$ sudo dnf -y install docker-ce docker-ce-cli</pre>
+<pre>$ sudo systemctl start docker
+$ sudo systemctl enable docker</pre>
+<p><strong>Install Go 1.13+</strong></p>
+<p>Download Go and extract it to /usr/local</p>
+<pre>$ curl -O https://dl.google.com/go/go1.13.6.linux-amd64.tar.gz</pre>
+<pre>$ sudo tar -C /usr/local -xzf go1.13.6.linux-amd64.tar.gz</pre>
+<p>Update bash profile and set GOPATH/GOBIN</p>
+<pre>$ vi ~/.bash_profile
+</pre>
+:ET

@@ -1,0 +1,87 @@
+I"�<h2><img class="alignnone  wp-image-12383" src="/assets/2018/02/photodune-3931978-security-concept-with-a-lock-xl-900x506.jpg" alt="security concept  with a lock" width="518" height="291" /></h2>
+<h2><span style="text-decoration:underline;">Overview</span></h2>
+<p>In this article we will focus on security and vulnerability strategies for scanning container images. I know, in the past security was always viewed upon as an impedance to the speed of production but hopefully these days are behind us. Having a security breach, as you probably know, is one of the most costly things an organization can endure. It takes years to build up a reputation and only seconds to tear it down completely.</p>
+<p>I still see today, many organizations ignoring container images completely because it is often misunderstood. Exactly what is inside a container image? Who should be responsible for it? How does it map to what we have done on servers? Security teams often don't understand containers or even know what questions to ask. We need to help them and it is our duty to do so. Unfortunately there are not very many tools that can help in broad sense. Containers are new and evolving at breakneck speed. That coupled with the fact that security can negatively impact the speed of a DevOps team (if not done right), it is no wonder we are at square one, in many cases.</p>
+<p>Before we dive into more detail, let us review important security aspects of containers.</p>
+<ul>
+<li>Containers can have various packaging formats, Docker is the most popular today</li>
+<li>Containers are immutable and as such are image based</li>
+<li>Container are never updated, any change always results in a new container</li>
+<li>Container images consist of layers (base, runtime, application)</li>
+<li>Container images require shared responsibility between dev and ops</li>
+<li>Containers don't contain, they are in fact, just processes</li>
+</ul>
+<p>For more information I recommend reading about the <a href="https://www.redhat.com/cms/managed-files/cl-container-security-openshift-cloud-devops-tech-detail-f7530kc-201705-en.pdf">10 layers of container security</a>.</p>
+<p><!--more--></p>
+<p>Container images contain OS, runtime and application (everything but the Linux kernel basically). If a container is breached, there is not much in the way preventing further containers from being breached unless you have SELinux, limit kernel capabilities, run as non-priviledged user and follow many other best practices. OpenShift and using trusted, signed images by a vendor like Red Hat does all of this by default. Even still the attack surface can be large. You still think it is OK to not worry about container images and what is inside? Thankfully there are at least several solutions we will talk about from Red Hat for the container Platform OpenShift.</p>
+<ul>
+<li><strong>Container Catalog</strong> grades images provided by Red Hat and provides history of image as security patches are applied.</li>
+<li><strong>Atomic CLI</strong> scans images and uses OpenSCAP to determine security vulnerabilities.</li>
+<li><strong>CloudForms</strong> scans images using OpenSCAP (same as atomic) and also adds capabilities like taking action when container images are vulnerable, automatically scanning new images and even reporting.</li>
+</ul>
+<p>All of these solutions are included with OpenShift.</p>
+<h2>Container Catalog</h2>
+<p>Red Hat offers a container catalog for all images that it provides. Images are maintained by Red Hat meaning they are frequently scanned and updated. The container catalog also provides the history of an image, each time it is updated a new tag is created. The image is graded according to a scale A to F.</p>
+<table class="tg" style="height:672px;" width="520">
+<colgroup>
+<col span="1" />
+<col span="1" /></colgroup>
+<tbody>
+<tr>
+<th class="tg-yw4l" width="20%">Health Index</th>
+<th class="tg-yw4l" width="80%">Security Errata Conditions</th>
+</tr>
+<tr>
+<td class="tg-yw4l"><strong>Grade A</strong></td>
+<td class="tg-yw4l"> This image does not have any unapplied Critical or Important security errata</td>
+</tr>
+<tr>
+<td class="tg-yw4l"><strong>Grade B</strong></td>
+<td class="tg-yw4l"> This image is affected by Critical (no older than 7 days) or Important (no older than 30 days) security errata</td>
+</tr>
+<tr>
+<td class="tg-yw4l"><strong>Grade C</strong></td>
+<td class="tg-yw4l"> This image is affected by Critical (no older than 30 days) or Important (no older than 90 days) security errata</td>
+</tr>
+<tr>
+<td class="tg-yw4l"><strong>Grade D</strong></td>
+<td class="tg-yw4l"> This image is affected by Critical (no older than 90 days) or Important (no older than 12 months) security errata</td>
+</tr>
+<tr>
+<td class="tg-yw4l"><strong>Grade E</strong></td>
+<td class="tg-yw4l"> This image is affected by Critical or Important security errata no older than 12 months</td>
+</tr>
+<tr>
+<td class="tg-yw4l"><strong>Grade F</strong></td>
+<td class="tg-yw4l"> This image is affected by Critical or Important security errata older than 12 months</td>
+</tr>
+<tr>
+<td class="tg-yw4l"><strong>Unknown</strong></td>
+<td class="tg-yw4l">This image is missing metadata required to calculate a grade and cannot be scanned</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Check image (example nodejs-6).</strong></p>
+<p><a href="https://access.redhat.com/containers/?tab=overview&amp;platform=openshift#/registry.access.redhat.com/rhscl/nodejs-6-rhel7">https://access.redhat.com/containers/?tab=overview&amp;platform=openshift#/registry.access.redhat.com/rhscl/nodejs-6-rhel7</a></p>
+<p><img class="alignnone  wp-image-12350" src="/assets/2018/02/cc_1.png" alt="cc_1" width="789" height="585" /></p>
+<p>We see the image has a health index of A and is also signed. We also see it runs as unprivileged user.</p>
+<p><strong>View Image History</strong></p>
+<p>Under tags, the history of the image can be viewed.</p>
+<p><img class="alignnone  wp-image-12351" src="/assets/2018/02/cc_2.png" alt="cc_2" width="828" height="611" /></p>
+<p><strong>Image Details</strong></p>
+<p>By clicking on the tag name we are able to get more detail about a given image.</p>
+<p><img class="alignnone  wp-image-12352" src="/assets/2018/02/cc_3.png" alt="cc_3" width="755" height="493" /></p>
+<p>Any CVEs that affect the image are shown in addition to RPM advisory.</p>
+<h2>Atomic CLI Image Scanning</h2>
+<p>Atomic Cli provides image scanning using OpenSCAP. This tool can be used via Ansible or other automation in CI/CD pipeline to automatically scan images.</p>
+<p><strong>Install Atomic cli</strong></p>
+<p>If you aren't running RHEL Atomic you need to install the atomic cli. In this case we are doing so on the OpenShift master (master0) but it can be any node that has access to the container images. If image doesn't exist locally (in this case on master0) it must be pulled down.</p>
+<pre>[master0 ~]$ yum install -y atomic</pre>
+<p><strong>Get the image that should be scanned</strong></p>
+<pre>[master0 ~]$ oc get image |grep nodejs
+sha256:947bf778fd9ee31a4cd06a702954aa0cd91e1eb81fef366a9080c0cfe3e35e43 172.30.187.230:5000/mynodejs/test@sha256:947bf778fd9ee31a4cd06a702954aa0cd91e1eb81fef366a9080c0cfe3e35e43
+<strong>sha256:a9b89bb53fef405ea73f3eaff2dafa0c37c2cc988586b1a8a0e3bc19de07d4b8</strong> <strong>registry.access.redhat.com/rhscl/nodejs-6-rhel7@sha256:a9b89bb53fef405ea73f3eaff2dafa0c37c2cc988586b1a8a0e3bc19de07d4b8</strong>
+sha256:b6fee5146e6330e9890f8290746944ab1452f709f806588fbfb1ff5cadb5aaed registry.access.redhat.com/rhscl/nodejs-4-rhel7@sha256:b6fee5146e6330e9890f8290746944ab1452f709f806588fbfb1ff5cadb5aaed
+sha256:c17fa1ffa8e4acf5e66e10127aea2ae5ca3eda7c34aecc005aaf3b04da48814c 172.30.187.230:5000/mynodejs/nodejs-hello-world-v2@sha256:c17fa1ffa8e4acf5e66e10127aea2ae5ca3eda7c34aecc005aaf3b04da48814c
+</pre>
+:ET

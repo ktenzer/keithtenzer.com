@@ -1,0 +1,115 @@
+I"�%<h3><a href="https://keithtenzer.files.wordpress.com/2015/11/software-maintenance.jpg"><img class="alignnone size-full wp-image-1421" src="/assets/2015/11/software-maintenance.jpg" alt="software-maintenance" width="300" height="214" /></a></h3>
+<h3>Overview</h3>
+<p>In this article we will look at some advanced deployment scenarios using TripleO and the OpenStack Director. This article builds on a previous article: <a href="http://keithtenzer.com/2015/10/14/howto-openstack-deployment-using-tripleo-and-the-red-hat-openstack-director/">HOWTO: OpenStack Deployment using TripleO and the Red Hat OpenStack Director</a>. It assumes you have a working OpenStack environment built with Red Hat OpenStack Director and complete with undercloud as well as overcloud. We will tear down existing OpenStack environment, create a new deployment using custom OpenStack Ironic profiles, customize post-installation and show how to add additional compute resources.<br />
+<!--more--></p>
+<h3>Tear Down Existing Environment</h3>
+<p>One of the advantages of TripleO is that it uses OpenStack to deploy OpenStack. This makes it of course very easy to tear down and rebuilt environments. The basic idea is that immutable and reproducible infrastructure leads to much higher stability. Production environments can be tested properly because they are reproducible. Production is never changed, it is re-deployed and only the deployment configuration is ever changed. These are common practices for any software engineering group but only recently have been applied to Infrastructure itself.</p>
+<p>Delete ironic baremetal nodes.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ for i in $(ironic node-list | grep -v UUID | awk ' { print $2 } '); do ironic node-delete $i; done</pre>
+<p>Import the baremetal node configuration.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ openstack baremetal import --json instackenv.json</pre>
+<p>Undeploy overcloud by deleting the Heat stack.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ heat stack-delete overcloud</pre>
+<h3>Ironic Profiles</h3>
+<p>In our original deployment we used a single Ironic profile. Normally however you would probably have different resource expectations for controller, compute and even ceph nodes. Using AHC-Tools (Automated Health Check) it is possible to build Ironic profiles that match specific hardware.</p>
+<p>Install AHC-Tools.</p>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ sudo yum install -y ahc-tools</code></pre>
+<p>Configure AHC-Tools.</p>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ sudo su -
+undercloud# sed 's/\[discoverd/\[ironic/' /etc/ironic-discoverd/discoverd.conf &gt; /etc/ahc-tools/ahc-tools.conf </code></pre>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ unset DIB_YUM_REPO_CONF
+[stack@undercloud ~]$ unset DIB_LOCAL_IMAGE
+[stack@undercloud ~]$ sudo systemctl stop bootif-fix 
+[stack@undercloud ~]$ source ~/stackrc </code></pre>
+<p>Enable discovery using AHC-Tools and re-deploy the undercloud.</p>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ openstack-config --set ~/undercloud.conf DEFAULT discovery_runbench true
+[stack@undercloud ~]$ openstack undercloud install
+[stack@undercloud ~]$ sudo systemctl start bootif-fix
+[stack@undercloud ~]$ source ~/stackrc</code></pre>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ </code>openstack baremetal import --json instackenv.json</pre>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ openstack baremetal configure boot </code></pre>
+<p>Ironic nodes should be set to available.</p>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ ironic node-list
++--------------------------------------+------+---------------+-------------+-----------------+-------------+
+| UUID | Name | Instance UUID | Power State | Provision State | Maintenance |
++--------------------------------------+------+---------------+-------------+-----------------+-------------+
+| 88d5901b-8527-468b-8c7c-852d79096bcc | None | None | power off | available | False |
+| d1f47f58-3b29-4dc6-a16c-2999f3422b36 | None | None | power off | available | False |
+| 9e6f26df-22dd-4b2b-a862-78b29a284825 | None | None | power off | available | False |
++--------------------------------------+------+---------------+-------------+-----------------+-------------+
+</code></pre>
+<p>Change Ironic node provision state to managed. Manual introspection requires nodes being set to managed.</p>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ ironic node-set-provision-state 88d5901b-8527-468b-8c7c-852d79096bcc manage
+[stack@undercloud ~]$ ironic node-set-provision-state d1f47f58-3b29-4dc6-a16c-2999f3422b36 manage
+[stack@undercloud ~]$ ironic node-set-provision-state 9e6f26df-22dd-4b2b-a862-78b29a284825 manage</code></pre>
+<p>Start introspection for each Ironic node.</p>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ openstack baremetal introspection start 88d5901b-8527-468b-8c7c-852d79096bcc
+[stack@undercloud ~]$ openstack baremetal introspection start d1f47f58-3b29-4dc6-a16c-2999f3422b36
+[stack@undercloud ~]$ openstack baremetal introspection start 9e6f26df-22dd-4b2b-a862-78b29a284825</code></pre>
+<p><code class="language-none">Verify introspection completes. Check to ensure nodes power-on and in addition monitor introspection to ensure it completes. </code></p>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ ironic node-list | grep "power on" | awk '{print $2" ("$8" "$9")";}' </code></pre>
+<p><code class="language-none">To check introspection status view journalctl logs.</code></p>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ </code><code class="language-none">sudo journalctl -u openstack-ironic-discoverd -f </code></pre>
+<p>Check introspection status using CLI.</p>
+<pre style="padding-left:30px;"><code class="language-none">[stack@undercloud ~]$ openstack baremetal introspection status 88d5901b-8527-468b-8c7c-852d79096bcc 
++----------+-------+ 
+| Field    | Value | 
++----------+-------+ 
+| error    | None  |  
+| finished | False | 
++----------+-------+ </code></pre>
+<p>Wait until introspection completes for all nodes.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ openstack baremetal introspection status 88d5901b-8527-468b-8c7c-852d79096bcc 
++----------+-------+ 
+| Field    | Value | 
++----------+-------+ 
+| error    | None  | 
+| finished | True  | 
++----------+-------+</pre>
+<p>Once introspection completes we need to set the state of each node to 'available'. Again this is automatically done for us when doing automatic introspection.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ <code class="language-none">for i in $(ironic node-list | grep -v UUID | awk ' { print $2 } '); do ironic node-set-provision-state $i provide; done</code></pre>
+<p>Generate report of benchmarking and introspection using ahc-tools.</p>
+<pre style="padding-left:30px;"><code class="language-none">undercloud$ ahc-report --full</code></pre>
+<p>We can view indentical systems as well as systems that are not consistent with our configuration</p>
+<pre style="padding-left:30px;"><code class="language-none">undercloud$ ahc-report --categories | grep -A3 "3 identical systems"
+undercloud$ ahc-report --outliers | grep -i inconsistent | head -n5 </code></pre>
+<p>Ironic hardware specs are stored in various configuration files. Once exists for compute, controller and ceph. In addition there is a configuration file that depicts the OpenStack overcloud topology.</p>
+<p>Controller specs are stored in following file:</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ cat /etc/ahc-tools/edeploy/control.specs
+[
+('disk', '$disk', 'size', 'gt(4)'),
+('network', '$eth', 'ipv4', 'network(192.0.2.0/24)'),
+('memory', 'total', 'size', 'ge(4294967296)'),
+]</pre>
+<p>Compute specs are stored in following file:</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ cat /etc/ahc-tools/edeploy/compute.specs
+[
+('disk', '$disk', 'size', 'gt(4)'),
+('network', '$eth', 'ipv4', 'network(192.0.2.0/24)'),
+('memory', 'total', 'size', 'ge(4294967296)'),
+]</pre>
+<p>OpenStack overcloud topology is stored in following file:</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ cat /etc/ahc-tools/edeploy/state
+[('control', '1'), ('compute', '*')]</pre>
+<p>Change the compute and controller specs as follows:</p>
+<pre style="padding-left:30px;"><code class="language-none">undercloud$ sudo su - 
+undercloud# cat &lt;&lt; EOF &gt; /etc/ahc-tools/edeploy/control.specs
+[
+('cpu', 'logical', 'number', 'ge(4)'),
+('disk', 'vda', 'size', 'gt(25)'),
+]
+EOF</code></pre>
+<pre style="padding-left:30px;"><code class="language-none">undercloud# cat &lt;&lt; EOF &gt; /etc/ahc-tools/edeploy/compute.specs
+[
+('cpu', 'logical', 'number', 'ge(2)'),
+('memory', 'total', 'size', 'ge(3000000)'),
+]
+EOF</code></pre>
+<p>Run AHC and have it match profiles with discovered hardware.</p>
+<pre style="padding-left:30px;"><code class="language-none">undercloud# ahc-match</code></pre>
+<p>Node roles can now be viewed. In our case we have 1 controller and two compute nodes that were classified by AHC.</p>
+<pre style="padding-left:30px;">[stack@undercloud ~]$ for i in $(ironic node-list | grep -v UUID | awk '{print $2;}' \
+| sed -e /^$/d); do ironic node-show $i | grep -A1 properties; \
+echo "======="; done;
+</pre>
+:ET

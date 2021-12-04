@@ -1,0 +1,50 @@
+I"¹<h1><img class="alignnone size-full wp-image-8960" src="/assets/2017/03/images.jpg" alt="images" width="225" height="225" /><img class="alignnone  wp-image-5506" src="/assets/2017/03/plus_sign.gif" alt="plus_sign" width="102" height="102" /><img class="alignnone  wp-image-8798" src="/assets/2017/03/1015767.png" alt="1015767" width="223" height="223" /></h1>
+<h3>Overview</h3>
+<p>In this article we will configure OpenStack Manila using CephFS as a storage backend. OpenStack Manila is an OpenStack project providing file services. Manila is storage backend agnostic and you can have many different kinds of storage backends, similar to Cinder. CephFS is a POSIX-Compliant file system that uses the Ceph storage cluster to store data. CephFS works by providing a Metadata Server (MDS) that collectively manages filesystem namespaces. It also coordinates access to Ceph Object Storage Damones (OSDs). Ceph MDS has two modes: active or passive. There are several documented <a href="http://docs.ceph.com/docs/master/cephfs/standby/#referring-to-mds-daemons">active/passive MDS</a> configurations and <a href="http://docs.ceph.com/docs/master/cephfs/multimds/">multi-mds or active/active MDS</a>Â that can be configured when a single MDS becomes a bottleneck. Clients can mount CephFS filesystems using the ceph-fuse client or kernel kernel driver.</p>
+<p>Integrating Ceph with OpenStack Series:</p>
+<ul>
+<li><a href="https://keithtenzer.com/2016/09/12/openstack-integrating-ceph-as-storage-backend/">Integrating Ceph with OpenStack Cinder, Glance and Nova</a></li>
+<li><a href="https://keithtenzer.com/2017/03/30/openstack-swift-integration-with-ceph/">Integrating Ceph with Swift</a></li>
+<li><a href="https://keithtenzer.com/2017/03/28/openstack-manila-integration-with-ceph/">Integrating Ceph with Manila</a></li>
+</ul>
+<h3>Prerequisites</h3>
+<p>The following are required to configure OpenStack Manila with CephFS:</p>
+<ul>
+<li>Already configured Ceph cluster (Jewel or higher). See <a href="https://keithtenzer.com/2017/02/03/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">here</a> to setup Ceph cluster.</li>
+<li>Already configured OpenStack (Mitaka or higher). See <a href="https://keithtenzer.com/2017/03/27/openstack-10-newton-lab-installation-and-configuration-guide/">here</a> to setup OpenStack.</li>
+</ul>
+<p><!--more--></p>
+<h3>Configure CephFS</h3>
+<p><strong>[All Ceph Nodes]</strong></p>
+<p>Add repository for ceph tools.</p>
+<pre class="screen"># subscription-manager repos --enable=rhel-7-server-rhceph-2-tools-rpms</pre>
+<p><strong>[Ceph Ansible Node]</strong></p>
+<p>Update Ansible inventory file and add metadata server.</p>
+<pre class="screen">#vi /etc/host/ansible
+...
+[mdss]
+ceph2
+...</pre>
+<p>Note: For non-lab environment you definitely wan't to configure multiple MDS servers. One is active and additional servers are passive.</p>
+<p>Run Ansible.</p>
+<pre># su - ansible
+$ cd /usr/share/ceph-ansible
+$ ansible-playbook site.yml -vvvv
+PLAY RECAP ******************************************************************** 
+ceph1 : ok=369 changed=1 unreachable=0 failed=0 
+ceph2 : ok=364 changed=11 unreachable=0 failed=0 
+ceph3 : ok=369 changed=1 unreachable=0 failed=0</pre>
+<p><strong>[Ceph Monitor Node]</strong></p>
+<p>Check CephFS metadata server.</p>
+<pre># ceph mds stat
+e24: 1/1/1 up {0=ceph2=up:active}</pre>
+<p>Create keyring and cephx authentication key for Manila service.</p>
+<pre><span class="go"># read -d '' MON_CAPS &lt;&lt; EOF</span>
+<span class="go">allow r,</span>
+<span class="go">allow command "auth del",</span>
+<span class="go">allow command "auth caps",</span>
+<span class="go">allow command "auth get",</span>
+<span class="go">allow command "auth get-or-create"</span>
+<span class="go">EOF</span>
+</pre>
+:ET

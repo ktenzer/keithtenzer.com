@@ -1,0 +1,254 @@
+I"t9<h2><img class="alignnone  wp-image-5495" src="/assets/2017/10/openshift-logotype-svg.png" alt="openshift-logotype-svg" width="175" height="187" /></h2>
+<h2>Overview</h2>
+<p>Egress traffic is traffic going from OpenShift pods to external systems, outside of OpenShift. There are two main options for enabling egress traffic. Allow access to external systems from OpenShift physical node IPs or use egress router. In enterprise environments egress routers are often preferred. They allow granular access from a specific pod, group of pods or project to an external system or service. Access via node IP means all pods running on a given node can access external systems.</p>
+<p><!--more--></p>
+<p>An egress router is a pod that has two interfaces (eth0) and (macvlan0). Eth0 is sitting on the cluster network in OpenShift (internal) and macvlan0 has an IP and gateway from the external physical network. The network team can allow access to external systems using the egress router IP. OpenShift administrators using project level access can assign pods access to the egress router service thus enabling them to access external services. The egress router acts as a bridge between pods and an external system. Traffic going out the egress router, goes via node but instead of having MAC address of node it will have MAC address of the macvlan0 interface inside the egress router.</p>
+<h2>Configuration</h2>
+<p>In this configuration we have deployed a simple OpenShift all-in-one environment running on a KVM hypervisor. We have also deployed a second VM running a web server. The KVM hypervisor has two virtual networks 192.168.122.0/24 and 192.168.123.0/24. OpenShift has two network interfaces, eth0 is on 192.168.122.0/24 and eth1 is on 192.168.123.0/24. The Web server has one interface, eth0 on 192.168.123.0/24. To test the egress router we will only allow access to the web server from the source IP of the egress router. Using another pod we will show how to access the web server using the egress router.</p>
+<p><img class="alignnone size-full wp-image-11739" src="/assets/2017/10/screenshot-from-2017-10-08-15-07-42.png" alt="Screenshot from 2017-10-08 15-07-42" width="364" height="225" /></p>
+<p><strong>[Web Server]</strong></p>
+<p>Allow only the IP of the egress router (192.168.123.99) in OpenShift to access the web server on port 80.</p>
+<pre># firewall-cmd --permanent --zone=public \
+--add-rich-rule='rule family="ipv4" source address="192.168.123.99" \
+port protocol="tcp" port="80" accept'</pre>
+<pre># firewall-cmd --reload</pre>
+<p><strong>[OpenShift Master]</strong></p>
+<p><strong>Create a new project</strong></p>
+<pre># oc new-project myproj</pre>
+<p><strong>Configure Security Context</strong></p>
+<p>Egress router in legacy mode will run as root so we need to allow root containers. To do this we update the security context.</p>
+<pre># vi scc.yaml</pre>
+<pre>kind: SecurityContextConstraints
+apiVersion: v1
+metadata:
+  name: scc-admin
+allowPrivilegedContainer: true
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- admin
+</pre>
+<p>Note: You can also add groups to the security context.</p>
+<pre># oc create -f scc.yaml</pre>
+<p><strong>Deploy Egress router in legacy mode</strong></p>
+<pre># vi egress-router.yaml</pre>
+<pre>apiVersion: v1
+kind: Pod
+metadata:
+  name: egress-1
+  labels:
+    name: egress-1
+  annotations:
+    pod.network.openshift.io/assign-macvlan: "true"
+spec:
+  containers:
+  - name: egress-router
+    image: openshift3/ose-egress-router
+    securityContext:
+      privileged: true
+    env:
+    - name: EGRESS_SOURCE 
+      value: 192.168.123.99
+    - name: EGRESS_GATEWAY 
+      value: 192.168.123.1
+    - name: EGRESS_DESTINATION 
+      value: 192.168.123.91
+</pre>
+<pre># oc create -f egress-router.yaml</pre>
+<p><strong>Check Egress pod and ensure it can access web server</strong></p>
+<pre># oc get pods
+NAME READY STATUS RESTARTS AGE
+egress-1 1/1 Running 0 2h</pre>
+<pre># oc rsh egress-1</pre>
+<p>Once connected to egress router you will notice it is running as root. This is the difference between legacy mode and init. For troubleshooting and testing it is easier to run in legacy mode and then switch to init mode when things are working.</p>
+<pre>sh-4.2# curl http://192.168.123.91
+Hello World! My App deployed via Ansible V6.
+</pre>
+<p>Here we see we can access our web server.<br />
+<strong>Deploy Egress service</strong></p>
+<p>The egress service allows other pods to access external services using the egress router.</p>
+<pre># vi egress-service.yaml</pre>
+<pre>apiVersion: v1
+kind: Service
+metadata:
+  name: egress-1
+spec:
+  ports:
+  - name: http
+    port: 80
+  type: ClusterIP
+  selector:
+    name: egress-1
+</pre>
+<pre># oc create -f efress-service.yaml</pre>
+<p><strong>Deploy Ruby hello world pod</strong></p>
+<p>The ruby example pod will be used to access our web server (192.168.123.91) via the egress router. Remember only source IP 192.168.123.99 (egress router) can access web server.</p>
+<pre># oc new-app \
+centos/ruby-22-centos7~https://github.com/openshift/ruby-ex.git</pre>
+<pre># oc get pods
+NAME READY STATUS RESTARTS AGE
+egress-1 1/1 Running 0 2h
+ruby-ex-1-wt3q9 1/1 Running 1 15h</pre>
+<p>Here we now see the ruby example pod is running.</p>
+<p><strong>Get service for the egress router</strong></p>
+<pre># oc get service
+NAME CLUSTER-IP EXTERNAL-IP PORT(S) AGE
+egress-1 172.30.137.86  80/TCP 2h
+ruby-ex 172.30.205.126  8080/TCP 15h</pre>
+<p>Check that web server pod cannot access web server directly</p>
+<pre># oc rsh ruby-ex-1-wt3q9</pre>
+<pre>sh-4.2$ curl http://192.168.123.91
+curl: (7) Failed connect to 192.168.123.91:80; No route to host</pre>
+<p>Check that web server pod can access web server using egress service</p>
+<pre>sh-4.2$ curl http://172.30.137.86
+Hello World! My App deployed via Ansible V6.
+</pre>
+<pre>sh-4.2$ curl http://egress-1 
+Hello World! My App deployed via Ansible V6.</pre>
+<h2>Configure Egress Router Init Mode</h2>
+<p>Once egress router is working it is recommend re-configuring using init mode. This ensures that the egress router is not running as root.</p>
+<pre>apiVersion: v1
+kind: Pod
+metadata:
+  name: egress-1
+  labels:
+    name: egress-1
+  annotations:
+    pod.network.openshift.io/assign-macvlan: "true" 
+spec:
+  initContainers:
+  - name: egress-router
+    image: openshift3/ose-egress-router
+    securityContext:
+      privileged: true
+    env:
+    - name: EGRESS_SOURCE 
+      value: 192.168.123.99
+    - name: EGRESS_GATEWAY 
+      value: 192.168.123.1
+    - name: EGRESS_DESTINATION 
+      value: 192.168.123.91
+    - name: EGRESS_ROUTER_MODE 
+      value: init
+  containers:
+  - name: egress-router-wait
+    image: openshift3/ose-pod
+</pre>
+<h2>Troubleshooting in Legacy Mode</h2>
+<p>In order to troubleshoot the egress router it is recommended to run in legacy mode so you have access to the IP space.</p>
+<p><strong>View Network Configuration</strong></p>
+<p>Below we can see that eth0 has a IP from pod network and macvlan0 has IP on our external network.</p>
+<pre># oc rsh egress-1</pre>
+<pre>sh-4.2# ip a
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+3: eth0@if26: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UP 
+    link/ether 0a:58:0a:80:00:51 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 10.128.0.81/23 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::858:aff:fe80:51/64 scope link 
+       valid_lft forever preferred_lft forever
+4: macvlan0@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UNKNOWN 
+    link/ether <strong>b6:6d:62:ee:2e:bb</strong> brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet <strong>192.168.123.99</strong>/32 scope global macvlan0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::b46d:62ff:feee:2ebb/64 scope link 
+       valid_lft forever preferred_lft forever
+</pre>
+<p><strong>Send ARP requests from egress router to gateway of external network</strong></p>
+<pre>sh-4.2# arping -I macvlan0 -c 2 192.168.123.91
+ARPING 192.168.123.91 from 192.168.123.99 macvlan0
+Unicast reply from 192.168.123.91 [52:54:00:7F:0A:4A] 0.944ms
+Unicast reply from 192.168.123.91 [52:54:00:7F:0A:4A] 0.671ms
+Sent 2 probes (1 broadcast(s))
+Received 2 response(s)</pre>
+<p><strong>View ARP table of OpenShift node</strong></p>
+<p>Notice both the egress router (192.168.123.99) and web server (192.168.123.91) show up in arp cache. The egress router is incomplete because the node cannot see the MAC address. This is important and reason you need to enable promiscuous mode if you are running OpenShift on top of a virtualization platform. Otherwise hypervisor will not recognize MAC address and simply drop the packets.</p>
+<pre># arp
+Address                  HWtype  HWaddress           Flags Mask    Iface
+10.128.0.71              ether   0a:58:0a:80:00:47   C             tun0
+10.128.0.66              ether   0a:58:0a:80:00:42   C             tun0
+10.128.0.74              ether   0a:58:0a:80:00:4a   C             tun0
+10.128.0.69              ether   0a:58:0a:80:00:45   C             tun0
+<strong>192.168.123.99                   (incomplete)                      eth1</strong>
+10.128.0.81              ether   0a:58:0a:80:00:51   C             tun0
+10.128.0.72              ether   0a:58:0a:80:00:48   C             tun0
+10.128.0.67              ether   0a:58:0a:80:00:43   C             tun0
+192.168.122.1            ether   52:54:00:18:40:b7   C             eth0
+10.128.0.75              ether   0a:58:0a:80:00:4b   C             tun0
+10.128.0.70              ether   0a:58:0a:80:00:46   C             tun0
+192.168.123.1            ether   52:54:00:03:3f:fd   C             eth1
+<strong>192.168.123.91           ether   52:54:00:7f:0a:4a   C             eth1</strong>
+10.128.0.73              ether   0a:58:0a:80:00:49   C             tun0
+</pre>
+<p><strong>Use tcpdump on OpenShift node to analyze packets</strong></p>
+<p>While running tcpdump connect to web server through egress router using curl.</p>
+<pre># tcpdump -i eth1 -e
+14:29:46.550889 <strong>b6:6d:62:ee:2e:bb</strong> (oui Unknown) &gt; 52:54:00:03:3f:fd (oui Unknown), ethertype IPv4 (0x0800), length 74: 192.168.123.99.55892 &gt; 192.168.123.91.http: Flags [S], seq 2654909605, win 28200, options [mss 1410,sackOK,TS val 11141299 ecr 0,nop,wscale 7], length 0
+14:29:46.550991 52:54:00:03:3f:fd (oui Unknown) &gt; 52:54:00:7f:0a:4a (oui Unknown), ethertype IPv4 (0x0800), length 74: 192.168.123.99.55892 &gt; 192.168.123.91.http: Flags [S], seq 2654909605, win 28200, options [mss 1410,sackOK,TS val 11141299 ecr 0,nop,wscale 7], length 0
+14:29:46.551107 52:54:00:7f:0a:4a (oui Unknown) &gt; <strong>b6:6d:62:ee:2e:bb</strong> (oui Unknown), ethertype IPv4 (0x0800), length 74: 192.168.123.91.http &gt; 192.168.123.99.55892: Flags [S.], seq 2459314841, ack 2654909606, win 28960, options [mss 1460,sackOK,TS val 10909669 ecr 11141299,nop,wscale 7], length 0
+</pre>
+<p>Notice we now see the MAC address of the egress router (b6:6d:62:ee:2e:bb). We can also see the egress router talking to the web server (192.168.123.91) through the gateway (192.168.123.1).</p>
+<h2>Troubleshooting in Init Mode</h2>
+<p>As mentioned for troubleshooting legacy mode is recommended but using init mode the egress router network namespace can still be accessed in order to identify potential problems.</p>
+<p><strong>Identify node running egress router</strong></p>
+<pre># oc get pods -o wide
+NAME READY STATUS RESTARTS AGE IP NODE
+egress-1 1/1 Running 1 1d 10.128.0.98 <strong>ocp36.lab.com</strong></pre>
+<p><strong>Get docker id for egress container</strong></p>
+<pre># docker ps |grep egress-1
+ <strong>49d42d963169</strong> registry.access.redhat.com/openshift3/ose-egress-router@sha256:30f8aa01c90c9d83934c7597152930a9feff2fe121c04e09fcf478cc42e45d72 "/bin/sh -c /bin/egre" 4 minutes ago Up 4 minutes k8s_egress-router_egress-1_myproj_2e61d2c8-ac0c-11e7-994f-5254003fbd93_1
+ 6ba0d22b286d openshift3/ose-pod:v3.6.173.0.21 "/usr/bin/pod" 6 minutes ago Up 6 minutes k8s_POD_egress-1_myproj_2e61d2c8-ac0c-11e7-994f-5254003fbd93_2</pre>
+<p><strong>Inspect egress container and get pid</strong></p>
+<pre># docker inspect <strong>49d42d963169</strong> |grep Pid
+"Pid": 5675,
+"PidMode": "",
+"PidsLimit": 0,</pre>
+<p><strong>Enter egress container network namespace</strong></p>
+<pre># nsenter -n -t 5675</pre>
+<p><strong>Show egress router network interfaces</strong></p>
+<p>Note: be careful with nsenter and track if you are in network namespace of container or not. To leave network namespace type 'exit'.</p>
+<pre>[root@ocp36 ~]# ip a
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+3: eth0@if16: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UP 
+    link/ether 0a:58:0a:80:00:62 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 10.128.0.98/23 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::1439:8bff:fe62:f208/64 scope link 
+       valid_lft forever preferred_lft forever
+4: macvlan0@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UNKNOWN 
+    link/ether 5e:ee:12:f6:bb:4f brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 192.168.123.99/32 scope global macvlan0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::5cee:12ff:fef6:bb4f/64 scope link 
+       valid_lft forever preferred_lft forever
+</pre>
+<p><strong>Ping gateway of egress router</strong></p>
+<pre># ping 192.168.123.1
+PING 192.168.123.1 (192.168.123.1) 56(84) bytes of data.
+64 bytes from 192.168.123.1: icmp_seq=1 ttl=64 time=0.154 ms
+64 bytes from 192.168.123.1: icmp_seq=2 ttl=64 time=0.131 ms
+64 bytes from 192.168.123.1: icmp_seq=3 ttl=64 time=0.119 ms</pre>
+<p><strong>Access application using curl</strong></p>
+<pre>sh-4.2# curl http://192.168.123.91 
+Hello World! My App deployed via Ansible V6.</pre>
+<h2>Summary</h2>
+<p>In this article we discussed the importance of the egress router and how it can be used to allow granular access of external services. We configured an egress router in OpenShift to allow access to an external web server. Finally we looked at how to troubleshoot the egress router.</p>
+<p>Happy OpenShifting!</p>
+<p>(c) 2017 Keith Tenzer</p>
+:ET

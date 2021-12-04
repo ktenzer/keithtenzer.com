@@ -1,0 +1,108 @@
+I"�<h3 class="screen"><img class="alignnone size-full wp-image-4161" src="/assets/2016/08/sat_6_components.png" alt="sat_6_components" width="493" height="157" /></h3>
+<h3 class="screen">Overview</h3>
+<p>In this article we will look at how to install Satellite 6.2 and configure a base environment. This article builds on a similar <a href="https://keithtenzer.com/2015/09/16/cloud-systems-management-satellite-6-1-getting-started-guide/">article</a> I published for Satellite 6.1. In addition to installing and configuring Satellite we will also look at one of the long awaited new features remote-cmd execution.<br />
+<!--more--><br />
+If you are coming from Satellite 5 world then you will want to familiarize yourself with the concepts and how they apply in Satellite 6. The biggest change is around how you manage content through stages (life-cycle enviornments) but there is also a lot more.</p>
+<p><img class="alignnone size-full wp-image-4156" src="/assets/2016/08/red_hat_satellite_6_life_cycle.png" alt="Red_Hat_Satellite_6_Life_Cycle" width="1344" height="827" /></p>
+<p><em>source: https://www.windowspro.de/sites/windowspro.de/files/imagepicker/6/Red_Hat_Satellite_6_Life_Cycle.png</em></p>
+<h3 class="screen">Features</h3>
+<p dir="ltr">Satellite 6.2 continues to build on that release and provides the following features:</p>
+<ul>
+<li>
+<p dir="ltr">Automated Workflows -- This includes remote execution, scheduling for remote execution jobs and expanded bootstrap and provisioning options.</p>
+</li>
+<li>
+<p dir="ltr">Air-gapped security and federation -- Inter-Satellite sync is now available to export RPM content from one Satellite to import into another</p>
+</li>
+<li>
+<p dir="ltr">Software Management Improvements -- Simplified Smart Variable management is now available.</p>
+</li>
+<li>
+<p dir="ltr">Capsule improvements -- Users now have deeper insight into Capsule health and overall performance; Capsules are lighter-weight and can be configured to store only the content that has been requested by its clients; and a new Reference Architecture including deploying a Highly Available Satellite Capsule is now available.</p>
+</li>
+<li>
+<p dir="ltr">Atomic OSTree and containers -- Mirror, provision and manage RHEL Atomic hosts and content with Satellite; mirror container repositories such as Red Hat Registry, DockerHub™ and other 3rd-party sources; and Satellite provides a secure, curated point of entry for container content</p>
+</li>
+<li>
+<p dir="ltr">Enhanced documentation -- Both new and improved documentation is available. (<a href="https://access.redhat.com/documentation/red-hat-satellite/" target="_blank">https://access.redhat.com/documentation/red-hat-satellite/</a>)</p>
+<ul>
+<li>
+<p dir="ltr">New Guides</p>
+<ul>
+<li>
+<p dir="ltr">Virtual Instance Guide (How to configure virt-who)</p>
+</li>
+<li>
+<p dir="ltr">Hammer CLI Guide (How to use Satellite’s CLI)</p>
+</li>
+<li>
+<p dir="ltr">Content Management Guide (How to easily manage Satellite’s content )</p>
+</li>
+<li>
+<p dir="ltr">Quickstart Guide (How to get up and running quickly)</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<ul>
+<li>
+<p dir="ltr">Improved/more user-friendly documentation</p>
+</li>
+</ul>
+</ul>
+<ul>
+<li>
+<p dir="ltr">User Guide split to make more topical and easier to follow:</p>
+<ul>
+<li>
+<p dir="ltr">Server Administration Guide</p>
+</li>
+<li>
+<p dir="ltr">Host Configuration Guide</p>
+</li>
+<li>
+<p dir="ltr">“Cheat Sheets” available for specific topics (Hammer)</p>
+</li>
+<li>
+<p dir="ltr">Updated Feature Overviews</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 class="screen">Prerequisites</h3>
+<p>In order to install Satellite we need a subscription and of course RHEL 6 or 7.</p>
+<pre class="screen">subscription-manager register</pre>
+<pre class="screen">subscription-manager list --available</pre>
+<pre class="screen">subscription-manager attach --pool=934893843989289</pre>
+<pre class="screen">subscription-manager repos --disable "*"</pre>
+<p><strong>RHEL 6</strong></p>
+<pre class="screen">subscription-manager repos --enable=rhel-6-server-rpms \
+--enable=rhel-server-rhscl-6-rpms \
+--enable=rhel-6-server-satellite-6.2-rpms</pre>
+<p><strong>RHEL 7</strong></p>
+<pre class="screen">subscription-manager repos --enable=rhel-7-server-rpms \
+--enable=rhel-server-rhscl-7-rpms \
+--enable=rhel-7-server-satellite-6.2-rpms</pre>
+<p>Update all packages.</p>
+<pre># yum update -y</pre>
+<p>Add Firewall rules.</p>
+<p><strong>RHEL 6</strong></p>
+<pre class="screen"># iptables -A INPUT -m state --state NEW -p udp --dport 53 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 53 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p udp --dport 67 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p udp --dport 69 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 80 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 443 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 5647 -j ACCEPT \
+&amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 8140 -j ACCEPT \
+&amp;&amp; iptables-save &gt; /etc/sysconfig/iptables</pre>
+<p><strong>RHEL 7</strong></p>
+<pre># firewall-cmd --add-service=RH-Satellite-6
+# firewall-cmd --permanent --add-service=RH-Satellite-6</pre>
+<p><strong>NTP</strong></p>
+<pre># yum install chrony
+</pre>
+:ET

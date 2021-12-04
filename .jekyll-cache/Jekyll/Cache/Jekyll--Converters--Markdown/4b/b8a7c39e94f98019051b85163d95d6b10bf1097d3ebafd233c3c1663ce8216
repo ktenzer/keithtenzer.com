@@ -1,0 +1,62 @@
+I"�+<h2><img class="alignnone  wp-image-12470" src="/assets/2018/06/logotype_rh_satellite_rgb_black.png" alt="Logotype_RH_Satellite_RGB_Black" width="243" height="66" /> <img class="alignnone  wp-image-12472" src="/assets/2018/06/plus_sign.gif" alt="plus_sign" width="71" height="71" /><img class="alignnone  wp-image-12471" src="/assets/2018/06/openstack.png" alt="openstack" width="305" height="79" /></h2>
+<h2>Overview</h2>
+<p>In this article we will explore an important part of day 2 operations in OpenStack or any IaaS, systems management. There are two ways to maintain applications: immutable or lifecyle. Satellite is a product from Red Hat that focuses on lifecycle management. Specifically the deployment, updating, patching and configuration of Red Hat Enterprise Linux (RHEL) as well as the applications running on top throughout entire lifecycle. We will discuss the value Satellite brings to OpenStack and why systems management is a key part of day 2 cloud operations. Investigate the Satellite architecture and how it applies to OpenStack. Finally we will go through hands-on deploy of Satellite on OpenStack, even deploying an instance and automatically connecting the instance to Satellite, all using Ansible.</p>
+<h2>The Value of Satellite in OpenStack</h2>
+<p>Satellite is the second product Red Hat created after RHEL. It has been around for over 10 years and recently gone through a major re-architecture from ground up to address cloud. Red Hat customers have used Satellite to create a standard operating environment (SOE) for RHEL and the applications that run on RHEL for 10+ years. Satellite provides the ability to create various content views and bring them together in a composite content view (a group of content views). This allows us to group content (RPMs, configuration management, Tar files, whatever else) and most importantly version it. Once we can group software and version it we can start thinking about release management across a lifecyle environment. A lifecycle environment is typically something similar the holy trinity: development, test and production. The versions of software for our OS and applications of course vary, you don't want to update software in production without testing in development or test right?</p>
+<p><!--more--></p>
+<p>Below is an illustration of how content views relate to lifecycle environments.</p>
+<p><img class="alignnone  wp-image-12465" src="/assets/2018/06/satellite-lifecycle-management.png" alt="satellite-lifecycle-management" width="899" height="395" /></p>
+<p>As we mentioned a composite content view is created to group content views. This is the basis of an SOE. If we wanted to build an SOE for Java, we would have a content view for the OS (this is typically shared across many SOEs) and another one for Java. They would be combined in a composite content view and this is what would be presented to a host via a hostgroup. Hostgroups in Satellite are just groupings of similar hosts that inherit the same content view (likely a composite one), same configuration environment, etc.</p>
+<p>In addition to building an SOE across lifecycle environment, Satellite also provides patching, security vulnerabilities, configuration management via either puppet or integration with Ansible Tower and what I am most excited about, integration with Insights that allows for predictive systems management through AI/ML.</p>
+<p>Now if we look at what you get when you go to a public cloud platform AWS, Azure, GCE, it is very different. You can get a RHEL instance on demand but how is lifecycle management done? Well it isn't, they simply provide you the latest RPMs and you do a yum update. That is it. Great, no thanks! No SOE, no content view, no configuration management, nothing. OpenStack also does not provide anything here. Sure you can upload an image and deploy from that but what about lifecycle management? Your applications are ok with update to an image every time you make a change and complete redeploy? I would say 10% of your applications can handle that and for them, great that is the way to go but everyone else?</p>
+<p>Why is lifecycle management forgotten in the cloud? Simple, the idea with cloud was cloud-native, everything is an image, you never update a running system, you throw it away and build a new one. That is cloud-native in a nutshell and of course is a concept we need for cloud-native or containerized applications but it doesn't help for the other 90% of applications in an enterprise. Combining OpenStack with Satellite, gets you to IaaS (something modern, nimble, agile, flexible) and allows you to run cloud-native + traditional workloads on the same platform. Imagine your enterprise, everything being under a single IaaS. What could you do? What value would that bring the business?</p>
+<p>Satellite of course can be used in public cloud just like on OpenStack. It means however not using RHEL image from AWS, Azure, GCE, etc but bringing your own image and subscription from Red Hat.</p>
+<h2>Satellite 6 Architecture</h2>
+<p>As I mentioned, Satellite 5 existed almost 10 years but a few years ago Red Hat started over and built a new Satellite based on leading opensource projects. Satellite is a product that brings together the following opensource projects: foreman (provisioning), katello (content management), pulp (content repository), candelpin (subscription management),  Ansible Tower Integration (configuration management option 1) and puppet (configuration management option 2). Satellite consists of a server and one or more capsules. Capsules are used to scale or address network segmentation.</p>
+<p>Below is illustration of the different Satellite components.</p>
+<p><img class="alignnone  wp-image-12466" src="/assets/2018/06/red-hat-satellite-6.png" alt="red-hat-satellite-6" width="1043" height="600" /></p>
+<p>For configuration management you could use Ansible Tower, Puppet or even both. In the case of Ansible Tower only you would not run Puppet services on the capsule and Ansible Tower would leverage the Satellite 6 inventory as well as facts to communicate directly with instances.</p>
+<p>The illustration below shows how we could apply the Satellite 6 architecture to OpenStack taking advantage of the multi-tenant capabilities and lifecycle environments.</p>
+<p><img class="alignnone  wp-image-12468" src="/assets/2018/06/satellite_on_openstack1.png" alt="satellite_on_openstack" width="1205" height="629" /></p>
+<p>In Satellite you can have many lifecycle stages, even for each application and in OpenStack there are various concepts on how to do multitenancy. This should just give an idea of how to apply the Satellite architecture and SOE lifecycle to OpenStack.</p>
+<p><strong>Value of solution:</strong></p>
+<ul>
+<li>IaaS to manage virtual and baremetal workloads.</li>
+<li>Enterprise grade and production proven with Red Hat OpenStack Platform.</li>
+<li>Manage cloud native and traditional workloads together.</li>
+<li>Provide Security / Vulnerability updates, patching, SOE, lifecycle management for traditional workloads and platforms such as PaaS that run on IaaS layer.</li>
+<li>Provide automation tool and framework, Ansible or Puppet to drive end-to-end automation once instances are deployed via Heat.</li>
+<li>Leverage entire Red Hat knowledge base, all support cases ever opened and Red Hat security / vulnerability database to provide insights, allowing problems to be seen before they are well, problems.</li>
+</ul>
+<p>Add it all up and you got incredible business value. The only thing missing on top is OpenShift to provide a PaaS based on container technology and devops methodology. By the way that subject is covered in great detail here:</p>
+<p><a href="https://keithtenzer.com/2018/02/26/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/">https://keithtenzer.com/2018/02/26/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/</a></p>
+<h2><img class="alignnone size-full wp-image-12473" src="/assets/2018/06/one.png" alt="one" width="225" height="225" /></h2>
+<h2>Deploy Satellite on OpenStack</h2>
+<p>Now that we have a solid foundation it is time to deploy Satellite on OpenStack. First, one thing we haven't talked about is provisioning. Of course both Satellite and OpenStack through Heat can provision virtual and baremetal instances. This is the only part of Satellite that actually overlaps with OpenStack. You will probably get varying opinions and certainly a requirements discussion is in order before making a decision regarding provisioning technology or process, nevertheless I will share my thoughts. My view is you should always use the infrastructure platform and it's native capabilities for provisioning while using an abstraction layer on top like Ansible. In this case that means using OpenStack Heat to create templates for deploying instances or groups of instances and Ansible to orchestrate Heat and also deploy software to those instances.</p>
+<p>I have prepared several Ansible playbooks that do various things to not only automate the deployment of Satellite but also to automate connecting instances to Satellite (bootstrap) and even deploying an instance with Satellite bootstrap. Let us get started.</p>
+<p>Launch a RHEL 7.5 Instance in OpenStack.</p>
+<p><img class="alignnone  wp-image-12469" src="/assets/2018/06/instance.png" alt="instance" width="908" height="541" /></p>
+<p>Alternatively you can use Heat and a template similar to one I have provider (<a href="https://github.com/ktenzer/satellite-on-openstack-123/blob/master/heat/instance.yaml">https://github.com/ktenzer/satellite-on-openstack-123/blob/master/heat/instance.yaml</a>). Make sure you add floating ip so the Satellite server can be accessed externally.</p>
+<p>If you need more details on setting up OpenStack environment see the below posts.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2018/02/05/openstack-12-pike-lab-installation-and-configuration-guide-with-hetzner-root-servers/">OpenStack end-to-end deployment on Hetzner Server</a></li>
+<li><a href="https://keithtenzer.com/2017/04/20/red-hat-openstack-platform-10-newton-installation-and-configuration-guide/">Red Hat OpenStack 10 Configuration and Setup</a></li>
+</ul>
+<p>Or just search my blog for 'openstack' you will find a library of information, I promise ;)</p>
+<p><strong>Clone Git Repostory</strong></p>
+<p>Log onto instance and clone the git repo.</p>
+<pre>[root@sat6]# git clone https://github.com/ktenzer/satellite-on-openstack-123.git</pre>
+<p><strong>Checkout release-1.0 branch</strong></p>
+<pre>[root@sat6]# git checkout release-1.0</pre>
+<p><strong>Update Vars File</strong></p>
+<p>In Ansible vars are used to pass parameters into playbooks. I have created a single vars file with all the information needed to run all the playbooks. If you are only interested in deploying Satellite you do not need to configure OpenStack settings. You also do not need OpenStack settings for bootstrapping (configuring instances for Satellite).</p>
+<pre>[root@sat6]# cd satellite-openstack-123</pre>
+<pre>[root@sat6]# cp sample_vars.yml vars.yml</pre>
+<pre>[root@sat6]# vi vars.yml
+---
+### General Settings ###
+ssh_user: cloud-user
+admin_user: 
+admin_passwd: 
+</pre>
+:ET

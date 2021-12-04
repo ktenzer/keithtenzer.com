@@ -1,0 +1,45 @@
+I"�<h3><a href="https://keithtenzer.files.wordpress.com/2015/09/sat_6_components.png"><img class="alignnone wp-image-1246" src="/assets/2015/09/sat_6_components.png?w=300" alt="SAT_6_COmponents" width="1194" height="382" /></a></h3>
+<h3>Overview</h3>
+<p>Satellite is responsible for system and configuration management. Satellite 6 offers a new architecture based off best-of-breed opensource projects: Foreman (provisioning), Katello (content management), Pulp (content management), Puppet (configuration management) and Candlepin (subscription management). Satellite 6 provides ITIL equivalent of media library for RPMs, ISOs, Puppet modules and container images. It allows you to build a standard operating environment (SOE) that defines how systems and applications are provisioned as well as maintained. Satellite 6 allows an organization the ability to manage all content through defined life-cycles. Control through RBAC can be defined so that different groups can control various aspects of a SOE. In this article we will focus on how to install and configure Satellite 6.1.<br />
+<!--more--></p>
+<h3>Installing Satellite 6.1</h3>
+<p>Before installing Satellite 6.1 it is recommend to install RHEL 7.1 minimum OS. In this guide we will configure a Satellite 6.1 server and capsule on the same system.</p>
+<pre style="padding-left:30px;">#subscription-manager register
+#subscription-manager list --available
+#subscription-manager attach --pool=8a85f9844b5685ed014b6e02a0c3144e
+#subscription-manager repos --disable=*
+#subscription-manager repos --enable rhel-7-server-rpms --enable rhel-server-rhscl-7-rpms --enable rhel-7-server-satellite-6.1-rpms</pre>
+<p>Update all packages and install Katello.</p>
+<pre style="padding-left:30px;">#yum update -y
+#yum install -y katello</pre>
+<p>Run the Katello installer and provide information about the environment. In this environment the Satellite 6.1 server is located on 192.168.122.0/24 network and has static hostname sat6.lab.com. In order to provision new servers Satellite requires DNS and DHCP. You can use external DNS and DHCP but in this example we are having Satellite configure both locally.</p>
+<pre style="padding-left:30px;">katello-installer -v -d --foreman-admin-password redhat \
+--capsule-dns true --capsule-dns-interface eth0 --capsule-dns-zone lab.com \
+--capsule-dns-forwarders 192.168.122.1 --capsule-dns-reverse 122.168.192.in-addr.arpa \
+--capsule-dhcp true --capsule-dhcp-interface eth0 --capsule-dhcp-range "192.168.122.200 192.168.122.250" \
+--capsule-dhcp-gateway 192.168.122.1 --capsule-dhcp-nameservers 192.168.122.70 \
+--capsule-tftp true --capsule-tftp-servername $(hostname) \
+--capsule-puppet true --capsule-puppetca true</pre>
+<h3>Configuring Satellite 6.1</h3>
+<p>The first step in configuration is to open the necessary firewall ports.</p>
+<pre style="padding-left:30px;">#firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner foreman -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner root -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 0 -o lo -p tcp -m tcp --dport 9200 -m owner --uid-owner root -j ACCEPT \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 1 -o lo -p tcp -m tcp --dport 9200 -j DROP \
+&amp;&amp; firewall-cmd --permanent --direct --add-rule ipv6 filter OUTPUT 1 -o lo -p tcp -m tcp --dport 9200 -j DROP</pre>
+<p class="screen">Allow HTTPS access from the web UI.</p>
+<pre class="screen" style="padding-left:30px;">#firewall-cmd --permanent --add-service=https</pre>
+<p class="screen">Reload the firewall rules so they are active.</p>
+<pre class="screen" style="padding-left:30px;"># firewall-cmd --reload</pre>
+<p class="screen">At this point you should be able to reach the web UI using HTTPS. In this environment the url is https://sat6.lab.com. Next we need to setup the hammer CLI. Configure hammer so that we automatically pass authentication credentials.</p>
+<pre class="programlisting" style="padding-left:30px;">mkdir ~/.hammer
+cat &gt; .hammer/cli_config.yml &lt;&lt;EOF
+:foreman:
+    :host: 'https://sat-$GUID.rhpds.opentlc.com/'
+    :username: 'admin'
+    :password: 'redhat'
+</pre>
+:ET
