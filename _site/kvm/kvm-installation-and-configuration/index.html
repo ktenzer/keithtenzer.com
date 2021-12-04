@@ -24,7 +24,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="KVM Installation and Configuration">
-<meta property="og:url" content="https://keithtenzer.com/kvm/kvm-installation-and-configuration/">
+<meta property="og:url" content="http://localhost:4000/kvm/kvm-installation-and-configuration/">
 
 
   <meta property="og:description" content="Overview KVM (Kernel Virtual Machine) is a Linux kernel module that allows a user space process to utilize hardware virtualization capabilities. When people refer to KVM they are usually talking about the hypervisor but there are in fact three components (or balls our penguin seems to be juggling): KVM (hardware acceleration), Qemu (hypervisor), and Libvirt (management library). KVM and Qemu started as separate projects but their code streams have been merged and hence the qemu-kvm package. In order to communicate with the KVM hypervisor libvirt is used which also has support for the management of other hypervisors such as ESX. Install KVM KVM consists of many packages, most notable are qemu-kvm, libvirt, virt-manager and virt-viewer. The virt-manager and virt-viewer packages are optional and only required for the GUI.   yum groupinstall &quot;Virtualisation Tools&quot; &quot;Virtualization Platform&quot;     yum install python-virtinst     yum install virt-manager virt-viewer     yum install qemu-kvm   Configure libvirtd This step is mainly for development environments or management tools that require tcp access to libvirtd. In order to use the libvirt APIs we need to enable access through tcp and configure authentication. In this example we will use SASL authentication.   vi /etc/libvirt/libvirtd.conf   [code language=&quot;text&quot;] listen_tls = 0 listen_tcp = 1 tcp_port=”16509” listen_addr=”&lt;IP&gt;” auth_tcp = “sasl” [/code] Note: you can disable authentication by setting auth_tcp=&quot;none&quot; but this is only recommended for development or test environments. Configure Authentication Credentials KVM has various authentication options and protocol support. Documentation regarding libvirt and remote connections as well as authentication can be found on the libvirt website. The most secure way to do things is with TLS and certificates however in the below example we are just using tcp and standard SASL user/password authentication. Create a SASL user and password for the libvirt service.   saslpasswd2 -a libvirt kvmuser   Add authentication credentials so you are not prompted for credentials. This is critical for remote access tools requiring access over tcp.   vi /etc/libvirt/auth.conf   [code language=&quot;text&quot;] [credentials-test] authname=kvmuser password=mypassword [auth-libvirt-192.168.8.132] credentials=test [/code] Upon adding credentials make sure you restart libvirtd.   service libvirtd restart   In order to test the credentials use the vrish cli command with the &quot;no_verify&quot; option. If things are working correctly you should not be prompted for credentials and get a list of virtual machines.   virsh -c qemu+tcp:///system?no_verify=1 list   (c) 2014 Keith Tenzer">
@@ -36,7 +36,7 @@
   <meta name="twitter:site" content="@keithtenzer">
   <meta name="twitter:title" content="KVM Installation and Configuration">
   <meta name="twitter:description" content="Overview KVM (Kernel Virtual Machine) is a Linux kernel module that allows a user space process to utilize hardware virtualization capabilities. When people refer to KVM they are usually talking about the hypervisor but there are in fact three components (or balls our penguin seems to be juggling): KVM (hardware acceleration), Qemu (hypervisor), and Libvirt (management library). KVM and Qemu started as separate projects but their code streams have been merged and hence the qemu-kvm package. In order to communicate with the KVM hypervisor libvirt is used which also has support for the management of other hypervisors such as ESX. Install KVM KVM consists of many packages, most notable are qemu-kvm, libvirt, virt-manager and virt-viewer. The virt-manager and virt-viewer packages are optional and only required for the GUI.   yum groupinstall &quot;Virtualisation Tools&quot; &quot;Virtualization Platform&quot;     yum install python-virtinst     yum install virt-manager virt-viewer     yum install qemu-kvm   Configure libvirtd This step is mainly for development environments or management tools that require tcp access to libvirtd. In order to use the libvirt APIs we need to enable access through tcp and configure authentication. In this example we will use SASL authentication.   vi /etc/libvirt/libvirtd.conf   [code language=&quot;text&quot;] listen_tls = 0 listen_tcp = 1 tcp_port=”16509” listen_addr=”&lt;IP&gt;” auth_tcp = “sasl” [/code] Note: you can disable authentication by setting auth_tcp=&quot;none&quot; but this is only recommended for development or test environments. Configure Authentication Credentials KVM has various authentication options and protocol support. Documentation regarding libvirt and remote connections as well as authentication can be found on the libvirt website. The most secure way to do things is with TLS and certificates however in the below example we are just using tcp and standard SASL user/password authentication. Create a SASL user and password for the libvirt service.   saslpasswd2 -a libvirt kvmuser   Add authentication credentials so you are not prompted for credentials. This is critical for remote access tools requiring access over tcp.   vi /etc/libvirt/auth.conf   [code language=&quot;text&quot;] [credentials-test] authname=kvmuser password=mypassword [auth-libvirt-192.168.8.132] credentials=test [/code] Upon adding credentials make sure you restart libvirtd.   service libvirtd restart   In order to test the credentials use the vrish cli command with the &quot;no_verify&quot; option. If things are working correctly you should not be prompted for credentials and get a list of virtual machines.   virsh -c qemu+tcp:///system?no_verify=1 list   (c) 2014 Keith Tenzer">
-  <meta name="twitter:url" content="https://keithtenzer.com/kvm/kvm-installation-and-configuration/">
+  <meta name="twitter:url" content="http://localhost:4000/kvm/kvm-installation-and-configuration/">
 
   
     <meta name="twitter:card" content="summary">
@@ -58,7 +58,7 @@
   
 
 
-<link rel="canonical" href="https://keithtenzer.com/kvm/kvm-installation-and-configuration/">
+<link rel="canonical" href="http://localhost:4000/kvm/kvm-installation-and-configuration/">
 
 
 
@@ -69,7 +69,7 @@
     
       "@type": "Person",
       "name": "Keith Tenzer",
-      "url": "https://keithtenzer.com/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -122,7 +122,7 @@
 
   </head>
 
-  <body class="layout--single">
+  <body class="layout--single wide">
     <nav class="skip-links">
   <h2 class="screen-reader-text">Skip links</h2>
   <ul>
@@ -189,7 +189,7 @@
     
       
         <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <a href="http://localhost:4000/" itemprop="item"><span itemprop="name">Home</span></a>
           <meta itemprop="position" content="1" />
         </li>
         <span class="sep">/</span>
@@ -508,11 +508,11 @@ credentials=test</p>
     <h4 class="page__share-title">Share on</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=KVM+Installation+and+Configuration%20https%3A%2F%2Fkeithtenzer.com%2Fkvm%2Fkvm-installation-and-configuration%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=KVM+Installation+and+Configuration%20http%3A%2F%2Flocalhost%3A4000%2Fkvm%2Fkvm-installation-and-configuration%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fkvm%2Fkvm-installation-and-configuration%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fkvm%2Fkvm-installation-and-configuration%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fkvm%2Fkvm-installation-and-configuration%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fkvm%2Fkvm-installation-and-configuration%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 

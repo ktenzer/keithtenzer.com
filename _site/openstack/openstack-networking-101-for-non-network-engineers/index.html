@@ -24,7 +24,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenStack Networking 101 for non-Network engineers">
-<meta property="og:url" content="https://keithtenzer.com/openstack/openstack-networking-101-for-non-network-engineers/">
+<meta property="og:url" content="http://localhost:4000/openstack/openstack-networking-101-for-non-network-engineers/">
 
 
   <meta property="og:description" content="Overview In this article we will take a deeper look into OpenStack networking and try to understand general networking concepts . We will look at how various networking concepts are implemented within OpenStack and also discuss SDNs, network scalability and HA.  The most complex service within OpenStack is certainly Neutron. Networking principles have not changed, however Neutron provides a lot of new abstractions that make is rather difficult to follow or understand traffic flows. On top of that there are many, many ways to build Network architectures within Neutron and a huge 3rd party ecosystem exists around Neutron that can make things even more confusing. Networking Basics You cannot really start a discussion around networking basics without mentioning the OSI model so that is where we will begin as well.  The OSI model identifies 7 layers, for the purposes of Neutron we are primarily concerned with layer 1 (physical), layer 2 (data link ), layer 3 (network) and layer 4 (transport). Ethernet data is transmitted in packets on layer 1. An Ethernet frame is encapsulated within a packet on layer 2.  Ethernet frames have source and destination MAC addresses however do not include routing information. Layer 2 can only broadcast on the local network segment. It does have a place holder for VLAN ID so traffic can be delivered to correct network segment based on VLAN. A VLAN is nothing more than a logical representation of a layer 2 segment.  Each host on the layer 2 network segment can communicate with one another using Ethernet frame and specifying source / destination MAC address. ARP (Address Resolution Protocol) is used to find out the location of a MAC address.  Once a MAC address has been discovered it is cached on the clients and stored in the ARP cache.  Traffic bound for MAC addresses that don&#39;t exist on layer 2 network segment must be routed over layer 3. In other words layer 3 simply connects multiple layer 2 networks together.  In this example we have three class C (255.255.255.0) network subnets. Communication between subnets requires layer 3 routing. Communication within subnet uses layer 2 ethernet frame and ARP. ICMP (Internet Control Messaging Protocol) works at layer 3, tools that use ICMP are ping and mtr. Layer 3 traffic traverses networks and each device has a routing table that understands the next hop.  We can look at the routing table and using commands like &quot;ip route get&quot;, &quot;traceroute&quot; and &quot;tracepath&quot; we can understand traffic patterns within layer 3 network. Layer 4 is of course where we get into TCP (Transmission Control Protocol) and UDP (User Datagram Protocol). TCP is a reliable protocol that ensures flow control, retransmission and ordered delivery of packets. Ports or socket streams are used to uniquely identify applications communicating with one another. Port range that exists is 1 - 65535 with 1-1023 being reserved for system ports. The default ephemeral port range in Linux is 32768 - 61000. UDP unlike TCP is a connectionless protocol. Since delivery and sequential ordering are not guaranteed, UDP is not a reliable protocol. Common applications important in OpenStack ecosystem that use UDP are DHCP, DNS, NTP and VXLAN. Network Tunneling Tunneling allows a network to support a service or protocol that isnt natively supported within network. Tunneling works by encapsulating metadata into IP packet header. It allows for connecting dissimilar networks, encapsulating services like IPV6 in IPV4 and securely connecting non-trusted networks such as is the case with VPNs. Open vSwitch (out-of-box) SDN provided with OpenStack supports following tunneling protocols: GRE,  (Generic Routing Encapsulation) VXLAN (Virtual Extensible LAN) and GENEVE (General Network Virtualization Encapsulation). Network Namespaces Linux network namespaces allow for more granular segregation of software-defined networks. Since namespaces are logically segregated there is no overlap of ip ranges. In order to see networking within namespace commands such as ip, ping, tcdump, etc need to be executed within namespace. To list network namespaces use below command. # ip netns show">
@@ -36,7 +36,7 @@
   <meta name="twitter:site" content="@keithtenzer">
   <meta name="twitter:title" content="OpenStack Networking 101 for non-Network engineers">
   <meta name="twitter:description" content="Overview In this article we will take a deeper look into OpenStack networking and try to understand general networking concepts . We will look at how various networking concepts are implemented within OpenStack and also discuss SDNs, network scalability and HA.  The most complex service within OpenStack is certainly Neutron. Networking principles have not changed, however Neutron provides a lot of new abstractions that make is rather difficult to follow or understand traffic flows. On top of that there are many, many ways to build Network architectures within Neutron and a huge 3rd party ecosystem exists around Neutron that can make things even more confusing. Networking Basics You cannot really start a discussion around networking basics without mentioning the OSI model so that is where we will begin as well.  The OSI model identifies 7 layers, for the purposes of Neutron we are primarily concerned with layer 1 (physical), layer 2 (data link ), layer 3 (network) and layer 4 (transport). Ethernet data is transmitted in packets on layer 1. An Ethernet frame is encapsulated within a packet on layer 2.  Ethernet frames have source and destination MAC addresses however do not include routing information. Layer 2 can only broadcast on the local network segment. It does have a place holder for VLAN ID so traffic can be delivered to correct network segment based on VLAN. A VLAN is nothing more than a logical representation of a layer 2 segment.  Each host on the layer 2 network segment can communicate with one another using Ethernet frame and specifying source / destination MAC address. ARP (Address Resolution Protocol) is used to find out the location of a MAC address.  Once a MAC address has been discovered it is cached on the clients and stored in the ARP cache.  Traffic bound for MAC addresses that don&#39;t exist on layer 2 network segment must be routed over layer 3. In other words layer 3 simply connects multiple layer 2 networks together.  In this example we have three class C (255.255.255.0) network subnets. Communication between subnets requires layer 3 routing. Communication within subnet uses layer 2 ethernet frame and ARP. ICMP (Internet Control Messaging Protocol) works at layer 3, tools that use ICMP are ping and mtr. Layer 3 traffic traverses networks and each device has a routing table that understands the next hop.  We can look at the routing table and using commands like &quot;ip route get&quot;, &quot;traceroute&quot; and &quot;tracepath&quot; we can understand traffic patterns within layer 3 network. Layer 4 is of course where we get into TCP (Transmission Control Protocol) and UDP (User Datagram Protocol). TCP is a reliable protocol that ensures flow control, retransmission and ordered delivery of packets. Ports or socket streams are used to uniquely identify applications communicating with one another. Port range that exists is 1 - 65535 with 1-1023 being reserved for system ports. The default ephemeral port range in Linux is 32768 - 61000. UDP unlike TCP is a connectionless protocol. Since delivery and sequential ordering are not guaranteed, UDP is not a reliable protocol. Common applications important in OpenStack ecosystem that use UDP are DHCP, DNS, NTP and VXLAN. Network Tunneling Tunneling allows a network to support a service or protocol that isnt natively supported within network. Tunneling works by encapsulating metadata into IP packet header. It allows for connecting dissimilar networks, encapsulating services like IPV6 in IPV4 and securely connecting non-trusted networks such as is the case with VPNs. Open vSwitch (out-of-box) SDN provided with OpenStack supports following tunneling protocols: GRE,  (Generic Routing Encapsulation) VXLAN (Virtual Extensible LAN) and GENEVE (General Network Virtualization Encapsulation). Network Namespaces Linux network namespaces allow for more granular segregation of software-defined networks. Since namespaces are logically segregated there is no overlap of ip ranges. In order to see networking within namespace commands such as ip, ping, tcdump, etc need to be executed within namespace. To list network namespaces use below command. # ip netns show">
-  <meta name="twitter:url" content="https://keithtenzer.com/openstack/openstack-networking-101-for-non-network-engineers/">
+  <meta name="twitter:url" content="http://localhost:4000/openstack/openstack-networking-101-for-non-network-engineers/">
 
   
     <meta name="twitter:card" content="summary">
@@ -58,7 +58,7 @@
   
 
 
-<link rel="canonical" href="https://keithtenzer.com/openstack/openstack-networking-101-for-non-network-engineers/">
+<link rel="canonical" href="http://localhost:4000/openstack/openstack-networking-101-for-non-network-engineers/">
 
 
 
@@ -69,7 +69,7 @@
     
       "@type": "Person",
       "name": "Keith Tenzer",
-      "url": "https://keithtenzer.com/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -122,7 +122,7 @@
 
   </head>
 
-  <body class="layout--single">
+  <body class="layout--single wide">
     <nav class="skip-links">
   <h2 class="screen-reader-text">Skip links</h2>
   <ul>
@@ -189,7 +189,7 @@
     
       
         <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <a href="http://localhost:4000/" itemprop="item"><span itemprop="name">Home</span></a>
           <meta itemprop="position" content="1" />
         </li>
         <span class="sep">/</span>
@@ -548,11 +548,11 @@ enable_isolated_metadata = True</pre>
     <h4 class="page__share-title">Share on</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenStack+Networking+101+for+non-Network+engineers%20https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fopenstack-networking-101-for-non-network-engineers%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenStack+Networking+101+for+non-Network+engineers%20http%3A%2F%2Flocalhost%3A4000%2Fopenstack%2Fopenstack-networking-101-for-non-network-engineers%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fopenstack-networking-101-for-non-network-engineers%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fopenstack%2Fopenstack-networking-101-for-non-network-engineers%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fopenstack-networking-101-for-non-network-engineers%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fopenstack%2Fopenstack-networking-101-for-non-network-engineers%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 

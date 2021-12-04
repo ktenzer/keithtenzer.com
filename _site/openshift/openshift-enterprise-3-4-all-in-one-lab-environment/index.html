@@ -24,7 +24,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenShift Enterprise 3.4: all-in-one Lab Environment">
-<meta property="og:url" content="https://keithtenzer.com/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">
+<meta property="og:url" content="http://localhost:4000/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">
 
 
   <meta property="og:description" content="Overview In this article we will setup a OpenShift Enterprise 3.4 all-in-one configuration. OpenShift has several different roles: masters, nodes, etcd and load balancers. An all-in-one setup means running all service on a single system. Since we are only using a single system a load balancer or ha-proxy won&#39;t be configured. If you would like to read more about OpenShift I can recommend the following:  General OpenShift Product Blogs Persistent Storage OpenShift Networking Part I OpenShift Networking Part II Aggregate Logging, Metrics, CloudForms and Jenkins Integration Deployment Scenarios OpenShift on Azure   Prerequisites Configure a VM with following:  RHEL 7.3 2 CPUs 4096 RAM 30GB disk for OS 25GB disk for docker images  # subscription-manager repos --disable=&quot;*&quot; # subscription-manager repos \     --enable=&quot;rhel-7-server-rpms&quot; \     --enable=&quot;rhel-7-server-extras-rpms&quot; \     --enable=&quot;rhel-7-server-ose-3.4-rpms&quot; # yum install wget git net-tools bind-utils iptables-services bridge-utils bash-completion # yum update -y # yum install -y atomic-openshift-utils # yum install atomic-openshift-excluder atomic-openshift-docker-excluder # atomic-openshift-excluder unexclude # yum install -y docker # vi /etc/sysconfig/docker OPTIONS=&#39;--selinux-enabled --insecure-registry 172.30.0.0/16&#39; # cat &lt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF # docker-storage-setup # systemctl enable docker # systemctl start docker # ssh-keygen # ssh-copy-id -i /root/.ssh/id_rsa-pub ose3-master.lab.com #vi /etc/hosts">
@@ -36,7 +36,7 @@
   <meta name="twitter:site" content="@keithtenzer">
   <meta name="twitter:title" content="OpenShift Enterprise 3.4: all-in-one Lab Environment">
   <meta name="twitter:description" content="Overview In this article we will setup a OpenShift Enterprise 3.4 all-in-one configuration. OpenShift has several different roles: masters, nodes, etcd and load balancers. An all-in-one setup means running all service on a single system. Since we are only using a single system a load balancer or ha-proxy won&#39;t be configured. If you would like to read more about OpenShift I can recommend the following:  General OpenShift Product Blogs Persistent Storage OpenShift Networking Part I OpenShift Networking Part II Aggregate Logging, Metrics, CloudForms and Jenkins Integration Deployment Scenarios OpenShift on Azure   Prerequisites Configure a VM with following:  RHEL 7.3 2 CPUs 4096 RAM 30GB disk for OS 25GB disk for docker images  # subscription-manager repos --disable=&quot;*&quot; # subscription-manager repos \     --enable=&quot;rhel-7-server-rpms&quot; \     --enable=&quot;rhel-7-server-extras-rpms&quot; \     --enable=&quot;rhel-7-server-ose-3.4-rpms&quot; # yum install wget git net-tools bind-utils iptables-services bridge-utils bash-completion # yum update -y # yum install -y atomic-openshift-utils # yum install atomic-openshift-excluder atomic-openshift-docker-excluder # atomic-openshift-excluder unexclude # yum install -y docker # vi /etc/sysconfig/docker OPTIONS=&#39;--selinux-enabled --insecure-registry 172.30.0.0/16&#39; # cat &lt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF # docker-storage-setup # systemctl enable docker # systemctl start docker # ssh-keygen # ssh-copy-id -i /root/.ssh/id_rsa-pub ose3-master.lab.com #vi /etc/hosts">
-  <meta name="twitter:url" content="https://keithtenzer.com/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">
+  <meta name="twitter:url" content="http://localhost:4000/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">
 
   
     <meta name="twitter:card" content="summary">
@@ -58,7 +58,7 @@
   
 
 
-<link rel="canonical" href="https://keithtenzer.com/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">
+<link rel="canonical" href="http://localhost:4000/openshift/openshift-enterprise-3-4-all-in-one-lab-environment/">
 
 
 
@@ -69,7 +69,7 @@
     
       "@type": "Person",
       "name": "Keith Tenzer",
-      "url": "https://keithtenzer.com/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -122,7 +122,7 @@
 
   </head>
 
-  <body class="layout--single">
+  <body class="layout--single wide">
     <nav class="skip-links">
   <h2 class="screen-reader-text">Skip links</h2>
   <ul>
@@ -189,7 +189,7 @@
     
       
         <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <a href="http://localhost:4000/" itemprop="item"><span itemprop="name">Home</span></a>
           <meta itemprop="position" content="1" />
         </li>
         <span class="sep">/</span>
@@ -532,11 +532,11 @@ ose3-master.lab.com
     <h4 class="page__share-title">Share on</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenShift+Enterprise+3.4%3A+all-in-one+Lab+Environment%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-enterprise-3-4-all-in-one-lab-environment%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenShift+Enterprise+3.4%3A+all-in-one+Lab+Environment%20http%3A%2F%2Flocalhost%3A4000%2Fopenshift%2Fopenshift-enterprise-3-4-all-in-one-lab-environment%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-enterprise-3-4-all-in-one-lab-environment%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fopenshift%2Fopenshift-enterprise-3-4-all-in-one-lab-environment%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fopenshift-enterprise-3-4-all-in-one-lab-environment%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fopenshift%2Fopenshift-enterprise-3-4-all-in-one-lab-environment%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 

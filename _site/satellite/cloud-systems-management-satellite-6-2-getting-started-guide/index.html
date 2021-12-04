@@ -24,7 +24,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Cloud Systems Management: Satellite 6.2 Getting Started Guide">
-<meta property="og:url" content="https://keithtenzer.com/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">
+<meta property="og:url" content="http://localhost:4000/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">
 
 
   <meta property="og:description" content="Overview In this article we will look at how to install Satellite 6.2 and configure a base environment. This article builds on a similar article I published for Satellite 6.1. In addition to installing and configuring Satellite we will also look at one of the long awaited new features remote-cmd execution.  If you are coming from Satellite 5 world then you will want to familiarize yourself with the concepts and how they apply in Satellite 6. The biggest change is around how you manage content through stages (life-cycle enviornments) but there is also a lot more.  source: https://www.windowspro.de/sites/windowspro.de/files/imagepicker/6/Red_Hat_Satellite_6_Life_Cycle.png Features Satellite 6.2 continues to build on that release and provides the following features:   Automated Workflows -- This includes remote execution, scheduling for remote execution jobs and expanded bootstrap and provisioning options.   Air-gapped security and federation -- Inter-Satellite sync is now available to export RPM content from one Satellite to import into another   Software Management Improvements -- Simplified Smart Variable management is now available.   Capsule improvements -- Users now have deeper insight into Capsule health and overall performance; Capsules are lighter-weight and can be configured to store only the content that has been requested by its clients; and a new Reference Architecture including deploying a Highly Available Satellite Capsule is now available.   Atomic OSTree and containers -- Mirror, provision and manage RHEL Atomic hosts and content with Satellite; mirror container repositories such as Red Hat Registry, DockerHub™ and other 3rd-party sources; and Satellite provides a secure, curated point of entry for container content   Enhanced documentation -- Both new and improved documentation is available. (https://access.redhat.com/documentation/red-hat-satellite/)   New Guides   Virtual Instance Guide (How to configure virt-who)   Hammer CLI Guide (How to use Satellite’s CLI)   Content Management Guide (How to easily manage Satellite’s content )   Quickstart Guide (How to get up and running quickly)          Improved/more user-friendly documentation      User Guide split to make more topical and easier to follow:   Server Administration Guide   Host Configuration Guide   “Cheat Sheets” available for specific topics (Hammer)   Updated Feature Overviews     Prerequisites In order to install Satellite we need a subscription and of course RHEL 6 or 7. subscription-manager register subscription-manager list --available subscription-manager attach --pool=934893843989289 subscription-manager repos --disable &quot;*&quot; RHEL 6 subscription-manager repos --enable=rhel-6-server-rpms \ --enable=rhel-server-rhscl-6-rpms \ --enable=rhel-6-server-satellite-6.2-rpms RHEL 7 subscription-manager repos --enable=rhel-7-server-rpms \ --enable=rhel-server-rhscl-7-rpms \ --enable=rhel-7-server-satellite-6.2-rpms Update all packages. # yum update -y Add Firewall rules. RHEL 6 # iptables -A INPUT -m state --state NEW -p udp --dport 53 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 53 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p udp --dport 67 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p udp --dport 69 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 80 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 443 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 5647 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 8140 -j ACCEPT \ &amp;&amp; iptables-save &gt; /etc/sysconfig/iptables RHEL 7 # firewall-cmd --add-service=RH-Satellite-6 # firewall-cmd --permanent --add-service=RH-Satellite-6 NTP # yum install chrony">
@@ -36,7 +36,7 @@
   <meta name="twitter:site" content="@keithtenzer">
   <meta name="twitter:title" content="Cloud Systems Management: Satellite 6.2 Getting Started Guide">
   <meta name="twitter:description" content="Overview In this article we will look at how to install Satellite 6.2 and configure a base environment. This article builds on a similar article I published for Satellite 6.1. In addition to installing and configuring Satellite we will also look at one of the long awaited new features remote-cmd execution.  If you are coming from Satellite 5 world then you will want to familiarize yourself with the concepts and how they apply in Satellite 6. The biggest change is around how you manage content through stages (life-cycle enviornments) but there is also a lot more.  source: https://www.windowspro.de/sites/windowspro.de/files/imagepicker/6/Red_Hat_Satellite_6_Life_Cycle.png Features Satellite 6.2 continues to build on that release and provides the following features:   Automated Workflows -- This includes remote execution, scheduling for remote execution jobs and expanded bootstrap and provisioning options.   Air-gapped security and federation -- Inter-Satellite sync is now available to export RPM content from one Satellite to import into another   Software Management Improvements -- Simplified Smart Variable management is now available.   Capsule improvements -- Users now have deeper insight into Capsule health and overall performance; Capsules are lighter-weight and can be configured to store only the content that has been requested by its clients; and a new Reference Architecture including deploying a Highly Available Satellite Capsule is now available.   Atomic OSTree and containers -- Mirror, provision and manage RHEL Atomic hosts and content with Satellite; mirror container repositories such as Red Hat Registry, DockerHub™ and other 3rd-party sources; and Satellite provides a secure, curated point of entry for container content   Enhanced documentation -- Both new and improved documentation is available. (https://access.redhat.com/documentation/red-hat-satellite/)   New Guides   Virtual Instance Guide (How to configure virt-who)   Hammer CLI Guide (How to use Satellite’s CLI)   Content Management Guide (How to easily manage Satellite’s content )   Quickstart Guide (How to get up and running quickly)          Improved/more user-friendly documentation      User Guide split to make more topical and easier to follow:   Server Administration Guide   Host Configuration Guide   “Cheat Sheets” available for specific topics (Hammer)   Updated Feature Overviews     Prerequisites In order to install Satellite we need a subscription and of course RHEL 6 or 7. subscription-manager register subscription-manager list --available subscription-manager attach --pool=934893843989289 subscription-manager repos --disable &quot;*&quot; RHEL 6 subscription-manager repos --enable=rhel-6-server-rpms \ --enable=rhel-server-rhscl-6-rpms \ --enable=rhel-6-server-satellite-6.2-rpms RHEL 7 subscription-manager repos --enable=rhel-7-server-rpms \ --enable=rhel-server-rhscl-7-rpms \ --enable=rhel-7-server-satellite-6.2-rpms Update all packages. # yum update -y Add Firewall rules. RHEL 6 # iptables -A INPUT -m state --state NEW -p udp --dport 53 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 53 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p udp --dport 67 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p udp --dport 69 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 80 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 443 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 5647 -j ACCEPT \ &amp;&amp; iptables -A INPUT -m state --state NEW -p tcp --dport 8140 -j ACCEPT \ &amp;&amp; iptables-save &gt; /etc/sysconfig/iptables RHEL 7 # firewall-cmd --add-service=RH-Satellite-6 # firewall-cmd --permanent --add-service=RH-Satellite-6 NTP # yum install chrony">
-  <meta name="twitter:url" content="https://keithtenzer.com/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">
+  <meta name="twitter:url" content="http://localhost:4000/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">
 
   
     <meta name="twitter:card" content="summary">
@@ -58,7 +58,7 @@
   
 
 
-<link rel="canonical" href="https://keithtenzer.com/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">
+<link rel="canonical" href="http://localhost:4000/satellite/cloud-systems-management-satellite-6-2-getting-started-guide/">
 
 
 
@@ -69,7 +69,7 @@
     
       "@type": "Person",
       "name": "Keith Tenzer",
-      "url": "https://keithtenzer.com/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -122,7 +122,7 @@
 
   </head>
 
-  <body class="layout--single">
+  <body class="layout--single wide">
     <nav class="skip-links">
   <h2 class="screen-reader-text">Skip links</h2>
   <ul>
@@ -189,7 +189,7 @@
     
       
         <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <a href="http://localhost:4000/" itemprop="item"><span itemprop="name">Home</span></a>
           <meta itemprop="position" content="1" />
         </li>
         <span class="sep">/</span>
@@ -844,11 +844,11 @@ Exit status: 0</pre>
     <h4 class="page__share-title">Share on</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Cloud+Systems+Management%3A+Satellite+6.2+Getting+Started+Guide%20https%3A%2F%2Fkeithtenzer.com%2Fsatellite%2Fcloud-systems-management-satellite-6-2-getting-started-guide%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Cloud+Systems+Management%3A+Satellite+6.2+Getting+Started+Guide%20http%3A%2F%2Flocalhost%3A4000%2Fsatellite%2Fcloud-systems-management-satellite-6-2-getting-started-guide%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fsatellite%2Fcloud-systems-management-satellite-6-2-getting-started-guide%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fsatellite%2Fcloud-systems-management-satellite-6-2-getting-started-guide%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fsatellite%2Fcloud-systems-management-satellite-6-2-getting-started-guide%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fsatellite%2Fcloud-systems-management-satellite-6-2-getting-started-guide%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 

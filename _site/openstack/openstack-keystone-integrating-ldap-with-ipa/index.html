@@ -24,7 +24,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenStack Keystone: Integrating LDAP with IPA">
-<meta property="og:url" content="https://keithtenzer.com/openstack/openstack-keystone-integrating-ldap-with-ipa/">
+<meta property="og:url" content="http://localhost:4000/openstack/openstack-keystone-integrating-ldap-with-ipa/">
 
 
   <meta property="og:description" content="Overview  Keystone is the identity service in OpenStack responsible for authentication of users and services. Keystone leverages tokens which are transient in nature. In addition to authentication Keystone allows for policy management defining roles and responsibilities that govern users, services and tenants. Fine granular RBAC is also possible, Keystone allows for mapping capabilities directly to users. Finally, Keystone provides a catalog for all service endpoints within OpenStack. Most organizations will have either central AD or LDAP for managing users and services. In this article we will integrate Keystone with LDAP using central IPA server.  Setup IPA Server A special thanks to Asaf Waizman and his team at Red Hat for providing a lot of insight on this subject. Before we configure Keystone we need to ensure a central identity management system is configured.  Install RHEL or CentOS 7.1 If using RHEL ensure subscription-manager is configured for appropriate repos  [root@ipa ~]# subscription-manager attach --pool=39482983298398232 [root@ipa ~]# subscription-manager repos --disable=*  [root@ipa ~]# subscription-manager repos --enable=rhel-7-server-rpms  [root@ipa ~]# subscription-manager repos --enable=rhel-7-server-aus-rpms  Install IPA Server  [root@ipa ~]# yum install ipa-server ipa-server-dns  Configure IPA Server  [root@ipa ~]# ipa-server-install">
@@ -36,7 +36,7 @@
   <meta name="twitter:site" content="@keithtenzer">
   <meta name="twitter:title" content="OpenStack Keystone: Integrating LDAP with IPA">
   <meta name="twitter:description" content="Overview  Keystone is the identity service in OpenStack responsible for authentication of users and services. Keystone leverages tokens which are transient in nature. In addition to authentication Keystone allows for policy management defining roles and responsibilities that govern users, services and tenants. Fine granular RBAC is also possible, Keystone allows for mapping capabilities directly to users. Finally, Keystone provides a catalog for all service endpoints within OpenStack. Most organizations will have either central AD or LDAP for managing users and services. In this article we will integrate Keystone with LDAP using central IPA server.  Setup IPA Server A special thanks to Asaf Waizman and his team at Red Hat for providing a lot of insight on this subject. Before we configure Keystone we need to ensure a central identity management system is configured.  Install RHEL or CentOS 7.1 If using RHEL ensure subscription-manager is configured for appropriate repos  [root@ipa ~]# subscription-manager attach --pool=39482983298398232 [root@ipa ~]# subscription-manager repos --disable=*  [root@ipa ~]# subscription-manager repos --enable=rhel-7-server-rpms  [root@ipa ~]# subscription-manager repos --enable=rhel-7-server-aus-rpms  Install IPA Server  [root@ipa ~]# yum install ipa-server ipa-server-dns  Configure IPA Server  [root@ipa ~]# ipa-server-install">
-  <meta name="twitter:url" content="https://keithtenzer.com/openstack/openstack-keystone-integrating-ldap-with-ipa/">
+  <meta name="twitter:url" content="http://localhost:4000/openstack/openstack-keystone-integrating-ldap-with-ipa/">
 
   
     <meta name="twitter:card" content="summary">
@@ -58,7 +58,7 @@
   
 
 
-<link rel="canonical" href="https://keithtenzer.com/openstack/openstack-keystone-integrating-ldap-with-ipa/">
+<link rel="canonical" href="http://localhost:4000/openstack/openstack-keystone-integrating-ldap-with-ipa/">
 
 
 
@@ -69,7 +69,7 @@
     
       "@type": "Person",
       "name": "Keith Tenzer",
-      "url": "https://keithtenzer.com/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -122,7 +122,7 @@
 
   </head>
 
-  <body class="layout--single">
+  <body class="layout--single wide">
     <nav class="skip-links">
   <h2 class="screen-reader-text">Skip links</h2>
   <ul>
@@ -189,7 +189,7 @@
     
       
         <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <a href="http://localhost:4000/" itemprop="item"><span itemprop="name">Home</span></a>
           <meta itemprop="position" content="1" />
         </li>
         <span class="sep">/</span>
@@ -693,11 +693,11 @@ export PS1='[\u@\h \W(keystone_ospadmin)]\$ '</pre>
     <h4 class="page__share-title">Share on</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenStack+Keystone%3A+Integrating+LDAP+with+IPA%20https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fopenstack-keystone-integrating-ldap-with-ipa%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenStack+Keystone%3A+Integrating+LDAP+with+IPA%20http%3A%2F%2Flocalhost%3A4000%2Fopenstack%2Fopenstack-keystone-integrating-ldap-with-ipa%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fopenstack-keystone-integrating-ldap-with-ipa%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fopenstack%2Fopenstack-keystone-integrating-ldap-with-ipa%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fopenstack-keystone-integrating-ldap-with-ipa%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fopenstack%2Fopenstack-keystone-integrating-ldap-with-ipa%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 

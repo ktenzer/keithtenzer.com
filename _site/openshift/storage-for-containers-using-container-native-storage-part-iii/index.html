@@ -24,7 +24,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Storage for Containers using Container Native Storage – Part III">
-<meta property="og:url" content="https://keithtenzer.com/openshift/storage-for-containers-using-container-native-storage-part-iii/">
+<meta property="og:url" content="http://localhost:4000/openshift/storage-for-containers-using-container-native-storage-part-iii/">
 
 
   <meta property="og:description" content="Overview In this article we will focus on a new area of storage for containers called Container Native Storage. This article is a collaboration between Daniel Messer (Technical Marketing Manager Storage @RedHat) and Keith Tenzer (Sr. Solutions Architect @RedHat).  Storage for Containers Overview – Part I Storage for Containers using Gluster – Part II Storage for Containers using Container Native Storage – Part III Storage for Containers using Ceph – Part IV Storage for Containers using NetApp ONTAP NAS – Part V Storage for Containers using NetApp SolidFire – Part VI  So What is Container Native Storage? Essentially container native storage or CNS is a hyper-converged approach to storage and compute in the context of containers. Each container host or node supplies both compute and storage allowing storage to be completely integrated or absorbed by the platform itself. A software-defined storage system running in containers on the platform, consumes disks provided by nodes and provides a cluster-wide storage abstraction layer. The software-defined storage system then provides capabilities such as high-availability, dynamic provisioning and general storage management. This enables DevOps from a storage perspective, allows storage to grow with the container platform and delivers a high level of efficiency.  Container Native Storage Overview CNS is realized by containerizing GlusterFS in a Docker container. This is deployed on a running OpenShift or Kubernetes cluster using native container orchestration provided by the platform. To provide integration with the storage provisioning framework an additional management component is added to GlusterFS called heketi. It serves as an API and CLI front-end for storage lifecyle operations. In addition it supports multiple deployment scenarios. Heketi runs containerized along side the GlusterFS pods on OpenShift or Kubernetes cluster. The entire deployment of this infrastructure is automated using a utility called cns-deploy. Container Native Storage Pre-requisites There are several container orchestration technologies such as Docker Swarm, Marathon (Mesos), Diego (CloudFoundry) and Kubernetes (OpenShift). Container Native Storage applies to Kubernetes and OpenShift as Kubernetes supports both stateless and stateful applications. In order to use CNS you need an OpenShift cluster. To setup OpenShift you can follow this article. As the article focuses on an all-in-one setup, meaning a single VM you will need to make a few minor changes. Create minimum of three VMs Each VM should have following spec:  RHEL 7.2 or 7.3 2 vCPUs 4GB RAM 30 GB Root Disk 25 GB Docker Disk 3 x 20GB CNS Disks  Update OpenShift Ansible Inventory Since the article only deploys a single VM we need to change the inventory to reflect 3 nodes. ... # host group for masters [masters] ose3-master.lab.com">
@@ -36,7 +36,7 @@
   <meta name="twitter:site" content="@keithtenzer">
   <meta name="twitter:title" content="Storage for Containers using Container Native Storage – Part III">
   <meta name="twitter:description" content="Overview In this article we will focus on a new area of storage for containers called Container Native Storage. This article is a collaboration between Daniel Messer (Technical Marketing Manager Storage @RedHat) and Keith Tenzer (Sr. Solutions Architect @RedHat).  Storage for Containers Overview – Part I Storage for Containers using Gluster – Part II Storage for Containers using Container Native Storage – Part III Storage for Containers using Ceph – Part IV Storage for Containers using NetApp ONTAP NAS – Part V Storage for Containers using NetApp SolidFire – Part VI  So What is Container Native Storage? Essentially container native storage or CNS is a hyper-converged approach to storage and compute in the context of containers. Each container host or node supplies both compute and storage allowing storage to be completely integrated or absorbed by the platform itself. A software-defined storage system running in containers on the platform, consumes disks provided by nodes and provides a cluster-wide storage abstraction layer. The software-defined storage system then provides capabilities such as high-availability, dynamic provisioning and general storage management. This enables DevOps from a storage perspective, allows storage to grow with the container platform and delivers a high level of efficiency.  Container Native Storage Overview CNS is realized by containerizing GlusterFS in a Docker container. This is deployed on a running OpenShift or Kubernetes cluster using native container orchestration provided by the platform. To provide integration with the storage provisioning framework an additional management component is added to GlusterFS called heketi. It serves as an API and CLI front-end for storage lifecyle operations. In addition it supports multiple deployment scenarios. Heketi runs containerized along side the GlusterFS pods on OpenShift or Kubernetes cluster. The entire deployment of this infrastructure is automated using a utility called cns-deploy. Container Native Storage Pre-requisites There are several container orchestration technologies such as Docker Swarm, Marathon (Mesos), Diego (CloudFoundry) and Kubernetes (OpenShift). Container Native Storage applies to Kubernetes and OpenShift as Kubernetes supports both stateless and stateful applications. In order to use CNS you need an OpenShift cluster. To setup OpenShift you can follow this article. As the article focuses on an all-in-one setup, meaning a single VM you will need to make a few minor changes. Create minimum of three VMs Each VM should have following spec:  RHEL 7.2 or 7.3 2 vCPUs 4GB RAM 30 GB Root Disk 25 GB Docker Disk 3 x 20GB CNS Disks  Update OpenShift Ansible Inventory Since the article only deploys a single VM we need to change the inventory to reflect 3 nodes. ... # host group for masters [masters] ose3-master.lab.com">
-  <meta name="twitter:url" content="https://keithtenzer.com/openshift/storage-for-containers-using-container-native-storage-part-iii/">
+  <meta name="twitter:url" content="http://localhost:4000/openshift/storage-for-containers-using-container-native-storage-part-iii/">
 
   
     <meta name="twitter:card" content="summary">
@@ -58,7 +58,7 @@
   
 
 
-<link rel="canonical" href="https://keithtenzer.com/openshift/storage-for-containers-using-container-native-storage-part-iii/">
+<link rel="canonical" href="http://localhost:4000/openshift/storage-for-containers-using-container-native-storage-part-iii/">
 
 
 
@@ -69,7 +69,7 @@
     
       "@type": "Person",
       "name": "Keith Tenzer",
-      "url": "https://keithtenzer.com/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -122,7 +122,7 @@
 
   </head>
 
-  <body class="layout--single">
+  <body class="layout--single wide">
     <nav class="skip-links">
   <h2 class="screen-reader-text">Skip links</h2>
   <ul>
@@ -189,7 +189,7 @@
     
       
         <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <a href="http://localhost:4000/" itemprop="item"><span itemprop="name">Home</span></a>
           <meta itemprop="position" content="1" />
         </li>
         <span class="sep">/</span>
@@ -988,11 +988,11 @@ aria_log.00000001 aria_log_control ib_logfile0 ib_logfile1 ibdata1 mariadb-1-wwu
     <h4 class="page__share-title">Share on</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Storage+for+Containers+using+Container+Native+Storage+%E2%80%93+Part+III%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fstorage-for-containers-using-container-native-storage-part-iii%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Storage+for+Containers+using+Container+Native+Storage+%E2%80%93+Part+III%20http%3A%2F%2Flocalhost%3A4000%2Fopenshift%2Fstorage-for-containers-using-container-native-storage-part-iii%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fstorage-for-containers-using-container-native-storage-part-iii%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fopenshift%2Fstorage-for-containers-using-container-native-storage-part-iii%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fstorage-for-containers-using-container-native-storage-part-iii%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fopenshift%2Fstorage-for-containers-using-container-native-storage-part-iii%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 

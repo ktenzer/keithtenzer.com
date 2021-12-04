@@ -24,7 +24,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="OpenStack Manila Integration with Ceph">
-<meta property="og:url" content="https://keithtenzer.com/openstack/openstack-manila-integration-with-ceph/">
+<meta property="og:url" content="http://localhost:4000/openstack/openstack-manila-integration-with-ceph/">
 
 
   <meta property="og:description" content="Overview In this article we will configure OpenStack Manila using CephFS as a storage backend. OpenStack Manila is an OpenStack project providing file services. Manila is storage backend agnostic and you can have many different kinds of storage backends, similar to Cinder. CephFS is a POSIX-Compliant file system that uses the Ceph storage cluster to store data. CephFS works by providing a Metadata Server (MDS) that collectively manages filesystem namespaces. It also coordinates access to Ceph Object Storage Damones (OSDs). Ceph MDS has two modes: active or passive. There are several documented active/passive MDS configurations and multi-mds or active/active MDS that can be configured when a single MDS becomes a bottleneck. Clients can mount CephFS filesystems using the ceph-fuse client or kernel kernel driver. Integrating Ceph with OpenStack Series:  Integrating Ceph with OpenStack Cinder, Glance and Nova Integrating Ceph with Swift Integrating Ceph with Manila  Prerequisites The following are required to configure OpenStack Manila with CephFS:  Already configured Ceph cluster (Jewel or higher). See here to setup Ceph cluster. Already configured OpenStack (Mitaka or higher). See here to setup OpenStack.   Configure CephFS [All Ceph Nodes] Add repository for ceph tools. # subscription-manager repos --enable=rhel-7-server-rhceph-2-tools-rpms [Ceph Ansible Node] Update Ansible inventory file and add metadata server. #vi /etc/host/ansible ... [mdss] ceph2 ... Note: For non-lab environment you definitely wan&#39;t to configure multiple MDS servers. One is active and additional servers are passive. Run Ansible. # su - ansible $ cd /usr/share/ceph-ansible $ ansible-playbook site.yml -vvvv PLAY RECAP ********************************************************************  ceph1 : ok=369 changed=1 unreachable=0 failed=0  ceph2 : ok=364 changed=11 unreachable=0 failed=0  ceph3 : ok=369 changed=1 unreachable=0 failed=0 [Ceph Monitor Node] Check CephFS metadata server. # ceph mds stat e24: 1/1/1 up {0=ceph2=up:active} Create keyring and cephx authentication key for Manila service. # read -d &#39;&#39; MON_CAPS &lt;&lt; EOF allow r, allow command &quot;auth del&quot;, allow command &quot;auth caps&quot;, allow command &quot;auth get&quot;, allow command &quot;auth get-or-create&quot; EOF">
@@ -36,7 +36,7 @@
   <meta name="twitter:site" content="@keithtenzer">
   <meta name="twitter:title" content="OpenStack Manila Integration with Ceph">
   <meta name="twitter:description" content="Overview In this article we will configure OpenStack Manila using CephFS as a storage backend. OpenStack Manila is an OpenStack project providing file services. Manila is storage backend agnostic and you can have many different kinds of storage backends, similar to Cinder. CephFS is a POSIX-Compliant file system that uses the Ceph storage cluster to store data. CephFS works by providing a Metadata Server (MDS) that collectively manages filesystem namespaces. It also coordinates access to Ceph Object Storage Damones (OSDs). Ceph MDS has two modes: active or passive. There are several documented active/passive MDS configurations and multi-mds or active/active MDS that can be configured when a single MDS becomes a bottleneck. Clients can mount CephFS filesystems using the ceph-fuse client or kernel kernel driver. Integrating Ceph with OpenStack Series:  Integrating Ceph with OpenStack Cinder, Glance and Nova Integrating Ceph with Swift Integrating Ceph with Manila  Prerequisites The following are required to configure OpenStack Manila with CephFS:  Already configured Ceph cluster (Jewel or higher). See here to setup Ceph cluster. Already configured OpenStack (Mitaka or higher). See here to setup OpenStack.   Configure CephFS [All Ceph Nodes] Add repository for ceph tools. # subscription-manager repos --enable=rhel-7-server-rhceph-2-tools-rpms [Ceph Ansible Node] Update Ansible inventory file and add metadata server. #vi /etc/host/ansible ... [mdss] ceph2 ... Note: For non-lab environment you definitely wan&#39;t to configure multiple MDS servers. One is active and additional servers are passive. Run Ansible. # su - ansible $ cd /usr/share/ceph-ansible $ ansible-playbook site.yml -vvvv PLAY RECAP ********************************************************************  ceph1 : ok=369 changed=1 unreachable=0 failed=0  ceph2 : ok=364 changed=11 unreachable=0 failed=0  ceph3 : ok=369 changed=1 unreachable=0 failed=0 [Ceph Monitor Node] Check CephFS metadata server. # ceph mds stat e24: 1/1/1 up {0=ceph2=up:active} Create keyring and cephx authentication key for Manila service. # read -d &#39;&#39; MON_CAPS &lt;&lt; EOF allow r, allow command &quot;auth del&quot;, allow command &quot;auth caps&quot;, allow command &quot;auth get&quot;, allow command &quot;auth get-or-create&quot; EOF">
-  <meta name="twitter:url" content="https://keithtenzer.com/openstack/openstack-manila-integration-with-ceph/">
+  <meta name="twitter:url" content="http://localhost:4000/openstack/openstack-manila-integration-with-ceph/">
 
   
     <meta name="twitter:card" content="summary">
@@ -58,7 +58,7 @@
   
 
 
-<link rel="canonical" href="https://keithtenzer.com/openstack/openstack-manila-integration-with-ceph/">
+<link rel="canonical" href="http://localhost:4000/openstack/openstack-manila-integration-with-ceph/">
 
 
 
@@ -69,7 +69,7 @@
     
       "@type": "Person",
       "name": "Keith Tenzer",
-      "url": "https://keithtenzer.com/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -122,7 +122,7 @@
 
   </head>
 
-  <body class="layout--single">
+  <body class="layout--single wide">
     <nav class="skip-links">
   <h2 class="screen-reader-text">Skip links</h2>
   <ul>
@@ -189,7 +189,7 @@
     
       
         <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <a href="http://localhost:4000/" itemprop="item"><span itemprop="name">Home</span></a>
           <meta itemprop="position" content="1" />
         </li>
         <span class="sep">/</span>
@@ -653,11 +653,11 @@ e46: 1/1/1 up {0=ceph2=up:active}</pre>
     <h4 class="page__share-title">Share on</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenStack+Manila+Integration+with+Ceph%20https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fopenstack-manila-integration-with-ceph%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=OpenStack+Manila+Integration+with+Ceph%20http%3A%2F%2Flocalhost%3A4000%2Fopenstack%2Fopenstack-manila-integration-with-ceph%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fopenstack-manila-integration-with-ceph%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fopenstack%2Fopenstack-manila-integration-with-ceph%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenstack%2Fopenstack-manila-integration-with-ceph%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fopenstack%2Fopenstack-manila-integration-with-ceph%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 

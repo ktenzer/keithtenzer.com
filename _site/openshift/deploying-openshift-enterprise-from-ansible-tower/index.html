@@ -24,7 +24,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Keith Tenzer's Blog">
 <meta property="og:title" content="Deploying OpenShift Enterprise from Ansible Tower">
-<meta property="og:url" content="https://keithtenzer.com/openshift/deploying-openshift-enterprise-from-ansible-tower/">
+<meta property="og:url" content="http://localhost:4000/openshift/deploying-openshift-enterprise-from-ansible-tower/">
 
 
   <meta property="og:description" content="   Overview In this article we will look at how to use Ansible Tower to deploy and manage OpenShift environments. OpenShift of course uses Ansible as its deployment and configuration tool already. While that is great, using Tower provides several major advantages:  UI for OpenShift deployment and configuration management Secure store for credentials RBAC and ability to delegate different responsibilities for OpenShift deployments Easy to visualize and manage multiple OpenShift environments and even versions of OpenShift History, audit trail and detailed logging in central location for all OpenShift environments and deployments   Prepare OpenShift Environment In this example we will be doing an all-in-one deployment of OpenShift. The following steps should be done on OpenShift masters and nodes. Again here we just have one node since it is an all-in-one. CONFIGURE A VMs WITH FOLLOWING:  RHEL 7.2 2 CPUs 4096 RAM 30GB disk for OS 25GB disk for docker images  REGISTER VALID SUBSCRIPTION # subscription-manager register # subscription-manager attach --pool=843298293829382 # subscription-manager repos --disable=&quot;*&quot; #subscription-manager repos \     --enable=&quot;rhel-7-server-rpms&quot; \     --enable=&quot;rhel-7-server-extras-rpms&quot; \     --enable=&quot;rhel-7-server-ose-3.3-rpms&quot; INSTALL REQUIRED TOOLS # yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion UPDATE # yum update -y RESTART OPENSHIFT MASTER # systemctl reboot CONFIGURE DOCKER # yum install -y docker-1.10.3 ENABLE DOCKER DAEMON TO PULL FROM OPENSHIFT REGISTRY # vi /etc/sysconfig/docker OPTIONS=&#39;--selinux-enabled --insecure-registry 172.30.0.0/16&#39; SETUP DOCKER STORAGE FOR OPENSHIFT REGISTRY Note: we will use the second disk for configuring docker storage. # cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF # docker-storage-setup ENABLE AND START DOCKER DAEMON # systemctl enable docker # systemctl start docker Import OpenShift inventory into Ansible Tower These steps should be done directly on the host running Ansible Tower. Create Inventory in Ansible Tower Under inventories add a new inventory.  Create directors for OpenShift inventory # mkdir /root/ose3 Setup ansible-hosts file # vi /root/ose3/ansible-hosts ########################## ### OSEv3 Server Types ### ########################## [OSEv3:children] masters nodes etcd">
@@ -36,7 +36,7 @@
   <meta name="twitter:site" content="@keithtenzer">
   <meta name="twitter:title" content="Deploying OpenShift Enterprise from Ansible Tower">
   <meta name="twitter:description" content="   Overview In this article we will look at how to use Ansible Tower to deploy and manage OpenShift environments. OpenShift of course uses Ansible as its deployment and configuration tool already. While that is great, using Tower provides several major advantages:  UI for OpenShift deployment and configuration management Secure store for credentials RBAC and ability to delegate different responsibilities for OpenShift deployments Easy to visualize and manage multiple OpenShift environments and even versions of OpenShift History, audit trail and detailed logging in central location for all OpenShift environments and deployments   Prepare OpenShift Environment In this example we will be doing an all-in-one deployment of OpenShift. The following steps should be done on OpenShift masters and nodes. Again here we just have one node since it is an all-in-one. CONFIGURE A VMs WITH FOLLOWING:  RHEL 7.2 2 CPUs 4096 RAM 30GB disk for OS 25GB disk for docker images  REGISTER VALID SUBSCRIPTION # subscription-manager register # subscription-manager attach --pool=843298293829382 # subscription-manager repos --disable=&quot;*&quot; #subscription-manager repos \     --enable=&quot;rhel-7-server-rpms&quot; \     --enable=&quot;rhel-7-server-extras-rpms&quot; \     --enable=&quot;rhel-7-server-ose-3.3-rpms&quot; INSTALL REQUIRED TOOLS # yum install -y wget git net-tools bind-utils iptables-services bridge-utils bash-completion UPDATE # yum update -y RESTART OPENSHIFT MASTER # systemctl reboot CONFIGURE DOCKER # yum install -y docker-1.10.3 ENABLE DOCKER DAEMON TO PULL FROM OPENSHIFT REGISTRY # vi /etc/sysconfig/docker OPTIONS=&#39;--selinux-enabled --insecure-registry 172.30.0.0/16&#39; SETUP DOCKER STORAGE FOR OPENSHIFT REGISTRY Note: we will use the second disk for configuring docker storage. # cat &lt;&lt;EOF &gt; /etc/sysconfig/docker-storage-setup DEVS=/dev/vdb VG=docker-vg EOF # docker-storage-setup ENABLE AND START DOCKER DAEMON # systemctl enable docker # systemctl start docker Import OpenShift inventory into Ansible Tower These steps should be done directly on the host running Ansible Tower. Create Inventory in Ansible Tower Under inventories add a new inventory.  Create directors for OpenShift inventory # mkdir /root/ose3 Setup ansible-hosts file # vi /root/ose3/ansible-hosts ########################## ### OSEv3 Server Types ### ########################## [OSEv3:children] masters nodes etcd">
-  <meta name="twitter:url" content="https://keithtenzer.com/openshift/deploying-openshift-enterprise-from-ansible-tower/">
+  <meta name="twitter:url" content="http://localhost:4000/openshift/deploying-openshift-enterprise-from-ansible-tower/">
 
   
     <meta name="twitter:card" content="summary">
@@ -58,7 +58,7 @@
   
 
 
-<link rel="canonical" href="https://keithtenzer.com/openshift/deploying-openshift-enterprise-from-ansible-tower/">
+<link rel="canonical" href="http://localhost:4000/openshift/deploying-openshift-enterprise-from-ansible-tower/">
 
 
 
@@ -69,7 +69,7 @@
     
       "@type": "Person",
       "name": "Keith Tenzer",
-      "url": "https://keithtenzer.com/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -122,7 +122,7 @@
 
   </head>
 
-  <body class="layout--single">
+  <body class="layout--single wide">
     <nav class="skip-links">
   <h2 class="screen-reader-text">Skip links</h2>
   <ul>
@@ -189,7 +189,7 @@
     
       
         <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-          <a href="https://keithtenzer.com/" itemprop="item"><span itemprop="name">Home</span></a>
+          <a href="http://localhost:4000/" itemprop="item"><span itemprop="name">Home</span></a>
           <meta itemprop="position" content="1" />
         </li>
         <span class="sep">/</span>
@@ -567,11 +567,11 @@ openshift_use_dnsmasq: false</pre>
     <h4 class="page__share-title">Share on</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Deploying+OpenShift+Enterprise+from+Ansible+Tower%20https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fdeploying-openshift-enterprise-from-ansible-tower%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?via=keithtenzer&text=Deploying+OpenShift+Enterprise+from+Ansible+Tower%20http%3A%2F%2Flocalhost%3A4000%2Fopenshift%2Fdeploying-openshift-enterprise-from-ansible-tower%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fdeploying-openshift-enterprise-from-ansible-tower%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fopenshift%2Fdeploying-openshift-enterprise-from-ansible-tower%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fkeithtenzer.com%2Fopenshift%2Fdeploying-openshift-enterprise-from-ansible-tower%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fopenshift%2Fdeploying-openshift-enterprise-from-ansible-tower%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 
