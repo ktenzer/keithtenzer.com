@@ -1,9 +1,0 @@
-I"<h2 id="overview">Overview</h2>
-<p>In this article we will go step by step in build a Kubernetes Operator using Ansible and the Operator Framework. Operators provide ability to not only deploy an application but also manage the entire lifecycle while also baking in higher degrees of intelligence and resilience. Before we get to the Operator lets briefly revisit the ways we can deploy and manage applications in k8s.</p>
-<ul>
-  <li>Deployment Config</li>
-  <li>Deployment Template</li>
-  <li>Helm</li>
-  <li>Operator</li>
-</ul>
-:ET
