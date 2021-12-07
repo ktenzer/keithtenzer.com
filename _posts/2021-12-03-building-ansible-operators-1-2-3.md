@@ -42,12 +42,13 @@ Under ```roles/kubecraft/tasks``` directory we create tasks in Ansible to deploy
 In addition, if your operator creates k8s resources you need to ensure proper permissions. Under the ```config/rbac``` directory you can add permissions to the role.yaml. For this operator I added services and routes so that those resources  can be created by the Operator.
 
 ## Testing Operator
-The operator sdk provides a simple way to test the operator locally. Once we have our tasks complete under the role we simply need to create a new project, run the operator locally and create a custom resource (CR) which executes our role and tasks we defined.
+The operator sdk provides a simple way to test the operator locally. Once we have our tasks complete under the ```role/project/tasks``` directory, we simply need to create a new project, run the operator locally and create a custom resource (CR) which executes our role and tasks we defined.
 
 **Create project**
 <pre>$ oc new-project kubecraft</pre>
 
 **Run operator locally**
+Run these commands from the root directory of your operator project where the Makefile resides.
 <pre>$ make install</pre>
 <pre>$ make run</pre>
 
@@ -62,14 +63,14 @@ Once we have tested the operator locally we can build and publish our operator t
 
 **Build operator image and push to registry**
  <pre>$ sudo make docker-build docker-push IMG=quay.io/ktenzer/kubecraft-operator:latest</pre>
- If you are using quay.io as your registry make sure to login and make the image public so it can be accessed.
+ If you are using quay.io as your registry make sure to login and make the image is public so it can be accessed.
 
 ## Running Operator
  Now that we have the operator tested and the image built we can simply deploy it, create a CR and rule the world!
  The operator sdk makes this really easy and streamlines everything into a single command.
  <pre>$ make deploy IMG=quay.io/ktenzer/kubecraft-operator:latest</pre>
 
- BY default the operator will be installed into a project <pre>operatorName-system</pre> however you can change that by updating the project name in the PROJECT file. In this case we changed it to kubecraft-operator.
+ BY default the operator will be installed into a project ```operatorName-system``` however you can change that by updating the project name in the PROJECT file under the root of the operator project. In this case we changed it to kubecraft-operator.
  
  We can remove the operator also using make.
  <pre>$ make undeploy</pre>
