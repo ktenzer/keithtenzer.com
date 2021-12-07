@@ -11,14 +11,13 @@ tags:
 - Ansible
 ---
 ## Overview
-In this article we will go step by step in build a Kubernetes Operator using Ansible and the Operator Framework. Operators provide ability to not only deploy an application but also manage the entire lifecycle while also baking in higher degrees of intelligence and resilience. Before we get to the Operator lets briefly revisit the ways we can deploy and manage applications in k8s. 
+In this article we will go step by step to build a Kubernetes Operator using Ansible and the Operator Framework. Operators provide the ability to not only deploy an application but also manage the entire lifecycle while also baking in higher degrees of intelligence as well as resilience. Before we get to the Operator lets briefly revisit the ways we can deploy and manage applications in k8s. 
 - Deployment
 - Deployment Template
 - Helm
 - Operator
 
-A k8s deployment is the simplest method but there is no way to parameterize unless you are doing it through Ansible k8s module or something else that handles that. A deployment template does provide parameterization but is only available on OpenShift and also doesn't handle packaging or management of the application itself. Helm provides parameterization and also packaging but doesn't provide application lifecycle management or allow for building extended intelligence for added resilience. Operators provide the full package and provide the pattern to improve operability over time. Some suggest just using the simplest tool for the job. If you just need to deploy an app for example and don't need parameterization, use a k8s deployment. Personally my view is that with Ansible, Operators are just about as easy as a k8s deployment but with so much added benefit that the Operator approach always makes sense.
-My hope and goal with this article is to maybe influence a few more Operators and show that it isn't really any additional work.
+A k8s deployment is the simplest method but there is no way to parameterize unless you are doing it through Ansible k8s module or something else that handles that. A deployment template does provide parameterization but is only available on OpenShift and also doesn't handle packaging or management of the application itself. Helm provides parameterization and also packaging but doesn't provide application lifecycle management or allow for building extended intelligence for added resilience. Operators provide the full package and provide the pattern to improve operability over time. Some suggest just using the simplest tool for the job. If you just need to deploy an app for example and don't need parameterization, use a k8s deployment. Personally my view is that with Ansible, Operators are just about as easy as a k8s deployment but with so much added benefit that the Operator approach always makes sense. My hope and goal with this article is to maybe influence a few more Operators and show that it isn't really any additional work.
 
 ## Pre-requisites
 Your starting point should be an application you can deploy using a k8s deployment or deployment config. From there the next thing is to setup a development environment for building Operators using the Operator Framework and Ansible.
@@ -37,7 +36,7 @@ Once you have operator-sdk and openshift or kubectl client you need some Ansible
 <pre>$ operator-sdk create api     --group cache     --version v1     --kind Kubecraft     --generate-role</pre>
 
 ## Customizing Operator
- At this point we need an application. My approach is to first create a k8s deployment and test deploying my application before building the Operator. In this example we will use an app called [Kubekraft](https://github.com/ktenzer/kubecraftadmin). It is a fun app that connects k8s world to minecraft through a minecraft websocket server written in Go. Browse to the yaml folder and you will see the k8s deployment.yaml. This is what we will use to build out our Operator.
+At this point we need an application. My approach is to first create a k8s deployment and test deploying my application before building the Operator. In this example we will use an app called [Kubekraft](https://github.com/ktenzer/kubecraftadmin). It is a fun app that connects k8s world to minecraft through a minecraft websocket server written in Go. Browse to the yaml folder and you will see the k8s deployment.yaml. This is what we will use to build out our Operator.
 Under ```roles/kubecraft/tasks``` directory we create tasks in Ansible to deploy what we had in the k8s deployment yaml which is a deployment, service and route. In addition we added a task to get the application domain dynamically so we can build our route properly. This also demonstrates how to query and use other k8s resources in our Ansible code.
 
 In addition, if your operator creates k8s resources you need to ensure proper permissions. Under the ```config/rbac``` directory you can add permissions to the role.yaml. For this operator I added services and routes so that those resources  can be created by the Operator.
