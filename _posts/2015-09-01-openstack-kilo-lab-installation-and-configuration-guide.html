@@ -1,0 +1,185 @@
+---
+layout: single 
+title: OpenStack Kilo Lab Installation and Configuration Guide
+categories:
+- OpenStack 
+tags:
+- CentOS
+- Kilo
+- KVM
+- Linux
+- OpenStack
+- Packstack
+- RDO
+- Red Hat
+- RHEL
+---
+<h3><a href="https://keithtenzer.files.wordpress.com/2015/09/rdo.jpg"><img class="alignnone size-medium wp-image-1215" src="{{ site.baseurl }}/assets/2015/09/rdo.jpg?w=300" alt="rdo" width="300" height="120" /></a></h3>
+<h3>Overview</h3>
+<p>In this article we will focus on installing and configuring OpenStack Kilo using RDO and the packstack installer. RDO is a community platform around Red Hat's OpenStack Platform. It allows you to test the latest OpenStack capabilities on a stable platform such as Red Hat Enterprise Linux (RHEL) or CentOS. This guide will take you through installing the OpenStack Kilo release, configuring networking, security groups, flavors, images and are other OpenStack related services. The outcome is a working OpenStack environment based on the Kilo release that you can use as a baseline for testing your applications with OpenStack capabilities. A big thanks to Red Hatter, Goetz Rieger who contributed some of this content.<br />
+<!--more--></p>
+<h3>Install and Configure OpenStack Kilo</h3>
+<ul>
+<li>Install RHEL or CentOS 7.1.</li>
+<li>Ensure name resolution is working</li>
+</ul>
+<pre style="padding-left:30px;">#vi /etc/hosts</pre>
+<pre style="padding-left:30px;">192.168.122.80 osp7.lab.com osp7</pre>
+<ul>
+<li>Ensure the hostname is set statically.</li>
+</ul>
+<pre style="padding-left:30px;">#hostnamectl set-hostname osp7.lab.com</pre>
+<ul>
+<li>Disable network manager.</li>
+</ul>
+<pre style="padding-left:30px;">#systemctl disable NetworkManager.service</pre>
+<ul>
+<li>Disable firewalld to make configuration easier.</li>
+</ul>
+<pre style="padding-left:30px;"> #systemctl disable firewalld.service</pre>
+<ul>
+<li>For RHEL systems register with subscription manager.</li>
+</ul>
+<pre style="padding-left:30px;"> #subscription-manager register
+ #subscription-manager subscribe --auto
+ #subscription-manager repos --disable=*
+ #subscription-manager repos --enable=rhel-7-server-rpms
+ #subscription-manager repos --enable=rhel-7-server-openstack-7.0-rpms</pre>
+<ul>
+<li>Install yum-utils and update the system.</li>
+</ul>
+<pre style="padding-left:30px;"> #yum install -y yum-utils
+ #yum update -y
+ #reboot</pre>
+<ul>
+<li>Install packstack packages.</li>
+</ul>
+<pre style="padding-left:30px;"> #yum install -y openstack-packstack</pre>
+<ul>
+<li>Create packstack answers file for customizing the installer.</li>
+</ul>
+<pre style="padding-left:30px;"> #packstack --gen-answer-file /root/answers.txt</pre>
+<ul>
+<li>Update the packstack answers file.</li>
+</ul>
+<pre style="padding-left:30px;">#vi /root/answers.txt
+ CONFIG_KEYSTONE_ADMIN_PW=redhat
+ CONFIG_HORIZON_SSL=y
+ CONFIG_PROVISION_DEMO=n
+ CONFIG_HEAT_INSTALL=y
+ CONFIG_HEAT_CLOUDWATCH_INSTALL=y
+ CONFIG_HEAT_CFN_INSTALL=y
+ CONFIG_SAHARA_INSTALL=y
+ CONFIG_TROVE_INSTALL=y
+ CONFIG_CEILOMETER_INSTALL=y
+ CONFIG_LBAAS_INSTALL=y</pre>
+<ul>
+<li>Install OpenStack using packstack from RDO.</li>
+</ul>
+<pre style="padding-left:30px;">#packstack --answer-file /root/answers.txt</pre>
+<pre style="padding-left:30px;">. /root/keystonerc_admin</pre>
+<ul>
+<li>Check status of openstack services.</li>
+</ul>
+<pre style="padding-left:30px;">#openstack-status</pre>
+<ul>
+<li>Backup the ifcfg-etho script.</li>
+</ul>
+<pre style="padding-left:30px;">#cp /etc/sysconfig/network-scripts/ifcfg-eth0 /root/</pre>
+<ul>
+<li>Configure external bridge for floating ip networks.</li>
+</ul>
+<pre style="padding-left:30px;">#vi /etc/sysconfig/network-scripts/ifcfg-eth0
+ DEVICE=eth0
+ ONBOOT=yes
+ TYPE=OVSPort
+ DEVICETYPE=ovs
+ OVS_BRIDGE=br-ex</pre>
+<pre style="padding-left:30px;">#vi /etc/sysconfig/network-scripts/ifcfg-br-ex
+ DEVICE=br-ex
+ BOOTPROTO=static
+ ONBOOT=yes
+ TYPE=OVSBridge
+ DEVICETYPE=ovs
+ USERCTL=yes
+ PEERDNS=yes
+ IPV6INIT=no
+ IPADDR=&lt;www.xxx.yyy.zzz&gt;
+ NETMASK=255.255.255.0
+ GATEWAY=&lt;GW IP&gt;
+ DNS1=&lt;DNS IP&gt;</pre>
+<ul>
+<li>Add the eht0 physical interface to the br-ex bridge in openVswitch for floating IP networks.</li>
+</ul>
+<pre style="padding-left:30px;">#ovs-vsctl add-port br-ex eth0 ; systemctl restart network.service</pre>
+<ul>
+<li>Create private network.</li>
+</ul>
+<pre style="padding-left:30px;">#neutron net-create private</pre>
+<pre style="padding-left:30px;">#neutron subnet-create private 10.10.1.0/24 --name private_subnet --allocation-pool start=10.10.1.100,end=10.10.1.200</pre>
+<ul>
+<li>Create public network. Note: these steps assume the physical network connected to eth0 is 192.168.122.0/24.</li>
+</ul>
+<pre style="padding-left:30px;">#neutron net-create public --router:external</pre>
+<pre style="padding-left:30px;">#neutron subnet-create public 192.168.122.0/24 --name public_subnet --allocation-pool start=192.168.122.100,end=192.168.122.200 --disable-dhcp --gateway 192.168.122.1</pre>
+<ul>
+<li>Add a new router and configure router interfaces.</li>
+</ul>
+<pre style="padding-left:30px;">#neutron router-create router1 --ha False</pre>
+<pre style="padding-left:30px;">#<span class="GramE">neutron</span> router-gateway-set router1 public</pre>
+<pre style="padding-left:30px;">#neutron router-interface-add router1 private_subnet</pre>
+<ul>
+<li>Upload a glance image. In this case we will use a Cirros image because it is small and thus good for testing OpenStack.</li>
+</ul>
+<pre style="padding-left:30px;">#glance image-create --name "Cirros 0.3.4" --disk-format qcow2 --container-format bare --is-public True --copy http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img</pre>
+<ul>
+<li>Create a new m1.nano flavor for running Cirros image.</li>
+</ul>
+<pre style="padding-left:30px;">#nova flavor-create m1.nano 42 64 0 1</pre>
+<ul>
+<li>Create security group and allow all TCP ports.</li>
+</ul>
+<pre style="padding-left:30px;">#nova secgroup-create all "Allow all tcp ports"</pre>
+<pre style="padding-left:30px;">#nova secgroup-add-rule all TCP 1 65535 0.0.0.0/0</pre>
+<ul>
+<li>Create security group for base access</li>
+</ul>
+<pre style="padding-left:30px;">#nova secgroup-create base "Allow Base Access"</pre>
+<pre style="padding-left:30px;">#nova secgroup-add-rule base TCP 22 22 0.0.0.0/0</pre>
+<pre style="padding-left:30px;">#nova secgroup-add-rule base TCP 80 80 0.0.0.0/0</pre>
+<pre style="padding-left:30px;">#nova secgroup-add-rule base ICMP -1 -1 0.0.0.0/0</pre>
+<ul>
+<li>Create a private ssh key for connecting to instances remotely.</li>
+</ul>
+<pre style="padding-left:30px;">#nova keypair-add admin</pre>
+<ul>
+<li>Create admin.pem file and add private key from output of keypair-add command.</li>
+</ul>
+<pre style="padding-left:30px;">#vi /root/admin.pem</pre>
+<pre style="padding-left:30px;">#chmod 400 /root/admin.pem</pre>
+<ul>
+<li>List the network IDs.</li>
+</ul>
+<pre style="padding-left:30px;"># neutron net-list
+ +--------------------------------------+---------+-------------------------------------------------------+
+ | id | name | subnets |
+ +--------------------------------------+---------+-------------------------------------------------------+
+ | d4f3ed19-8be4-4d56-9f95-cfbac9fdf670 | private | 92d82f53-6e0b-4eef-b8b9-cae32cf40457 10.10.1.0/24     |
+ | 37c024d6-8108-468c-bc25-1748db7f5e8f | public  | 22f2e901-186f-4041-ad93-f7b5ccc30a81 192.168.122.0/24 |</pre>
+<ul>
+<li>Start an instance and make sure to replace network id from above command.</li>
+</ul>
+<pre style="padding-left:30px;">#nova boot --flavor m1.nano --image "Cirros 0.3.4" --nic net-id=92d82f53-6e0b-4eef-b8b9-cae32cf40457 --key-name admin --security-groups all mycirros</pre>
+<ul>
+<li>Create a floating IP and assign it to the mycirros instance.</li>
+</ul>
+<pre style="padding-left:30px;">#nova floating-ip-create</pre>
+<pre style="padding-left:30px;">#nova floating-ip-associate mycirros &lt;FLOATING IP&gt;</pre>
+<ul>
+<li>Connect to mycirros instance using the private ssh key stored in the admin.pem file.</li>
+</ul>
+<pre style="padding-left:30px;">#ssh -i admin.pem cirros@192.168.122.233</pre>
+<h3>Summary</h3>
+<p>This article was intended as a hands on guide for standing up an OpenStack Kilo lab using RDO. As mentioned RDO is a stable community platform built around Red Hat's OpenStack Platform. It provides the ability to test the latest OpenStack features against either an enterprise platform (RHEL) or community platform (CentOS). Hopefully you found the information in this article useful. If you have anything to add or feedback, feel free to leave your comments.</p>
+<p>Happy OpenStacking!</p>
+<p>(c) 2015 Keith Tenzer</p>

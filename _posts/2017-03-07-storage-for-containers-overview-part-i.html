@@ -1,0 +1,227 @@
+---
+layout: single 
+title: Storage for Containers Overview - Part I
+categories:
+- OpenShift
+tags:
+- Docker
+- Kubernetes
+- Persistent Storage
+- software-defined storage
+- Storage
+---
+<h3><img class="alignnone size-full wp-image-8150" src="{{ site.baseurl }}/assets/2017/03/storage_article_008.jpg" alt="Shipping containers" width="1200" height="400" /></h3>
+<h3>Overview</h3>
+<p>This is a six part series dedicated to container storage. The article series is a collaboration between Daniel Messer (Technical Marketing Manager Storage @RedHat), Keith Tenzer (Solutions Architect @RedHat) and Kapil Arora (Cloud Platform Architect @NetApp). The focus of this article is an overview on storage for containers. In this article we will focus on laying out fundamentals critical to any container storage discussion. In addition we will go into some details on the various solutions that exist today.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2017/03/07/storage-for-containers-overview-part-i/">Storage for Containers Overview – Part I</a></li>
+<li><a href="https://keithtenzer.com/2017/03/24/storage-for-containers-using-gluster-part-ii/">Storage for Containers using Gluster – Part II</a></li>
+<li><a href="https://keithtenzer.com/2017/03/29/storage-for-containers-using-container-native-storage-part-iii/">Storage for Containers using Container Native Storage – Part III</a></li>
+<li><a href="https://keithtenzer.com/2017/04/07/storage-for-containers-using-ceph-rbd-part-iv/">Storage for Containers using Ceph – Part IV</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-ontap-nas-part-v/">Storage for Containers using NetApp ONTAP NAS – Part V</a></li>
+<li><a href="https://keithtenzer.com/2017/04/05/storage-for-containers-using-netapp-solidfire-part-vi/">Storage for Containers using NetApp SolidFire – Part VI</a></li>
+</ul>
+<p><!--more--></p>
+<h3>The Basics</h3>
+<p>Containers have been around for a really, long time. They first appeared in UNIX systems in early 2000's and have been in Linux since 2007. These containers acted more like virtual machines and provided additional efficiencies but really weren't ground-breaking. In addition they were rather complicated to setup for the average user. When most people talk about containers these days, they are referring to Docker containers. Docker greatly simplified using containers by taking the existing isolation facilities in the Linux kernel (cgroups, IPC/network/file system namespace) and hiding these behind a simple command, "docker run". In addition Docker provided a container format, that allows application services to package themselves in a container that in theory will run on any Linux system with a Docker daemon.<br />
+Docker enables fast, iterative application development and portability. That is why it's one of the main technologies that enables DevOps. Not only providing additional simplicity in dealing with containers of the past but rather, fundamentally changing the way we build, package, deploy and run applications. It has become the base technology for packaging micro-services.</p>
+<p>Docker containers in regards to storage, have their own "view" of a file system since the filesystem itself is a Linux namespace. When you launch a Red Hat Enterprise Linux (RHEL) 7 container and list the contents of "/" you see what appears to be a normal root filesystem.</p>
+<pre>[root@rhel7-workstation ~]# docker run -it registry.access.redhat.com/rhel7 bash
+Unable to find image 'registry.access.redhat.com/rhel7:latest' locally
+Trying to pull repository registry.access.redhat.com/rhel7 ...
+latest: Pulling from registry.access.redhat.com/rhel7
+154dc369ca0d: Pull complete
+e6b5b6e3c142: Pull complete
+Digest: sha256:822cfa544c7c51d8bca1675dfd7ef5b5aaa205e222617f787868516eca2c6acc
+[root@20ca20ac05a5 /]# ls -ahl /
+total 4.0K
+dr-xr-xr-x. 18 root root 260 Mar 3 11:01 .
+dr-xr-xr-x. 18 root root 260 Mar 3 11:01 ..
+-rwxr-xr-x. 1 root root 0 Mar 3 11:01 .dockerenv
+lrwxrwxrwx. 1 root root 7 Feb 22 17:24 bin -&gt; usr/bin
+dr-xr-xr-x. 2 root root 6 Mar 10 2016 boot
+drwxr-xr-x. 5 root root 380 Mar 3 11:01 dev
+drwxr-xr-x. 49 root root 4.0K Mar 3 11:01 etc
+drwxr-xr-x. 2 root root 6 Feb 22 17:26 home
+lrwxrwxrwx. 1 root root 7 Feb 22 17:24 lib -&gt; usr/lib
+lrwxrwxrwx. 1 root root 9 Feb 22 17:24 lib64 -&gt; usr/lib64
+drwx------. 2 root root 6 Feb 22 17:23 lost+found
+drwxr-xr-x. 2 root root 6 Mar 10 2016 media
+drwxr-xr-x. 2 root root 6 Mar 10 2016 mnt
+drwxr-xr-x. 2 root root 6 Mar 10 2016 opt
+dr-xr-xr-x. 289 root root 0 Mar 3 11:01 proc
+dr-xr-x---. 3 root root 154 Feb 22 17:30 root
+drwxr-xr-x. 12 root root 172 Feb 22 17:30 run
+lrwxrwxrwx. 1 root root 8 Feb 22 17:24 sbin -&gt; usr/sbin
+drwxr-xr-x. 2 root root 6 Mar 10 2016 srv
+dr-xr-xr-x. 13 root root 0 Mar 3 10:51 sys
+drwxrwxrwt. 7 root root 132 Feb 22 17:26 tmp
+drwxr-xr-x. 13 root root 155 Feb 22 17:24 usr
+drwxr-xr-x. 18 root root 238 Feb 22 17:25 var</pre>
+<p>The container root filesystem's main purpose is for supplying an independent application runtime (at the minimum glibc). Everything else is the Linux Kernel itself, which is of course shared amoung all containers. You can write to this file system and even do destructive things like erasing /etc/passwd however it will stay inside the container. The next time you restart the container everything will be as it was before your changes. Docker implements a layered approach for container storage.</p>
+<p>https://access.redhat.com/webassets/avalon/d/Red_Hat_Enterprise_Linux_Atomic_Host-7-Overview_of_Containers_in_Red_Hat_Systems-en-US/images/440aa214d60c93edebd6b4522fffe54f/docker_structure.png</p>
+<p>When we issue a "docker run" command it starts the platform image. In this example, a minimal RHEL Operating environment inside the container root filesystem. This is read-only. When the container is started, a writeable layer is added on top. This records only the delta information. Compare this user experience to storage snapshots. Imagine if you had a read-only file system mounted from a snapshot and a writeable layer added on top transparently. It will have it's own lineage.<br />
+In Docker the writeable layer is discarded once the container terminates. The only way in this case to persist a change is to stop the container, commit the stopped instance to the local list of images and create another instance from that. That is Docker storage in a nutshell.</p>
+<p>Docker originally used the "<a href="https://en.wikipedia.org/wiki/UnionFS">Union File System</a>" to layer images and provide a coherent view of that to the container. Over time however, other implementations emerged like OverlayFS, auFS and those based on the existing file systems with integrated snapshot capabilities like btrfs. Fedora, CentOS and RHEL are implementing this entirely within device-mapper these days.</p>
+<p>Why do we care about this? Many applications are certified or tested with a specific runtime i.e. RHEL 7. Before it meant you needed not only the runtime but the entire RHEL 7 OS. It meant our IT infrastructure teams had to support N variants and standardization was impossible. Imagine the shipping industry before shipping containers came along? That is IT today, little portability and standardization. Now with Docker we have a much more flexible, portable means for containing applications that allows complete standardization. If we standardize, we can automate and if we achieve that we have met some of the principles required by DevOps.</p>
+<p>The two most important things to understand from a Docker storage perspective in terms of storage are:</p>
+<ol>
+<li>Docker container images are ephemeral. When the running container is terminated (which happens very frequently in the container world) the storage inside the container is lost.</li>
+<li>Every overlay filesystem is very slow for write performance.</li>
+</ol>
+<p>These are also the reasons many stayed away from data-intensive workloads in containers in the beginning. Since however there are new solutions for properly handling storage but first impressions die slowly so let us bust some of these myths.</p>
+<h3>Container Storage Myths</h3>
+<p><strong>Myth 1: Containerized Applications should be stateless</strong></p>
+<p>This really comes from what we learned about Docker storage and platforms such as CloudFoundry that are container-based but only handle stateless applications.</p>
+<p>The true value of containers is to enable IT industrialization, meaning a standardized, automated method for building, deploying, upgrading and rolling out new application versions across dissimilar infrastructure platforms. Why should this be limited to just stateless service? Why not include all the entire application stack including databases, middleware, messaging, etc.</p>
+<p>Solutions for managing storage and as such providing applications a place to store state exist in both Docker and Kubernetes. We will look into these solutions further in this article.</p>
+<p><strong>Myth 2: Persisting Data in Docker Containers is Slow</strong></p>
+<p>This is true if you write directly to the Docker container image and as mentioned that should be avoided. As an alternative Docker provides ability to mount a directory on the container host in the container. This called a <a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Storage_Administration_Guide/sect-Using_the_mount_Command-Mounting.html#sect-Using_the_mount_Command-Mounting-Bind">bind-mount</a> and usually is as performant as normal file systems. As such any locally available file system storage can be used as local sub-directories of the host's root file system, NFS, SAN volumes formatted with xfs, basically anything.</p>
+<p><strong>Myth 3: SAN is the Best Choice for Storage</strong></p>
+<p>SAN is actually the worst choice besides using the Docker container itself for storage. SAN is expensive, highly complicated and requires a sophisticated cluster locking mechanism to handle access to LUNs in shared environment. SAN was not designed to fan out thousands of individual LUNs for containers at scale either. Forget SAN and forget repeating what we have done the last 20 years in storage. It doesn't fit anymore in the containerized world.</p>
+<p><strong>Myth 4: Persisting Data in Containers Requires Shared Storage</strong></p>
+<p>Not true anymore. At least not always. Containers enable you to bring compute and storage close together and using local storage is a viable option depending on the application. Many applications are moving from structured SQL databases such as Oracle, MariaDB, PostgreSQL, etc to unstructured NoSQL databases such as CouchBase, Mongo, Cassandra, etc. These database engines bring their own replication and scale-out mechanism. This has a huge effect on storage. NoSQL databases don't need shared storage, they are sharded and re-balance data within a cluster as changes occur. That is to say the database is providing data management. Here local storage may be faster and certainly cheaper than shared storage. Certainly though, the requirements for external storage remain. With data-intensive workloads running in containers the limited local storage capacity of the container host via SATA or SAS is quickly exhausted. Most notably as well the performance is limited to how many storage devices you can put in a single server.</p>
+<p><strong>Myth 5: Storage should be Centrally Managed for Containers</strong></p>
+<p>The main point of container technology is as enabler to DevOps. What is goal of DevOps? To build, deploy and run applications consistently and with high-degree of automation across all defined application stages (Development-&gt;Test-&gt;QA-&gt;Production).  This is what is meant when we refer to continuous deployment and integration. In order for this to work production teams, such as a storage team, need to be firmly integrated in the process. If a DevOps team needs to bother the storage team or open a ticket for something each time they have storage needs, we won't won't leverage the agility or speed that DevOps promises.<br />
+The goal is to allow the container platform to be able to dynamically orchestrate the infrastructure around the application, as needed, including storage. DevOps teams should be given quotas and when they require resources like storage capacity they simply get it, if it fits their quota. The container platform should communicate with the underlying storage and provision storage on the fly. This is known as dynamic provisioning and it is supported by Kubernetes, a very popular and in fact the defacto open-source standard container orchestration engine.</p>
+<h3><strong>Container Orchestration and Storage</strong></h3>
+<p>Docker provided us a standard packaging format, application portability and became the enabler technology for building <a href="https://martinfowler.com/articles/microservices.html">microservices</a>. While it is great to build, package and run applications using Docker, a lot was still missing. Docker is just a technology, not a platform. In order to operate complex applications and handle upgrades or rollouts of many Docker images across many hosts, an orchestration layer was required.</p>
+<p>Fortunately there were some very smart people, you guessed it, at Google, who agreed that this is indeed a great idea. In fact, Google has been using containers for more than a decade, long before Docker was born. They implemented orchestration in an internal project called <a href="https://research.google.com/pubs/pub43438.html">Borg</a>, open-sourced those ideas under a new open-source project called Kubernetes. Today Red Hat and Google are the two main contributors behind <a href="https://kubernetes.io/">Kubernetes</a>. You can see the code contributors on <a href="http://stackalytics.com/?project_type=kubernetes-group&amp;metric=commits">stackalytics</a>. Kubernetes is also the underpinning technology along with Docker used in <a href="https://www.openshift.com/container-platform/">Red Hat OpenShift Container Platform</a>.</p>
+<p>Kubernetes is a container orchestration engine that supports stateful applications and database workloads with storage orchestration. An application owner or developer can simply state that his application or particular micro-service needs storage of a certain capacity. Kubernetes accepts this request and takes care of the rest, from provisioning to ensuring the storage is available as a local file system mount wherever the container happens to run. Let's look at how this works in a bit more detail.</p>
+<p><strong>PVs, PVCs, and Storage Classes</strong></p>
+<p>Everything in Kubernetes including a storage request, is an object that is described by YAML or JSON. Kubernetes enables<a href="https://en.wikipedia.org/wiki/Infrastructure_as_Code"> infrastructure-as-code</a> so just like code, infrastructure blueprints that provide application requirement can be stored in simple files sitting in a source-code management system like Git.</p>
+<p>Kubernetes has a few concepts for managing storage: PersistentVolumes (PVs), PersistentVolumeClaims (PVCs) and Storage Classes. A PVC is a means of requesting storage capacity. It results simply in a mapping of a PV, (the object representing storage) to a specific container or group of containers. Container storage requests are fulfilled if a free PV is available and meets the requirements defined in the PVC. If that occurs a container is granted a PVC and that PV which maps to a filesystem on the container host will be bind-mounted to the container itself. The PVC ensures that wherever a container starts it always gets it's correct volume and if that condition isn't met the container can't start. Storage Classes are providers of PVs that PVCs can explicitly reach out to. They can be thought of as similar to storage tiers. In addition modern storage classes enable dynamic provisioning. This means that once a PVC is issued to such a storage class, storage is provisioned on the storage system, mounted on the host where the container is starting, a PV is created, PVC reserves the PV and then that PV mountpoint is bind-mounted inside the container. In the beginning, especially with NFS, PVs needed to be manually pre-provisioned by admins and there was no concept of dynamic provisioning.</p>
+<p>Let's see how this looks like with simple example for creating a PV from <a href="https://kubernetes.io/docs/user-guide/persistent-volumes">Kubernetes documentation</a>. Below a static PV is being created that maps to an NFS server and the export must already exist.</p>
+<pre class="highlight"><code>  <span class="s">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
+  <span class="s">kind</span><span class="pi">:</span> <span class="s">PersistentVolume</span>
+  <span class="s">metadata</span><span class="pi">:</span>
+    <span class="s">name</span><span class="pi">:</span> <span class="s">pv0003</span>
+    <span class="s">annotations</span><span class="pi">:</span>
+      <span class="s">volume.beta.kubernetes.io/storage-class</span><span class="pi">:</span> <span class="s2">"</span><span class="s">slow"</span>
+  <span class="s">spec</span><span class="pi">:</span>
+    <span class="s">capacity</span><span class="pi">:</span>
+      <span class="s">storage</span><span class="pi">:</span> <span class="s">5Gi</span>
+    <span class="s">accessModes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">ReadWriteOnce</span>
+    <span class="s">persistentVolumeReclaimPolicy</span><span class="pi">:</span> <span class="s">Recycle</span>
+    <span class="s">nfs</span><span class="pi">:</span>
+      <span class="s">path</span><span class="pi">:</span> <span class="s">/tmp</span>
+      <span class="s">server</span><span class="pi">:</span> <span class="s">172.17.0.2</span></code></pre>
+<p>In this example we see the PV represents provisioned storage, an NFS share /tmp on the host 172.17.0.2. We give the PV a name, provide an access mode and set its capacity. The reclaim policy defines what happens when the PVC is deleted and the PV is returned to the free pool. Recycle will delete the data before the PV is freed using "rm -rf". There are other options and even plugins for defining how to recycle data. These can also be defined by the storage class.</p>
+<p>How do we "claim" this storage from a user perspective? Let's take a simple example of a PVC from the <a href="https://kubernetes.io/docs/user-guide/persistent-volumes">Kubernetes documentation</a>.</p>
+<pre class="highlight"><code><span class="s">kind</span><span class="pi">:</span> <span class="s">PersistentVolumeClaim</span>
+<span class="s">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
+<span class="s">metadata</span><span class="pi">:</span>
+  <span class="s">name</span><span class="pi">:</span> <span class="s">myclaim</span>
+<span class="s">spec</span><span class="pi">:</span>
+  <span class="s">accessModes</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">ReadWriteOnce</span>
+  <span class="s">resources</span><span class="pi">:</span>
+    <span class="s">requests</span><span class="pi">:</span>
+      <span class="s">storage</span><span class="pi">:</span> 8<span class="s">Gi</span></code></pre>
+<p>In this example we have requested 8 GiB of storage. "ReadWriteOnce" tells Kubernetes that this storage or volume can only be mounted by a single container host in read-write mode (in contrast to "ReadWriteMany" where it can be mounted from multiple containers on different hosts). A "PersistentVolumeClaim" (PVC) as mentioned is simply a request for a "PersistentVolume" of a certain kind. The above mentioned PVC would not match the PV defined on the NFS server because that is too small (only 5Gi). You can see that manual PV provisioning is very inefficient.</p>
+<p>The example above just requests storage but doesn't do anything with it. The example below shows how to request a PVC from the perspective of a Pod. We haven't talked about pods but they are a construct in Kubernetes and contain one or more containers. A pod is a logical grouping of containers. Containers within a pod run co-located, co-scheduled and share the same resource context. Usually we deal with single-container pods unless there is reason for tightly coupling containers.</p>
+<pre class="highlight"><code><span class="s">kind</span><span class="pi">:</span> <span class="s">Pod</span>
+<span class="s">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
+<span class="s">metadata</span><span class="pi">:</span>
+  <span class="s">name</span><span class="pi">:</span> <span class="s">mypod</span>
+<span class="s">spec</span><span class="pi">:</span>
+  <span class="s">containers</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">myfrontend</span>
+      <span class="s">image</span><span class="pi">:</span> <span class="s">dockerfile/nginx</span>
+      <span class="s">volumeMounts</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">mountPath</span><span class="pi">:</span> <span class="s2">"</span><span class="s">/var/www/html"</span>
+        <span class="s">name</span><span class="pi">:</span> <span class="s">mypd</span>
+  <span class="s">volumes</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">name</span><span class="pi">:</span> <span class="s">mypd</span>
+      <span class="s">persistentVolumeClaim</span><span class="pi">:</span>
+        <span class="s">claimName</span><span class="pi">:</span> <span class="s">myclaim</span></code></pre>
+<p>Without going into more details on how to tell Kubernetes to launch container-based applications in so called "pods" let's focus on the essence. We are requesting Kubernetes to launch an instance of the nginx container image with a volume mount. This is storage from the host made available on /var/www/html inside the nginx container.<br />
+We specify that the pod should use a volume (called "mypd") as the backing storage for this mount. The volume in turn is tied to our request in Kubernetes via the PVC "myclaim".<br />
+Simply put, we request storage, put a name to that request and then launch our app with a bind-mounted volume backed by that storage request.</p>
+<p><strong>Storage on Auto-Pilot with Kubernetes</strong></p>
+<p>Without dynamic provisioning, PVs need to be created manually by storage admins. This incredibly slows down DevOps teams, breaks automation and forces teams to operate like they have the last 20+ years, slowly. Fortunately dynamic provisioning was added to Kubernetes. The idea is that the storage class or provider should simply know how to provision storage on-the fly when a request comes in.</p>
+<p>From the consumer perspective, nothing changes. But life get's dramatically easier for the Ops storage team. Instead of pre-provisioning NFS-based PVs (like above example), they pick a mature storage technology that knows how to do dynamic provisioning.</p>
+<p>Below is an example of a storage-class for GlusterFS.</p>
+<pre class="highlight"><code><span class="s">apiVersion</span><span class="pi">:</span> <span class="s">storage.k8s.io/v1beta1</span>
+<span class="s">kind</span><span class="pi">:</span> <span class="s">StorageClass</span>
+<span class="s">metadata</span><span class="pi">:</span>
+  <span class="s">name</span><span class="pi">:</span> fast
+<span class="s">provisioner</span><span class="pi">:</span> <span class="s">kubernetes.io/glusterfs</span>
+<span class="s">parameters</span><span class="pi">:</span>
+  <span class="s">resturl</span><span class="pi">:</span> <span class="s2">"</span><span class="s">http://127.0.0.1:8081"</span>
+  <span class="s">restauthenabled</span><span class="pi">:</span> <span class="s2">"</span><span class="s">true"</span>
+  <span class="s">restuser</span><span class="pi">:</span> <span class="s2">"</span><span class="s">admin"</span>
+  <span class="s">secretNamespace</span><span class="pi">:</span> <span class="s2">"</span><span class="s">default"</span>
+  <span class="s">secretName</span><span class="pi">:</span> <span class="s2">"</span><span class="s">heketi-secret"</span></code></pre>
+<p>Don't worry about the details of the syntax. Once a storage class is introduced that features a dynamic storage provisioner, the storage lifecycle will be completely automated.</p>
+<p>PVCs referring to that particular storage class will get their PV objects created on-demand in a completely transparent fashion, with <span style="text-decoration:underline;">no human intervention</span>. Likewise when a containers PVC is removed, the PV and underlying storage is automatically unprovisioned. The PVC in the previous example requesting storage from class "fast" would have behaved exactly like that.</p>
+<h3>Container Storage Solutions</h3>
+<p>You have seen above some of the storage fundamentals in Kubernetes and OpenShift. It covers most stateful applications storage needs including exclusive storage access (standalone databases) and shared storage access (content stores, streamin apps, analytics apps).<br />
+Kubernetes supports a lot of storage technologies, each with their own features, advantages and disadvantages.</p>
+<ul>
+<li>NFS (you already heard about)
+<ul>
+<li>static provisioner, manually and statically pre-provisioned, inefficient space allocation</li>
+<li>ubiquitous, easy to set up in PoCs, well understood, good for tests</li>
+<li>supports ReadWriteOnce and ReadWriteMany</li>
+</ul>
+</li>
+<li>Ceph RBD
+<ul>
+<li>dynamic provisioner, Ceph block devices are automatically created, presented to the host, formatted and presented (mounted into) to the container</li>
+<li>excellent when running Kubernetes on top of OpenStack where Ceph is the #1 storage</li>
+<li>does not support ReadWriteMany</li>
+</ul>
+</li>
+<li>GCE Persistent Disk / AWS EBS / AzureDisk
+<ul>
+<li>dynamic provisioner, block devices are requested via the provider API, then automatically presented to the instance running Kubernetes/OpenShift and the container, formatted etc</li>
+<li>does not support ReadWriteMany</li>
+<li>performance may be problematic on small capacities ( &lt;100GB, typical for PVCs)</li>
+</ul>
+</li>
+<li>AWS EFS / AzureFile
+<ul>
+<li>dynamic provisioner, filesystems are requested via the provider API, mounted on the container host and then bind-mounted to the app container</li>
+<li>supports ReadWriteMany</li>
+<li>usually quite expensive</li>
+</ul>
+</li>
+<li>CephFS
+<ul>
+<li>same as RBD but already a filesystem, a shared one too</li>
+<li>supports ReadWriteMany</li>
+<li>excellent when running Kubernetes on top of OpenStack with Ceph</li>
+</ul>
+</li>
+<li>GlusterFS
+<ul>
+<li>dynamic provisioner</li>
+<li>supports ReadWriteOnce</li>
+<li>available on-premise and in public cloud with lower TCO than public cloud providers Filesystem-as-a-Service</li>
+</ul>
+</li>
+<li>NetApp
+<ul>
+<li>Currently tech-preview</li>
+<li>dynamic provisioner called <a href="https://github.com/NetApp/trident">trident</a></li>
+<li>supports ReadWriteOnce (block or file-based), ReadWriteMany (file-based), ReadOnlyMany (file-based)</li>
+<li>Requires NetApp Data OnTap or Solid Fire Storage</li>
+</ul>
+</li>
+</ul>
+<p><strong>Getting closer to the application</strong></p>
+<p>Traditionally storage has always been something that sits external to the application and it's supporting infrastructure. Storage contains valuable data, it is the crown-jewel of every business. Data however also has gravity or inertia (if you want to be accurate in terms of physics). Simply put, the more data you have the harder it becomes to move, especially if your application infrastructure is tightly coupled to the storage backend. This also means that data created in the cloud will likely stay there, whereas data that has been created on-premise you guessed it, won't move.<br />
+Moving away from external storage systems will reduce the amount of variety or complexity we need to understand in order to deal with storage. When storage gets closer to your application, here a set containers, you are heightening the abstraction level and it is becoming easier to replicate the stack across providers. It's about having a common denominator when dealing with storage that you can always rely on regardless of what infrastructure platform is used (on-prem, AWS, GCE, Azure, OpenStack, etc).</p>
+<p><strong>Container-Native Storage</strong></p>
+<p>We can now build a common denominator like this with Container-Native Storage (CNS).<br />
+The idea behind it is simple, Kubernetes is an orchestration solution for distributed, containerized applications following a micro-service architecture. GlusterFS is a distributed software architecture split out in multiple smaller services running inside containers. Each node or selected nodes in Kubernetes has a container that runs GlusterFS. A <a href="https://kubernetes.io/docs/admin/daemons/">daemon-set</a> is used in Kubernetes to ensure that a GlusterFS container is always running on the correct nodes that are providing physical disks. Each GlusterFS container consumes the local storage (SATA, SSDs, NVMe, etc) and creates a cluster-wide distributed file-based storage system.<br />
+Gluster on Kubernetes can expand and shrink with the growth of the Kubernetes cluster and the application workloads on top of it. Availability, distribution, connectivity and health of Gluster is all managed seamlessly by Kubernetes native orchestration capabilities. Kubernetes dynamic provisioner maintains the lifecycle of storage requested by users via PVCs entirely in the background, from initial provisioning, to growth and eventual decommissioning. Since the containers are immutable there is no configuration and upgrades are handled same as other containerized applications, online, in rolling fashion using concept of the Kubernetes <a href="https://kubernetes.io/docs/user-guide/services/">service</a>. Finally, a storage architecture that doesn't create more work for storage teams and reduces complexity by providing a common software-defined storage layer.</p>
+<p>This is a really powerful as storage itself has been elevated from something deep-down, chained to physical or virtual services to something that runs on the application platform itself. Kubernetes can run anywhere. OpenShift runs everywhere where Red Hat Enterprise Linux (RHEL) runs and from now on, this is also true for storage. While Gluster is the first storage platform to be provided as container-native storage, other software-defined storage platforms could go this route in the future.</p>
+<h3>Summary</h3>
+<p>In this article we have discussed the fundamentals behind storing data in the containerized world. Docker has become the standard format for container images. Kubernetes has become the standard for orchestrating Docker container images across 1000s of hosts. Kubernetes allows for running both stateless and stateful applications. It integrates with various storage platforms through storage classes. OpenShift is an enterprise build, deployment and run-time container platform based on Kubernetes that utilizes Docker (or any <a href="https://www.opencontainers.org/">OCI</a>-compatible runtime for that matter).<br />
+Various storage solutions exist for containers such as local storage, external storage and Container-Native Storage. Integrating storage with Kubernetes and enterprise container platform OpenShift means, enabling DevOps teams to look at storage as a omnipresent utility that they can dynamically provision without any knowledge of the storage subsystem. Container Native Storage (CNS) allows storage teams to provide storage for containers on-premise, off-premise, virtualized or bare-metal with automated management and deployment. This greatly offloads storage teams from manual provisioning and decommissioning tasks. It reduces cost of providing storage, avoids lock-in into the cloud-provider storage and allows storage to be part of the DevOps process just like everything else. We hope you found this article of interest and look forward to your feedback.</p>
+<p>This is the first part of a six part series so stay tuned! Up until now we have discussed a lot of fundamental concepts and reasoning but no real hands-on. In the coming articles this will definitely change :)</p>
+<p>Happy Stateful Applications running as Containers!</p>
+<p>(c) 2017 Keith Tenzer</p>

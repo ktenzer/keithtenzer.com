@@ -1,0 +1,64 @@
+---
+layout: post
+title: OpenShift Tips and Tricks
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta:
+  _oembed_bffed6da6b41f151b6103d68a6f7f061: "{{unknown}}"
+  _oembed_178b68efbf546e58dc3e4730f904955f: "{{unknown}}"
+  _last_editor_used_jetpack: block-editor
+  _oembed_31706e170dd20a212396c85570a2411c: "{{unknown}}"
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p><a href="https://access.redhat.com/solutions/2168181">https://access.redhat.com/solutions/2168181</a></p>
+<p>&nbsp;</p>
+<p>External registry</p>
+<p>1037 podman login -u $(oc whoami) -p $(oc whoami -t) --tls-verify=false default-route-openshift-image-registry.apps.ocp4.keithtenzer.com<br />
+1038 podman pull default-route-openshift-image-registry.apps.ocp4.keithtenzer.com/podium-dev/podium:latest<br />
+1039 podman pull --tls-verify=false default-route-openshift-image-registry.apps.ocp4.keithtenzer.com/podium-dev/podium:latest</p>
+<p>&nbsp;</p>
+<p>Prune images</p>
+<p>oc adm prune images --registry-url=default-route-openshift-image-registry.apps.ocp4.keithtenzer.com --confirm</p>
+<p>Automatically</p>
+<p>oc edit imagepruners.imageregistry.operator.openshift.io/cluster</p>
+<p>spec:</p>
+<p><span style="color:var(--color-text);">schedule: "*/0 * * * *"</span></p>
+<p>suspend: false<br />
+keepTagRevisions: 3<br />
+keepYoungerThan: 60m<br />
+startingDeadlineSeconds: 60<br />
+successfulJobsHistoryLimit: 3<br />
+failedJobsHistoryLimit: 3</p>
+<p>&nbsp;</p>
+<p>Configure image garbage collection</p>
+<p>https://docs.openshift.com/container-platform/4.4/nodes/nodes/nodes-nodes-garbage-collection.html</p>
+<p>oc edit machineconfigpool worker</p>
+<p>spec:<br />
+kubeletConfig:<br />
+imageMinimumGCAge: 5m<br />
+imageGCHighThresholdPercent: 80<br />
+imageGCLowThresholdPercent: 75</p>
+<p>&nbsp;</p>
+<p>Force update OCP cluster</p>
+<pre><code>oc patch clusterversion version --type json -p '[{"op": "add", "path": "/spec/desiredUpdate/force", "value": true}]'</code></pre>
+<p>&nbsp;</p>
+<p>Approve CSRs</p>
+<p>Can happen that after upgrade CSRs need to be approved, example nyou cant see a pods logs anymore</p>
+<pre><code>oc get csr -o name | xargs oc adm certificate approve</code></pre>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

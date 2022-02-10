@@ -1,0 +1,110 @@
+---
+layout: post
+title: OpenShift on OpenStack Easy as 1-2-3
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta:
+  _oembed_1f0eba568841aa6da7d57255c31a7284: "{{unknown}}"
+  _oembed_e1d7843797d2bf76c724ee3574047fc6: "{{unknown}}"
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p>openstack quota set --volumes 50 admin</p>
+<p>openstack quota set --cores 50 admin</p>
+<h2><img class="alignnone  wp-image-12316" src="{{ site.baseurl }}/assets/one.png" alt="one" width="76" height="76" /></h2>
+<p>source /root/keystonerc_admin</p>
+<p>export ANSIBLE_HOST_KEY_CHECKING=False</p>
+<p>ansible-playbook deploy-openstack-infra.yml --private-key=/root/admin.pem -e @vars.yml</p>
+<p><img class="alignnone  wp-image-12317" src="{{ site.baseurl }}/assets/two.png" alt="two" width="77" height="77" /></p>
+<p>openstack stack output show -f value -c output_value openshift ip_address</p>
+<pre>{
+  "masters": [
+    {
+      "name": "master0",
+      "address": "144.76.134.230"
+    }
+  ],
+  "bastion": {
+    "name": "bastion",
+    "address": "144.76.134.226"
+  },
+  "nodes": [
+    {
+      "name": "node0",
+      "address": "10.0.1.8"
+    },
+    {
+      "name": "node1",
+      "address": "10.0.1.13"
+    }
+  ],
+  "infras": [
+    {
+      "name": "infra0",
+      "address": "144.76.134.228"
+    }
+  ]
+}
+</pre>
+<p>&nbsp;</p>
+<p>ssh -i /root/admin.pem cloud-user@144.76.134.226</p>
+<p>source /home/cloud-user/keystonerc_admin</p>
+<p>export ANSIBLE_HOST_KEY_CHECKING=False</p>
+<p>ansible-playbook playbooks/prepare-openshift.yml --private-key=/home/cloud-user/admin.pem -e @playbooks/vars.yml</p>
+<p>PLAY RECAP **************************************************************************************************************************************<br />
+bastion : ok=15 changed=7 unreachable=0 failed=0<br />
+infra0 : ok=18 changed=13 unreachable=0 failed=0<br />
+localhost : ok=7 changed=6 unreachable=0 failed=0<br />
+master0 : ok=18 changed=13 unreachable=0 failed=0<br />
+node0 : ok=18 changed=13 unreachable=0 failed=0<br />
+node1 : ok=18 changed=13 unreachable=0 failed=0</p>
+<p><img class="alignnone  wp-image-12318" src="{{ site.baseurl }}/assets/three.png" alt="three" width="77" height="78" /></p>
+<p>ansible-playbook -i /home/cloud-user/openshift-inventory --private-key=/home/cloud-user/admin.pem -vv /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml</p>
+<p>PLAY RECAP *****************************************************************************************<br />
+infra0.ocp3.lab : ok=183 changed=59 unreachable=0 failed=0<br />
+localhost : ok=12 changed=0 unreachable=0 failed=0<br />
+master0.ocp3.lab : ok=635 changed=265 unreachable=0 failed=0<br />
+node0.ocp3.lab : ok=183 changed=59 unreachable=0 failed=0<br />
+node1.ocp3.lab : ok=183 changed=59 unreachable=0 failed=0</p>
+<p>&nbsp;</p>
+<p>INSTALLER STATUS ***********************************************************************************<br />
+Initialization : Complete<br />
+Health Check : Complete<br />
+etcd Install : Complete<br />
+Master Install : Complete<br />
+Master Additional Install : Complete<br />
+Node Install : Complete<br />
+Hosted Install : Complete<br />
+Service Catalog Install : Complete</p>
+<p>ssh -i /home/cloud-user/admin.pem cloud-user@144.76.134.230</p>
+<p>oc login -u system:admin -n default</p>
+<p>[cloud-user@master0 ~]$ sudo htpasswd -c /etc/origin/master/htpasswd admin</p>
+<p>[cloud-user@master0 ~]$ oadm policy add-cluster-role-to-user \<br />
+cluster-admin admin</p>
+<p>[cloud-user@master0 ~]$ oc login -u admin -n default</p>
+<p>https://master0.144.76.134.230.xip.io:8443</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

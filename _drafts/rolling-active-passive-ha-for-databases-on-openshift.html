@@ -1,0 +1,309 @@
+---
+layout: post
+title: Rolling Active/Passive HA for Databases on OpenShift
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta: {}
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<h3>Overview</h3>
+<p>Containers and active/passive high availability for databases, are you nuts? The common industry understanding is that containerized platforms like Red Hat's OpenShift are better suited for stateless active/active applications and that traditional active/passive, highly-available, stateful applications should be left alone. In this article we will challenge that industry view and show how the most traditional, stateful, active/passive, highly-available applications can actually run simpler, more effectively and with higher availability on a containerized platform than the status quo.</p>
+<p>Before we get into the demonstration let us look into the benefits that containerized platforms like OpenShift provide for stateful, active/passive, highly-available applications.</p>
+<p><strong>Simplicity</strong></p>
+<p>Containers provide a standard deployment template, the active/passive application is rolled out the same way, every time and those blueprints are 100% reproducible, infrastructure independent.</p>
+<p><strong>Efficiency</strong></p>
+<p>Typically active/passive applications require very complex infrastructure that has an extremely high-level of vendor lock-in. Special network and storage configurations are required to replicate data. Those solutions are complex to build-up and tear-down, aren't well understood and cost a lot of money.</p>
+<p><strong>High Availability</strong></p>
+<p>Typically active/passive applications can achieve around 99.999% or 5 9's of availability. As we can see in the below table that amounts to 5.26 minutes per year.</p>
+<table class="wikitable sortable jquery-tablesorter">
+<thead>
+<tr>
+<th class="headerSort" title="Sort ascending">Availability %</th>
+<th class="headerSort" title="Sort ascending">Downtime per year</th>
+<th class="headerSort" title="Sort ascending">Downtime per month</th>
+<th class="headerSort" title="Sort ascending">Downtime per week</th>
+<th class="headerSort" title="Sort ascending">Downtime per day</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">90% ("one nine")</td>
+<td>36.5 days</td>
+<td>72 hours</td>
+<td>16.8 hours</td>
+<td>2.4 hours</td>
+</tr>
+<tr>
+<td align="left">95%</td>
+<td>18.25 days</td>
+<td>36 hours</td>
+<td>8.4 hours</td>
+<td>1.2 hours</td>
+</tr>
+<tr>
+<td align="left">97%</td>
+<td>10.96 days</td>
+<td>21.6 hours</td>
+<td>5.04 hours</td>
+<td>43.2 minutes</td>
+</tr>
+<tr>
+<td align="left">98%</td>
+<td>7.30 days</td>
+<td>14.4 hours</td>
+<td>3.36 hours</td>
+<td>28.8 minutes</td>
+</tr>
+<tr>
+<td align="left">99% ("two nines")</td>
+<td>3.65 days</td>
+<td>7.20 hours</td>
+<td>1.68 hours</td>
+<td>14.4 minutes</td>
+</tr>
+<tr>
+<td align="left">99.5%</td>
+<td>1.83 days</td>
+<td>3.60 hours</td>
+<td>50.4 minutes</td>
+<td>7.2 minutes</td>
+</tr>
+<tr>
+<td align="left">99.8%</td>
+<td>17.52 hours</td>
+<td>86.23 minutes</td>
+<td>20.16 minutes</td>
+<td>2.88 minutes</td>
+</tr>
+<tr>
+<td align="left">99.9% ("three nines")</td>
+<td>8.76 hours</td>
+<td>43.8 minutes</td>
+<td>10.1 minutes</td>
+<td>1.44 minutes</td>
+</tr>
+<tr>
+<td align="left">99.95%</td>
+<td>4.38 hours</td>
+<td>21.56 minutes</td>
+<td>5.04 minutes</td>
+<td>43.2 seconds</td>
+</tr>
+<tr>
+<td align="left">99.99% ("four nines")</td>
+<td>52.56 minutes</td>
+<td>4.38 minutes</td>
+<td>1.01 minutes</td>
+<td>8.66 seconds</td>
+</tr>
+<tr>
+<td align="left">99.995%</td>
+<td>26.28 minutes</td>
+<td>2.16 minutes</td>
+<td>30.24 seconds</td>
+<td>4.32 seconds</td>
+</tr>
+<tr>
+<td align="left"><strong>99.999% ("five nines")</strong></td>
+<td><strong>5.26 minutes</strong></td>
+<td><strong>25.9 seconds</strong></td>
+<td><strong>6.05 seconds</strong></td>
+<td><strong>864.3 milliseconds</strong></td>
+</tr>
+<tr>
+<td align="left">99.9999% ("six nines")</td>
+<td>31.5 seconds</td>
+<td>2.59 seconds</td>
+<td>604.8 milliseconds</td>
+<td>86.4 milliseconds</td>
+</tr>
+<tr>
+<td align="left">99.99999% ("seven nines")</td>
+<td>3.15 seconds</td>
+<td>262.97 milliseconds</td>
+<td>60.48 milliseconds</td>
+<td>8.64 milliseconds</td>
+</tr>
+<tr>
+<td align="left">99.999999% ("eight nines")</td>
+<td>315.569 milliseconds</td>
+<td>26.297 milliseconds</td>
+<td>6.048 milliseconds</td>
+<td>0.864 milliseconds</td>
+</tr>
+<tr>
+<td align="left">99.9999999% ("nine nines")</td>
+<td>31.5569 milliseconds</td>
+<td>2.6297 milliseconds</td>
+<td>0.6048 milliseconds</td>
+<td>0.0864 milliseconds</td>
+</tr>
+</tbody>
+</table>
+<p>The unpleasant truth is that we rarely meet these targets. Sure in today's world our infrastructure has double, triple or even quadruple resiliance but we must consider the law of diminishing returns. Our infrastructure is so complex from power, networking, storage, servers, clustering and software layer that while we have redundancy, it provides minimal value at extreme cost. The problems we consider and architect around aren't what causing downtime. It is the things we can't anticipate.</p>
+<p>A disk going offline on our shared storage that then doesn't send expected SCSI commands and as such isn't picked up by operating systems that continues to think the disk is alive when it is not. Causing data to be sent to nowhere. It is the race conditions that occur and cause the dominos to fall resulting in catastrophic failure.</p>
+<p>Finally the most important point to consider, since the infrastructure is so complex there is usually very little automation around failures. When something fails we are running in degraded state for not just minutes but sometimes days. That alone should really convince us that 5.26 minutes of downtime is simple not feasible unless we are lucky but businesses aren't paying millions of dollars for complex IT infrstructure because they want to gamble right?</p>
+<p>Containerized platforms allow you to automatically handle failure through intelligent scheduling policies that ensure the active/passive relationship is always existing and when issues arise that relationship is rebuilt. It is a completely different approach to what we are doing and that is why I think in many ways it makes a lot of sense.</p>
+<p>Now that we have set the foundation let's look at how to implement an active/passive mysql database on the OpenShift container platform.</p>
+<h3>Rolling Active/Passive MySQL Database</h3>
+<p>For this setup we have three components: MySQL Master, MySQL Slave and monitoring. In order to achieve active/passive HA we are using database replication instead of complex shared storage. In fact for storage we are just using local disk. In my example here I used NFS but I recommend just using local disks and hostpath. The idea is that the MySQL Master and Slave both get a persistent disk which is a local disk/lun attached to the container node. A new feature in Kubernetes and OpenShift called pet-sets will allow us to ensure that the MySQL master and slave are seen as a single deployment. It will ensure that the master and slave are always located on different physical nodes. Database replication is used to sync the data between the master and slave.</p>
+<p>In the event that the node or the slave pod/container goes offline, OpenShift will automatically reschedule it on a new node and restart replication.</p>
+<p>In the event that the node or master pod/container goes offline, we will promote the salve to a master and OpenShift will roll out a new slave on a different node and restart replication.</p>
+<p>The beauty here is the deployment is 100% automated and failure handling is also 100% automated. Now before you get too excited pet-sets is still in development so not everything we need is in place but it is coming soon so view this more as a proto-type or concept. It can be applied to any active/passive application.</p>
+<h3>Pre-requisites</h3>
+<p>This entire setup can run on a VM on your laptop.</p>
+<ul>
+<li>OpenShift Environment. If you are interested in setting up an all-in-one lab environment follow my <a href="https://keithtenzer.com/2016/11/21/openshift-enterprise-3-3-all-in-one-lab-environment-with-jenkins-build-pipeline/">guide</a>.</li>
+<li>Parameterized Docker container to run mysql as master and slave. OpenShift provides these images out of the box.</li>
+<li>A test application that writes data to databases, in this case we will use ruby hello-world example that also comes with OpenShift.</li>
+<li>Persistent storage needs to be configured. To set that up follow my <a href="https://keithtenzer.com/2015/08/20/openshift-v3-unlocking-the-power-of-persistent-storage/">guide</a>.</li>
+</ul>
+<h3>Configure Mysql Active/Passive</h3>
+<p> </p>
+<p> </p>
+<p> 
+<pre>
+kind: "DeploymentConfig"
+apiVersion: "v1"
+metadata:
+  name: "mysql-master"
+spec:
+  strategy:
+    type: "Recreate"
+  triggers:
+    - type: "ConfigChange"
+  replicas: 1
+  selector:
+    name: "mysql-master"
+  template:
+    metadata:
+      labels:
+        name: "mysql-master"
+    spec:
+      containers:
+        - name: "server"
+          image: "openshift/mysql-55-centos7"
+          command:
+            - "run-mysqld-master"
+          ports:
+            - containerPort: 3306
+              protocol: "TCP"
+          env:
+            - name: "MYSQL_MASTER_USER"
+              value: "master"
+            - name: "MYSQL_MASTER_PASSWORD"
+              value: "redhat01"
+            - name: "MYSQL_USER"
+              value: "mysql"
+            - name: "MYSQL_PASSWORD"
+              value: "redhat01"
+            - name: "MYSQL_DATABASE"
+              value: "sampledb"
+            - name: "MYSQL_ROOT_PASSWORD"
+              value: "redhat01"
+          volumeMounts:
+            - name: "mysql-master-data"
+              mountPath: "/var/lib/mysql/data"
+          resources: {}
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            capabilities: {}
+            privileged: false
+      volumes:
+        - name: "mysql-master-data"
+          persistentVolumeClaim:
+            claimName: "mysql-master"
+      restartPolicy: "Always"
+      dnsPolicy: "ClusterFirst"
+
+</pre>
+<pre>
+kind: "DeploymentConfig"
+apiVersion: "v1"
+metadata:
+  name: "mysql-slave"
+spec:
+  strategy:
+    type: "Recreate"
+  triggers:
+    - type: "ConfigChange"
+  replicas: 1
+  selector:
+    name: "mysql-slave"
+  template:
+    metadata:
+      labels:
+        name: "mysql-slave"
+    spec:
+      volumes:
+        - name: "mysql-slave-data"
+          persistentVolumeClaim:
+            claimName: "mysql-slave"
+      containers:
+        - name: "server"
+          image: "openshift/mysql-55-centos7"
+          command:
+            - "run-mysqld-slave"
+          ports:
+            - containerPort: 3306
+              protocol: "TCP"
+          env:
+            - name: "MYSQL_MASTER_USER"
+              value: "master"
+            - name: "MYSQL_MASTER_PASSWORD"
+              value: "redhat01"
+            - name: "MYSQL_DATABASE"
+              value: "sampledb"
+            - name: "MYSQL_MASTER_SERVICE_NAME"
+              value: "mysql-master"
+          volumeMounts:
+            - name: "mysql-slave-data"
+              mountPath: "/var/lib/mysql/data"
+          resources: {}
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            capabilities: {}
+            privileged: false
+      restartPolicy: "Always"
+      dnsPolicy: "ClusterFirst"
+
+</pre>
+<pre>
+
+</pre>
+<pre>
+[root@ose3-master ~]# oc get rc
+NAME                  DESIRED   CURRENT   AGE
+mysql-master-1        1         1         12m
+mysql-slave-1         1         1         11m
+ruby-hello-world-1    0         0         7d
+ruby-hello-world-10   0         0         7d
+ruby-hello-world-11   0         0         7d
+ruby-hello-world-12   0         0         7d
+ruby-hello-world-13   1         1         7d
+ruby-hello-world-2    0         0         7d
+ruby-hello-world-3    0         0         7d
+ruby-hello-world-4    0         0         7d
+ruby-hello-world-5    0         0         7d
+ruby-hello-world-6    0         0         7d
+ruby-hello-world-7    0         0         7d
+ruby-hello-world-8    0         0         7d
+ruby-hello-world-9    0         0         7d
+
+</pre>
+<p>[root@ose3-master ~]# oc scale rc mysql0-1 --replicas=0<br />
+replicationcontroller "mysql-master-1" scaled</p>

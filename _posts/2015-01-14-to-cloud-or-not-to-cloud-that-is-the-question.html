@@ -1,0 +1,37 @@
+---
+layout: single 
+title: To cloud or not to cloud...that is the question
+categories:
+- General
+tags:
+- Amazon
+- Cloud
+- OpenShift
+- OpenStack
+- Red Hat
+---
+<p><a href="https://keithtenzer.files.wordpress.com/2015/01/photo-3.jpg"><img class=" wp-image-483 aligncenter" src="{{ site.baseurl }}/assets/2015/01/photo-3.jpg?w=300" alt="photo (3)" width="717" height="535" /></a></p>
+<p><em>Iceland  - has possibly the cheapest, most reliable energy source in the world and as such is not a bad place to build a cloud.</em></p>
+<h3>Attempting to understand cloud</h3>
+<p>There is still a ton of confusion around cloud computing. Not a day goes by that I don't talk to someone or read something about cloud that has nothing to do with cloud. <!--more--> I am sure many of you are with me there. Everyone is talking cloud, everyone is using cloud but everyone thinks they are also doing cloud and few really are. There is no doubt cloud has a huge future but it is going to take time to get there for most as it means changing everything! It means re-writing the applications, business processes, consumption practices and governance policies. That is why when we talk about cloud, we are talking about a transformation. It is a choice and not all applications should move to the cloud or will move to the cloud.</p>
+<p>Cloud is really about everything ephemeral. In cloud every workload has a life-cycle. It is born, lives and of course dies. Every workload is completely decoupled from the underlying infrastructure. If your workload requires any fixed resources it is <span style="text-decoration:underline;"><strong>not</strong></span> a cloud workload. In a cloud, application workloads can move at anytime to new infrastructure (compute, network and storage) and as such the underlying infrastructure is basically throw-away, meaning it is provisioned entirely from templates or services. If your infrastructure is not throw-away it is <span style="text-decoration:underline;"><strong>not</strong></span> cloud.</p>
+<p>In a nutshell what is new about cloud vs existing enterprise infrastructure is the life-cycle and especially the part involving instance destruction. While destroying other people's sandbox may be fun, destroying your own is not and that is one of many reasons cloud is really hard to grasp. We don't like to throw things away, we have a tendency to be pack rats but if you are creating instances that don't expire it is <span style="text-decoration:underline;"><strong>not</strong></span> cloud.</p>
+<p>For the last 25 years we have built silo-based infrastructure to support applications. We have built infrastructure without plans for retiring said infrastructure. We have customised application environments so uniquely that automation is not even possible. Cloud is changing our thinking but in order to adopt cloud we need to also change the behaviors of the last 25 years. If that wasn't difficult enough we still have to deal with existing enterprise infrastructure and applications that will probably never be cloud-ready.</p>
+<h3>Virtualization is not cloud</h3>
+<p>Many often confuse cloud for virtualization. Virtualization is a technology. There are many types of virtualization (compute, network and storage). Within those virtualization types are different implementations such as hypervisor vs container, software-defined-networking (SDN) vs network functional virtualization (NPV) and hyper-converged vs software-defined-storage (SDS). Cloud is not a technology but rather an architectural methodology of resource governance that utilises underlying virtualization technologies.</p>
+<h3>Three key ingredients</h3>
+<p>Cloud is definitely not easy, it is really hard. To put it down into just three things seems silly but I feel today it simply has too many meanings. My point here is to help identify what basic building blocks are required by cloud infrastructure.</p>
+<ul>
+<li>Virtualize everything on ephemeral infrastructure around cloud platform such as <a href="http://www.openstack.org/">OpenStack</a></li>
+<li>Automate everything</li>
+<li>One-click consumable tenant-based services</li>
+</ul>
+<h3>Cloud is about the applications</h3>
+<p>You have your cloud platform up and running, time to open the flood gates? Not so fast. If you don't have cloud applications you wont be in business long. So how do cloud applications differ from legacy applications?</p>
+<p>Cloud applications are very challenging to build but incredibly simple to operationalize. Every component or service must be decoupled from one another and able to scale independently as well as horizontally. Each service must do one thing and one thing only otherwise we start incurring dependencies and our horizontal scaling model breaks.</p>
+<p>Much more time is required to architect or design a cloud application vs a legacy application however there are clear advantages. One major advantage is developers no longer need to worry about how to scale their application. Cloud platforms such as <a href="https://www.openshift.com/">Red Hat OpenShift</a> can be used to deploy cloud applications in containers that provide automatic load balancing as well as scaling. If our application can be broken down into standalone components or services that interact using APIs then we may have a candidate for a cloud computing platform. Jeff Bezos Amazons CEO once mandated that all amazon services, libraries and components speak to one another using APIs and famously said:</p>
+<p><strong><em>"Anyone who doesn’t do this will be fired.  Thank you; have a nice day!"</em></strong></p>
+<p>This was perhaps the beginning of the age of cloud applications and reading <a href="https://keithtenzer.files.wordpress.com/2015/01/jeff_bezos_mandate1.pdf">Jeff Bezos mandate</a> certainly gives us the right mindset for building cloud applications.</p>
+<h3>Summary</h3>
+<p>Cloud is not a technology but rather an architectural methodology of resource governance that utilises underlying virtualization technologies. Just because someone says private cloud, public cloud or hybrid cloud doesn't mean anything. Have a discussion about applications and workloads. Discuss which IT methodologies or architectures best suite those workloads. There is no one-size-fits-all approach. Cloud infrastructure is here and the future is bright but existing enterprise infrastructure isn't going anywhere either, we will have both! The biggest challenge and what will separate the best from the rest will be the ability to move workloads between these two different worlds. In order for this to happen compute, network and storage hardware must be entirely abstracted from cloud management stack. Choose your cloud platform and hardware vendors wisely. Lastly it all comes down to the applications and choosing the right platform to operate those applications, wether it be to cloud or not to cloud.</p>
+<p>(c) 2015 Keith Tenzer</p>

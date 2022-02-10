@@ -1,0 +1,97 @@
+---
+layout: single 
+title: OpenShift Showback Reporting using CloudForms
+status: publish
+categories:
+- CloudForms
+tags:
+- Chargeback
+- Containers
+- Kubernetes
+- Metering
+- OpenShift
+- Showback
+---
+<h2><img class="alignnone  wp-image-10679" src="{{ site.baseurl }}/assets/2017/07/openshift_logo.png" alt="openshift_logo" width="301" height="58" /> <img class="alignnone  wp-image-5506" src="{{ site.baseurl }}/assets/2017/07/plus_sign.gif" alt="plus_sign" width="80" height="80" />  <img class="alignnone  wp-image-10681" src="{{ site.baseurl }}/assets/2017/07/cf_logo.png" alt="cf_logo" width="78" height="78" /></h2>
+<h2>Overview</h2>
+<p>One of the most important capabilities of any platform in today's service driven, pay-as-you-go economy is metering and showback. Without a solid understanding of costs, organizations are in fact unable to provide services. With containers, metering and showback becomes more challenging. If we think about containers simply being processes, then we are basically needing to meter and perform showback at that level of granularity. In addition since OpenShift uses Kubernetes for container orchestration, there are additional concepts that are new. For example, one more more containers run together in what Kubernetes refers to as a Pod. Next Pods are extremely dynamic and their lifetime very short. All of this make metering and showback anything but straight-forward. Thankfully OpenShift and CloudForms have the solution.</p>
+<p><!--more--></p>
+<p>OpenShift comes with Hawkular, a highly scalable, flexible, performant metric storage system based on Cassandra. Hawkular runs on OpenShift (as a container) and collects CPU, Memory, Disk and Network utilization for all Pods running in environment.</p>
+<p>CloudForms is a multi-cloud management platform that integrates with many platforms including OpenShift. CloudForms is able to read the data from Hawkular, apply user-defined rates and provide report on costs for containers running in Pods on OpenShift. By default CloudForms is able to show these reports per project. Since an application or business will have multiple projects, showback should be ideally done based on a group of projects. In this article we will look at how to create showback reports from a group of interrelated projects in OpenShift using CloudForms.</p>
+<h2>Pre-requisites</h2>
+<p>In order to setup showback reports you will need an OpenShift environment and of course CloudForms. I tested with OpenShift 3.5 and CloudForms 4.5.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2017/05/11/cloudforms-installation-and-configuration-guide-for-red-hat-enterprise-virtualization/">Deploy CloudForms on Red Hat Enterprise Virtualization</a></li>
+<li><a href="https://keithtenzer.com/2017/03/23/deploying-cloudforms-in-the-azure-cloud/">Deploy CloudForms on Azure</a></li>
+<li><a href="https://keithtenzer.com/2016/11/21/openshift-enterprise-3-3-all-in-one-lab-environment-with-jenkins-build-pipeline/">Deploy OpenShift and Configure CloudForms</a></li>
+</ul>
+<h2>Label Projects in OpenShift</h2>
+<p>In OpenShift since orchestration is Kubernetes, everything can be labeled. In this case we want to label our OpenShift projects (Kubernetes namespace) so projects that belong together can be easily identified. For simplicity, we will call a group of OpenShift projects that have same cost center a box. Each box has a number, so it can be identified. Ideally the name of the project should also have the box for quick identification.</p>
+<p>In the real-world you will most likely not want to allow developers to create projects directly in OpenShift. Instead you can use CloudForms and provide a service. Here you can ask end-user for a cost center or something to identify themselves and then ensure all projects that are created have that identifier in the name (optional) and label (required). You can also enforce quotas and of course would want to do that to ensure end-user's only get what they pay for.</p>
+<p><strong>List all projects that belong together</strong></p>
+<p>Here it is easy since they all have Box02 in display name. Again why you would want to optionally add identifier to project name.</p>
+<pre>[ktenzer@master1 ~]$ oc get projects |grep -i box
+greetme-poc Box02: greetme-poc Active
+greetme-norman-dev Box02: greetme-norman-dev Active
+greetme-prod Box02: greetme-prod Active
+greetme-workshop Box02: GreetMe-Workshop Active
+greetme-dev Box02: greetme-dev Active
+greetme-norman-prod Box02: greetme-norman-prod Active</pre>
+<p><strong>Label all the projects that belong together</strong></p>
+<p>In this case we are labeling box02 projects.</p>
+<pre>[ktenzer@master1 ~]$ oc label namespace greetme-poc box=box02
+namespace "greetme-poc" labeled</pre>
+<pre>[ktenzer@master1 ~]$ oc label namespace greetme-norman-dev box=box02
+namespace "greetme-norman-dev" labeled</pre>
+<pre>[ktenzer@master1 ~]$ oc label namespace greetme-prod box=box02
+namespace "greetme-prod" labeled</pre>
+<pre>[ktenzer@master1 ~]$ oc label namespace greetme-workshop box=box02
+namespace "greetme-workshop" labeled</pre>
+<pre>[ktenzer@master1 ~]$ oc label namespace greetme-dev box=box02
+namespace "greetme-dev" labeled</pre>
+<pre>[ktenzer@master1 ~]$ oc label namespace greetme-norman-prod box=box02
+namespace "greetme-norman-prod" labeled</pre>
+<h2>Map Labels to Tags in CloudForms</h2>
+<p>Once projects have been labeled in OpenShift we need to map those labels to tags in CloudForms.</p>
+<p><strong>Refresh CloudForms Data</strong></p>
+<p>Go to the OpenShift provider in CloudForms and refresh relationships.</p>
+<p><img class="alignnone size-full wp-image-10626" src="{{ site.baseurl }}/assets/2017/07/cf_refresh_li.jpg" alt="cf_refresh_LI" width="1002" height="387" /></p>
+<p><strong>View Labels</strong></p>
+<p>OpenShift projects labels should now be visible in CloudForms. In this case box is the label and on our greetme-prod project it is set to the box02 label.</p>
+<p><img class="alignnone size-full wp-image-10621" src="{{ site.baseurl }}/assets/2017/07/cf_project_label_li.jpg" alt="cf_project_label_LI" width="1116" height="519" /></p>
+<p><strong>Map label to tag</strong></p>
+<p>Under user-&gt;Configuration you can map labels to tags.</p>
+<p><img class="alignnone size-full wp-image-10484" src="{{ site.baseurl }}/assets/2017/07/cf_oc_mapping.png" alt="cf_oc_mapping" width="1499" height="535" /></p>
+<p>We will create a new mapping and simply map the OpenShift label box to a tag in CloudForms also called box. The mappings don't of course need to match.</p>
+<p><img class="alignnone size-full wp-image-10489" src="{{ site.baseurl }}/assets/2017/07/cf_map_tags2.png" alt="cf_map_tags2" width="1000" height="410" /></p>
+<p><strong>Refresh CloudForms Data</strong></p>
+<p>Go to the OpenShift provider in CloudForms and refresh relationships. CloudForms needs to now discover the tags.</p>
+<p><img class="alignnone size-full wp-image-10626" src="{{ site.baseurl }}/assets/2017/07/cf_refresh_li.jpg" alt="cf_refresh_LI" width="1002" height="387" /></p>
+<p><strong>View Tags</strong></p>
+<p>Under the project, smart management tab we can now see the tag box: box02 has been applied.</p>
+<p><img class="alignnone size-full wp-image-10623" src="{{ site.baseurl }}/assets/2017/07/cf_project_tagged_li.jpg" alt="cf_project_tagged_LI" width="1494" height="550" /></p>
+<h2>Create Showback Reports in CloudForms</h2>
+<p>Once the labels exist in OpenShift and are mapped to tags we can start to generate reports and actually sort by tag. Here we will create two reports. One that shows showback costs for all boxes or tags and other for a specific tag like box02.</p>
+<p><strong>Create Showback Rates</strong></p>
+<p>Under "Cloud Intel-&gt;Chargeback&gt;Rates" you can create your own rates. CloudForms lets you choose the currency and rates. You can either configure fixed or variable for CPU, Memory, Network I/O and Disk I/O. Finally CloudForms also lets you set ranges. You could have the first few CPU cores cost X and the rest cost Y, as example. Both reports will use the same showback rates.</p>
+<p><img class="alignnone size-full wp-image-10590" src="{{ site.baseurl }}/assets/2017/07/cf_chargeback.png" alt="cf_chargeback" width="1652" height="769" /></p>
+<p><strong>Create Showback Report for all "box" tags</strong></p>
+<p>This report will show all boxes for our tag box and their cost. Under "Cloud Intel&gt;Reports-&gt;Custom" add a new report.</p>
+<p><img class="alignnone size-full wp-image-10494" src="{{ site.baseurl }}/assets/2017/07/cf_add_report.png" alt="cf_add_report" width="630" height="446" /></p>
+<p>Name the report and select the fields that should be part of the report.</p>
+<p><img class="alignnone size-full wp-image-10496" src="{{ site.baseurl }}/assets/2017/07/cf_report_1.png" alt="cf_report_1" width="1090" height="677" /></p>
+<p>Here we have selected the tag and CPU / Memory used and cost.</p>
+<p><img class="alignnone size-full wp-image-10498" src="{{ site.baseurl }}/assets/2017/07/cf_report_2.png" alt="cf_report_2" width="1102" height="398" /></p>
+<p>Under the "filter" tab of the report we need to define the filters. Select all projects and group by the tag box.</p>
+<p><img class="alignnone size-full wp-image-10629" src="{{ site.baseurl }}/assets/2017/07/cf_report_3_li.jpg" alt="cf_report_3_LI" width="912" height="665" /></p>
+<p>To run the report select the report and click queue. You can also generate the report under the preview tab. Below is the output. This report shows cost according to box (a group of OpenShift projects). It is a monthly report that shows total cost per day. In this case we only have box02. Notice the &lt;empty&gt; box. These are projects that are not associated to a box.</p>
+<p><img class="alignnone size-full wp-image-10504" src="{{ site.baseurl }}/assets/2017/07/cf_all_projects_per_box_report.png" alt="cf_all_projects_per_box_report" width="1596" height="659" /></p>
+<p><strong>Create Showback Report for tag box02</strong></p>
+<p>In this report we want to only see projects that have the tag box02. Follow the same steps as above only this time change show costs, to tag and select the tag box02. Grouping should be done by project.</p>
+<p><img class="alignnone size-full wp-image-10501" src="{{ site.baseurl }}/assets/2017/07/cf_report_4.png" alt="cf_report_4" width="926" height="639" /></p>
+<p>To run the report select the report and click queue. You can also generate the report under the preview tab. Below is the output. This report shows cost according to box02. We see all the projects that are part of box02 and their costs. It is a monthly report that shows total cost per day per project.</p>
+<p><img class="alignnone size-full wp-image-10509" src="{{ site.baseurl }}/assets/2017/07/cf_report_box021.png" alt="cf_report_box02" width="1107" height="741" /></p>
+<h2>Summary</h2>
+<p>In this article we looked at how OpenShift and CloudForms integrate with one another to provide both metering and showback. This involves labeling OpenShift projects, mapping them to tags in CloudForms and building reports based on user-defined rates. We created a report to provide an overview of all tagged OpenShift projects and a report that shows only the projects of a specific tag. Hopefully this article provides some ideas and you have seen the possibilities that exist today for metering and providing showback of costs in OpenShift using CloudForms.</p>
+<p>Happy OpenShifting!</p>
+<p>(c) 2017 Keith Tenzer</p>

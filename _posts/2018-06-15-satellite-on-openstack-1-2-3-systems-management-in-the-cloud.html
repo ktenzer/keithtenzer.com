@@ -1,0 +1,270 @@
+---
+layout: single 
+title: 'Satellite on OpenStack 1-2-3: Systems Management in the Cloud'
+categories:
+- Satellite 
+tags:
+- Cloud Computing
+- cloud management
+- Insights
+- OpenStack
+- Satellite 6
+- Security
+- system management
+---
+<h2><img class="alignnone  wp-image-12470" src="{{ site.baseurl }}/assets/2018/06/logotype_rh_satellite_rgb_black.png" alt="Logotype_RH_Satellite_RGB_Black" width="243" height="66" /> <img class="alignnone  wp-image-12472" src="{{ site.baseurl }}/assets/2018/06/plus_sign.gif" alt="plus_sign" width="71" height="71" /><img class="alignnone  wp-image-12471" src="{{ site.baseurl }}/assets/2018/06/openstack.png" alt="openstack" width="305" height="79" /></h2>
+<h2>Overview</h2>
+<p>In this article we will explore an important part of day 2 operations in OpenStack or any IaaS, systems management. There are two ways to maintain applications: immutable or lifecyle. Satellite is a product from Red Hat that focuses on lifecycle management. Specifically the deployment, updating, patching and configuration of Red Hat Enterprise Linux (RHEL) as well as the applications running on top throughout entire lifecycle. We will discuss the value Satellite brings to OpenStack and why systems management is a key part of day 2 cloud operations. Investigate the Satellite architecture and how it applies to OpenStack. Finally we will go through hands-on deploy of Satellite on OpenStack, even deploying an instance and automatically connecting the instance to Satellite, all using Ansible.</p>
+<h2>The Value of Satellite in OpenStack</h2>
+<p>Satellite is the second product Red Hat created after RHEL. It has been around for over 10 years and recently gone through a major re-architecture from ground up to address cloud. Red Hat customers have used Satellite to create a standard operating environment (SOE) for RHEL and the applications that run on RHEL for 10+ years. Satellite provides the ability to create various content views and bring them together in a composite content view (a group of content views). This allows us to group content (RPMs, configuration management, Tar files, whatever else) and most importantly version it. Once we can group software and version it we can start thinking about release management across a lifecyle environment. A lifecycle environment is typically something similar the holy trinity: development, test and production. The versions of software for our OS and applications of course vary, you don't want to update software in production without testing in development or test right?</p>
+<p><!--more--></p>
+<p>Below is an illustration of how content views relate to lifecycle environments.</p>
+<p><img class="alignnone  wp-image-12465" src="{{ site.baseurl }}/assets/2018/06/satellite-lifecycle-management.png" alt="satellite-lifecycle-management" width="899" height="395" /></p>
+<p>As we mentioned a composite content view is created to group content views. This is the basis of an SOE. If we wanted to build an SOE for Java, we would have a content view for the OS (this is typically shared across many SOEs) and another one for Java. They would be combined in a composite content view and this is what would be presented to a host via a hostgroup. Hostgroups in Satellite are just groupings of similar hosts that inherit the same content view (likely a composite one), same configuration environment, etc.</p>
+<p>In addition to building an SOE across lifecycle environment, Satellite also provides patching, security vulnerabilities, configuration management via either puppet or integration with Ansible Tower and what I am most excited about, integration with Insights that allows for predictive systems management through AI/ML.</p>
+<p>Now if we look at what you get when you go to a public cloud platform AWS, Azure, GCE, it is very different. You can get a RHEL instance on demand but how is lifecycle management done? Well it isn't, they simply provide you the latest RPMs and you do a yum update. That is it. Great, no thanks! No SOE, no content view, no configuration management, nothing. OpenStack also does not provide anything here. Sure you can upload an image and deploy from that but what about lifecycle management? Your applications are ok with update to an image every time you make a change and complete redeploy? I would say 10% of your applications can handle that and for them, great that is the way to go but everyone else?</p>
+<p>Why is lifecycle management forgotten in the cloud? Simple, the idea with cloud was cloud-native, everything is an image, you never update a running system, you throw it away and build a new one. That is cloud-native in a nutshell and of course is a concept we need for cloud-native or containerized applications but it doesn't help for the other 90% of applications in an enterprise. Combining OpenStack with Satellite, gets you to IaaS (something modern, nimble, agile, flexible) and allows you to run cloud-native + traditional workloads on the same platform. Imagine your enterprise, everything being under a single IaaS. What could you do? What value would that bring the business?</p>
+<p>Satellite of course can be used in public cloud just like on OpenStack. It means however not using RHEL image from AWS, Azure, GCE, etc but bringing your own image and subscription from Red Hat.</p>
+<h2>Satellite 6 Architecture</h2>
+<p>As I mentioned, Satellite 5 existed almost 10 years but a few years ago Red Hat started over and built a new Satellite based on leading opensource projects. Satellite is a product that brings together the following opensource projects: foreman (provisioning), katello (content management), pulp (content repository), candelpin (subscription management),  Ansible Tower Integration (configuration management option 1) and puppet (configuration management option 2). Satellite consists of a server and one or more capsules. Capsules are used to scale or address network segmentation.</p>
+<p>Below is illustration of the different Satellite components.</p>
+<p><img class="alignnone  wp-image-12466" src="{{ site.baseurl }}/assets/2018/06/red-hat-satellite-6.png" alt="red-hat-satellite-6" width="1043" height="600" /></p>
+<p>For configuration management you could use Ansible Tower, Puppet or even both. In the case of Ansible Tower only you would not run Puppet services on the capsule and Ansible Tower would leverage the Satellite 6 inventory as well as facts to communicate directly with instances.</p>
+<p>The illustration below shows how we could apply the Satellite 6 architecture to OpenStack taking advantage of the multi-tenant capabilities and lifecycle environments.</p>
+<p><img class="alignnone  wp-image-12468" src="{{ site.baseurl }}/assets/2018/06/satellite_on_openstack1.png" alt="satellite_on_openstack" width="1205" height="629" /></p>
+<p>In Satellite you can have many lifecycle stages, even for each application and in OpenStack there are various concepts on how to do multitenancy. This should just give an idea of how to apply the Satellite architecture and SOE lifecycle to OpenStack.</p>
+<p><strong>Value of solution:</strong></p>
+<ul>
+<li>IaaS to manage virtual and baremetal workloads.</li>
+<li>Enterprise grade and production proven with Red Hat OpenStack Platform.</li>
+<li>Manage cloud native and traditional workloads together.</li>
+<li>Provide Security / Vulnerability updates, patching, SOE, lifecycle management for traditional workloads and platforms such as PaaS that run on IaaS layer.</li>
+<li>Provide automation tool and framework, Ansible or Puppet to drive end-to-end automation once instances are deployed via Heat.</li>
+<li>Leverage entire Red Hat knowledge base, all support cases ever opened and Red Hat security / vulnerability database to provide insights, allowing problems to be seen before they are well, problems.</li>
+</ul>
+<p>Add it all up and you got incredible business value. The only thing missing on top is OpenShift to provide a PaaS based on container technology and devops methodology. By the way that subject is covered in great detail here:</p>
+<p><a href="https://keithtenzer.com/2018/02/26/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/">https://keithtenzer.com/2018/02/26/openshift-on-openstack-1-2-3-bringing-iaas-and-paas-together/</a></p>
+<h2><img class="alignnone size-full wp-image-12473" src="{{ site.baseurl }}/assets/2018/06/one.png" alt="one" width="225" height="225" /></h2>
+<h2>Deploy Satellite on OpenStack</h2>
+<p>Now that we have a solid foundation it is time to deploy Satellite on OpenStack. First, one thing we haven't talked about is provisioning. Of course both Satellite and OpenStack through Heat can provision virtual and baremetal instances. This is the only part of Satellite that actually overlaps with OpenStack. You will probably get varying opinions and certainly a requirements discussion is in order before making a decision regarding provisioning technology or process, nevertheless I will share my thoughts. My view is you should always use the infrastructure platform and it's native capabilities for provisioning while using an abstraction layer on top like Ansible. In this case that means using OpenStack Heat to create templates for deploying instances or groups of instances and Ansible to orchestrate Heat and also deploy software to those instances.</p>
+<p>I have prepared several Ansible playbooks that do various things to not only automate the deployment of Satellite but also to automate connecting instances to Satellite (bootstrap) and even deploying an instance with Satellite bootstrap. Let us get started.</p>
+<p>Launch a RHEL 7.5 Instance in OpenStack.</p>
+<p><img class="alignnone  wp-image-12469" src="{{ site.baseurl }}/assets/2018/06/instance.png" alt="instance" width="908" height="541" /></p>
+<p>Alternatively you can use Heat and a template similar to one I have provider (<a href="https://github.com/ktenzer/satellite-on-openstack-123/blob/master/heat/instance.yaml">https://github.com/ktenzer/satellite-on-openstack-123/blob/master/heat/instance.yaml</a>). Make sure you add floating ip so the Satellite server can be accessed externally.</p>
+<p>If you need more details on setting up OpenStack environment see the below posts.</p>
+<ul>
+<li><a href="https://keithtenzer.com/2018/02/05/openstack-12-pike-lab-installation-and-configuration-guide-with-hetzner-root-servers/">OpenStack end-to-end deployment on Hetzner Server</a></li>
+<li><a href="https://keithtenzer.com/2017/04/20/red-hat-openstack-platform-10-newton-installation-and-configuration-guide/">Red Hat OpenStack 10 Configuration and Setup</a></li>
+</ul>
+<p>Or just search my blog for 'openstack' you will find a library of information, I promise ;)</p>
+<p><strong>Clone Git Repostory</strong></p>
+<p>Log onto instance and clone the git repo.</p>
+<pre>[root@sat6]# git clone https://github.com/ktenzer/satellite-on-openstack-123.git</pre>
+<p><strong>Checkout release-1.0 branch</strong></p>
+<pre>[root@sat6]# git checkout release-1.0</pre>
+<p><strong>Update Vars File</strong></p>
+<p>In Ansible vars are used to pass parameters into playbooks. I have created a single vars file with all the information needed to run all the playbooks. If you are only interested in deploying Satellite you do not need to configure OpenStack settings. You also do not need OpenStack settings for bootstrapping (configuring instances for Satellite).</p>
+<pre>[root@sat6]# cd satellite-openstack-123</pre>
+<pre>[root@sat6]# cp sample_vars.yml vars.yml</pre>
+<pre>[root@sat6]# vi vars.yml
+---
+### General Settings ###
+ssh_user: cloud-user
+admin_user: 
+admin_passwd: 
+
+### OpenStack Settings ###
+stack_name: myinstance
+heat_template_path: /root/satellite-on-openstack-123/heat/instance.yaml
+openstack_version: 12
+openstack_user: admin
+openstack_passwd: 
+openstack_ip: 
+
+### OpenStack Instance Settings ###
+hostname: rhel123
+domain_name: novalocal
+external_network: public
+internal_network: internal
+internal_subnet: internal-subnet
+security_group: base
+flavor: m2.tiny
+image: rhel75
+ssh_key_name: admin
+volume_size: 30
+ssh_key_name: admin
+
+### Satellite Settings ###
+satellite_server: sat6.novalocal
+satellite_ip: 
+satellite_version: 6.3
+activation_key: rhel7-base
+puppet_version: puppet4
+puppet_environment: KT_RedHat_unstaged_rhel7_base_5
+install_puppet: True
+puppet_logdir: /var/log/puppet
+puppet_ssldir: /var/lib/puppet/ssl
+org: 
+location: 
+manifest_file:
+
+### Red Hat Subscription ###
+rhn_username: 
+rhn_password: 
+rhn_pool:</pre>
+<p><strong>Configure Inventory</strong></p>
+<p>In Ansible an inventory is used to define and group hosts where we want to run playbooks. Dynamic inventories and everything imaginable are possible with Ansible Tower. In this case we have a static inventory.</p>
+<pre>[root@sat6]# cp sample.inventory inventory</pre>
+<pre>[root@sat6]# vi inventory
+[server]
+sat6.novalocal
+
+[capsules]
+
+[clients]
+rhel2.novalocal
+rhel1.novalocal</pre>
+<p>We will only deploy a Satellite server with integrated capsule. I haven't yet tested deployment with multiple capsules but let me know if this is working or open git issue and I will look into it.</p>
+<p>The clients group in inventory file is for Satellite 6 bootstrapping i.e. configuring instances automatically to use Satellite 6. You can leave this blank optionally.</p>
+<p><strong>Run Satellite Deployment Playbook</strong></p>
+<p>Since we are running on OpenStack you need a private key. You create a key in OpenStack and assign it to an instance when the instance is deployed. This key is needed. You can follow OpenStack guides listed above to understand this is more detail.</p>
+<p>Run the playbook <strong>install-satellite.yml</strong>.</p>
+<pre>[root@sat6]# ansible-playbook install-satellite.yml \
+--private-key=/root/admin.pem -e @.vars.yml -i inventory
+
+PLAY RECAP *****************************************************************************************
+rhel1.novalocal : ok=10 changed=4 unreachable=0 failed=0
+rhel2.novalocal : ok=10 changed=4 unreachable=0 failed=0
+sat6.novalocal : ok=46 changed=18 unreachable=0 failed=0</pre>
+<p>After installation there are still some todos I haven't completed automated. You need to create a hostgroup, assign it a content view and puppet environment as well as assign repos (products) to activation key.</p>
+<p>&nbsp;</p>
+<p><strong>Update activation key</strong></p>
+<p><img class="alignnone  wp-image-12488" src="{{ site.baseurl }}/assets/2018/06/act3.png" alt="act3" width="1383" height="429" /></p>
+<p><img class="alignnone  wp-image-12489" src="{{ site.baseurl }}/assets/2018/06/act2.png" alt="act2" width="1604" height="493" /></p>
+<p><img class="alignnone  wp-image-12490" src="{{ site.baseurl }}/assets/2018/06/act1.png" alt="act1" width="1619" height="488" /></p>
+<p><strong>Create hostgroup</strong></p>
+<p><img class="alignnone  wp-image-12487" src="{{ site.baseurl }}/assets/2018/06/hg.png" alt="hg" width="844" height="345" /></p>
+<h2><img class="alignnone size-full wp-image-12474" src="{{ site.baseurl }}/assets/2018/06/two.png" alt="two" width="225" height="225" /></h2>
+<h2>Bootstrap Existing Instance to Satellite</h2>
+<p>If any instances already exist at time when Satellite 6 is installed the install-satellite.yml playbook will also configure instances listed in [clients] hostgroup of inventory file automatically for Satellite 6. This was also shown above. Mostly you will deploy instances and then either bootstrap them later or bootstrap them during deployment. I have provided playbooks to accomplish both.</p>
+<p><strong>Bootstrap Existing Instance</strong></p>
+<p>The <strong>bootstrap-clients.yml</strong> playbook will simply run the sat6-bootstrap role. The role is responsible for connecting an existing instance to Satellite. A good practice in Ansible is to put tasks into roles and make them reusable, I have followed that.</p>
+<p>The Satellite bootstrap steps are as follows:</p>
+<ul>
+<li>Install Satellite CA Certificate</li>
+<li>Register to Satellite with activation key</li>
+<li>Install Katello agent</li>
+<li>Start and enable goferd</li>
+<li>Install Red Hat Insights</li>
+<li>Install Puppet</li>
+<li>Configure Puppet</li>
+</ul>
+<pre>[root@sat6]# ansible-playbook bootstrap-clients.yml --private-key=/root/admin.pem -e @../vars.yml -i ../inventory
+
+PLAY RECAP *****************************************************************************************
+rhel1.novalocal : ok=8 changed=2 unreachable=0 failed=0
+rhel123.novalocal : ok=8 changed=2 unreachable=0 failed=0</pre>
+<h2>Deploy New Instance and Bootstrap using OpenStack Heat</h2>
+<p>You may of course want to deploy a new instance and as part of deployment automatically do the bootstrapping to Satellite. In this case there are two playbooks. The first is provided to configure the OpenStack client on host that run playbook so you can authenticate to OpenStack. The other is used to deploy a new instance using Heat and automatically bootstrap newly created instance to Satellite. IP address discovery is done dynamically by reading the output of the Heat stack, once provisioning is complete. Everything is of course driven through Ansible. In order to run these playbooks you must ensure the OpenStack settings in the vars file are configured correctly.</p>
+<p><strong>Configure OpenStack Client</strong></p>
+<p>As mentioned in order to communicate with OpenStack we need to authenticate to Keystone, the identity service. The playbook is <strong>setup-openstack-client.yml</strong>. In order to run it no inventory is needed since it will just configure the client on the localhost or host running playbook.</p>
+<pre>[root@sat6]# ansible-playbook setup-openstack-client.yml --private-key=/root/admin.pem -e @../vars.yml
+
+PLAY RECAP *****************************************************************************************
+localhost : ok=4 changed=1 unreachable=0 failed=0</pre>
+<p><img class="alignnone size-full wp-image-12475" src="{{ site.baseurl }}/assets/2018/06/three.png" alt="three" width="225" height="225" /></p>
+<p><strong>Deploy New Instance with Heat and Bootstrap to Satellite</strong></p>
+<p>Once OpenStack client is setup we need to authenticate. This is done outside of the Ansible environment.</p>
+<pre>[root@sat6]# source /root/keystonerc_admin</pre>
+<p>Authentication credentials are set in the environment. We are using OpenStack CLI through Ansible. Another option is to use OpenStack modules written for Ansible and then authentication is of course built-in. This is a much cleaner approach but also requires various python libraries and versions like shade.</p>
+<p>Make sure strict ssh host key checking is off (StrictHostKeyChecking) in /etc/sshd/ssh_config or set option on cli for Ansible. If strict host key checking is on you are of course prompted when connecting to host via ssh for first time and automation requires no manual inputs.</p>
+<pre>[root@sat6(keystone_admin)]# export ANSIBLE_HOST_KEY_CHECKING=False</pre>
+<p>Once authenticated run the <strong>provision-client.yml</strong> playbook. This will take a few minutes, as a new instance in OpenStack will be provisioned.</p>
+<pre>[root@sat6(keystone_admin)]# ansible-playbook provision-client.yml \
+--private-key=/root/admin.pem -e @../vars.yml
+PLAY RECAP *****************************************************************************************
+localhost : ok=11 changed=6 unreachable=0 failed=0
+rhel3 : ok=15 changed=12 unreachable=0 failed=0</pre>
+<p>If you are configuring puppet, a certificate needs to be signed in Satellite. You can of course setup auto-signed certificates but default is you need to sign. This means pupet agent run will fail. You need to go into Satellite, under Capsule and Certificates. There you can click sign to sign a certificate.</p>
+<p><img class="alignnone  wp-image-12477" src="{{ site.baseurl }}/assets/2018/06/puppet_sign1.png" alt="puppet_sign" width="2054" height="568" /></p>
+<p>After signing certificate you can simply re-run playbook to do the first puppet run. This of course should happen every 30 minutes so you can wait for next automatic run.</p>
+<h2>Update and Manage Errata</h2>
+<p>Using Satellite, it is very easy to see what hosts have security vulnerabilities and where errata should be installed. You can of course also schedule updates using the scheduler built-in to Satellite. The Ansible playbook will do a yum update when enabled after host is provisioned from Heat and configured for Satellite. Sometimes however a critical issue comes about and systems should be patched immediately. Here we will walk through process.</p>
+<p>Under Hosts-&gt;Content Hosts.</p>
+<p><img class="alignnone  wp-image-12478" src="{{ site.baseurl }}/assets/2018/06/sat1.png" alt="sat1" width="1240" height="403" /></p>
+<p>Select the newly provisioned instance rhel3.novalocal and choose manage errata.</p>
+<p><img class="alignnone  wp-image-12479" src="{{ site.baseurl }}/assets/2018/06/sat2.png" alt="sat2" width="1351" height="437" /></p>
+<p>Next select the erratas you would like to apply to rhel3.novalocal.</p>
+<p><img class="alignnone  wp-image-12480" src="{{ site.baseurl }}/assets/2018/06/sat3.png" alt="sat3" width="1457" height="677" /></p>
+<p>Click Install Selected to perform update.</p>
+<p><img class="alignnone  wp-image-12481" src="{{ site.baseurl }}/assets/2018/06/sat4.png" alt="sat4" width="1948" height="659" /></p>
+<h2>Predicative System Management with Red Hat Insights</h2>
+<p>Obviously Satellite helps you once a security vulnerability is available or to control how new software updates are introduced into an applications lifecycle environment. However, what if we could identify problems or issues before they would arise? If you consider Red Hat as an organization has quite a lot of data that could help. Red Hat has all the information from support cases across all our customers. Red Hat has a deep and broad knowledge base with recommendations on not only OS but platform, such as OpenStack or OpenShift configurations. Given the support case and knowledge base, using AI/ML that data could be crunched against intelligent rule sets. We could check these rules against a configuration provided by customer to see if everything checks out immediately once a system is built or updated. Guess what? That is Red Hat Insights. Customers can opt-in and send information from their systems and it is run against rule sets build from knowledge in support cases as well as other sources like knowledge base. With every new case or knowledge base the rule set grows so Red Hat Insights is continually getting smarter. This of course is all integrated into Satellite.</p>
+<p>Now that we have patched our newly deployed instance, rhel3.novalocal, we can view Insights to see if anything else needs to be done.</p>
+<p><strong>Actions</strong></p>
+<p>Under Satellite-&gt;Red Hat Insights select actions.</p>
+<p><img class="alignnone  wp-image-12482" src="{{ site.baseurl }}/assets/2018/06/insights1.png" alt="insights1" width="1318" height="407" /></p>
+<p><strong>Inventory</strong></p>
+<p>We can view which actions apply to hosts by clicking inventories.</p>
+<p><img class="alignnone  wp-image-12483" src="{{ site.baseurl }}/assets/2018/06/insights2.png" alt="insights2" width="1442" height="333" /></p>
+<p>Here we see Insights found 5 actions that need attention.</p>
+<p><strong>Plans</strong></p>
+<p>In Insights plans allow us to resolve and track resolution of actions across systems.</p>
+<p><img class="alignnone  wp-image-12485" src="{{ site.baseurl }}/assets/2018/06/insights4.png" alt="insights4" width="985" height="801" /></p>
+<p>Here we create a plan for our single instance rhel3.novalocal.</p>
+<p><strong>Resolutions</strong></p>
+<p>Red Hat Insights is pretty smart. There is often not just one resolution but multiple. For any actions that have more than one resolution, Insights will prompt user to make decision.</p>
+<p><img class="alignnone  wp-image-12484" src="{{ site.baseurl }}/assets/2018/06/insights5.png" alt="insights5" width="1059" height="718" /></p>
+<p>Once the plan is saved, Insights will also provide playbooks to actually address and resolve the issues according to resolutions provided by user.</p>
+<p><img class="alignnone  wp-image-12486" src="{{ site.baseurl }}/assets/2018/06/insights6.png" alt="insights6" width="1418" height="413" /></p>
+<p>Simply click download playbook to get an Ansible playbook that will resolve the issue without you having to do anything. Pretty cool right?</p>
+<p>Below is the playbook to fix our performance issue downloaded downloaded in Satellite directly from Insights.</p>
+<pre>---
+# Red Hat Insights has recommended one or more actions for you, a system administrator, to review and if you
+# deem appropriate, deploy on your systems running Red Hat software. Based on the analysis, we have automatically
+# generated an Ansible Playbook for you. Please review and test the recommended actions and the Playbook as
+# they may contain configuration changes, updates, reboots and/or other changes to your systems. Red Hat is not
+# responsible for any adverse outcomes related to these recommendations or Playbooks.
+#
+# Addresses maintenance plan 35821 (rhel3)
+# https://access.redhat.com/insights/planner/35821
+# Generated by Red Hat Insights on Fri, 15 Jun 2018 12:04:33 GMT
+# Warning: Some of the rules in the plan do not have Ansible support and this playbook does not address them!
+
+# Decreased performance when not using 'noop' or 'deadline' I/O scheduler on VM
+# Identifier: (vm_io_scheduler|VM_IO_SCHEDULER_V1,105,fix)
+# Version: a0e934f07d8167073546cbc5108c4345f92559a5
+- name: Enable virtual-guest tuned profile
+  hosts: "rhel3.novalocal"
+  become: true
+  tasks:
+
+    - name: ensure tuned is installed
+      yum:
+        name: tuned
+        state: latest
+    
+    - name: ensure tuned is started and enabled at boot
+      service:
+        name: tuned
+        state: started
+        enabled: true
+
+    - name: set tuned profile to virtual-guest
+      command: tuned-adm profile virtual-guest
+      check_mode: false
+
+
+- name: run insights
+  hosts: rhel3.novalocal
+  become: True
+  gather_facts: False
+  tasks:
+    - name: run insights
+      command: redhat-access-insights
+      changed_when: false
+</pre>
+<h2>Summary</h2>
+<p>In this article we discussed the importance of Satellite in the context of OpenStack. Providing a standard operating environment and lifecycle management for systems we don't want to build up / burn down every time a change is made. We looked at some architecture concepts and ideas as a starting point. Finally we went though deployment of Satellite, deployment of an instance, Satellite bootstrapping, security updates and of course predictive systems management with Red Hat Insights. All of this together means we can not only operate cloud-native applications but also much more challenging traditional applications that require a lifecycle in OpenStack. Most organizations today go about this the wrong way. They try to build a new greenfield that only addresses cloud-native and attempt to leave their legacy behind. While certainly the cloud-native greenfield approach at least gets you going with cloud-native applications and methodologies, you are doing so by leaving your legacy behind. Re-platforming legacy applications, especially ones already virtualized on OpenStack is a no-brainer and hopefully this article has shown the capabilities are all there. We should not simply forget or ignore the past, our legacy, but rather take it with us and use it to improve our future.</p>
+<p>Happy OpenStacking!</p>
+<p>(c) 2018 Keith Tenzer</p>

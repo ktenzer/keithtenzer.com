@@ -1,0 +1,99 @@
+---
+layout: post
+title: Operator SDK Ansible
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta: {}
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p>&nbsp;</p>
+<p>dnf install -y git</p>
+<p>&nbsp;</p>
+<p><strong>Install Docker 17.03+</strong></p>
+<p>Add the docker ce repositories. Note: you can also use podman and buildah instead of Docker for those that want a complete and clean divorce.</p>
+<p><code><span class="nb">$ sudo </span>dnf <span class="nt">-y</span> install dnf-plugins-core</code></p>
+<pre class="highlight">$ <code><span class="nb">sudo </span>dnf config-manager <span class="se">\</span>
+    <span class="nt">--add-repo</span> <span class="se">\</span>
+    https://download.docker.com/linux/fedora/docker-ce.repo</code></pre>
+<p>Install docker-ce</p>
+<pre>$ sudo dnf -y install docker-ce docker-ce-cli</pre>
+<pre>$ sudo systemctl start docker
+$ sudo systemctl enable docker</pre>
+<p>&nbsp;</p>
+<p>dnf install ansible</p>
+<p>&nbsp;</p>
+<p>pip3 install ansible-runner<br />
+pip3 install ansible-runner-http</p>
+<p><code>$ pip3 install --user requests</code></p>
+<p>&nbsp;</p>
+<pre><code>$ pip3 install --user openshift</code></pre>
+<p>&nbsp;</p>
+<pre><code>curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl</code></pre>
+<p>&nbsp;</p>
+<p>curl -LO https://dl.google.com/go/go1.14.2.linux-arm64.tar.gz</p>
+<pre>tar -C /usr/local -xzf <span class="downloadFilename">go1.14.2.linux-amd64.tar.gz</span></pre>
+<p>&nbsp;</p>
+<p>mkdir -p /home/fedora/go/src</p>
+<p>mkdir -p /home/fedora/go/bin</p>
+<p>vi /home/fedora/.bash_profile</p>
+<pre>export PATH=$PATH:/usr/local/go/bin
+GOPATH=/home/fedora/go
+GOBIN=/home/fedora/go/bin</pre>
+<p>&nbsp;</p>
+<pre>$ RELEASE_VERSION=v0.17.0</pre>
+<pre>curl -LO https://github.com/operator-framework/operator-sdk/releases/download/<span class="pl-smi">${RELEASE_VERSION}</span>/operator-sdk-<span class="pl-smi">${RELEASE_VERSION}</span>-x86_64-linux-gnu</pre>
+<pre>chmod +x operator-sdk-<span class="pl-smi">${RELEASE_VERSION}</span>-x86_64-linux-gnu <span class="pl-k">&amp;&amp;</span> sudo mkdir -p /usr/local/bin/ <span class="pl-k">&amp;&amp;</span> sudo cp operator-sdk-<span class="pl-smi">${RELEASE_VERSION}</span>-x86_64-linux-gnu /usr/local/bin/operator-sdk <span class="pl-k">&amp;&amp;</span> rm operator-sdk-<span class="pl-smi">${RELEASE_VERSION}</span>-x86_64-linux-gnu</pre>
+<p>&nbsp;</p>
+<p>mkdir /home/fedora/go/src/github.com</p>
+<p>cd /home/fedora/go/src/github.com</p>
+<p>operator-sdk new podium-operator --repo github.com --api-version=cars.example.com/v1alpha1 --kind=Car --type=ansible</p>
+<p><strong>Create User on Quay.io</strong></p>
+<p>We will be using quay to store operator images. Authenticate using Github or Gmail to <a href="https://quay.io/">https://quay.io</a>. Once authenticated go to account settings and set a password.</p>
+<p><strong>Test Quay.io Credentials</strong></p>
+<pre>$ sudo docker login quay.io</pre>
+<p><strong>Build Operator</strong></p>
+<p>Using operator-sdk cli build the operator which will push the image to your local Docker registry.</p>
+<pre>$ sudo PATH=$PATH:/usr/local/go/bin operator-sdk build \
+quay.io/ktenzer/cars-operator:latest</pre>
+<p>Note: Substitute ktenzer for your username.</p>
+<p><strong>Push Operator to your Quay.io Account</strong></p>
+<pre>$ sudo docker push quay.io/ktenzer/cars-operator:latest</pre>
+<p>&nbsp;</p>
+<p>328 oc create -f deploy/crds/podium.com_podia_crd.yaml</p>
+<p>324 oc create -f deploy/service_account.yaml<br />
+326 oc create -f deploy/role.yaml<br />
+327 oc create -f deploy/role_binding.yaml<br />
+329 oc create -f deploy/operator.yaml</p>
+<p>&nbsp;</p>
+<p>Deploy Operator through OLM</p>
+<p>Create CSV</p>
+<p>operator-sdk generate csv --csv-version 0.0.1 --deploy-dir deploy/cluster</p>
+<div>1) create bundle (a bundle will package your operator image with a clusterversion manifest that explains how to deploy your operator)</div>
+<div>sudo operator-sdk bundle create quay.io/ktenzer/podium-operator-catalog:latest --channels beta --package podium-operator-catalog --directory deploy/olm-catalog/podium-operator/manifests</div>
+<div>2) push catalog bundle local to <a href="http://quay.io/" target="_blank" rel="noopener">quay.io</a></div>
+<div>3) create index (an index creates a catalog which is another new image that contains one or more bundles, created in step 1)</p>
+<div>sudo opm index add -c docker --bundles quay.io/ktenzer/podium-operator-catalog:latest --tag quay.io/ktenzer/podium-operator-index:1.0.0</div>
+<div>4) deploy catalogsource into marketplace (the catalog source defines your OLM catalog and what image to run, this makes it visibile in operator hub)</div>
+<div><span class="im">apiVersion: <a href="http://operators.coreos.com/v1alpha1" target="_blank" rel="noopener">operators.coreos.com/v1alpha1</a><br />
+kind: CatalogSource<br />
+metadata:<br />
+name: podium-operator-catalog<br />
+spec:<br />
+sourceType: grpc<br />
+</span>  image: <a href="http://quay.io/ktenzer/podium-operator-index:1.0.0" target="_blank" rel="noopener">quay.io/ktenzer/podium-operator-index:1.0.0</a><span class="im"><br />
+displayName: Podium Operator Catalog<br />
+publisher: Podium Community</span></div>
+</div>
+<div></div>

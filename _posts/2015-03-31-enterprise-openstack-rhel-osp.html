@@ -1,0 +1,406 @@
+---
+layout: single 
+title: 'Enterprise OpenStack: RHEL OSP'
+categories:
+- OpenStack 
+tags:
+- Ceph
+- Cloud Computing
+- KVM
+- OpenStack
+- Red Hat
+- RHEL
+- RHEL OSP
+---
+<h3>Overview</h3>
+<p>As of today there are over eleven OpenStack services and more are coming. Each service has complete isolation from other services and that allows OpenStack to scale far beyond the reach of current computing platforms. However due to all these independent services, OpenStack can be very complicated to operationalize in enterprise environments.<br />
+<!--more--><br />
+Each service has a database or means for storing stateful data, requires load balancing and can scale at a different pace from that of other services. In addition OpenStack has over 1000 different configuration parameters, making it impossible to deploy and manage without complete automation through configuration management.</p>
+<p>Enterprise OpenStack is about high availability, scalability, automation, configuration management, life-cycles and of course support. Choosing the right distribution is the most important decision you will ever make in regards to OpenStack. Below are some points to consider:</p>
+<ul>
+<li>Support - How much experience does company have with Open Source, Linux, Ceph and KVM?</li>
+<li>Vision - How complete is the OpenStack story?  Does it extend to applications?</li>
+<li>Enterprise Features - High availability, scalability and support for diversified hardware?</li>
+<li>Configuration Management - Can OpenStack be managed centrally and deployment be 100% automated?</li>
+<li>Enterprise Management - Charge-back, governance policies, single-pane-of-glass, hybrid cloud and support for traditional platforms (VMware, Microsoft Hyper-V, RHEV)?</li>
+<li>Linux Containers - How will OpenStack provide infrastructure for DevOps and containerized next-gen applications?</li>
+<li>Lock-in - Are you free to choose your underlying hardware vendor for compute, network and storage?</li>
+</ul>
+<p>I know at least one company that can talk about all of these points and that is Red Hat. In this post we will focus on the Red Hat OpenStack Platform (RHEL OSP).</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/foreman-e.png"><img class="alignnone  wp-image-777" src="{{ site.baseurl }}/assets/2015/03/foreman-e.png?w=300" alt="foreman-e" width="1383" height="742" /></a></p>
+<h3>Node Types</h3>
+<p>RHEL OSP defines four types of nodes: admin, controller, compute and Ceph storage node.</p>
+<h4>Admin Node</h4>
+<p>The admin node is responsible for management of an OpenStack environment. It provides configuration management through <a href="https://puppetlabs.com/">puppet</a> and automated installation through <a href="http://theforeman.org/">foreman</a>. The admin node is constantly evolving and mixes best of breed open source technologies together. The admin node will allow an OpenStack administrator to deploy OpenStack with 100% automation on bare-metal or virtual infrastructure. The admin node maintains configuration for a deployment centrally therefore you can not only deploy initial environment but you can grow and scale-out the environment in an automated manner. The admin node provides the following additional services for an OpenStack deployment:</p>
+<ul>
+<li>DHCP</li>
+<li>DNS</li>
+<li>PXE</li>
+<li>TFTP</li>
+</ul>
+<p>These services enable automated provisioning and configuration management. The admin node can provision two types of OpenStack nodes today: controller and compute.</p>
+<h4>Controller Node</h4>
+<p>The controller node runs all OpenStack services except for Nova (compute). The Red Hat best practice is to run three controller nodes. The admin node and the RHEL OSP installer will configure a <a href="http://clusterlabs.org/">pacemaker</a> cluster that uses corosync for the cluster network as well as fencing nodes. All OpenStack services will be individually clustered with an HA proxy for load balancing. The main reason for running three controller nodes aside from scalability and availability is fencing. Having three nodes provides clear ownership in a pacemaker cluster and as such two nodes is not a valid configuration.</p>
+<p>The controller node runs the following OpenStack services:</p>
+<ul>
+<li>Horizon (dashboard)</li>
+<li>Keystone (identity)</li>
+<li>Nova scheduler (compute)</li>
+<li>Neutron (network)</li>
+<li>Neutron metadata (metadata - cloud-init)</li>
+<li>Neutron L3 Agent (L3 networking)</li>
+<li>Cinder (block storage)</li>
+<li>Swift (object storage)</li>
+<li>Heat (orchestration)</li>
+<li>Ceilometer (telemetry)</li>
+</ul>
+<h4>Compute Node</h4>
+<p>The compute node runs Nova (compute) and the Neutron openvswitch agent. Compute nodes do not provide any high availability, if a compute node goes down then all instances hosted on that node are down. The point of OpenStack though is to provide horizontal scaling. If you need more compute resources you simply add more compute nodes. Applications must be resilient and able to handle instances going down, this is a requirement that is often misunderstood when discussing cloud computing.</p>
+<h4>Ceph Storage Node</h4>
+<p>The Ceph storage node runs Ceph services such as the Object Storage Daemon (OSD) that provides storage to a Ceph cluster. These nodes are not at this time provisioned by the admin node and must be configured separately. The admin node will let the administrator configure Ceph as a storage back-end for Glance or Cinder but the Ceph cluster must be available. Ceph requires metadata services however and it is ideal to run these on the controller nodes but other than the Ceph metadata services nothing else Ceph related should be running on OpenStack controller nodes.</p>
+<p>Ceph is the defacto storage for OpenStack because it meets the requirements for OpenStack storage very well. Ceph can scale far beyond other storage systems and like OpenStack it abstracts hardware allowing you to be free in choice of your hardware vendors.</p>
+<h3>Installing Admin Node</h3>
+<p>The first step to deploying enterprise OpenStack is to install and configure the admin node. The admin node must at a minimum be connected to the provisioning network. If the admin node goes down you will be unable to provision. In addition if the admin node is providing DNS or DHCP to OpenStack environment those services will be offline. Infrastructure decisions regarding the admin node require thoughtful planning.</p>
+<h4>Prepare</h4>
+<pre style="padding-left:30px;">Install RHEL 7.1</pre>
+<pre style="padding-left:30px;">#subscription-manager register</pre>
+<pre style="padding-left:30px;">#subscription-manager list --available</pre>
+<pre style="padding-left:30px;">#subscription-manager attach --pool=&lt;pool id&gt;</pre>
+<pre style="padding-left:30px;">#systemctl disable NetworkManager.service</pre>
+<pre style="padding-left:30px;">#systemctl stop NetworkManager.service</pre>
+<pre style="padding-left:30px;">#yum remove dnsmasq</pre>
+<pre style="padding-left:30px;">#subscription-manager repos --disable=*</pre>
+<pre style="padding-left:30px;">#subscription-manager repos --enable=rhel-7-server-rpms</pre>
+<pre style="padding-left:30px;">#subscription-manager repos --enable=rhel-7-server-openstack-6.0-installer-rpms</pre>
+<pre style="padding-left:30px;">#subscription-manager repos --enable=rhel-server-rhscl-7-rpms</pre>
+<pre style="padding-left:30px;">#yum update -y</pre>
+<pre style="padding-left:30px;">#yum install -y rhel-osp-installer</pre>
+<h4>Setup Provisioning Network</h4>
+<p>Before starting the installer ensure your network interface is setup correctly. Below is an example.</p>
+<pre style="padding-left:30px;">DEVICE=eth0
+BOOTPROTO=none
+HWADDR=52:54:00:a5:fe:26
+ONBOOT=yes
+HOTPLUG=yes
+TYPE=Ethernet
+IPADDR=192.168.122.99
+NETMASK=255.255.255.0
+PEERDNS=yes
+DNS1=192.168.122.99
+DNS2=192.168.122.1
+NM_CONTROLLED=no</pre>
+<h4>Install and Configure</h4>
+<pre style="padding-left:30px;">#rhel-osp-installer</pre>
+<pre style="padding-left:30px;">Please select NIC on which you want provisioning enabled: 
+1. eth0
+2. eth1
+? 1
+
+Networking setup:
+Network interface: 'eth0'
+IP address: '192.168.122.99'
+Network mask: '255.255.255.0'
+Network address: '192.168.122.0'
+Host Gateway: '192.168.122.1'
+DHCP range start: '192.168.122.100'
+DHCP range end: '192.168.122.254'
+DHCP Gateway: '192.168.122.99'
+DNS forwarder: '192.168.122.1'
+Domain: 'lab.local'
+NTP sync host: '0.rhel.pool.ntp.org'
+Timezone: 'Europe/Berlin'
+Configure networking on this machine: ✓
+Configure firewall on this machine: ✓
+</pre>
+<p>Ensure your DNS forwarder is a system that can provide external DNS. The DHCP gateway should be admin node itself since it provides DHCP unless of course you want to handle this externally.</p>
+<pre style="padding-left:30px;">How would you like to proceed?:
+
+1. Proceed with the above values
+2. Change Network interface
+3. Change IP address
+4. Change Network mask
+5. Change Network address
+6. Change Host Gateway
+7. Change DHCP range start
+8. Change DHCP range end
+9. Change DHCP Gateway
+10. Change DNS forwarder
+11. Change Domain
+12. Change NTP sync host
+13. Change Timezone
+14. Do not configure networking
+15. Do not configure firewall
+16. Cancel Installation
+
+9
+
+new value for DHCP Gateway
+192.168.122.1
+</pre>
+<p>Change the NTP server, it is critical you provide an internal NTP server or an external one that is available as OpenStack replies heavily on NTP.</p>
+<pre style="padding-left:30px;">How would you like to proceed?:
+
+1. Proceed with the above values
+2. Change Network interface
+3. Change IP address
+4. Change Network mask
+5. Change Network address
+6. Change Host Gateway
+7. Change DHCP range start
+8. Change DHCP range end
+9. Change DHCP Gateway
+10. Change DNS forwarder
+11. Change Domain
+12. Change NTP sync host
+13. Change Timezone
+14. Do not configure networking
+15. Do not configure firewall
+16. Cancel Installation
+
+12
+
+Enter a list of NTP hosts, separated by commas. First in the list will be the default.
+clock.redhat.com</pre>
+<pre style="padding-left:30px;">Configure client authentication
+SSH public key: ''
+Root password: '*******************************************'
+
+Please set a default root password for newly provisioned machines. If you choose not to set a password, it will be generated randomly. The password must be a minimum of 8 characters. You can also set a public ssh key which will be deployed to newly provisioned machines.
+
+How would you like to proceed?:
+1. Proceed with the above values
+2. Change SSH public key
+3. Change Root password
+4. Toggle Root password visibility
+3
+
+new value for root password
+********
+
+enter new root password again to confirm
+********</pre>
+<pre style="padding-left:30px;">Now you should configure installation media which will be used for provisioning.
+Note that if you don't configure it properly, host provisioning won't work until you configure installation media manually.
+
+Enter RHEL repo path:
+1. Set RHEL repo path (http or https URL): http://
+2. Proceed with configuration
+3. Skip this step (provisioning won't work)
+1
+Path: http://192.168.122.99:8120/RHEL7
+Enter RHEL repo path:
+1. Set RHEL repo path (http or https URL): http://192.168.122.99:8120/RHEL7
+2. Proceed with configuration
+3. Skip this step (provisioning won't work)
+2</pre>
+<pre style="padding-left:30px;">Enter your subscription manager credentials:
+
+1. Subscription manager username: myuser
+2. Subscription manager password: ********
+3. Comma or Space separated repositories: rhel-7-server-openstack-6.0-rpms rhel-7-server-openstack-6.0-installer-rpms rhel-7-server-rh-common-rpms
+4. Subscription manager pool (recommended): mypool
+5. Subscription manager proxy hostname:
+6. Subscription manager proxy port:
+7. Subscription manager proxy username:
+8. Subscription manager proxy password:
+9. Proceed with configuration
+10. Skip this step (provisioning won't subscribe your machines)
+9</pre>
+<pre style="padding-left:30px;">Starting to seed provisioning data
+
+Use 'base_RedHat_7' hostgroup for provisioning
+
+Success!
+
+* Foreman is running at https://admin.lab.local
+
+Initial credentials are admin / 7wHcE3YZYHSRffmh
+
+* Foreman Proxy is running at https://admin.lab.local:8443
+
+* Puppetmaster is running at port 8140
+
+The full log is at /var/log/rhel-osp-installer/rhel-osp-installer.log</pre>
+<h4>Configure Provisioning Media</h4>
+<p>The admin node needs to install RHEL on nodes it provisions. To do this we need to expose the RHEL install media through HTTP. Below is the process:</p>
+<pre style="padding-left:30px;">mount RHEL 7.1 install media in cdrom</pre>
+<pre style="padding-left:30px;">#mkdir /RHEL7</pre>
+<pre style="padding-left:30px;">#mount -o ro /dev/cdrom /RHEL7</pre>
+<pre style="padding-left:30px;">#cp -dpR /RHEL7 /var/www/html/.</pre>
+<pre style="padding-left:30px;">#chmod -R 755 /var/www/html/RHEL7</pre>
+<pre style="padding-left:30px;">#semanage port -a -t http_port_t -p tcp 8120</pre>
+<pre style="padding-left:30px;">vi /etc/httpd/conf.d/medium.conf</pre>
+<pre style="padding-left:30px;">Listen 8120
+NameVirtualHost *:8120
+&lt;VirtualHost *:8120&gt;
+DocumentRoot /var/www/html/
+ServerName 192.168.122.99
+&lt;Directory "/var/www/html/"&gt;
+Options All Indexes FollowSymLinks
+Order allow,deny
+Allow from all
+&lt;/Directory&gt;
+&lt;/VirtualHost&gt;</pre>
+<pre style="padding-left:30px;">#iptables -I INPUT 1 -p tcp -m multiport --ports 8120 -m comment --comment "8120 accept - medium" -j ACCEPT</pre>
+<pre style="padding-left:30px;">#iptables-save &gt; /etc/sysconfig/iptables</pre>
+<pre style="padding-left:30px;">#systemctl restart network.service</pre>
+<pre style="padding-left:30px;">#systemctl restart httpd</pre>
+<h3>Host Discovery</h3>
+<p>Now that the admin node has been installed and configured we can start our OpenStack deployment. The first step is host discovery. As mentioned OpenStack nodes can run on bare-metal or Virtual Machines. In either case you must configure host for boot via PXE. At minimum the controller node should have three NICs connecting to networks for provisioning / management, external and tenant. The compute node should have minimum two NICs for provisioning / management and tenant. You also generally want an additional network for public API and of course storage. Configure host networking properly before booting.</p>
+<p>Once hosts are booted foreman will discover them and they will show up in the RHEL OSP installer under Hosts-&gt;Discovered Hosts.</p>
+<p>Create Networks in RHEL OSP installer under Infrastructure-&gt;Subnet. You should have at minimum three subnets (provisioning / management, external and tenant). It is also recommend to separate public and storage.</p>
+<p>Below both hosts have been discovered based on MAC address (names can be changed later).</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/rhel_osp_6_deployment_networks.png"><img class="alignnone  wp-image-755" src="{{ site.baseurl }}/assets/2015/03/rhel_osp_6_deployment_networks.png?w=300" alt="RHEL_OSP_6_Deployment_Networks" width="1384" height="263" /></a></p>
+<p>Create an external subnet (you need to do this for every network).</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_create_external_network.png"><img class="alignnone  wp-image-767" src="{{ site.baseurl }}/assets/2015/03/osp_6_create_external_network.png?w=300" alt="OSP_6_Create_External_Network" width="1369" height="671" /></a></p>
+<h3>Deploying OpenStack</h3>
+<p>The first step to deploying OpenStack is to create a new deployment by going to OpenStack Installer-&gt;Deployments. Creating a new deployment is a four step process that can be observed below.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_deployment_1.png"><img class="alignnone  wp-image-756" src="{{ site.baseurl }}/assets/2015/03/osp_6_deployment_1.png?w=300" alt="OSP_6_Deployment_1" width="1364" height="573" /></a></p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_deployment_2.png"><img class="alignnone  wp-image-757" src="{{ site.baseurl }}/assets/2015/03/osp_6_deployment_2.png?w=300" alt="OSP_6_Deployment_2" width="1365" height="487" /></a></p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_deployment_3.png"><img class="alignnone  wp-image-758" src="{{ site.baseurl }}/assets/2015/03/osp_6_deployment_3.png?w=300" alt="OSP_6_Deployment_3" width="1364" height="550" /></a></p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_deployment_4.png"><img class="alignnone  wp-image-759" src="{{ site.baseurl }}/assets/2015/03/osp_6_deployment_4.png?w=300" alt="OSP_6_Deployment_4" width="1364" height="550" /></a></p>
+<p>Glance requires a storage back-end, in this case NFS was chosen.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_deployment_glance.png"><img class="alignnone  wp-image-760" src="{{ site.baseurl }}/assets/2015/03/osp_6_deployment_glance.png?w=300" alt="OSP_6_Deployment_GLance" width="1360" height="544" /></a></p>
+<p>Cinder also requires a storage back-end, in this case NFS was chosen. Note NetApp as being an option. Red Hat partners such as NetApp have started integrating into the RHEL OSP installer.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_deployment_cinder.png"><img class="alignnone  wp-image-761" src="{{ site.baseurl }}/assets/2015/03/osp_6_deployment_cinder.png?w=300" alt="OSP_6_Deployment_Cinder" width="1359" height="539" /></a></p>
+<p>Once the deployment has been created we can assign hosts. In this configuration we have one controller and compute node (the minimum setup). Below we will assign controller and compute node to deployment. Keep in mind the beauty of the installer allows you to grow the environment and scale-out more controllers or compute nodes as required. I would recommend starting small until at least the kinks are worked out (see troubleshooting section).</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_assign_controllers.png"><img class="alignnone  wp-image-762" src="{{ site.baseurl }}/assets/2015/03/osp_6_assign_controllers.png?w=300" alt="OSP_6_Assign_Controllers" width="1358" height="489" /></a></p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_deployment_assign_compute.png"><img class="alignnone  wp-image-763" src="{{ site.baseurl }}/assets/2015/03/osp_6_deployment_assign_compute.png?w=300" alt="OSP_6_Deployment_assign_compute" width="1352" height="374" /></a></p>
+<p>Once our hosts have been assigned to a deployment we can update the hosts. In this case I changed the hostname but you can also configure network, domain and realm information for every host.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_deployment_rename_hosts.png"><img class="alignnone  wp-image-764" src="{{ site.baseurl }}/assets/2015/03/osp_6_deployment_rename_hosts.png?w=300" alt="OSP_6_Deployment_rename_hosts" width="1344" height="242" /></a></p>
+<p>Finally we are ready for deployment. Under Infrastructure-&gt;Deployments select the deployment and deploy. The progress can be followed from the UI. It typically takes around 2 hours to deploy an OpenStack environment and periodically you will want to check on the progress. Once RHEL is installed you can log into controller and compute hosts to follow progress at more granular level. The install log is located under /var/log/foreman-installer/foreman-installer.log.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_deyploment_status.png"><img class="alignnone  wp-image-765" src="{{ site.baseurl }}/assets/2015/03/osp_6_deyploment_status.png?w=300" alt="OSP_6_Deyploment_status" width="1341" height="371" /></a></p>
+<p>Congrats you have deployed an Enterprise OpenStack environment!</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_deployment_success.png"><img class="alignnone  wp-image-766" src="{{ site.baseurl }}/assets/2015/03/osp_6_deployment_success.png?w=300" alt="OSP_6_Deployment_success" width="1336" height="374" /></a></p>
+<h3>Monitoring</h3>
+<p>One of the great features with the RHEL OSP installer is monitoring. You get dashboards, reports and detailed host information that allow administrators to proactively monitor their deployments. Below are a few dashboards to give you an idea of the capability.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/rhel_osp_monitoring.png"><img class="alignnone  wp-image-791" src="{{ site.baseurl }}/assets/2015/03/rhel_osp_monitoring.png?w=300" alt="RHEL_OSP_Monitoring" width="1358" height="344" /></a></p>
+<p>&nbsp;</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/rhel_osp_monitoring_2.png"><img class="alignnone  wp-image-792" src="{{ site.baseurl }}/assets/2015/03/rhel_osp_monitoring_2.png?w=300" alt="RHEL_OSP_Monitoring_2" width="1349" height="571" /></a></p>
+<h3>Neutron Networking</h3>
+<p>At this point we have a running OpenStack environment. The last step is to setup OpenStack networking. In this example we will use vxlan for tenant tunneling traffic and a flat network for external access via floating IPs.</p>
+<p>Configure internal tenant network using vxlan.</p>
+<pre style="padding-left:30px;">neutron net-create internal --provider:network_type vxlan</pre>
+<pre style="padding-left:30px;">neutron subnet-create internal --name internal_subnet --allocation-pool start=10.10.1.100,end=10.10.1.200 10.10.1.0/24</pre>
+<p>Configure external flat provider network</p>
+<pre style="padding-left:30px;">neutron net-create external --provider:network_type flat --provider:physical_network physnet-external --router:external=True</pre>
+<pre style="padding-left:30px;">neutron subnet-create external --name external_subnet --allocation-pool start=192.168.123.100,end=192.168.123.200 --disable-dhcp --gateway 192.168.123.1 192.168.123.0/24</pre>
+<p>Configure a OpenStack router without HA</p>
+<pre style="padding-left:30px;">neutron router-create prod-router --ha False</pre>
+<p>Set router gateway to our external provider network and add interface to tenant network</p>
+<pre style="padding-left:30px;"><span class="GramE">neutron</span> router-gateway-set prod-router external</pre>
+<pre style="padding-left:30px;">neutron router-interface-add prod-router internal_subnet</pre>
+<p>When complete the network topology should look something like diagram below.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/osp_6_netowkr_topology.png"><img class="alignnone  wp-image-806" src="{{ site.baseurl }}/assets/2015/03/osp_6_netowkr_topology.png?w=300" alt="OSP_6_Netowkr_Topology" width="1357" height="1334" /></a></p>
+<h3>Troubleshooting</h3>
+<p>OpenStack is not for the faint of heart. If you are expecting click-next and grab a coffee you are in for a rude awakening. OpenStack requires a certain level of Open Source and Linux knowledge. You should understand how puppet and foreman work, these skills are recommended for troubleshooting (especially puppet). You also need decent skills in OpenStack networking (openvswitch) in general. Just because the RHEL OSP installer automates everything doesn't mean it is autopilot.</p>
+<p>Before we get into troubleshooting lets understand the basic workflow of a RHEL OSP deployment.</p>
+<ol>
+<li><span style="line-height:1.5;">provision nodes and install base RHEL.</span></li>
+<li>register nodes with subscription manager</li>
+<li>download packages from appropriate channels</li>
+<li>configure base networking</li>
+<li>puppet run on all controller nodes (openstack, openvswitch and pacemaker cluster configured)</li>
+<li>puppet run on all compute nodes (openstack nova and openvswitch configured)</li>
+</ol>
+<p>Here are some common problems that I have run into, hopefully they are helpful.</p>
+<ul>
+<li>   Error: Could not retrieve catalog from remote server: Error 400 on SERVER: Local ip for ovs agent must be set when tunneling is enabled at<br />
+/etc/puppet/environments/production/modules/neutron/manifests/agents/ovs.pp:32 on node controller1.lab.local</li>
+</ul>
+<p>Solution: this is a configuration problem. It will occur on the controller node and means that the controller does not have access to a particular network. In this case it was due to only giving the compute node access to the tenant network. This error requires re-configuring network and deployment in the admin node and starting over.</p>
+<ul>
+<li>Error: Could not retrieve catalog from remote server: Error 400 on SERVER: Failed when searching for node ostack-ctr1.lab.local: Failed to find ostack-ctr1.lab.local via exec: Execution of '/etc/puppet/node.rb ostack-ctr1.lab.local' returned 1:<br />
+Warning: Not using cache on failed catalog<br />
+Error: Could not retrieve catalog; skipping run</li>
+</ul>
+<p>Solution: This error was caused mainly by a bug fixed in RHEL OSP 6.0.1. Ensure you are running RHEL 6.0.1, RHEL 7.1 and have performed a yum update. This error requires re-install of the the admin node itself to update to latest version.</p>
+<ul>
+<li>Error: Deployment completes but br-ex is missing.</li>
+</ul>
+<p>Solution: the br-ex is an openvswitch bridge that handles external access for instances via floating IPs. If br-ex is missing you wont have ability to assign floating IPs to instances for external access. This could be a configuration problem in deployment. Edit the controller host and ensure the external network has the correct subnet.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/03/rhel_osp_deployment_external_subnet.png"><img class="alignnone  wp-image-772" src="{{ site.baseurl }}/assets/2015/03/rhel_osp_deployment_external_subnet.png?w=300" alt="RHEL_OSP_DEPLOYMENT_EXTERNAL_SUBNET" width="1374" height="545" /></a></p>
+<p>In order to create br-ex openvswitch bridge manually follow these steps</p>
+<ul>
+<li>Ensure physical NIC in this case eth1 is configured correctly</li>
+</ul>
+<pre style="padding-left:30px;">#cat /etc/sysconfig/network-scripts/ifcfg-eth1 
+DEVICE=eth1
+DEVICETYPE=ovs
+TYPE=OVSPort
+OVS_BRIDGE=br-ex
+ONBOOT=yes
+BOOTPROTO=none</pre>
+<ul>
+<li>Ensure br-ex interface for openvswitch is configured correctly</li>
+</ul>
+<pre style="padding-left:30px;">#cat /etc/sysconfig/network-scripts/ifcfg-br-ex 
+IPADDR="192.168.123.43"
+NETMASK="255.255.255.0"
+GATEWAY="192.168.123.1"
+ONBOOT=yes
+PEERROUTES=no
+NM_CONTROLLED=no
+DEFROUTE=no
+PEERDNS=no
+DEVICE=br-ex
+DEVICETYPE=ovs
+OVSBOOTPROTO="none"
+TYPE=OVSBridge</pre>
+<ul>
+<li>Create br-ex bridge</li>
+</ul>
+<pre style="padding-left:30px;">#ovs-vsctl add-br br-ex</pre>
+<ul>
+<li>Add physical NIC to bridge as internal openvswitch port</li>
+</ul>
+<pre style="padding-left:30px;">#ovs-vsctl add-port br-ex eth1</pre>
+<ul>
+<li>Create a patch port on br-int that patches over to br-ex</li>
+</ul>
+<pre style="padding-left:30px;">#ovs-vsctl add-port br-int br-int-ex -- set Interface br-int-ex type=patch options:peer=phys-br-ex</pre>
+<ul>
+<li>Create a openvswitch patch port on br-ex that patches over to br-int</li>
+</ul>
+<pre style="padding-left:30px;">#ovs-vsctl add-port br-ex phy-br-ex -- set Interface phy-br-ex type=patch options:peer=br-int-ex</pre>
+<pre>     Bridge br-ex
+        Port "eth1"
+            Interface "eth1"
+        Port phy-br-ex
+            Interface phy-br-ex
+                type: patch
+                options: {peer=br-int-ex}
+        Port br-ex
+            Interface br-ex
+                type: internal</pre>
+<ul>
+<li>Error: registering host with foreman (https://admin.osp.lab.com) could not send facts to foreman: connection refused - connect(2)</li>
+</ul>
+<p>Solution: this error occurs during discovery of hosts by foreman. It indicates a DNS or firewall problem. RHEL OSP 6.0.1 fixed a lot of problems with discovery but it is important to ensure DNS and DHCP are working correctly from admin node.</p>
+<ul>
+<li>Error: Openvswitch interfaces show down when issuing "ip a" command</li>
+</ul>
+<p>Solution: this is not generally a problem. Openvswitch creates interfaces for every bridge for Linux compatibility reasons. They are not otherwise used. The kernel does not recognize these devices correctly and hence sees them as down interfaces.</p>
+<ul>
+<li>Error: Puppet throws error no certificate found and waitforcert is disabled</li>
+</ul>
+<p>Solution: this problem is fairly uncommon however if it happens you need to regenerate certificates. Below is the process.</p>
+<p>On puppet master (admin node)</p>
+<pre style="padding-left:30px;">#puppet cert sign --all</pre>
+<pre style="padding-left:30px;">#puppet cert clean --all</pre>
+<p>On puppet agent (controller or compute)</p>
+<pre style="padding-left:30px;">#rm -rf /var/lib/puppet/ssl/*</pre>
+<pre style="padding-left:30px;">vi /etc/puppet/puppet.conf
+certificate_revocation = false</pre>
+<pre style="padding-left:30px;">#puppet agent --no-daemonize --server admin.local.lab --onetime --verbose</pre>
+<p>On puppet master (admin node)</p>
+<pre style="padding-left:30px;">#puppet cert --list</pre>
+<pre style="padding-left:30px;">#puppet cert sign "controller or compute hostname"</pre>
+<h4>Restarting Puppet</h4>
+<p>In case puppet fails for any reason you need to run the following command on the controller or compute node where the error occurred in order to restart puppet</p>
+<pre style="padding-left:30px;">#puppet agent -td</pre>
+<h3>Summary</h3>
+<p>Enterprise OpenStack is not just about support it is so much more. As we have seen to operationalize OpenStack in enterprise environments we require automation, provisioning, central management / monitoring, declarative configuration management, Linux experience / expertise and of course world class support from a premier Open Source company like Red Hat. The biggest difference between OpenStack distributions and if you will feature disparity lies within the admin node. OpenStack is OpenStack but how it is deployed and maintained will determine your success. This is just the beginning, if you like the current capabilities you are going to love what is coming down the pipe with Triple-O (OpenStack on OpenStack) and over / under clouds. Things are just getting started!</p>
+<p>As always if you have feedback, ideas or suggestions I would love to hear about them.</p>
+<p>Happy Stacking!</p>
+<p>(c) 2015 Keith Tenzer</p>

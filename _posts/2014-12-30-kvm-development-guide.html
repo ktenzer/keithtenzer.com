@@ -1,0 +1,166 @@
+---
+layout: single 
+title: KVM Development Guide
+categories:
+- KVM
+tags:
+- Java
+- Linux
+---
+<h3>Overview</h3>
+<p>This guide will go through how to configure your Java development environment, connect to KVM and provide some Java code examples for interfacing with KVM. Upon completing this guide you should be off and running with developing application interfaces for KVM. <!--more-->As mentioned in previous post KVM is made up of three components: KVM (hardware acceleration), Qemu (hypervisor) and Libvirt (management library). We will be purely focusing on Libvirt as it is the management library for KVM.</p>
+<h3>Development Environment Setup</h3>
+<p>This guide assumes you will be using Eclipse and Maven for jar package management. If you aren't no big deal, you can always download libraries and add them to CLASSPATH manually.</p>
+<h4>Configure KVM</h4>
+<p>Before we begin it is important to ensure KVM is properly configured to allow remote access over TCP. For instructions on doing this refer to <a href="http://keithtenzer.com/2014/12/16/kvm-installation-and-configuration/">KVM Installation and Configuration</a>.</p>
+<h4>Configure Maven</h4>
+<p>Add JNA and Libvirt dependencies to pom.xml. Be careful which versions you use. Make sure the JNA version is not newer than the Libvirt version else you will have incompatibility issues.</p>
+<p>[code language="xml"]</p>
+<p>&lt;dependency&gt;<br />
+   &lt;groupId&gt;net.java.dev.jna&lt;/groupId&gt;<br />
+   &lt;artifactId&gt;jna&lt;/artifactId&gt;<br />
+   &lt;version&gt;3.4.0&lt;/version&gt;<br />
+&lt;/dependency&gt;</p>
+<p>&lt;dependency&gt;<br />
+   &lt;groupId&gt;org.libvirt&lt;/groupId&gt;<br />
+   &lt;artifactId&gt;libvirt&lt;/artifactId&gt;<br />
+   &lt;version&gt;0.4.9&lt;/version&gt;<br />
+&lt;/dependency&gt;    </p>
+<p>[/code]</p>
+<p>Instruct Maven to download and make these jars available to Eclipse by running the following command from the root project folder:</p>
+<ul>
+<li>
+<pre class="bash">mvn clean compile</pre>
+</li>
+</ul>
+<p>Note: if you choose not to use Maven, you can simply download the JNA / Libvirt libraries and add them to your projects CLASSPATH in Eclipse.</p>
+<h3>Connecting to Libvirt</h3>
+<p>Now that we have configured Libvirt to allow remote TCP connections and have our Java libraries setup we can start coding!</p>
+<h4>Libvirt connection class</h4>
+<p>Below we will create a class which we can instantiate with a hostname. The class will provide a getConnection() method that returns the connection to a KVM host.</p>
+<p>[code language="java"]<br />
+import org.libvirt.Connect;</p>
+<p>import org.libvirt.ConnectAuth;</p>
+<p>import org.libvirt.ConnectAuthDefault;</p>
+<p>import org.libvirt.LibvirtException;</p>
+<p>public class KvmConnection {</p>
+<p>    private String hostname;</p>
+<p>    public KvmConnection(String host) {</p>
+<p>        this.hostname = host;</p>
+<p>    }</p>
+<p>    public Connect getConnection() throws Exception {</p>
+<p>        Connect conn = null;</p>
+<p>        try {</p>
+<p>            ConnectAuth defaultAuth = new ConnectAuthDefault();</p>
+<p>            conn = new Connect(&quot;qemu+tcp://&quot; + hostname + &quot;/system&quot;, defaultAuth, 0); </p>
+<p>        } catch (LibvirtException e) {</p>
+<p>            throw new Exception(e.getMessage(), e);</p>
+<p>        }</p>
+<p>        return conn;</p>
+<p>    }</p>
+<p>}</p>
+<p>[/code]</p>
+<p>Note: the above example is using SASL authentication. Other authentication mechanisms such as TLS are possible but the URI does need to change if the authentication mechanism changes.</p>
+<h3> Working with Domains</h3>
+<p>In Libvirt Domains are Virtual Machines. Before we can perform APIs against a domain we must retrieve the Domain object which can be done by name, id or other methods. Libvirt also has APIs that return a list of active or inactive Domains. If we don't know the name or id of a Domain we would first get a list of all Domain Ids or names. In addition to the below code examples, the <a href="http://libvirt.org/html/libvirt-libvirt-domain.html">API reference for Libvirt Domains</a> is also a good resource.</p>
+<h4>Listing Domains</h4>
+<p>The below method returns a list of active and inactive Domain objects:</p>
+<p>[code language="java"]</p>
+<p>public List&lt;Domain&gt; getDomains(Connect conn) throws Exception {<br />
+    List&lt;Domain&gt; domainList = new ArrayList&lt;Domain&gt;();</p>
+<p>    try {</p>
+<p>        int[] activeDomainIds = conn.listDomains();<br />
+        String[] inactiveDomainNames = conn.listDefinedDomains();</p>
+<p>        if (activeDomainIds.length &gt; 0) {<br />
+            for (int id : activeDomainIds) {<br />
+                Domain domain = conn.domainLookupByID(id);<br />
+                domainList.add(domain);</p>
+<p>            }<br />
+        }</p>
+<p>        if (inactiveDomainNames.length &gt; 0) {<br />
+            for (String name : inactiveDomainNames) {<br />
+                Domain domain = conn.domainLookupByName(name);<br />
+                domainList.add(domain);<br />
+            }<br />
+        }<br />
+    } catch (Exception e) {<br />
+        throw new Exception(e.getMessage(), e);<br />
+    }</p>
+<p>    return domainList;<br />
+ }</p>
+<p>[/code]</p>
+<h4>Domain status</h4>
+<p>A domain can be either active, inactive or error. These are represented as integers in Libvirt. The below method will get the status of a Domain and save it as an Enum:</p>
+<p>[code language="java"]</p>
+<p> public VmStatusEnum getVmStatus(int status) throws Exception {<br />
+     VmStatusEnum vmState = null;<br />
+     try {<br />
+         if (status == 1) {<br />
+             vmState = VmStatusEnum.ON;<br />
+         } else if (status == 0) {<br />
+             vmState = VmStatusEnum.OFF;<br />
+         } else {<br />
+             vmState = VmStatusEnum.ERROR;<br />
+         }<br />
+     } catch (Exception e) {<br />
+         throw new Exception(e.getMessage(), e);<br />
+     }</p>
+<p>     return vmState;<br />
+ }</p>
+<p>[/code]</p>
+<h4>Creating Domain Snapshot</h4>
+<p>The below code creates a Domain snapshot based on a given Connection object, Domain name and Snapshot name:</p>
+<p>[code language="java"]</p>
+<p>public void createSnapshot(Connect conn, String vmName, String snapshotName) throws Exception {</p>
+<p>    if (snapshotName == null || snapshotName.isEmpty()) {<br />
+        snapshotName = vmName + &quot;_snapshot&quot;;<br />
+    }<br />
+    String description = &quot;KVM snapshot created by XYZ&quot;;<br />
+    try {<br />
+        Domain domain = conn.domainLookupByName(vmName);<br />
+        int status = domain.isActive();<br />
+        VmStatusEnum vmStatusEnum = getVmStatus(status);</p>
+<p>        if (vmStatusEnum.equals(VmStatusEnum.ON)) {<br />
+           String snapshotXML = &quot;&lt;domainsnapshot&gt;&lt;name&gt;&quot; + snapshotName + &quot;&lt;/name&gt;&lt;description&gt;&quot; + description + &quot;&lt;/description&gt;&lt;/domainsnapshot&gt;&quot;;<br />
+           domain.snapshotCreateXML(snapshotXML);<br />
+        } else if (vmStatusEnum.equals(VmStatusEnum.ERROR)) {<br />
+           throw new Exception(String.format(VM_STATUS_ERROR, vmName));<br />
+        }<br />
+    } catch (LibvirtException e) {<br />
+        LOGGER.error(String.format(SNAPSHOT_CREATE_FAILED, snapshotName, vmName));<br />
+        throw new Exception(e.getMessage(), e);<br />
+    }<br />
+    LOGGER.info(String.format(SNAPSHOT_CREATE_SUCCESS, snapshotName, vmName));<br />
+ }</p>
+<p>[/code]</p>
+<h3>Working with Storage Pools</h3>
+<p>Libvirt uses Storage Pools to store images and virtual disks for Virtual Machines. Virtual disks are presented to Virtual Machines as block devices regardless of the underlying storage pool type. There are many different types of storage pools which can be configured. Aside from NFS, iSCSI and FC there is also integration to support Ceph RDB pools, Gluster pools and even ZFS pools. In addition to below code example the <a href="http://libvirt.org/html/libvirt-libvirt-storage.html">API reference for Libvirt Storage</a> is a good resource.</p>
+<h4>Listing Storage Pools</h4>
+<p>Below is a method that returns a list of active and inactive Storage Pools:</p>
+<p>[code language="java"]</p>
+<p>public List&lt;StoragePool&gt; getStoragePools(Connect conn) throws Exception {<br />
+    List&lt;StoragePool&gt; storagePoolList = new ArrayList();</p>
+<p>    try {<br />
+        String[] activeStoragePools = conn.listStoragePools();<br />
+        String[] inactiveStoragePools = conn.listDefinedStoragePools();</p>
+<p>        if (activeStoragePools.length &gt; 0) {<br />
+            for (String name : activeStoragePools) {<br />
+                StoragePool storagePool = conn.storagePoolLookupByName(name);<br />
+                storagePoolList.add(storagePool);<br />
+            }<br />
+        }</p>
+<p>        if (inactiveStoragePools.length &gt; 0) {<br />
+            for (String name : inactiveStoragePools) {<br />
+                StoragePool storagePool = conn.storagePoolLookupByName(name);<br />
+                storagePoolList.add(storagePool);<br />
+            }<br />
+        }<br />
+    } catch (Exception e) {<br />
+        throw new Exception(e.getMessage(), e);<br />
+    }<br />
+    return storagePoolList;<br />
+}</p>
+<p>[/code]</p>
+<h3>Conclusion</h3>
+<p>Through these examples you should have a good understanding of how to work with KVM using Java or even other languages. As far as working with multiple KVM hypervisors, check out <a href="http://www.ovirt.org/Home">oVirt</a> which is open source management software built around KVM (similar in concept to vCenter for VMware environments). Red Hat who heavily contributes to upstream oVirt community uses it as the basis for Red Hat Enterprise Virtualization Management. I will be covering oVirt and Red Hat Enterprise Virtualization in later posts so stay tuned! As always if you have questions or need some help feel free to leave a post or get in contact with me directly. Happy Libvirting and safe travels!</p>
+<p>(c) 2015 Keith Tenzer</p>

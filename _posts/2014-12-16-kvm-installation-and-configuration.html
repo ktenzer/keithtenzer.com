@@ -1,0 +1,84 @@
+---
+layout: single 
+title: KVM Installation and Configuration
+categories:
+- KVM
+tags:
+- Linux
+- OpenStack
+- Red Hat
+---
+<h3><a href="https://keithtenzer.files.wordpress.com/2014/12/kvm-logo.png"><img class="alignnone size-medium wp-image-240" src="{{ site.baseurl }}/assets/2014/12/kvm-logo.png?w=300" alt="kvm-logo" width="300" height="119" /></a></h3>
+<h3>Overview</h3>
+<p>KVM (Kernel Virtual Machine) is a Linux kernel module that allows a user space process to utilize hardware virtualization capabilities. <!--more-->When people refer to KVM they are usually talking about the hypervisor but there are in fact three components (or balls our penguin seems to be juggling): KVM (hardware acceleration), Qemu (hypervisor), and Libvirt (management library). KVM and Qemu started as separate projects but their code streams have been merged and hence the qemu-kvm package. In order to communicate with the KVM hypervisor libvirt is used which also has support for the management of other hypervisors such as ESX.</p>
+<h3>Install KVM</h3>
+<p>KVM consists of many packages, most notable are qemu-kvm, libvirt, virt-manager and virt-viewer. The virt-manager and virt-viewer packages are optional and only required for the GUI.</p>
+<ul>
+<li style="text-align:left;">
+<pre>yum groupinstall "Virtualisation Tools" "Virtualization Platform"</pre>
+</li>
+</ul>
+<ul style="text-align:left;">
+<li>
+<pre>yum install python-virtinst</pre>
+</li>
+</ul>
+<ul style="text-align:left;">
+<li>
+<pre class="bash">yum install virt-manager virt-viewer</pre>
+</li>
+</ul>
+<ul>
+<li style="text-align:left;">
+<pre class="bash">yum install qemu-kvm</pre>
+</li>
+</ul>
+<h3>Configure libvirtd</h3>
+<p>This step is mainly for development environments or management tools that require tcp access to libvirtd. In order to use the libvirt APIs we need to enable access through tcp and configure authentication. In this example we will use SASL authentication.</p>
+<ul>
+<li>
+<pre class="bash">vi /etc/libvirt/libvirtd.conf</pre>
+</li>
+</ul>
+<p>[code language="text"]</p>
+<p>listen_tls = 0</p>
+<p>listen_tcp = 1</p>
+<p>tcp_port=”16509”</p>
+<p>listen_addr=”&lt;IP&gt;”</p>
+<p>auth_tcp = “sasl”</p>
+<p>[/code]</p>
+<p>Note: you can disable authentication by setting auth_tcp="none" but this is only recommended for development or test environments.</p>
+<h3>Configure Authentication Credentials</h3>
+<p>KVM has various authentication options and protocol support. Documentation regarding libvirt and <a href="https://libvirt.org/remote.html">remote</a> connections as well as <a href="http://libvirt.org/auth.html">authentication</a> can be found on the <a href="https://libvirt.org">libvirt</a> website. The most secure way to do things is with TLS and certificates however in the below example we are just using tcp and standard SASL user/password authentication.</p>
+<p>Create a SASL user and password for the libvirt service.</p>
+<ul>
+<li>
+<pre class="bash">saslpasswd2 -a libvirt kvmuser</pre>
+</li>
+</ul>
+<p>Add authentication credentials so you are not prompted for credentials. This is critical for remote access tools requiring access over tcp.</p>
+<ul>
+<li>
+<pre class="bash">vi /etc/libvirt/auth.conf</pre>
+</li>
+</ul>
+<p>[code language="text"]</p>
+<p>[credentials-test]<br />
+authname=kvmuser<br />
+password=mypassword</p>
+<p>[auth-libvirt-192.168.8.132]<br />
+credentials=test</p>
+<p>[/code]</p>
+<p>Upon adding credentials make sure you restart libvirtd.</p>
+<ul>
+<li>
+<pre class="bash">service libvirtd restart</pre>
+</li>
+</ul>
+<p>In order to test the credentials use the vrish cli command with the "no_verify" option. If things are working correctly you should not be prompted for credentials and get a list of virtual machines.</p>
+<ul>
+<li>
+<pre class="bash">virsh -c qemu+tcp:///system?no_verify=1 list</pre>
+</li>
+</ul>
+<p>(c) 2014 Keith Tenzer</p>

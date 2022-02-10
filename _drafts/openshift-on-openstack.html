@@ -1,0 +1,58 @@
+---
+layout: post
+title: OpenShift on OpenStack
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta: {}
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p># yum install -y ansible</p>
+<p># yum install -y bind-utils</p>
+<p># yum install -y bind</p>
+<p>git clone https://github.com/openshift/openshift-ansible-contrib.git<br />
+cd openshift-ansible-contrib/reference-architecture/osp-dns</p>
+<p>&nbsp;</p>
+<p>cp vars.sample.yaml vars.yaml</p>
+<p># ddns-confgen -r /dev/urandom |grep secret<br />
+secret "s+BrZYKZ/0YEMGjoxqvxuxoOI5pQ934+5cuPR3T1Pbw=";</p>
+<pre>vi vars.yaml
+
+---
+domain_name: ocp.lab
+dns_forwarders: [213.133.98.98, 213.133.98.99]
+external_network: public
+image: centos72
+ssh_user: cloud-user
+ssh_key_name: admin
+update_key: "s+BrZYKZ/0Yshol3qxqvxuxoOI5pQ934+5cuPR3T1Pbw="
+
+stack_name: dns-service
+slave_count: 1
+slave_server_group_policies: ['affinity']
+flavor: m1.small
+contact: admin@ocp.lab
+
+
+rhn_username: "&lt;user&gt;"
+rhn_password: "&lt;password&gt;"
+rhn_pool: "&lt;poolid&gt;"</pre>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

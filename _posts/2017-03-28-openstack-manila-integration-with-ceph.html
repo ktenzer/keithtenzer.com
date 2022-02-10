@@ -1,0 +1,228 @@
+---
+layout: single 
+title: OpenStack Manila Integration with Ceph
+categories:
+- OpenStack 
+tags:
+- Ceph
+- CephFS
+- Manila
+- OpenStack
+---
+<h1><img class="alignnone size-full wp-image-8960" src="{{ site.baseurl }}/assets/2017/03/images.jpg" alt="images" width="225" height="225" /><img class="alignnone  wp-image-5506" src="{{ site.baseurl }}/assets/2017/03/plus_sign.gif" alt="plus_sign" width="102" height="102" /><img class="alignnone  wp-image-8798" src="{{ site.baseurl }}/assets/2017/03/1015767.png" alt="1015767" width="223" height="223" /></h1>
+<h3>Overview</h3>
+<p>In this article we will configure OpenStack Manila using CephFS as a storage backend. OpenStack Manila is an OpenStack project providing file services. Manila is storage backend agnostic and you can have many different kinds of storage backends, similar to Cinder. CephFS is a POSIX-Compliant file system that uses the Ceph storage cluster to store data. CephFS works by providing a Metadata Server (MDS) that collectively manages filesystem namespaces. It also coordinates access to Ceph Object Storage Damones (OSDs). Ceph MDS has two modes: active or passive. There are several documented <a href="http://docs.ceph.com/docs/master/cephfs/standby/#referring-to-mds-daemons">active/passive MDS</a> configurations and <a href="http://docs.ceph.com/docs/master/cephfs/multimds/">multi-mds or active/active MDS</a> that can be configured when a single MDS becomes a bottleneck. Clients can mount CephFS filesystems using the ceph-fuse client or kernel kernel driver.</p>
+<p>Integrating Ceph with OpenStack Series:</p>
+<ul>
+<li><a href="https://keithtenzer.com/2016/09/12/openstack-integrating-ceph-as-storage-backend/">Integrating Ceph with OpenStack Cinder, Glance and Nova</a></li>
+<li><a href="https://keithtenzer.com/2017/03/30/openstack-swift-integration-with-ceph/">Integrating Ceph with Swift</a></li>
+<li><a href="https://keithtenzer.com/2017/03/28/openstack-manila-integration-with-ceph/">Integrating Ceph with Manila</a></li>
+</ul>
+<h3>Prerequisites</h3>
+<p>The following are required to configure OpenStack Manila with CephFS:</p>
+<ul>
+<li>Already configured Ceph cluster (Jewel or higher). See <a href="https://keithtenzer.com/2017/02/03/red-hat-ceph-storage-2-0-lab-object-storage-configuration-guide/">here</a> to setup Ceph cluster.</li>
+<li>Already configured OpenStack (Mitaka or higher). See <a href="https://keithtenzer.com/2017/03/27/openstack-10-newton-lab-installation-and-configuration-guide/">here</a> to setup OpenStack.</li>
+</ul>
+<p><!--more--></p>
+<h3>Configure CephFS</h3>
+<p><strong>[All Ceph Nodes]</strong></p>
+<p>Add repository for ceph tools.</p>
+<pre class="screen"># subscription-manager repos --enable=rhel-7-server-rhceph-2-tools-rpms</pre>
+<p><strong>[Ceph Ansible Node]</strong></p>
+<p>Update Ansible inventory file and add metadata server.</p>
+<pre class="screen">#vi /etc/host/ansible
+...
+[mdss]
+ceph2
+...</pre>
+<p>Note: For non-lab environment you definitely wan't to configure multiple MDS servers. One is active and additional servers are passive.</p>
+<p>Run Ansible.</p>
+<pre># su - ansible
+$ cd /usr/share/ceph-ansible
+$ ansible-playbook site.yml -vvvv
+PLAY RECAP ******************************************************************** 
+ceph1 : ok=369 changed=1 unreachable=0 failed=0 
+ceph2 : ok=364 changed=11 unreachable=0 failed=0 
+ceph3 : ok=369 changed=1 unreachable=0 failed=0</pre>
+<p><strong>[Ceph Monitor Node]</strong></p>
+<p>Check CephFS metadata server.</p>
+<pre># ceph mds stat
+e24: 1/1/1 up {0=ceph2=up:active}</pre>
+<p>Create keyring and cephx authentication key for Manila service.</p>
+<pre><span class="go"># read -d '' MON_CAPS &lt;&lt; EOF</span>
+<span class="go">allow r,</span>
+<span class="go">allow command "auth del",</span>
+<span class="go">allow command "auth caps",</span>
+<span class="go">allow command "auth get",</span>
+<span class="go">allow command "auth get-or-create"</span>
+<span class="go">EOF</span>
+
+<span class="go"># ceph auth get-or-create client.manila -o manila.keyring \</span>
+<span class="go">mds 'allow *' \</span>
+<span class="go">osd 'allow rw' \</span>
+<span class="go">mon "$MON_CAPS"</span></pre>
+<p>Enable CephFS snapshots.</p>
+<pre><span class="go"># ceph mds set allow_new_snaps true --yes-i-really-mean-it</span></pre>
+<p>Copy Ceph configuration and manila keyring to OpenStack controller running Manila share service.</p>
+<pre># scp /etc/ceph/ceph.conf root@192.168.122.80:/etc/ceph
+# scp manila.keyring root@192.168.122.80:/etc/ceph</pre>
+<h3>Configure Manila</h3>
+<p><strong>[OpenStack Controller]</strong></p>
+<p>Install Ceph tools and python-cephs</p>
+<pre># subscription-manager repos --enable=rhel-7-server-rhceph-2-tools-rpms
+# yum install -y ceph-common
+# yum install python-cephfs</pre>
+<p>Change permissions on Ceph configuration and keyring for manila.</p>
+<pre># chown manila /etc/ceph/manila.keyring
+# chown manila /etc/ceph/ceph.conf</pre>
+<p>Update Ceph configuration.</p>
+<pre><span class="k"># vi /etc/ceph/ceph.conf
+...
+</span><span class="s">[client.manila]
+client mount uid = 0
+client mount gid = 0
+log file = /var/log/manila/ceph-client.manila.log
+admin socket = /var/run/ceph/ceph-$name.$pid.asok
+keyring = /etc/ceph/manila.keyring
+
+...</span></pre>
+<p>Update Manila configuration.</p>
+<p>&nbsp;</p>
+<pre><span class="k"># vi /etc/manila/manila.conf
+...
+enabled_share_protocols = NFS,CIFS,CEPHFS
+enabled_share_backends = generic,cephfs
+
+</span><span class="s">[cephfs]
+driver_handles_share_servers = False
+share_backend_name = cephfs
+share_driver = manila.share.drivers.cephfs.cephfs_native.CephFSNativeDriver
+cephfs_conf_path = /etc/ceph/ceph.conf
+cephfs_auth_id = manila
+cephfs_cluster_name = ceph
+cephfs_enable_snapshots = True
+...</span></pre>
+<p>Restart Manila services.</p>
+<pre># systemctl restart openstack-manila-scheduler
+# systemctl restart openstack-manila-api
+# systemctl restart openstack-manila-share</pre>
+<p>Authenticate to Keystong.</p>
+<pre># source /root/keystonerc_admin</pre>
+<p>Set share type for CephFS.</p>
+<pre># manila type-create cephfstype false
++----------------------+--------------------------------------+
+| Property | Value |
++----------------------+--------------------------------------+
+| required_extra_specs | driver_handles_share_servers : False |
+| Name | cephfstype |
+| Visibility | public |
+| is_default | - |
+| ID | ae7cc121-d8b6-47e5-86ba-36d607df19b0 |
+| optional_extra_specs | snapshot_support : True |
++----------------------+--------------------------------------+</pre>
+<p>Create Manila share.</p>
+<pre># manila create --share-type cephfstype --name cephshare1 cephfs 1
++-----------------------------+--------------------------------------+
+| Property | Value |
++-----------------------------+--------------------------------------+
+| status | creating |
+| share_type_name | cephfstype |
+| description | None |
+| availability_zone | None |
+| share_network_id | None |
+| share_server_id | None |
+| host | |
+| access_rules_status | active |
+| snapshot_id | None |
+| is_public | False |
+| task_state | None |
+| snapshot_support | True |
+| id | c72318fd-3cb2-4c0a-855e-b75c5bd43c6d |
+| size | 1 |
+| user_id | 9d592f8a49654e8592de4e69fd15e603 |
+| name | cephshare1 |
+| share_type | ae7cc121-d8b6-47e5-86ba-36d607df19b0 |
+| has_replicas | False |
+| replication_type | None |
+| created_at | 2017-03-28T12:33:30.000000 |
+| share_proto | CEPHFS |
+| consistency_group_id | None |
+| source_cgsnapshot_member_id | None |
+| project_id | 29f6ba825bf5418395919c85874db4a5 |
+| metadata | {} |
++-----------------------------+--------------------------------------+</pre>
+<p>View the Manila share.</p>
+<pre># manila list
++--------------------------------------+------------+------+-------------+-----------+-----------+-----------------+-----------------------------+-------------------+
+| ID | Name | Size | Share Proto | Status | Is Public | Share Type Name | Host | Availability Zone |
++--------------------------------------+------------+------+-------------+-----------+-----------+-----------------+-----------------------------+-------------------+
+| 687d642b-3982-4f79-9b32-21ffb0bb54f9 | cephshare1 | 1 | CEPHFS | available | False | cephfstype | osp10.lab.com@cephfs#cephfs | nova |
++--------------------------------------+------------+------+-------------+-----------+-----------+-----------------+-----------------------------+-------------------+</pre>
+<p>Show Manila export location.</p>
+<pre># manila share-export-location-list cephshare1
++--------------------------------------+--------------------------------------------------------------------------------------------------------------------+-----------+
+| ID | Path | Preferred |
++--------------------------------------+--------------------------------------------------------------------------------------------------------------------+-----------+
+| a85a1653-ce6e-4c01-ad05-17b9c41ad241 | 192.168.122.81:6789,192.168.122.82:6789,192.168.122.83:6789:<strong>/volumes/_nogroup/b1464433-f10e-458f-b120-b9b41d3f0083</strong> | False |
++--------------------------------------+--------------------------------------------------------------------------------------------------------------------+-----------+</pre>
+<h3>Accessing Shares</h3>
+<p><strong>[OpenStack Controller]</strong></p>
+<p>In order to provide access to Manila shares create user.</p>
+<pre># manila access-allow cephshare1 cephx keith</pre>
+<p>Create a new keyring for user keith to authenticate via cephx from OpenStack controller running Manila share service.</p>
+<pre># ceph --name=client.manila --keyring=/etc/ceph/manila.keyring \
+auth get-or-create client.keith -o keith.keyring</pre>
+<p>Next we will start an RHEL 7.3 instance and access the Manila share. The instance needs to have both the ceph-fuse client, the ceph configuration and user keyring file (for keith) to mount the share.</p>
+<p>Start a RHEL instance on OpenStack.</p>
+<p>Note: depending on how you setup OpenStack and if you followed guide above you will need to change things in below. Regardless of setup make sure you change net-id to that of your private network.</p>
+<pre># nova boot --flavor m1.small --image "RHEL 7.3" --nic net-id=332c2dca-a005-42ca-abf2-54637c56bacf --key-name admin --security-groups all myrhel</pre>
+<p>Add floating ip.</p>
+<p>Note: floating ip is required and instance needs access to Ceph management network. This can be achieved by adding Ceph management network to OpenStack as public network and assigning floating ip on that network to instance.</p>
+<pre># nova floating-ip-create
+# nova floating-ip-associate myrhel 192.168.122.109</pre>
+<p>Copy Ceph configuration and keyring for user keith from OpenStack controller to instance.</p>
+<pre># scp -i admin.pem /etc/ceph/ceph.conf cloud-user@192.168.122.109:
+# scp -i admin.pem keith.keyring cloud-user@192.168.122.109:</pre>
+<p>SSH to instance.</p>
+<pre># ssh -i admin.pem cloud-user@192.168.122.109</pre>
+<p>Install Fuse Client.</p>
+<pre>$ sudo subscription-manager repos --enable=rhel-7-server-rpms
+$ sudo subscription-manager repos --enable=rhel-7-server-rhceph-2-tools-rpms
+$ sudo yum install -y ceph-fuse</pre>
+<p>Using ceph-fuse client mount the volume.</p>
+<pre>$ sudo ceph-fuse /mnt/cephfs --id=keith \
+--conf=/home/cloud-user/ceph.conf --keyring=/home/cloud-user/keith.keyring \
+--client-mountpoint=<strong>/volumes/_nogroup/b1464433-f10e-458f-b120-b9b41d3f0083</strong>
+
+</pre>
+<pre>List mounted file systems and we should see /mnt/ceph.
+$ df -k
+Filesystem 1K-blocks Used Available Use% Mounted on
+/dev/vda1 20956772 1209676 19747096 6% /
+devtmpfs 922260 0 922260 0% /dev
+tmpfs 941864 0 941864 0% /dev/shm
+tmpfs 941864 16680 925184 2% /run
+tmpfs 941864 0 941864 0% /sys/fs/cgroup
+tmpfs 188376 0 188376 0% /run/user/1000
+<strong>ceph-fuse 1048576 0 1048576 0% /mnt/cephfs</strong></pre>
+<h3>Resetting MDS Server</h3>
+<p><strong>[Ceph Monitor]</strong></p>
+<p>If your MDS server becomes degraded and you don't have a standby or backup you may need to either reset the journal or repair.  In this case we will show how to reset the MDS journal. Note: resetting the journal gets rid of all MDS metadata so be careful.</p>
+<pre># ceph -s
+ cluster 1e0c9c34-901d-4b46-8001-0d1f93ca5f4d
+ health HEALTH_ERR
+ mds rank 0 is damaged
+ mds cluster is degraded
+...</pre>
+<p>Reset Journal.</p>
+<pre># cephfs-journal-tool journal reset</pre>
+<p>Set MDS to repaired.</p>
+<pre># ceph mds repaired 0</pre>
+<p>Check MDS status.</p>
+<pre># ceph mds stat
+e46: 1/1/1 up {0=ceph2=up:active}</pre>
+<h3>Summary</h3>
+<p>In this article we configured OpenStack Manila to use the CephFS storage backend. Ceph is the perfect fit for OpenStack storage as it is a unified distributed software-defined storage system that scales with OpenStack. Ceph provides all storage access methods such as block (Cinder, Nova, Glance), file (Manila) and object (S3/Swift/Glance). As such Ceph can satisfy all OpenStack storage needs in a single unified, easy to manage system. Hopefully you found this article of use. Please let me know any and all feedback.</p>
+<p>Happy Manilaing!</p>
+<p>(c) 2017 Keith Tenzer</p>

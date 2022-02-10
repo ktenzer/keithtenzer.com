@@ -1,0 +1,167 @@
+---
+layout: feedback
+title: Cheng Egg - 2016-04-08 08:24:14
+date: 2016-04-08 08:24:14.000000000 -07:00
+type: feedback
+parent_id: '43'
+published: true
+password: ''
+status: publish
+categories: []
+tags: []
+meta:
+  _feedback_email: "a:2:{s:2:\"to\";a:1:{i:0;s:22:\"keith.tenzer@gmail.com\";}s:7:\"message\";s:5267:\"<b>Name:</b>
+    Cheng Egg<br /><br />\n<b>Email:</b> egg820217@gmail.com<br /><br />\n<b>Comment:</b>
+    hello, I read your article \"Auto Scaling Instances with OpenStack\". I tried
+    your .yaml file, and I find out an error. Here is the error message.<br />\r\n=================================<br
+    />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource Traceback (most
+    recent call last):<br />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource
+    \  File \"/usr/lib/python2.7/dist-packages/heat/engine/resource.py\", line 620,
+    in _action_recorder<br />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource
+    \    yield<br />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File
+    \"/usr/lib/python2.7/dist-packages/heat/engine/resource.py\", line 690, in _do_action<br
+    />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     yield self.action_handler_task(action,
+    args=handler_args)<br />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource
+    \  File \"/usr/lib/python2.7/dist-packages/heat/engine/scheduler.py\", line 292,
+    in wrapper<br />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     step
+    = next(subtask)<br />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource
+    \  File \"/usr/lib/python2.7/dist-packages/heat/engine/resource.py\", line 661,
+    in action_handler_task<br />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource
+    \    handler_data = handler(*args)<br />\r\n2016-04-08 16:19:12.236 2696 ERROR
+    heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/resources/openstack/neutron/port.py\",
+    line 349, in handle_create<br />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource
+    \    self._prepare_port_properties(props)<br />\r\n2016-04-08 16:19:12.236 2696
+    ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/resources/openstack/neutron/port.py\",
+    line 375, in _prepare_port_properties<br />\r\n2016-04-08 16:19:12.236 2696 ERROR
+    heat.engine.resource     ).get_secgroup_uuids(props.get(self.SECURITY_GROUPS))<br
+    />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/clients/os/neutron.py\",
+    line 116, in get_secgroup_uuids<br />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource
+    \    raise exception.PhysicalResourceNotFound(resource_id=sg)<br />\r\n2016-04-08
+    16:19:12.236 2696 ERROR heat.engine.resource PhysicalResourceNotFound: The Resource
+    (all) could not be found.<br />\r\n2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource<br
+    />\r\n2016-04-08 16:19:15.202 2696 INFO heat.engine.service [-] Stack create failed,
+    status FAILED<br />\r\n2016-04-08 16:19:15.218 2696 INFO heat.engine.stack [-]
+    Stack CREATE FAILED (example-scaleup_group-5mfpui4nry25-4zl7ogkrfcz4-wp2umlawixpy):
+    Resource CREATE failed: PhysicalResourceNotFound: resources.port: The Resource
+    (all) could not be found.<br />\r\n2016-04-08 16:19:15.955 2692 INFO heat.engine.resource
+    [-] CREATE: TemplateResource \"4zl7ogkrfcz4\" [5b522232-b35e-4865-b588-52ff3918e630]
+    Stack \"example-scaleup_group-5mfpui4nry25\" [67d8f93c-5c76-46c8-88bc-98f76e8535b3]<br
+    />\r\n2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource Traceback (most
+    recent call last):<br />\r\n2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource
+    \  File \"/usr/lib/python2.7/dist-packages/heat/engine/resource.py\", line 620,
+    in _action_recorder<br />\r\n2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource
+    \    yield<br />\r\n2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File
+    \"/usr/lib/python2.7/dist-packages/heat/engine/resource.py\", line 690, in _do_action<br
+    />\r\n2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     yield self.action_handler_task(action,
+    args=handler_args)<br />\r\n2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource
+    \  File \"/usr/lib/python2.7/dist-packages/heat/engine/scheduler.py\", line 309,
+    in wrapper<br />\r\n2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     step
+    = next(subtask)<br />\r\n2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource
+    \  File \"/usr/lib/python2.7/dist-packages/heat/engine/resource.py\", line 664,
+    in action_handler_task<br />\r\n2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource
+    \    while not check(handler_data):<br />\r\n2016-04-08 16:19:15.955 2692 ERROR
+    heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/resources/stack_resource.py\",
+    line 331, in check_create_complete<br />\r\n2016-04-08 16:19:15.955 2692 ERROR
+    heat.engine.resource     return self._check_status_complete(resource.Resource.CREATE)<br
+    />\r\n2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File \"/usr/lib/python2.7/dist-packages/heat/engine/resources/stack_resource.py\",
+    line 372, in _check_status_complete<br />\r\n2016-04-08 16:19:15.955 2692 ERROR
+    heat.engine.resource     action=action)<br />\r\n2016-04-08 16:19:15.955 2692
+    ERROR heat.engine.resource ResourceFailure: PhysicalResourceNotFound: resources.4zl7ogkrfcz4.resources.port:
+    The Resource (all) could not be found.<br />\r\n2016-04-08 16:19:15.955 2692 ERROR
+    heat.engine.resource<br />\r\n<br />\r\n=================================<br />\r\n<br
+    />\r\nI wish you can help me, thanks!<br /><br />\n\nTime: April 8, 2016 at 8:24
+    am<br />\nIP Address: 140.123.103.103<br />\nContact Form URL: http://keithtenzer.com/contact/<br
+    />\nSent by an unverified visitor to your site.\";}"
+  _feedback_extra_fields: a:0:{}
+author: 
+permalink: "/"
+---
+<p>hello, I read your article "Auto Scaling Instances with OpenStack". I tried your .yaml file, and I find out an error. Here is the error message.<br />
+=================================<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource Traceback (most recent call last):<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 620, in _action_recorder<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     yield<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 690, in _do_action<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     yield self.action_handler_task(action, args=handler_args)<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/scheduler.py", line 292, in wrapper<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     step = next(subtask)<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 661, in action_handler_task<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     handler_data = handler(*args)<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resources/openstack/neutron/port.py", line 349, in handle_create<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     self._prepare_port_properties(props)<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resources/openstack/neutron/port.py", line 375, in _prepare_port_properties<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     ).get_secgroup_uuids(props.get(self.SECURITY_GROUPS))<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/clients/os/neutron.py", line 116, in get_secgroup_uuids<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     raise exception.PhysicalResourceNotFound(resource_id=sg)<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource PhysicalResourceNotFound: The Resource (all) could not be found.<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource<br />
+2016-04-08 16:19:15.202 2696 INFO heat.engine.service [-] Stack create failed, status FAILED<br />
+2016-04-08 16:19:15.218 2696 INFO heat.engine.stack [-] Stack CREATE FAILED (example-scaleup_group-5mfpui4nry25-4zl7ogkrfcz4-wp2umlawixpy): Resource CREATE failed: PhysicalResourceNotFound: resources.port: The Resource (all) could not be found.<br />
+2016-04-08 16:19:15.955 2692 INFO heat.engine.resource [-] CREATE: TemplateResource "4zl7ogkrfcz4" [5b522232-b35e-4865-b588-52ff3918e630] Stack "example-scaleup_group-5mfpui4nry25" [67d8f93c-5c76-46c8-88bc-98f76e8535b3]<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource Traceback (most recent call last):<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 620, in _action_recorder<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     yield<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 690, in _do_action<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     yield self.action_handler_task(action, args=handler_args)<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/scheduler.py", line 309, in wrapper<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     step = next(subtask)<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 664, in action_handler_task<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     while not check(handler_data):<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resources/stack_resource.py", line 331, in check_create_complete<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     return self._check_status_complete(resource.Resource.CREATE)<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resources/stack_resource.py", line 372, in _check_status_complete<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     action=action)<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource ResourceFailure: PhysicalResourceNotFound: resources.4zl7ogkrfcz4.resources.port: The Resource (all) could not be found.<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource</p>
+<p>=================================</p>
+<p>I wish you can help me, thanks!<br />
+<!--more--><br />
+AUTHOR: Cheng Egg<br />
+AUTHOR EMAIL: egg820217@gmail.com<br />
+AUTHOR URL:<br />
+SUBJECT: Midnight Code Junkie<br />
+IP: 140.123.103.103<br />
+Array<br />
+(<br />
+    [1_Name] =&gt; Cheng Egg<br />
+    [2_Email] =&gt; egg820217@gmail.com<br />
+    [3_Comment] =&gt; hello, I read your article "Auto Scaling Instances with OpenStack". I tried your .yaml file, and I find out an error. Here is the error message.<br />
+=================================<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource Traceback (most recent call last):<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 620, in _action_recorder<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     yield<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 690, in _do_action<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     yield self.action_handler_task(action, args=handler_args)<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/scheduler.py", line 292, in wrapper<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     step = next(subtask)<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 661, in action_handler_task<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     handler_data = handler(*args)<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resources/openstack/neutron/port.py", line 349, in handle_create<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     self._prepare_port_properties(props)<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resources/openstack/neutron/port.py", line 375, in _prepare_port_properties<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     ).get_secgroup_uuids(props.get(self.SECURITY_GROUPS))<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/clients/os/neutron.py", line 116, in get_secgroup_uuids<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource     raise exception.PhysicalResourceNotFound(resource_id=sg)<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource PhysicalResourceNotFound: The Resource (all) could not be found.<br />
+2016-04-08 16:19:12.236 2696 ERROR heat.engine.resource<br />
+2016-04-08 16:19:15.202 2696 INFO heat.engine.service [-] Stack create failed, status FAILED<br />
+2016-04-08 16:19:15.218 2696 INFO heat.engine.stack [-] Stack CREATE FAILED (example-scaleup_group-5mfpui4nry25-4zl7ogkrfcz4-wp2umlawixpy): Resource CREATE failed: PhysicalResourceNotFound: resources.port: The Resource (all) could not be found.<br />
+2016-04-08 16:19:15.955 2692 INFO heat.engine.resource [-] CREATE: TemplateResource "4zl7ogkrfcz4" [5b522232-b35e-4865-b588-52ff3918e630] Stack "example-scaleup_group-5mfpui4nry25" [67d8f93c-5c76-46c8-88bc-98f76e8535b3]<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource Traceback (most recent call last):<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 620, in _action_recorder<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     yield<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 690, in _do_action<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     yield self.action_handler_task(action, args=handler_args)<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/scheduler.py", line 309, in wrapper<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     step = next(subtask)<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resource.py", line 664, in action_handler_task<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     while not check(handler_data):<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resources/stack_resource.py", line 331, in check_create_complete<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     return self._check_status_complete(resource.Resource.CREATE)<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource   File "/usr/lib/python2.7/dist-packages/heat/engine/resources/stack_resource.py", line 372, in _check_status_complete<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource     action=action)<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource ResourceFailure: PhysicalResourceNotFound: resources.4zl7ogkrfcz4.resources.port: The Resource (all) could not be found.<br />
+2016-04-08 16:19:15.955 2692 ERROR heat.engine.resource</p>
+<p>=================================</p>
+<p>I wish you can help me, thanks!<br />
+)</p>

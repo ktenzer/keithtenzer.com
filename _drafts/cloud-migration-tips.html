@@ -1,0 +1,77 @@
+---
+layout: post
+title: Cloud Migration Tips
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta: {}
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p><img class="alignnone size-full wp-image-14161" src="{{ site.baseurl }}/assets/network-2402637_1280.jpg" alt="network-2402637_1280" width="1280" height="720" /></p>
+<p><span style="font-weight:400;">source: </span><a href="https://pixabay.com/photos/network-server-system-2402637/"><span style="font-weight:400;">https://pixabay.com/photos/network-server-system-2402637/</span></a></p>
+<h2><span style="font-weight:400;">Overview</span></h2>
+<p><span style="font-weight:400;">Migrating to the cloud is increasingly popular for good reason, it can provide boosts in performance and accessibility at a fraction of the price of what most businesses can achieve on their own. Cloud-based services are well suited to the drive for innovation and fast development process that is so common in the modern business world. They can be however a challenge to adopt efficiently or effectively, particularly if you don’t have team members who have migration experience.</span></p>
+<p><span style="font-weight:400;">In this article, we’ll learn some hacks and tips to help simplify the cloud migration process and hopefully, help you get the greatest benefit out of your transition. We’ll cover how you might handle legacy applications, the benefits of implementing automation,  learn how to increase cloud security, and introduce how to benefit from hybrid configurations. </span></p>
+<h2><span style="font-weight:400;">ManageRetire Legacy Applications</span></h2>
+<p><span style="font-weight:400;">Migrating to the cloud can be a hugely disruptive process for a business but disruption isn’t always a bad thing. Moanyst organizations, particularly if they’ve been operating for a while, have applications that they continue to use just because "that’s the way things have been done" or because the hassle of moving to a new system doesn’t seem worth the effort. Moving data, applications, and processes to the cloud requires structural and workflow changes regardless of what applications you’re using, though, so migration can be the perfect time to retire legacy applications with minimal pain. </span></p>
+<p><span style="font-weight:400;">Retiring applications can provide you with the opportunity to upgrade to cloud-native services that will typically grant you greater benefits in terms of performance than would be available if you rehosted your old applications. It eliminates the need to </span><a href="https://www.altexsoft.com/blog/engineering/code-refactoring-best-practices-when-and-when-not-to-do-it/"><span style="font-weight:400;">refactor applications</span></a><span style="font-weight:400;"> that would otherwise be non-functional due to incompatibilities in environment or language and can reduce overall security risks by reducing the number of applications that need to be maintained and protected.</span></p>
+<p><span style="font-weight:400;">That said, retiring applications isn’t always an option, nor is simple retirement and replacement always the best solution. In these cases you might want to look at other options, like </span><a href="https://developer.ibm.com/articles/why-should-we-use-microservices-and-containers/"><span style="font-weight:400;">containerization or microservices</span></a><span style="font-weight:400;">. </span></p>
+<p><span style="font-weight:400;">Containers allow you to simplify the refactoring of legacy applications by removing dependencies on the underlying infrastructure. In doing so, you are able to gain cloud-native benefits, such as increased security and governance, easier automation, and distributed computing capabilities, with significantly reduced effort. Being able to separately scale your application components without losing the original functionality of the legacy application can be a huge benefit.</span></p>
+<p><span style="font-weight:400;">Microservices can be a more challenging option as they require the breakdown of applications into functional components which then communicate through API. The use of microservices becomes more practical the larger number of legacy applications you have to convert, as services can be reused for multiple applications. Conversion to microservices can also allow you to easily replace harder to manage systems with remote services, reducing the overall work that needs to be done in-house.</span></p>
+<p><span style="font-weight:400;">Keep in mind, however, if your applications are built from old or obscure languages, are poorly designed, or tightly coupled to data stores, the amount of time and effort you’ll need to spend making them cloud usable probably isn’t worth it. Instead, you should consider keeping them local with a hybrid cloud configuration. </span></p>
+<h2><span style="font-weight:400;">Implement Automation</span></h2>
+<p><span style="font-weight:400;">Similar to the opportunity migration provides when it comes to legacy applications, it also offers the chance to automate some of your processes and workflows. Migration often requires tedious repetition of steps, whether it’s initiating and configuring hundreds or even thousands of similar instances, or creating user-profiles and configuring permissions for all of your employees. Luckily, many cloud providers already have built-in services and integrations that allow you to integrate these tasks as well as others.</span></p>
+<p><span style="font-weight:400;">AWS, for example, offers automation options that range from expert level to novice. You can customize your automation processes through the use of Lambda and System Manager or rely on their built-in functions such as the</span><a href="https://cloud.netapp.com/blog/ebs-volumes-backup-automation"> <span style="font-weight:400;">automation of EBS snapshots</span></a><span style="font-weight:400;"> or the alerting of performance issues through CloudWatch.</span></p>
+<p><span style="font-weight:400;">Third-party services, such as those offered by Puppet or Ansible, are also available if you want to automate but don't know how to start or just want the extra support that an outside service can provide. Ansible, in particular, has been covered fairly frequently on this blog so I’ll point you to a few existing posts, like this </span><a href="https://keithtenzer.com/2017/11/09/ansible-getting-started-guide/"><span style="font-weight:400;">getting started guide</span></a><span style="font-weight:400;">, to learn more about implementing this tool.</span></p>
+<h2><span style="font-weight:400;">Design for Security</span></h2>
+<p><span style="font-weight:400;">Security concerns are often highly discussed during cloud migrations but inconsistently enforced or attended to, either due to lack of knowledge, indistinct roles and responsibilities, or time pressures. This means that, particularly in the early stages of use, your cloud configuration is likely to have some weaknesses. </span></p>
+<p><span style="font-weight:400;">Many argue that public clouds are more secure than private data centers, with good reason. They often have experts dedicated to securing systems around the clock rather than relying on IT professionals for whom security is just one duty. Due to their larger size and security budgets, public clouds are able to employ technologies including machine learning and behavior analytics that smaller businesses might not be able to afford. They also tend to have more consistent security tools that were developed especially by them for cloud-native use, as opposed to a variety of security measures accumulated and adapted over time.</span></p>
+<p><span style="font-weight:400;">The caveat here is two-fold: cloud providers are only obligated to secure their own services and it’s up to you to configure your system correctly to ensure that the provided security tools are applied. The type of cloud service you use determines how much responsibility for security is on your plate and what security features are built in. The chart below can give you an idea of a typical breakdown.</span></p>
+<table>
+<tbody>
+<tr>
+<td></td>
+<td><b>IaaS</b></td>
+<td><b>PaaS</b></td>
+<td><b>SaaS</b></td>
+</tr>
+<tr>
+<td><b>Cloud Provider</b></td>
+<td><span style="font-weight:400;">Servers, storage, networking, virtualization</span></td>
+<td><span style="font-weight:400;">Servers, storage, networking, virtualization, OS, middleware</span></td>
+<td><span style="font-weight:400;">Servers, storage, networking, virtualization, OS, middleware, applications</span></td>
+</tr>
+<tr>
+<td><b>User</b></td>
+<td><span style="font-weight:400;">Data, applications, middleware, OS</span></td>
+<td><span style="font-weight:400;">Data, applications</span></td>
+<td><span style="font-weight:400;">Data</span></td>
+</tr>
+</tbody>
+</table>
+<p><span style="font-weight:400;">To account for the gaps that can arise from this separation of responsibilities, you must make sure to enable features like default encryption and should set IAM policies according the principle of least privilege. Careful structuring of your architecture can significantly increase security as well. </span></p>
+<p><span style="font-weight:400;">Micro-segmentation and swim lane isolation are two methods, for example,  that can be used to restrict lateral movement through your system by isolating data and application access in separately securable zones. Layering security zones from least to most restrictive, thus requiring multiple authentication levels for higher priority data, is another option, and Access Control Lists (ACLs) can be used to restrict network traffic and resource access rights.</span></p>
+<p><span style="font-weight:400;">The </span><a href="https://www.cisecurity.org/cis-benchmarks/"><span style="font-weight:400;">Center for Internet Security (CIS) benchmarks</span></a><span style="font-weight:400;"> can provide some guidance on where specifically issues can occur and how to address them.</span></p>
+<h2><span style="font-weight:400;">Adopt a Hybrid Configuration</span></h2>
+<p><span style="font-weight:400;">Hybrid configurations can be a great choice as either an intermediate step or a long-term solution. If you have applications that won’t work properly if moved to the cloud, or simply have data that you wish to keep on-premise for ease of access, security concerns, or regulatory compliance, a hybrid cloud might be the solution you’re looking for. </span></p>
+<p><span style="font-weight:400;">Hybrid set-ups can help ease the pains of migration by limiting the amount of downtime that you and your customers experience and be useful if you simply wish to take advantage of cloud-bursting, where you direct overflow traffic or processing demands to the cloud when necessary.</span></p>
+<p><span style="font-weight:400;">Avoiding vendor lock-in is perhaps the greatest benefit that hybrid clouds can provide. You can switch, for example, between vendors like AWS and Azure. It may also be a good idea to </span><a href="https://github.com/limiw/open-source-discussions/blob/master/optimizing-cloud-pricing:-aws-vs-azure.md"><span style="font-weight:400;">compare prices</span></a><span style="font-weight:400;"> so you can optimize your cloud computing costs. An increasing number of open source tools are being developed that allow you to configure and manage your cloud without being reliant on your cloud service provider. </span></p>
+<p><span style="font-weight:400;">Kubernetes (K8s), used for container orchestration, is a well known example of the sort of tools available, although its notorious complexity of configuration can require you to seek third-party services anyways. Two alternatives, that may be simpler to use than K8s, are Cloudify and Apache CloudStack. </span></p>
+<p><span style="font-weight:400;">Cloudify is a model-driven cloud management solution that can be used for multi-cloud orchestration, automation and abstraction. It is designed to automate deployment, configuration, and remediation of application and network services across hybrid clouds and is based on </span><a href="https://www.oasis-open.org/committees/tc_home.php?wg_abbrev=tosca"><span style="font-weight:400;">Topology and Orchestration Specification for Cloud Applications</span></a><span style="font-weight:400;"> (TOSCA) guidelines.</span></p>
+<p><span style="font-weight:400;">Apache CloudStack goes a step above Cloudify, and can be used as a IaaS cloud platform in of itself. It offers compute orchestration, network as a service, user and account management, resource auditing, built-in security, services management, storage, and resource provisioning. CloudStack supports a large variety of hypervisors but can so far only integrate with AWS through RESTful API.</span></p>
+<p><span style="font-weight:400;">Both can be used to get you through the initial migration and after used as a centralized cloud management tool. Keep in mind, however, that because they are open source, you likely won’t get the same support that you would if you used proprietary tools.</span></p>
+<h2><span style="font-weight:400;">Summary</span></h2>
+<p><span style="font-weight:400;">In this article, we looked at some ways to maximize and simplify the cloud migration process, to help you achieve a successful and smooth migration. </span></p>
+<p><span style="font-weight:400;">We considered how to address legacy applications, were introduced to some tools for automating cloud migration and management, learned about the importance of designing for security, and looked at some of the benefits of hybrid configurations, including some tools available for hybrid management. </span></p>
+<p><span style="font-weight:400;">Although this article didn’t go into depth on these topics, it hopefully gave you some ideas to think about and places start from in planning your cloud migration journey.</span></p>

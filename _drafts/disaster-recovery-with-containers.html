@@ -1,0 +1,103 @@
+---
+layout: post
+title: Disaster Recovery with Containers
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta: {}
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p>mysql -u root</p>
+<p><strong>CREATE DATABASE books;</strong></p>
+<p>use books;</p>
+<p><strong>CREATE TABLE authors (id INT, name VARCHAR(20), email VARCHAR(20));</strong></p>
+<p>mysql&gt; <strong>INSERT INTO authors (id,name,email) VALUES(1,"Vivek","xuz@abc.com");</strong></p>
+<p>mysql&gt; <strong>INSERT INTO authors (id,name,email) VALUES(2,"Priya","p@gmail.com");</strong></p>
+<p>mysql&gt; <strong>INSERT INTO authors (id,name,email) VALUES(3,"Tom","tom@yahoo.com");</strong></p>
+<p>MariaDB [books]&gt; SELECT * FROM authors;<br />
++------+-------+---------------+<br />
+| id | name | email |<br />
++------+-------+---------------+<br />
+| 1 | Vivek | xuz@abc.com |<br />
+| 1 | Vivek | xuz@abc.com |<br />
+| 2 | Priya | p@gmail.com |<br />
+| 3 | Tom | tom@yahoo.com |<br />
++------+-------+---------------+<br />
+4 rows in set (0.00 sec)</p>
+<p>SCRIPT</p>
+<p>#!/bin/bash</p>
+<p>usage() {<br />
+echo "Usage:$0 project_name project_database_dc prod_url prod_token test_url test_token"<br />
+exit 1<br />
+}</p>
+<p>if ([ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ] || [ -z "$6" ]); then<br />
+usage<br />
+fi</p>
+<p># Parameters<br />
+#OPENSHIFT_APP_NAME=hackathon<br />
+#OPENSHIFT_APP_DC=mariadb<br />
+#OPENSHIFT_PROD_URL=https://openshift.144.76.134.230.xip.io:8443<br />
+#OPENSHIFT_PROD_TOKEN=lKffkOuOQCXsQrPGTaX5Z_jJhIdV15ip5laM4IJ6qGM<br />
+#OPENSHIFT_TEST_URL=https://openshift.144.76.134.229.xip.io:8443<br />
+#OPENSHIFT_TEST_TOKEN=7Pfd17d4NIBghixsPTdQ3S-FPQaemnQ1W2OMl3szfFs</p>
+<p>OPENSHIFT_APP_NAME=$1<br />
+OPENSHIFT_APP_DC=$2<br />
+OPENSHIFT_PROD_URL=$3<br />
+OPENSHIFT_PROD_TOKEN=$4<br />
+OPENSHIFT_TEST_URL=$5<br />
+OPENSHIFT_TEST_TOKEN=$6</p>
+<p>echo "INFO: Gathering Objects from Production"<br />
+oc login $OPENSHIFT_PROD_URL --token=$OPENSHIFT_PROD_TOKEN --insecure-skip-tls-verify --insecure-skip-tls-verify</p>
+<p>oc get secret $OPENSHIFT_APP_DC -n $OPENSHIFT_APP_NAME-prod -o yaml --export=true |sed '/creationTimestamp/d' |sed '/selfLink/d' |sed -e '17,22d' &gt;/tmp/secret.yaml</p>
+<p>PV=`oc get pv |grep $OPENSHIFT_APP_NAME-prod/$OPENSHIFT_APP_DC |awk {'print $1'}`;oc get pv $PV -o yaml |sed '/creationTimestamp/d' |sed '/resourceVersion/d' |sed '/selfLink/d' |sed '/uid:/d' |sed -e '19,23d' &gt;/tmp/pv</p>
+<p>oc get pvc $OPENSHIFT_APP_DC -n $OPENSHIFT_APP_NAME-prod -o yaml|sed '/creationTimestamp/d' |sed -e '12,20d' &gt;/tmp/pvc</p>
+<p>oc get project $OPENSHIFT_APP_NAME-prod -o yaml &gt;/tmp/project.yaml</p>
+<p>oc scale dc/$OPENSHIFT_APP_DC --replicas=0 -n $OPENSHIFT_APP_NAME-prod</p>
+<p>sleep 3</p>
+<p>source /home/cloud-user/keystonerc_prod</p>
+<p>sleep 15</p>
+<p>echo "INFO: Getting PV relationships"<br />
+PVC=`oc get pv |grep $OPENSHIFT_APP_NAME-prod/$OPENSHIFT_APP_DC |awk {'print $1'}`;openstack volume list |grep $PVC |awk {'print $2'} &gt;/tmp/volumeid</p>
+<p>sleep 15</p>
+<p>echo "INFO: Creating volume transfer request"<br />
+VOLUMEID=`cat /tmp/volumeid`;openstack volume transfer request create $VOLUMEID &gt;/tmp/volume-transfer-request</p>
+<p>sleep 3</p>
+<p>source /home/cloud-user/keystonerc_dr</p>
+<p>sleep 3</p>
+<p>echo "INFO: Accepting transfer move request"<br />
+AUTH_KEY=`cat /tmp/volume-transfer-request |grep auth_key |awk {'print $4'}`;ID=`cat /tmp/volume-transfer-request |grep ' id' |awk {'print $4'}`;openstack volume transfer request accept $ID $AUTH_KEY</p>
+<p>sleep 15</p>
+<p>oc login $OPENSHIFT_TEST_URL --token=$OPENSHIFT_TEST_TOKEN --insecure-skip-tls-verify --insecure-skip-tls-verify</p>
+<p>sleep 1</p>
+<p>echo "INFO: Creating DR Project"<br />
+oc new-project $OPENSHIFT_APP_NAME-prod</p>
+<p>sleep 3</p>
+<p>echo "INFO: Setting SELinux Labels on DR Project"<br />
+SCC_MCS=`cat /tmp/project.yaml |grep openshift.io/sa.scc.mcs: |awk {'print $2'}`;oc patch namespace $OPENSHIFT_APP_NAME-prod -p "{\"metadata\":{\"annotations\":{\"openshift.io/sa.scc.mcs\":\"$SCC_MCS\"}}}"</p>
+<p>sleep 3</p>
+<p>SCC_SUPP_GROUPS=`cat /tmp/project.yaml |grep openshift.io/sa.scc.supplemental-groups: |awk {'print $2'}`;oc patch namespace $OPENSHIFT_APP_NAME-prod -p "{\"metadata\":{\"annotations\":{\"openshift.io/sa.scc.supplemental-groups\":\"$SCC_SUPP_GROUPS\"}}}"</p>
+<p>sleep 3</p>
+<p>SCC_UID_RANGES=`cat /tmp/project.yaml |grep openshift.io/sa.scc.uid-range: |awk {'print $2'}`;oc patch namespace $OPENSHIFT_APP_NAME-prod -p "{\"metadata\":{\"annotations\":{\"openshift.io/sa.scc.uid-range\":\"$SCC_UID_RANGES\"}}}"</p>
+<p>sleep 3</p>
+<p>echo "INFO: Creating secrets and storage mappings on DR"<br />
+oc create -f /tmp/secret.yaml -n $OPENSHIFT_APP_NAME-prod</p>
+<p>oc create -f /tmp/pv</p>
+<p>oc create -f /tmp/pvc</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

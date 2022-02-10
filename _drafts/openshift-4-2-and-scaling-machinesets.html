@@ -1,0 +1,71 @@
+---
+layout: post
+title: OpenShift 4.2 and Scaling Machinesets
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta: {}
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p>&nbsp;</p>
+<pre>[root@keithcloud ~]# oc get machinesets -n openshift-machine-api
+NAME                DESIRED   CURRENT   READY   AVAILABLE   AGE
+ocp4-lnhdp-worker   2         2         2       2           4d</pre>
+<p>&nbsp;</p>
+<pre>[root@keithcloud ~]# oc scale --replicas=3 machineset ocp4-lnhdp-worker -n openshift-machine-api
+machineset.machine.openshift.io/ocp4-lnhdp-worker scaled</pre>
+<p>&nbsp;</p>
+<pre>[root@keithcloud ~]# oc get machines -n openshift-machine-api
+NAME                      STATE    TYPE             REGION   ZONE   AGE
+ocp4-lnhdp-master-0       ACTIVE   ocp.controller            nova   4d
+ocp4-lnhdp-master-1       ACTIVE   ocp.controller            nova   4d
+ocp4-lnhdp-master-2       ACTIVE   ocp.controller            nova   4d
+ocp4-lnhdp-worker-6djvc   ACTIVE   ocp.controller            nova   4m18s
+ocp4-lnhdp-worker-gwxpk   ACTIVE   ocp.controller            nova   4d
+ocp4-lnhdp-worker-qq9nb   ACTIVE   ocp.controller            nova   4d</pre>
+<p><img class="alignnone  wp-image-14280" src="{{ site.baseurl }}/assets/ocp_4_scale1.png" alt="ocp_4_scale1" width="1100" height="178" /></p>
+<p><img class="alignnone  wp-image-14281" src="{{ site.baseurl }}/assets/ocp_scale_2.png" alt="ocp_scale_2" width="2580" height="406" /></p>
+<pre>[root@keithcloud ~]# oc get nodes
+NAME                      STATUS     ROLES    AGE         VERSION
+ocp4-lnhdp-master-0       Ready      master   4d          v1.14.6+c07e432da
+ocp4-lnhdp-master-1       Ready      master   4d          v1.14.6+c07e432da
+ocp4-lnhdp-master-2       Ready      master   4d          v1.14.6+c07e432da
+ocp4-lnhdp-worker-6djvc   NotReady   worker   &lt;invalid&gt;   v1.14.6+c07e432da
+ocp4-lnhdp-worker-gwxpk   Ready      worker   4d          v1.14.6+c07e432da
+ocp4-lnhdp-worker-qq9nb   Ready      worker   4d          v1.14.6+c07e432da</pre>
+<p>&nbsp;</p>
+<pre>[root@keithcloud ~]# oc get nodes
+NAME                      STATUS   ROLES    AGE   VERSION
+ocp4-lnhdp-master-0       Ready    master   4d    v1.14.6+c07e432da
+ocp4-lnhdp-master-1       Ready    master   4d    v1.14.6+c07e432da
+ocp4-lnhdp-master-2       Ready    master   4d    v1.14.6+c07e432da
+ocp4-lnhdp-worker-6djvc   Ready    worker   71s   v1.14.6+c07e432da
+ocp4-lnhdp-worker-gwxpk   Ready    worker   4d    v1.14.6+c07e432da
+ocp4-lnhdp-worker-qq9nb   Ready    worker   4d    v1.14.6+c07e432da</pre>
+<p>&nbsp;</p>
+<p><img class="alignnone  wp-image-14283" src="{{ site.baseurl }}/assets/ocp_scale_3.png" alt="ocp_scale_3" width="1830" height="498" /></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

@@ -1,0 +1,211 @@
+---
+layout: single 
+title: 'Application Containers: A Practical HowTo Guide'
+categories:
+- Containers
+tags:
+- Docker
+- Kubernetes
+- Linux
+- LXC
+---
+<h3>Overview</h3>
+<p>We have by now all heard plenty about Linux containers and for good reason. Containers change the way applications are operated and allow us to deploy applications at unprecedented speeds. Containers pick up where Virtual Machines left off, at the application layer. In this article we will focus on the journey to a container driven world and explore the phases along the way. <!--more--></p>
+<h3>Container Rules</h3>
+<p>Before beginning our journey it is important to understand basic container rules:</p>
+<ul>
+<li>A container should run one and only one application process</li>
+<li>Containers are immutable, if something needs to be changed the container is thrown away and re-created</li>
+<li>Containers are insulated from one another but not isolated in same way as VIrtual Machines</li>
+<li>Containers share same Linux Kernel</li>
+</ul>
+<h3>Application Discovery</h3>
+<p>The first phase inolves indentifying applications. Not all applications are ideal to run in containers. Similar to cloud infrastructure such as OpenStack, containers require a certain application design. An application should exhibit the following behavior:</p>
+<ul>
+<li style="text-align:left;">Application functionality should be broken into components
+<ul>
+<li style="text-align:left;">components should be standalone services and have no dependencies on any other components</li>
+<li style="text-align:left;">all services should communicate with one another using external RESTful APIs</li>
+</ul>
+</li>
+<li style="text-align:left;">Application state change should be handled by using message buses or a distributed key/value store</li>
+<li style="text-align:left;">Application must scale horizontally not vertically</li>
+<li style="text-align:left;">Heavy components like databases should be operated on bare-metal or in Virtual Machines that can scale vertically</li>
+</ul>
+<p>For the purpose of this article I chose to containerize an application that displays these characteristics. <a href="http://integra.emitrom.com/">Integra</a> is an integration, automation and orchestration platform. It exposes application capabilities through providers that provide standalone micro-services with a RESTful frontend. The Integra reactor is the brain and allows automation architects to build workflows from capabilities exposed by providers. There are providers for applicaitons, databases, hypervisors, storage systems and much more. The idea behind Integra is automate everything with no compromises. Integra sees no difference between backup, provisioning or other common tasks. Everything is a workflow that can be automated using a standard toolset.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/05/integra_architecture.jpg"><img class="  wp-image-894 aligncenter" src="{{ site.baseurl }}/assets/2015/05/integra_architecture.jpg?w=280" alt="Integra_Architecture" width="968" height="1037" /></a></p>
+<p>Since Integra is composed of many services it is important to place each service in its own container. This means the reactor and every provider, even the CLI get its own container. The container will need to provide all dependencies in order to run the application including exposing ports. Each service or component of an application should use a different unique port. For Docker alone it doesn't matter as much but once we get into Kubernetes and pods this becomes very important since containers within a pod share same IP address.</p>
+<h3>Running Application in Container</h3>
+<p>Running applications in containers is not that much different than outside of a container. A container can run one command so typically we would create a small start script to lauch the application. Below is the start script run-integra.sh I am using for the Integra reactor:</p>
+<pre style="padding-left:30px;">#!/bin/sh
+ pgrep -f "rest-1.0.2-uber.jar" | awk '{system("kill " $1)}'
+ exec /usr/bin/java -jar /integra/rest-1.0.2-uber.jar</pre>
+<p>Before building our application container it is important to test and ensure things are working. Below are the commands I used to test the Integra reactor.</p>
+<pre style="padding-left:30px;"># docker pull debian</pre>
+<pre style="padding-left:30px;"># docker run -i -t debian /bin/bash</pre>
+<p>At this point we are inside the container running debian as the base OS.</p>
+<pre style="padding-left:30px;">root@b4a37b0d8040:/# apt-get update</pre>
+<pre style="padding-left:30px;">root@b4a37b0d8040:/# apt-get install -y openjdk-7-jre</pre>
+<p>We have now installed the application dependencies and can test the Integra reactor inside the container. Next we need to copy the application JAR to the container using the container id (long format).</p>
+<pre style="padding-left:30px;"># docker ps
+CONTAINER     ID IMAGE         COMMAND       CREATED         STATUS
+b4a37b0d8040  debian:latest    "/bin/bash"   5 minutes ago   Up 5 minutes</pre>
+<pre class="lang-sh prettyprint prettyprinted" style="padding-left:30px;"><code><span class="pln"># docker inspect -f b4a37b0d8040
+b4a37b0d8040a0d624b7edc264425693a7e0e50444f72d09a54209ff6461b377</span></code></pre>
+<pre class="lang-sh prettyprint prettyprinted" style="padding-left:30px;"><code><span class="pln">cp </span></code>rest-1.0.2-uber.jar /var/lib/docker/devicemapper/mnt/b4a37b0d8040a0d624b7edc264425693a7e0e50444f72d09a54209ff6461b377/rootfs</pre>
+<p>Now that we have copied the JAR file from our host OS to the container we can run the Integra reactor and ensure it works.</p>
+<pre style="padding-left:30px;">root@b4a37b0d8040:/# java -jar rest-1.0.2-uber.jar</pre>
+<p>Finally we are ready to build our Docker application container!</p>
+<h3>Building Docker Image</h3>
+<p>Docker provides a standard for packaging containers. While container technology has been around for a long time in both Unix and Linux the tooling and portability that Docker provides is certainly game-changing. Docker uses a Dockerfile to define the container image. A docker image is a grouping of layers. In our example we have essentially three layers: the base OS (Debian), required dependencies (Java) and our application (JAR). Besides providing software layering a Dockerfile also enables us to expose application ports, run-time environment parameters and a tooling for executing standard OS commands. Below is the Dockerfile used to build the Integra Reactor.</p>
+<pre style="padding-left:30px;"># vi Dockerfile
+# Integra Reactor
+# VERSION 0.0.1
+FROM debian MAINTAINER Keith Tenzer &lt;maintainer@domain.com&gt;
+
+LABEL Description="This image is used to start the Integra Rest Server" Vendor="Emitrom" Version="1.02" RUN apt-get update &amp;&amp; apt-get install -y openjdk-7-jre
+
+RUN mkdir /integra 
+COPY rest/* /integra/ 
+COPY run-integra.sh / 
+RUN chmod -R 755 /integra 
+RUN chmod 755 /run-integra.sh
+
+ENV JAVA_OPTS="-Xms512m -Xmx1152m -XX:MaxPermSize=256m -XX:MaxNewSize=256m"
+
+EXPOSE 8080 8443
+
+CMD ["/run-integra.sh"]</pre>
+<p>Once we are ready we can build our docker image. The docker build command will create the image and make it available in our local docker repository.</p>
+<pre style="padding-left:30px;"># docker build -t integra/reactor:v1.0.2 .</pre>
+<pre style="padding-left:30px;"># docker images
+REPOSITORY          TAG       IMAGE ID        CREATED         VIRTUAL SIZE
+integra/reactor     v1.0.2    233be1b0b05f    16 hours ago    523.4 MB</pre>
+<h3>Sharing Docker Images</h3>
+<p>Docker provides a public registry called <a href="http://hub.docker.com">Docker Hub</a> and in addition allows us to run our own private registry in order to share trusted images internally. Once the docker image is created it can be shared with a registry using the the docker push command. In order to allow Docker to communicate with an insecure private registry the docker daemon must be started with the --insecure-registry option as follows:</p>
+<pre style="padding-left:30px;">docker -d --insecure-registry kubernetes.lab.com:5000 &amp;</pre>
+<p>Tags are used to allow for versioning of Docker images. A special tag called latest is used as default whenever a tag is not specified. For example above we issued the command 'docker run -i -t debian /bin/bash'. Since a tag was not specified docker run used latest. The most current version of a Docker image should also be taged with 'latest'.</p>
+<pre style="padding-left:30px;">docker tag emitrom/server:v1.02 kubernetes.lab.com:5000/emitrom/integra-server:v1.02</pre>
+<pre style="padding-left:30px;">docker tag emitrom/integra-server:v1.02 kubernetes.lab.com:5000/emitrom/integra-server:latest</pre>
+<h4>Pusing Docker Image to Private Registry</h4>
+<pre style="padding-left:30px;">docker push kubernetes.lab.com:5000/integra/reactor</pre>
+<h4>Pusing Docker Image to Docker Hub</h4>
+<pre style="padding-left:30px;"># docker push integra/reactor</pre>
+<pre style="padding-left:30px;">Please login prior to push:
+Username: integra
+Password: *******
+Email: maintainer@domain.com</pre>
+<p>To see all images for the user integra we can go directly to Docker Hub or run a command.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/05/docker_hub_integra.jpg"><img class="  wp-image-905 aligncenter" src="{{ site.baseurl }}/assets/2015/05/docker_hub_integra.jpg?w=300" alt="Docker_Hub_Integra" width="1171" height="816" /></a></p>
+<pre style="padding-left:30px;"># docker search integra |grep "^integra/"</pre>
+<h3>Running Docker Images</h3>
+<p>We have built our Docker image for the Integra reactor and shared it in Docker Hub or a private registry. At this point anyone can run the application on any system running Docker using two simple commands.</p>
+<pre style="padding-left:30px;"># docker pull integra/reactor</pre>
+<pre style="padding-left:30px;"># docker run -i -t -d integra/reactor</pre>
+<p>This is the power of containers and portability of Docker. Think of how you would normally deploy such an application without containers? Think of the portability, your app can run on any system running Docker, anywhere.</p>
+<h3>Running Docker Images in Kubernetes</h3>
+<p>Running vanilla Docker is great for development or test environments but assuming we want to run this application in a production environment there are a few things missing. First we don't have any mechanism to orchestrate or handle deploying our application on multiple hosts. Next the target application contains many services, each being it's own container and connecting them together is quite a bit of work. There is no abstraction around services, a container may be temporary but an application service is certainly not. Finally we have no management around reliability or horizontal scaling. These are the gaps that Google's Kubernetes fills. For more information on setting up Kubernetes read this <a href="http://keithtenzer.com/2015/04/15/containers-at-scale-with-kubernetes-on-openstack/">article</a>. Kubernetes creates an abstraction around containers called a pod. A pod contains one or more tightly coupled containers. In this case if we want a holistic deployment of Integra and all its providers, reactor and CLI we can encapsulate the entire application in a Kubernetes pod. Once we have a pod independent services and replication policies can be created, Kubernetes handles all this automatically. Below is an example of a multiple container pod configuration.</p>
+<pre style="padding-left:30px;"># vi integra-all.json</pre>
+<p>[code language="java"]<br />
+{<br />
+   &quot;apiVersion&quot;: &quot;v1beta1&quot;,<br />
+   &quot;desiredState&quot;: {<br />
+      &quot;manifest&quot;: {<br />
+      &quot;containers&quot;: [<br />
+      {<br />
+         &quot;image&quot;: &quot;integra/reactor&quot;,<br />
+         &quot;name&quot;: &quot;integra-reactor&quot;,<br />
+         &quot;ports&quot;: [<br />
+         {<br />
+            &quot;containerPort&quot;: 8080,<br />
+            &quot;hostPort&quot;: 8080,<br />
+            &quot;protocol&quot;: &quot;TCP&quot;<br />
+         }<br />
+         ]<br />
+      },<br />
+      {<br />
+         &quot;image&quot;: &quot;integra/aws-provider&quot;,<br />
+         &quot;name&quot;: &quot;integra-aws&quot;,<br />
+         &quot;ports&quot;: [<br />
+         {<br />
+            &quot;containerPort&quot;: 9771,<br />
+            &quot;hostPort&quot;: 9771,<br />
+            &quot;protocol&quot;: &quot;TCP&quot;<br />
+         }<br />
+         ]<br />
+      },<br />
+      {<br />
+         &quot;image&quot;: &quot;integra/azure-provider&quot;,<br />
+         &quot;name&quot;: &quot;integra-azure&quot;,<br />
+         &quot;ports&quot;: [<br />
+         {<br />
+            &quot;containerPort&quot;: 9772,<br />
+            &quot;hostPort&quot;: 9772,<br />
+            &quot;protocol&quot;: &quot;TCP&quot;<br />
+         }<br />
+         ]<br />
+      }<br />
+      ],<br />
+      &quot;id&quot;: &quot;integra-all&quot;,<br />
+      &quot;restartPolicy&quot;: {<br />
+      &quot;always&quot;: {}<br />
+   },<br />
+   &quot;version&quot;: &quot;v1beta1&quot;,<br />
+   &quot;volumes&quot;: null<br />
+   }<br />
+ },<br />
+ &quot;id&quot;: &quot;integra-all&quot;,<br />
+ &quot;kind&quot;: &quot;Pod&quot;,<br />
+ &quot;labels&quot;: {<br />
+ &quot;name&quot;: &quot;integra-all&quot;<br />
+ },<br />
+ &quot;namespace&quot;: &quot;default&quot;<br />
+}<br />
+[/code]</p>
+<p>We can issue the following command in Kubernetes to deploy our pod:</p>
+<pre style="padding-left:30px;">kubectl create -f integra-reactor-svc.json</pre>
+<pre style="padding-left:30px;"># kubectl get pods
+POD            IP             CONTAINER(S)      IMAGE(S)                         HOST                 LABELS             STATUS
+integra-all    10.100.77.3    integra-reactor   integra/reactor:latest           atomic01.lab.com/    name=integra-all   Running
+                              integra-aws       integra/aws-provider:latest
+                              integra-azure     integra/azure-provider:latest</pre>
+<p>Next we need to expose the Integra reactor running on port 8080 as a service. The nice thing about pods is that all containers within pod communicate using the same IP address. This makes it much simpler to configure communication between related application services.</p>
+<pre style="padding-left:30px;"># vi integra-all-svc.json</pre>
+<p>[code language="java"]</p>
+<p>{<br />
+   &quot;apiVersion&quot;: &quot;v1beta1&quot;,<br />
+   &quot;containerPort&quot;: 8080,<br />
+   &quot;id&quot;: &quot;integra-reactor-svc&quot;,<br />
+   &quot;kind&quot;: &quot;Service&quot;,<br />
+   &quot;labels&quot;: {<br />
+      &quot;name&quot;: &quot;integra-reactor-svc&quot;<br />
+   },<br />
+   &quot;port&quot;: 8080,<br />
+   &quot;publicIPs&quot;: [<br />
+      &quot;10.10.1.114&quot;,&quot;10.10.1.115&quot;,&quot;10.10.1.116&quot;<br />
+   ],<br />
+   &quot;selector&quot;: {<br />
+      &quot;name&quot;: &quot;integra-all&quot;<br />
+   }<br />
+ }</p>
+<p>[/code]</p>
+<p>We can create the service and we are done!</p>
+<pre style="padding-left:30px;"> kubectl create -f integra-reactor-svc.json</pre>
+<p>Finally in order to test we can make a simple HTTP request to the Integra reactor.</p>
+<pre style="padding-left:30px;">curl -u admin:integra http://10.10.1.114:8080/rest</pre>
+<div class="line">
+<p>[code language="java"]<br />
+&lt;appInfo&gt;<br />
+   &lt;name&gt;Integra&lt;/name&gt;<br />
+   &lt;version&gt;1.0.2&lt;/version&gt;<br />
+   &lt;buildTimestamp&gt;20150420-2208&lt;/buildTimestamp&gt;<br />
+&lt;/appInfo&gt;<br />
+[/code]</p>
+</div>
+<h3 class="line">Summary</h3>
+<div class="line">In this article we explored how to approach and prepare applications running inside containers using the Docker platform. We have seen how to build docker images and use a docker registry to share images. Finally we have observed how to run containers inside Docker and Kubernetes. It doesn't stop there though, the story gets even better. In a future article I will discuss the need for PaaS and how PaaS can leverage these underlying technologies to provider even more value. In today's world IT is all about speed and innovation, if you don't have speed you cannot innovate, if you cannot innovate you will perish.</div>
+<div class="line"></div>
+<div class="line">Happy Containerizing!</div>
+<div class="line">
+<p>(c) 2015 Keith Tenzer</p>
+</div>

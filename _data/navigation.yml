@@ -1,0 +1,8 @@
+# main links
+main:
+  - title: "About"
+    url: /about/index.html
+  - title: "Conferences and Events"
+    url: /conferences-and-events/index.html
+  - title: "Videos"
+    url: /videos/index.html

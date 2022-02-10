@@ -1,0 +1,78 @@
+---
+layout: single 
+title: Red Hat CloudForms Overview and Setup
+categories:
+- CloudForms
+tags:
+- Amazon
+- Cloud
+- Hyper-V
+- OpenStack
+- Red Hat
+- RHEV
+- VMware
+---
+<h3>Overview</h3>
+<p>CloudForms is an upper-layer management abstraction that allows an organization to manage private, public and virtual infrastructure seamlessly from a single-pane-of-glass. CloudForms allows you to create powerful policies and apply them to all virtual infrastructure. <!--more--> In CloudForms you can not only build workflows and automation but you can expose those workflows to end-users as services. You can build service catalogs and easy to consume UI forms. Finally you can collect information about all virtual infrastructure enabling chargeback, dashboard visualization, monitoring and alerting. CloudForms supports OpenStack, Amazon EC2, Red Hat Enterprise Virtualization Management (RHEV-M), VMware vCenter, Microsoft System Center Virtual Machine Manager (SCVMM) and all the virtual infrastructure those platforms provide.</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/01/cloudforms_architecture1.jpg"><img class="  wp-image-527 aligncenter" src="{{ site.baseurl }}/assets/2015/01/cloudforms_architecture1.jpg?w=300" alt="cloudforms_architecture" width="695" height="257" /></a></p>
+<p>The CloudForms product is downstream from the <a href="http://manageiq.org/">ManageIQ </a>open-source project. Red Hat is a founding member and a large contributor to this community.</p>
+<h3>Terminology</h3>
+<p>Before sinking our teeth into Cloud Forms it is important to understand some terminology. CloudForms allows for the management of clouds and infrastructure.</p>
+<h4>Clouds</h4>
+<p><strong>Providers</strong> - A cloud provider is a computing platform that manages instances and allows building of multi-tenant infrastructure services independent from underlying hypervisors. Cloud providers supported by CloudForms are Amazon EC2 and OpenStack.</p>
+<p><strong>Availability Zones</strong> - Logical or physical groupings of cloud resources.</p>
+<p><strong>Tenants</strong> - Cloud computing provides a common software platform. Tenants share the platform but are completely isolated from one another. They have their own data, network and security.</p>
+<p><strong>Flavors</strong> - Cloud computing offers infrastructure as a service. A flavor describes a specific type of instance and what kind of resources are made available to the instance. All instances are created from a type of flavor.</p>
+<p><strong>Security Groups</strong> - Tenant based security that defines Ingres and Egres access to instances.</p>
+<p><strong>Instances</strong> - Virtual Machines running under cloud infrastructure.</p>
+<h4>Infrastructure</h4>
+<p><strong>Providers</strong> - A infrastructure provider is a management platform for managing virtual machines from a single type of hypervisor. Infrastructure providers supported by CloudForms are Red Hat Enterprise Virtualization Management (RHEV-M), VMware vCenter and Microsoft System Center Virtual Machine Manager (SCVMM).</p>
+<p><strong>Hosts</strong> - Hypervisors running on physical hardware providing virtual machines and infrastructure.</p>
+<p><strong>Clusters</strong> - Provide high availability and load balancing for a group of hosts. Clusters are groupings of compute hosts that share similar resources such as network and storage.</p>
+<p><strong>Virtual Machines</strong> - Operating systems running under a hypervisor.</p>
+<p><strong>Datastores</strong> - Storage locations that contain virtual images and disks.</p>
+<h3>Installation</h3>
+<p>Cloud Forms is distributed as an Open Virtual Applicance (OVA). There are OVAs for RHEV, OpenStack and VMware. The CloudForms OVAs are available for download <a href="https://access.redhat.com/downloads/content/167/ver=/cf-me---3.1/3.1/x86_64/product-downloads">here</a>. If you are using RHEV you can follow the <a href="http://keithtenzer.com/2015/01/12/rhev-importing-ova-templates/">importing OVAs into RHEV</a> guide.</p>
+<ul>
+<li>Deploy new virtual machine based off OVA template</li>
+<li>Connect to console and login as user:admin password: smartvm</li>
+<li>Press "enter" and you will be in the appliance configuration</li>
+</ul>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/01/cfm_setup.jpg"><img class="alignnone  wp-image-436" src="{{ site.baseurl }}/assets/2015/01/cfm_setup.jpg?w=300" alt="CFM_SETUP" width="711" height="600" /></a></p>
+<ul>
+<li>Configure static network settings</li>
+<li>Configure hostname</li>
+<li>Configure timezone, date and time</li>
+<li>Configure database
+<ul>
+<li>Choose internal database</li>
+<li>Enter a three-digit region id to create new region (can be any three-digit number)</li>
+</ul>
+</li>
+<li>Start EVM server process</li>
+</ul>
+<p>At this point you have successfully configured the appliance and can now connect using your web browser to https://hostname.</p>
+<h3>Configuration</h3>
+<p>CloudForms is an appliance so after installation all management will occur through the web-based management portal. In order to start doing things with CloudForms we need to configure users, enable automation and add providers. Connect to CloudForms management portal as user: admin password: smartvm.</p>
+<h4>Creating a user</h4>
+<p>By default CloudForms will only create the administrator user admin. New users can be created under "Configure" -&gt; "Configuration" -&gt; "Access Control".</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/01/screen-shot-2015-01-13-at-11-42-56.png"><img class="  wp-image-445 aligncenter" src="{{ site.baseurl }}/assets/2015/01/screen-shot-2015-01-13-at-11-42-56.png?w=300" alt="Screen Shot 2015-01-13 at 11.42.56" width="693" height="531" /></a></p>
+<p>Here we can add users, groups and roles by simply selecting one of them and "Configuration" -&gt; "Add new".</p>
+<h5><a href="https://keithtenzer.files.wordpress.com/2015/01/screen-shot-2015-01-13-at-11-45-32.png"><img class="  wp-image-446 aligncenter" src="{{ site.baseurl }}/assets/2015/01/screen-shot-2015-01-13-at-11-45-32.png?w=300" alt="Screen Shot 2015-01-13 at 11.45.32" width="699" height="573" /></a></h5>
+<h5></h5>
+<h4>Enable Automation</h4>
+<p>CloudForms has a lot of capabilities, one of them provisioning, requires automation to be enabled and by default it is not. Provisioning will allow CloudForms to create instances or virtual machines on the infrastructure that it is managing. In order to enable automation and as such provisioning navigate to "Configure" -&gt; "Configuration" -&gt; "Settings. Under "Zones" -&gt; "Zone" select the CloufForms EVM server. Enable the "Automation Engine" and save.</p>
+<h5><a href="https://keithtenzer.files.wordpress.com/2015/01/screen-shot-2015-01-13-at-11-52-37.png"><img class="  wp-image-447 aligncenter" src="{{ site.baseurl }}/assets/2015/01/screen-shot-2015-01-13-at-11-52-37.png?w=300" alt="Screen Shot 2015-01-13 at 11.52.37" width="733" height="384" /></a></h5>
+<h5></h5>
+<h4> Add Cloud Provider</h4>
+<p>In order to manage cloud infrastructure a provider must be added to CloudForms. Under "Clouds" -&gt; "Providers" select "Add a new Cloud Provider".</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/01/screen-shot-2015-01-13-at-13-06-57.png"><img class="  wp-image-448 aligncenter" src="{{ site.baseurl }}/assets/2015/01/screen-shot-2015-01-13-at-13-06-57.png?w=300" alt="Screen Shot 2015-01-13 at 13.06.57" width="727" height="206" /></a></p>
+<p>In this case we will add a OpenStack provider. Before adding provider make sure you validate credentials. Validation tests if CloudForms can communicate with the provider using the given credentials. CloudForms will let you add a provider regardless of if communication is working.</p>
+<h4><a href="https://keithtenzer.files.wordpress.com/2015/01/screen-shot-2015-01-13-at-13-10-55.png"><img class="  wp-image-449 aligncenter" src="{{ site.baseurl }}/assets/2015/01/screen-shot-2015-01-13-at-13-10-55.png?w=300" alt="Screen Shot 2015-01-13 at 13.10.55" width="730" height="723" /></a> Add Infrastructure Provider</h4>
+<p>In order to manage virtual infrastructure an infrastructure provider must be added to CloudForms. Under "Infrastructure" -&gt; "Providers" select "Add a new Infrastructure Provider".</p>
+<p><a href="https://keithtenzer.files.wordpress.com/2015/01/screen-shot-2015-01-13-at-13-15-00.png"><img class="  wp-image-450 aligncenter" src="{{ site.baseurl }}/assets/2015/01/screen-shot-2015-01-13-at-13-15-00.png?w=300" alt="Screen Shot 2015-01-13 at 13.15.00" width="726" height="208" /></a></p>
+<p>We will add a VMware vCenter provider.</p>
+<h3><a href="https://keithtenzer.files.wordpress.com/2015/01/screen-shot-2015-01-13-at-13-18-23.png"><img class="  wp-image-451 aligncenter" src="{{ site.baseurl }}/assets/2015/01/screen-shot-2015-01-13-at-13-18-23.png?w=276" alt="Screen Shot 2015-01-13 at 13.18.23" width="728" height="791" /></a>Conclusion</h3>
+<p>CloudForms provides instance or virtual machine life-cycle management. The idea is that a workload has a life-span and during its life will run on different infrastructure. It could be on private cloud infrastructure such as that from Red Hat, VMware or Microsoft. It could be on public cloud infrastructure from Amazon EC2, Cloud Service Provider running OpenStack or your own OpenStack private cloud. CloudForms lets you seamlessly manage your entire virtual infrastructure with policies and powerful automation engines. As we move into the future it is clear the hybrid cloud will prevail and become increasingly important. The idea of workload life-cycle management and moving workloads effortlessly across different infrastructure management platforms will become the norm. The whole concept of a workload life-cycle is new to many organizations.</p>
+<p>We are used to provisioning new environments but decommissioning them is something that occurs far less frequently. We need to change, infrastructure isn't built forever, it is built for now and when the time comes workloads must be decommissioned or moved to new infrastructure seamlessly. Beyond that, our various cloud or infrastructure platforms must be controlled or governed by central policies. Finally provisioning must be completely automated through one-click end-user service catalogs. This is what CloudForms is all about. CloudForms is taking huge strides to satisfy these needs and become the upper-layer multi-cloud management leader. Hopefully this post intrigues your interest to investigate this topic further.</p>
+<p>(c) 2015 Keith Tenzer</p>

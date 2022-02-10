@@ -1,0 +1,52 @@
+---
+layout: post
+title: "[HOWTO] Add Custom Meter to OpenStack Ceilometer"
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta:
+  _oembed_3038e2f8cd955f54d823b13b0549b61f: "{{unknown}}"
+  _edit_last: '63054820'
+  geo_public: '0'
+  _oembed_d3d8118eee45a04053902d752608bc53: "{{unknown}}"
+author:
+  login: ktenzer1
+  email: keith.tenzer@gmail.com
+  display_name: ktenzer
+  first_name: ''
+  last_name: ''
+permalink: "/"
+---
+<p>mysql -e 'use keystone; select id from token;' | tail -n 1</p>
+<p>OR</p>
+<p>HOST_IP=192.168.122.80<br />
+TOKEN=`curl -s -d '{"auth":{"passwordCredentials": {"username": "admin", "password": "redhat"},"tenantName": "admin"}}' -H "Content-type: application/json" http://$HOST_IP:5000/v2.0/tokens | python -c "import sys; import json; tok = json.loads(sys.stdin.read()); print tok['access']['token']['id'];"`<br />
+echo $TOKEN</p>
+<p>Token: 2f7f87149440457ab30cfc3f04c4e203</p>
+<p>curl -X POST -H 'X-Auth-Token: 2f7f87149440457ab30cfc3f04c4e203' -H 'Content-Type: application/json'   -d '[{"counter_name": "webserver_req_sec","user_id": "ca4f9a9b582b43a7baa6c5df1458c5d0","resource_id": "aaf870cd-ff6d-4e2b-988f-ec9a253c8397","resource_metadata": {"display_name": "my_webserver_req_sec","my_custom_metadata_1": "value1","my_custom_metadata_2": "value2"},""AutoScalingGroupName": "webserver","counter_unit": "requests/sec","counter_volume": 10.57762938230384,"project_id": "8cfd6fe086c54ed69cc3d40f18fea284","counter_type": "gauge"}]'  http://192.168.122.80:8777/v2/meters/webserver_req_sec</p>
+<p>&nbsp;</p>
+<p>update httpd.conf to enable statistics</p>
+<p>&lt;IfModule !status_module&gt;<br />
+LoadModule status_module modules/mod_status.so<br />
+&lt;/IfModule&gt;</p>
+<p>&lt;Location /server-status&gt;<br />
+SetHandler server-status<br />
+Order deny,allow<br />
+Deny from all<br />
+Allow from all<br />
+&lt;/Location&gt;</p>
+<p>&nbsp;</p>
+<p>generate load</p>
+<p>ab -kc 1000 -n 10000 http://192.168.122.190/hostname.php</p>
+<p>&nbsp;</p>
+<p>Get requests</p>
+<p>REQUESTS=`curl http://192.168.122.190/server-status?auto -s |grep ReqPerSec |awk {'print $2'}`</p>
+<p>&nbsp;</p>
+<p>ALl available meters</p>
+<p>&nbsp;</p>
+<p>http://docs.openstack.org/admin-guide-cloud/telemetry-measurements.html</p>
