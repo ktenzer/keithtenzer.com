@@ -29,6 +29,8 @@ Once you have operator-sdk and openshift or kubectl client you need some Ansible
  <pre>$ sudo pip install ansible-runner-http</pre>
  <pre>$ sudo pip install openshift</pre>
  <pre>$ ansible-galaxy collection install kubernetes.core </pre>
+ <pre>$ ansible-galaxy collection install operator_sdk.util </pre>
+
 
 ## Create Operator Scaffolding
  Before we can begin coding the Operator we need boiler plate code and thankfully the operator sdk does all that.
