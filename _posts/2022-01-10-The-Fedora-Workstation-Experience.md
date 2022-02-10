@@ -10,12 +10,12 @@ tags:
 ---
 ![Fedora](/assets/2022-01-10/desktop.png)
 ## Overview
-In 2022 choice matters, talk is even cheaper and action is many decibels louder than it used to be. In addition, more and more people are realizing the power of voting with their wallets (ESG) to make sure ideals or values are represented by what is purchased. The more we collectively choose something the more of it will naturally exist and be successful. Many of us of course, share opensource ideas and principals, believing an open world is a better world. Now I am not advocating our world should be void of closed systems and proprietary software just given the choice and things being similar, I choose opensource. I am also not advocating, I nor anyone else judge other's for their decisions. We never truly understand the circumstances of someone elses decision because we aren't in those shoes. I am merely trying to bring awareness to the decision itself, in this case wether to install Linux or Windows/MacOS and of course show how you how I configure my workstation with Fedora 34.
+A lot of people always ask me what is the best way to contribute to opensource? Of course contributing code, documentation, spreading the gospel or even talking about opensource are great. However the easiest and seemingly least obvious method is to actually use opensource. The best way to do that is by running Linux on your workstation. There are a lot of great Linux distro's to choose from and me being a RHatter, well let's just say I have an impartial view.
 
-Being an ex-macbooker myself, I love the simplicity and minimalist approach of Apple's UI design and experience. As such I aim to find the best of both worlds: great UI experience without compromising on freedom and choice!
+Being an ex-macbooker, I love the simplicity and minimalist approach of Apple's UI design and experience but I dislike their proprietary, closed system approach. As such I aim to find the best of both worlds: great UI experience without compromising on freedom, choice and promoting the power of opensource!
 
 ## Hardware
-Currently I am running Fedora 34 on the Lenovo Thinkpad X1 but great thing here is you have choice. I get that Apple's Macbook's look and feel great (touchpad works great) but those are pretty minor things and your going to cover your laptop in stickers anyway, right? 
+Currently I have a Lenovo Thinkpad X1 but great thing here is you have choice. I get that Apple's Macbook hardware has a great look and feel (touchpad works great) but those are pretty minor things and your going to cover your laptop in stickers anyway, right? 
 
 ## Installing Fedora Latest
 Fedora has a [media writer](https://getfedora.org/en/workstation/download/) and you can download this to create a USB Image to install Fedora. You can provide your own ISO or just let it create an image using the latest Fedora. Once you have USB image simply reboot your laptop/desktop press F12 or F8 to enter boot menu and boot from your USB. The rest is just accepting defaults. If your more advanced user you may want to also setup your own filesystem partitions and I always recommend turning on disk encryption with LUKS.
