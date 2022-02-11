@@ -10,9 +10,9 @@ tags:
 ---
 
 ## Overview
-Want to build your brand while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts doing it the way developers do it one commit at a time.
+Want to build your brand, while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts, doing it the way developers do it, one commit at a time.
 
-Now most people go to wordpress or some blog platform and pay money but besides paying money they are missing the chance to actually live the gitops revolution which is at the heart of automating everything. Github has long provided the ability to create a basic blog using gh-pages. Github uses a framework written in ruby called Jekyll which is available outside of Github, it's opensource. Jekyll provides a templating framework and handles all the html, css so you can just write your blog in markdown (which anyone can do). The Jekyll themes Github provides are seriously limited and no fun. Most people don't know this but with a little extra effort you can actually use any Jekyll themes and there are 100's if not 1000's so I will show how to also use your own custom themes.
+Now most people go to wordpress or some blog platform and pay money for it. I think that is a shame because it is a missed opportunity to live gitops which is at the center of automating everything. Github has long provided the ability to create a basic blogs using gh-pages. Github uses a framework written in ruby called Jekyll which is available outside of Github, it's opensource. Jekyll provides a templating framework and handles all the html, css stuff, allowing you to just write your blog in markdown (which anyone can do). The Jekyll themes Github provides are seriously limited and no fun. Most people don't know this but with a little extra effort you can actually use any Jekyll themes and there are 100's if not 1000's so you can create your brand just the way you like it.
 
 ## Setup Github Repository
 First if you don't have a [github](https://github.com/) account get one. Next once you have an account create a new repository. This should be the name of the blog. In my case my blog is keithtenzer.com so that is also the name of the [repository](https://github.com/ktenzer/keithtenzer.com). Next decide if you are okay with a github domain name or if you want your own custom domain. I strongly recommend you pay the $10 a year and get your name. It is your brand after all and using your name makes it that way and also allows you to blog about anything.
@@ -21,23 +21,23 @@ First if you don't have a [github](https://github.com/) account get one. Next on
 If you aren't interested in your own domain you can skip this part.
 Decide where you want your domain to be hosted. I strongly recommend [cloudflare](https://www.cloudflare.com/). Purchase your domain by selecting buy domain.
 ![Buy Domain](/assets/2022-02-10/buy_domain.png)
-Once you have a domain you need to point it at Github. Under websites, click DNS and configure DNS as follows. Simply replace ```keithtenzer.com``` with your domain.Also make sure you add a CNAME for www to <pre>username.github.io</pre>.
+Once you have a domain you need to point it at Github. Under websites, click DNS and configure DNS as follows. Simply replace ```keithtenzer.com``` with your domain. Also make sure you add a CNAME for www to <pre>username.github.io</pre>.
 ![Buy Domain](/assets/2022-02-10/buy_domain.png)
 Once DNS changes are done it can take 24 hours to propagate so I recommend waiting. You can check by querying DNS using nslookup or dig and seeing when your domain shows the IPs you entered for Github.
 
 ## Initialize Blog in Github
-Log in to Github and under repositories create a new one.
+Log in to Github and under repositories and create a new one.
 ![Blog Repository](/assets/2022-02-10/blog_repo.png)
-Clone your repository by copying the code link and running in a CLI terminal.
+Clone your repository by copying the code link and running it in a CLI terminal.
 <pre>$ git clone https://github.com/ktenzer/helloblog.git</pre>
-You man need to install [git](https://github.com/git-guides/install-git).
+You may need to install [git](https://github.com/git-guides/install-git).
 
 ## Enable Blog
 Once the repository is initialized we can enable the blog by going to settings. Under pages you simply need to select the branch (main) and fill out your custom domain if you have one.
 ![Enable Blog](/assets/2022-02-10/enable_blog.png)
 
 ## Select a Jekyll Themes
-As I mentioned there are many themes. You can search for curated ones [here](https://jekyllthemes.io/). For my blog I use [minimal-mistakes](https://mmistakes.github.io/minimal-mistakes/). Once you have chosen a theme simply clone it from Github in a separate directory from where you cloned your blog following same steps as above.
+As I mentioned there are many Jekyll themes. You can search for curated ones [here](https://jekyllthemes.io/). For my blog I use [minimal-mistakes](https://mmistakes.github.io/minimal-mistakes/). Once you have chosen a theme simply clone it from Github in a separate directory from where you cloned your blog following same steps as above.
 <pre>$ git clone https://github.com/mmistakes/minimal-mistakes.git</pre>
 Next copy the contents into your blog repository.
 <pre>cp -r minimal-mistakes/* helloblog/</pre>
@@ -49,7 +49,7 @@ remote_theme           : "mmistakes/minimal-mistakes"
 </pre>
 
 ## Setup Jekyll
-Now that you have a blog, you are dying to publish it right? Not so fast, remember gitops above, now it is time to test it locally after all you wouldn't want to publish anything you didn't review first right? In order to test locally you need to install and setup jekyll. This part is much easier if you are running Linux like me. If not maybe you should also consider [switching](https://keithtenzer.com/linux/The-Fedora-Workstation-Experience/) to Linux, your Macbook is holding you back from greatness. You could also run Fedora as a virtual machine, well as long as you don't have one of those shiny M1 Macbook's (maybe someone will make that work in future).
+Now that you have a blog, you are dying to publish it right? Not so fast, now it is time to test it locally. After all you wouldn't want to publish anything you didn't review first, right? In order to test locally you need to install and setup jekyll. This part is much easier if you are running Linux like me. If not maybe you should also consider [switching](https://keithtenzer.com/linux/The-Fedora-Workstation-Experience/) to Linux, your Macbook is holding you back from greatness (trust me). You could also run Fedora as a virtual machine, well as long as you don't have one of those shiny M1 Macbook's (maybe someone will make that work in future though).
 Either way below are the steps for Fedora Linux.
 <pre>$ cd helloblog
 $ sudo dnf install ruby
@@ -85,7 +85,7 @@ Once Jekyll is running simply open your web browser of choice and go to the serv
 
 # Push Blog to Github
 Now that we have tested our blog and are happy lets commit the code! If you want to brush up on Github I recommend the [tutorials](https://docs.github.com/en/get-started).
-First lets add our files locally from without our blog directory.
+First lets add our files locally from within our blog directory.
 <pre>$ git add .</pre>
 To see the files that will be commited (optional).
 <pre>$ git status -s</pre>
@@ -93,13 +93,13 @@ Commit files locally.
 <pre>$ git commit -a -m "first blog entry"</pre>
 Push changes into Github.
 <pre>$ git push origin</pre>
-In order to push changes you will need a token. You can create a token under account settings->developer settings->personal access tokens.
-Once changes are pushed it goes through CI/CD and then is published. It usually takes just few minutes. You can check the status by looking at workflows under actions. Once the action which does CI/CD is complete check out your blog in production [hello blog](https://ktenzer.github.io/helloblog/).
+In order to push changes you will need a token. You can create a token under account settings->developer settings->personal access tokens in Github.
+Once changes are pushed it goes through CI/CD (Github Actions) and then is published. It usually takes just few minutes. You can check the status by looking at workflows under actions. Once the action which does CI/CD is complete check out your blog in production [hello blog](https://ktenzer.github.io/helloblog/).
 
 ![Github Actions](/assets/2022-02-10/actions.png)
 
 ## Add Post to Blog
-Now that the blog is up and running let's create a blog entry. Create the _posts directory and then create a new file with the format YYYY-MM-DD-post-name.md. Add the header information on title and layout to use. Layouts are located in the _layouts directory and provided by the Jekyll theme.
+Now that the blog is up and running let's create a blog entry. Create the _posts directory and then create a new file with the format YYYY-MM-DD-post-name.md. Add the header information that defines title, layout, categories and tags. Layouts are located in the _layouts directory and provided by the Jekyll theme.
 <pre>$ mkdir _posts</pre>
 <pre>$ vi _posts/2022-02-10-hello-world.md</pre>
 <pre>--- 
@@ -143,7 +143,7 @@ Push changes into Github.
 <pre>$ git push origin</pre>
 
 ## Summary
-Blogging is a great way to build your own brand and be an ambassador for what is important to you. It allows you to share your experiences and knowledge with the rest of the world. In this article we went through the steps to create your own unique blog platform using Jekyll and hosting it in Github for free. One thing I learned that I will always take with me, sharing is caring.
+Blogging is a great way to build your own brand and be an ambassador for what is important to you. It allows you to share your experiences and knowledge with the rest of the world. In this article we went through the steps to create your own unique blog platform using Jekyll and hosting it in Github (for free). One thing I learned that I will always take with me, sharing is caring.
 
 (c) 2022 Keith Tenzer
 
