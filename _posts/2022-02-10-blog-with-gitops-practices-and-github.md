@@ -63,7 +63,10 @@ $ sudo gem pristine ffi --version 1.15.4
 $ sudo gem pristine http_parser.rb --version 0.8.0
 $ sudo gem pristine sassc --version 2.4.0
 $ bundle install
+$ bundle add webrick
 </pre>
+
+It may want you to pristine different version of gems. If that is the case just change the version to what it wants.
 
 ## Test Blog
 Now that Jekyll is setup we can test our new blog.
