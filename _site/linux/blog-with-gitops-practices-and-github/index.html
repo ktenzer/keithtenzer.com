@@ -11,8 +11,13 @@
     <meta charset="utf-8">
 
 <!-- begin _includes/seo.html --><title>Blog with Gitops Practices and GitHub - Keith Tenzer’s Blog</title>
-<meta name="description" content="Overview Want to build your brand while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts doing it the way developers do it one commit at a time.">
+<meta name="description" content="Overview Want to build your brand, while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts, doing it the way developers do it, one commit at a time.">
 
+
+  <meta name="author" content="Keith Tenzer">
+  
+  <meta property="article:author" content="Keith Tenzer">
+  
 
 
 <meta property="og:type" content="article">
@@ -22,7 +27,7 @@
 <meta property="og:url" content="http://localhost:4000/linux/blog-with-gitops-practices-and-github/">
 
 
-  <meta property="og:description" content="Overview Want to build your brand while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts doing it the way developers do it one commit at a time.">
+  <meta property="og:description" content="Overview Want to build your brand, while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts, doing it the way developers do it, one commit at a time.">
 
 
 
@@ -30,7 +35,7 @@
 
   <meta name="twitter:site" content="@keithtenzer">
   <meta name="twitter:title" content="Blog with Gitops Practices and GitHub">
-  <meta name="twitter:description" content="Overview Want to build your brand while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts doing it the way developers do it one commit at a time.">
+  <meta name="twitter:description" content="Overview Want to build your brand, while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts, doing it the way developers do it, one commit at a time.">
   <meta name="twitter:url" content="http://localhost:4000/linux/blog-with-gitops-practices-and-github/">
 
   
@@ -218,11 +223,22 @@
 <div itemscope itemtype="https://schema.org/Person">
 
   
+    <div class="author__avatar">
+      
+        <img src="/assets/main/me.png" alt="Keith Tenzer" itemprop="image">
+      
+    </div>
+  
 
   <div class="author__content">
     
-      <h3 class="author__name" itemprop="name"></h3>
+      <h3 class="author__name" itemprop="name">Keith Tenzer</h3>
     
+    
+      <div class="author__bio" itemprop="description">
+        <p>Solutions Architect at Temporal</p>
+
+      </div>
     
   </div>
 
@@ -230,7 +246,29 @@
     <button class="btn btn--inverse">Follow</button>
     <ul class="author__urls social-icons">
       
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Los Angeles, CA</span>
+        </li>
+      
 
+      
+        
+          
+        
+          
+        
+          
+            <li><a href="https://twitter.com/keithtenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+        
+          
+            <li><a href="https://github.com/ktenzer" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+        
       
 
       
@@ -299,7 +337,7 @@
 
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Blog with Gitops Practices and GitHub">
-    <meta itemprop="description" content="OverviewWant to build your brand while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts doing it the way developers do it one commit at a time.">
+    <meta itemprop="description" content="OverviewWant to build your brand, while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts, doing it the way developers do it, one commit at a time.">
     <meta itemprop="datePublished" content="2022-02-10T00:00:00-08:00">
     
 
@@ -342,9 +380,9 @@
       <section class="page__content" itemprop="text">
         
         <h2 id="overview">Overview</h2>
-<p>Want to build your brand while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts doing it the way developers do it one commit at a time.</p>
+<p>Want to build your brand, while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts, doing it the way developers do it, one commit at a time.</p>
 
-<p>Now most people go to wordpress or some blog platform and pay money but besides paying money they are missing the chance to actually live the gitops revolution which is at the heart of automating everything. Github has long provided the ability to create a basic blog using gh-pages. Github uses a framework written in ruby called Jekyll which is available outside of Github, it’s opensource. Jekyll provides a templating framework and handles all the html, css so you can just write your blog in markdown (which anyone can do). The Jekyll themes Github provides are seriously limited and no fun. Most people don’t know this but with a little extra effort you can actually use any Jekyll themes and there are 100’s if not 1000’s so I will show how to also use your own custom themes.</p>
+<p>Now most people go to wordpress or some blog platform and pay money for it. I think that is a shame because it is a missed opportunity to live gitops which is at the center of automating everything. Github has long provided the ability to create a basic blogs using gh-pages. Github uses a framework written in ruby called Jekyll which is available outside of Github, it’s opensource. Jekyll provides a templating framework and handles all the html, css stuff, allowing you to just write your blog in markdown (which anyone can do). The Jekyll themes Github provides are seriously limited and no fun. Most people don’t know this but with a little extra effort you can actually use any Jekyll themes and there are 100’s if not 1000’s so you can create your brand just the way you like it.</p>
 
 <h2 id="setup-github-repository">Setup Github Repository</h2>
 <p>First if you don’t have a <a href="https://github.com/">github</a> account get one. Next once you have an account create a new repository. This should be the name of the blog. In my case my blog is keithtenzer.com so that is also the name of the <a href="https://github.com/ktenzer/keithtenzer.com">repository</a>. Next decide if you are okay with a github domain name or if you want your own custom domain. I strongly recommend you pay the $10 a year and get your name. It is your brand after all and using your name makes it that way and also allows you to blog about anything.</p>
@@ -353,23 +391,23 @@
 <p>If you aren’t interested in your own domain you can skip this part.
 Decide where you want your domain to be hosted. I strongly recommend <a href="https://www.cloudflare.com/">cloudflare</a>. Purchase your domain by selecting buy domain.
 <img src="/assets/2022-02-10/buy_domain.png" alt="Buy Domain" />
-Once you have a domain you need to point it at Github. Under websites, click DNS and configure DNS as follows. Simply replace <code class="language-plaintext highlighter-rouge">keithtenzer.com</code> with your domain.Also make sure you add a CNAME for www to &lt;pre&gt;username.github.io&lt;/pre&gt;.
+Once you have a domain you need to point it at Github. Under websites, click DNS and configure DNS as follows. Simply replace <code class="language-plaintext highlighter-rouge">keithtenzer.com</code> with your domain. Also make sure you add a CNAME for www to &lt;pre&gt;username.github.io&lt;/pre&gt;.
 <img src="/assets/2022-02-10/buy_domain.png" alt="Buy Domain" />
 Once DNS changes are done it can take 24 hours to propagate so I recommend waiting. You can check by querying DNS using nslookup or dig and seeing when your domain shows the IPs you entered for Github.</p>
 
 <h2 id="initialize-blog-in-github">Initialize Blog in Github</h2>
-<p>Log in to Github and under repositories create a new one.
+<p>Log in to Github and under repositories and create a new one.
 <img src="/assets/2022-02-10/blog_repo.png" alt="Blog Repository" />
-Clone your repository by copying the code link and running in a CLI terminal.</p>
+Clone your repository by copying the code link and running it in a CLI terminal.</p>
 <pre>$ git clone https://github.com/ktenzer/helloblog.git</pre>
-<p>You man need to install <a href="https://github.com/git-guides/install-git">git</a>.</p>
+<p>You may need to install <a href="https://github.com/git-guides/install-git">git</a>.</p>
 
 <h2 id="enable-blog">Enable Blog</h2>
 <p>Once the repository is initialized we can enable the blog by going to settings. Under pages you simply need to select the branch (main) and fill out your custom domain if you have one.
 <img src="/assets/2022-02-10/enable_blog.png" alt="Enable Blog" /></p>
 
 <h2 id="select-a-jekyll-themes">Select a Jekyll Themes</h2>
-<p>As I mentioned there are many themes. You can search for curated ones <a href="https://jekyllthemes.io/">here</a>. For my blog I use <a href="https://mmistakes.github.io/minimal-mistakes/">minimal-mistakes</a>. Once you have chosen a theme simply clone it from Github in a separate directory from where you cloned your blog following same steps as above.</p>
+<p>As I mentioned there are many Jekyll themes. You can search for curated ones <a href="https://jekyllthemes.io/">here</a>. For my blog I use <a href="https://mmistakes.github.io/minimal-mistakes/">minimal-mistakes</a>. Once you have chosen a theme simply clone it from Github in a separate directory from where you cloned your blog following same steps as above.</p>
 <pre>$ git clone https://github.com/mmistakes/minimal-mistakes.git</pre>
 <p>Next copy the contents into your blog repository.</p>
 <pre>cp -r minimal-mistakes/* helloblog/</pre>
@@ -381,7 +419,7 @@ remote_theme           : "mmistakes/minimal-mistakes"
 </pre>
 
 <h2 id="setup-jekyll">Setup Jekyll</h2>
-<p>Now that you have a blog, you are dying to publish it right? Not so fast, remember gitops above, now it is time to test it locally after all you wouldn’t want to publish anything you didn’t review first right? In order to test locally you need to install and setup jekyll. This part is much easier if you are running Linux like me. If not maybe you should also consider <a href="https://keithtenzer.com/linux/The-Fedora-Workstation-Experience/">switching</a> to Linux, your Macbook is holding you back from greatness. You could also run Fedora as a virtual machine, well as long as you don’t have one of those shiny M1 Macbook’s (maybe someone will make that work in future).
+<p>Now that you have a blog, you are dying to publish it right? Not so fast, now it is time to test it locally. After all you wouldn’t want to publish anything you didn’t review first, right? In order to test locally you need to install and setup jekyll. This part is much easier if you are running Linux like me. If not maybe you should also consider <a href="https://keithtenzer.com/linux/The-Fedora-Workstation-Experience/">switching</a> to Linux, your Macbook is holding you back from greatness (trust me). You could also run Fedora as a virtual machine, well as long as you don’t have one of those shiny M1 Macbook’s (maybe someone will make that work in future though).
 Either way below are the steps for Fedora Linux.</p>
 <pre>$ cd helloblog
 $ sudo dnf install ruby
@@ -395,7 +433,10 @@ $ sudo gem pristine ffi --version 1.15.4
 $ sudo gem pristine http_parser.rb --version 0.8.0
 $ sudo gem pristine sassc --version 2.4.0
 $ bundle install
+$ bundle add webrick
 </pre>
+
+<p>It may want you to pristine different version of gems. If that is the case just change the version to what it wants.</p>
 
 <h2 id="test-blog">Test Blog</h2>
 <p>Now that Jekyll is setup we can test our new blog.</p>
@@ -417,7 +458,7 @@ Configuration file: /home/ktenzer/helloblog/_config.yml
 
 <h1 id="push-blog-to-github">Push Blog to Github</h1>
 <p>Now that we have tested our blog and are happy lets commit the code! If you want to brush up on Github I recommend the <a href="https://docs.github.com/en/get-started">tutorials</a>.
-First lets add our files locally from without our blog directory.</p>
+First lets add our files locally from within our blog directory.</p>
 <pre>$ git add .</pre>
 <p>To see the files that will be commited (optional).</p>
 <pre>$ git status -s</pre>
@@ -425,13 +466,13 @@ First lets add our files locally from without our blog directory.</p>
 <pre>$ git commit -a -m "first blog entry"</pre>
 <p>Push changes into Github.</p>
 <pre>$ git push origin</pre>
-<p>In order to push changes you will need a token. You can create a token under account settings-&gt;developer settings-&gt;personal access tokens.
-Once changes are pushed it goes through CI/CD and then is published. It usually takes just few minutes. You can check the status by looking at workflows under actions. Once the action which does CI/CD is complete check out your blog in production <a href="https://ktenzer.github.io/helloblog/">hello blog</a>.</p>
+<p>In order to push changes you will need a token. You can create a token under account settings-&gt;developer settings-&gt;personal access tokens in Github.
+Once changes are pushed it goes through CI/CD (Github Actions) and then is published. It usually takes just few minutes. You can check the status by looking at workflows under actions. Once the action which does CI/CD is complete check out your blog in production <a href="https://ktenzer.github.io/helloblog/">hello blog</a>.</p>
 
 <p><img src="/assets/2022-02-10/actions.png" alt="Github Actions" /></p>
 
 <h2 id="add-post-to-blog">Add Post to Blog</h2>
-<p>Now that the blog is up and running let’s create a blog entry. Create the _posts directory and then create a new file with the format YYYY-MM-DD-post-name.md. Add the header information on title and layout to use. Layouts are located in the _layouts directory and provided by the Jekyll theme.</p>
+<p>Now that the blog is up and running let’s create a blog entry. Create the _posts directory and then create a new file with the format YYYY-MM-DD-post-name.md. Add the header information that defines title, layout, categories and tags. Layouts are located in the _layouts directory and provided by the Jekyll theme.</p>
 <pre>$ mkdir _posts</pre>
 <pre>$ vi _posts/2022-02-10-hello-world.md</pre>
 <pre>--- 
@@ -475,7 +516,7 @@ First lets add our files locally from without our blog directory.</p>
 <pre>$ git push origin</pre>
 
 <h2 id="summary">Summary</h2>
-<p>Blogging is a great way to build your own brand and be an ambassador for what is important to you. It allows you to share your experiences and knowledge with the rest of the world. In this article we went through the steps to create your own unique blog platform using Jekyll and hosting it in Github for free. One thing I learned that I will always take with me, sharing is caring.</p>
+<p>Blogging is a great way to build your own brand and be an ambassador for what is important to you. It allows you to share your experiences and knowledge with the rest of the world. In this article we went through the steps to create your own unique blog platform using Jekyll and hosting it in Github (for free). One thing I learned that I will always take with me, sharing is caring.</p>
 
 <p>(c) 2022 Keith Tenzer</p>
 
@@ -549,7 +590,8 @@ First lets add our files locally from without our blog directory.</p>
 ">Previous</a>
     
     
-      <a href="#" class="pagination--pager disabled">Next</a>
+      <a href="/temporal/my-first-day-at-temporal/" class="pagination--pager" title="My First Day at Temporal
+">Next</a>
     
   </nav>
 
@@ -563,6 +605,54 @@ First lets add our files locally from without our blog directory.</p>
     <div class="page__related">
       <h4 class="page__related-title">You may also enjoy</h4>
       <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/temporal/my-first-day-at-temporal/" rel="permalink">My First Day at Temporal
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2022-08-15T00:00:00-07:00">August 15, 2022</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+Today is my first day at temporal and with that I wanted to share some thoughts around my decision, why Temporal and my experience thus far. As you...</p>
+  </article>
+</div>
+
         
           
 
@@ -709,55 +799,6 @@ In this article we will go step by step to build a Kubernetes Operator using Ans
 
 Overview
 In this article we will explore the OpenShift Service Mesh and deploy a demo application to better understand the various concepts. First you...</p>
-  </article>
-</div>
-
-        
-          
-
-
-
-<div class="grid__item">
-  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
-    
-    <h2 class="archive__item-title no_toc" itemprop="headline">
-      
-        <a href="/openshift/openshift-4-aws-ipi-installation-getting-started-guide/" rel="permalink">OpenShift 4 AWS IPI Installation Getting Started Guide
-</a>
-      
-    </h2>
-    
-
-  <p class="page__meta">
-    
-      
-      <span class="page__meta-date">
-        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
-        
-        <time datetime="2021-01-18T00:00:00-08:00">January 18, 2021</time>
-      </span>
-    
-
-    <span class="page__meta-sep"></span>
-
-    
-      
-      
-
-      <span class="page__meta-readtime">
-        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
-        
-          8 minute read
-        
-      </span>
-    
-  </p>
-
-
-    <p class="archive__item-excerpt" itemprop="description">
-
-
-Happy new year as this will be the first post of 2021! 2020 was obviously a challenging year, my hope is I will have more time to devote to blogging in 20...</p>
   </article>
 </div>
 

@@ -1,7 +1,34 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2022-02-10T18:01:43-08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Keith Tenzer’s Blog</title><subtitle></subtitle><author><name>Keith Tenzer</name></author><entry><title type="html">Blog with Gitops Practices and GitHub</title><link href="http://localhost:4000/linux/blog-with-gitops-practices-and-github/" rel="alternate" type="text/html" title="Blog with Gitops Practices and GitHub" /><published>2022-02-10T00:00:00-08:00</published><updated>2022-02-10T00:00:00-08:00</updated><id>http://localhost:4000/linux/blog-with-gitops-practices-and-github</id><content type="html" xml:base="http://localhost:4000/linux/blog-with-gitops-practices-and-github/">&lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
-&lt;p&gt;Want to build your brand while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts doing it the way developers do it one commit at a time.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2022-08-15T19:59:28-07:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Keith Tenzer’s Blog</title><subtitle></subtitle><author><name>Keith Tenzer</name></author><entry><title type="html">My First Day at Temporal</title><link href="http://localhost:4000/temporal/my-first-day-at-temporal/" rel="alternate" type="text/html" title="My First Day at Temporal" /><published>2022-08-15T00:00:00-07:00</published><updated>2022-08-15T00:00:00-07:00</updated><id>http://localhost:4000/temporal/my-first-day-at-temporal</id><content type="html" xml:base="http://localhost:4000/temporal/my-first-day-at-temporal/">&lt;p&gt;&lt;img src=&quot;/assets/2022-08-15/logo-temporal-with-copy.svg&quot; alt=&quot;Temporal&quot; /&gt;&lt;/p&gt;
+&lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
+&lt;p&gt;Today is my first day at temporal and with that I wanted to share some thoughts around my decision, why Temporal and my experience thus far. As you can imagine, making any career change is always a very careful thought process and as we get older, have more responsibilities, the gravity around those decisions becomes stronger.&lt;/p&gt;
 
-&lt;p&gt;Now most people go to wordpress or some blog platform and pay money but besides paying money they are missing the chance to actually live the gitops revolution which is at the heart of automating everything. Github has long provided the ability to create a basic blog using gh-pages. Github uses a framework written in ruby called Jekyll which is available outside of Github, it’s opensource. Jekyll provides a templating framework and handles all the html, css so you can just write your blog in markdown (which anyone can do). The Jekyll themes Github provides are seriously limited and no fun. Most people don’t know this but with a little extra effort you can actually use any Jekyll themes and there are 100’s if not 1000’s so I will show how to also use your own custom themes.&lt;/p&gt;
+&lt;h2 id=&quot;why-temporal&quot;&gt;Why Temporal?&lt;/h2&gt;
+&lt;p&gt;After IBM acquired Red Hat in 2018, I had the opportunity to visit the IBM research and development lab in Boeblingen, Germany. The idea was so RHatters could learn about some of the IBM history and why mainframes even today are great, at least with Linux. As you can imagine, I was more than skeptical. We spent years modernizing monolithic applications and moving workloads to Linux. Mainframe technology was a dinosaur that predated anything I ever worked on and as such I dismissed it, what could I possibly learn? Even once we arrived at the facility; the gray, lifeless, government looking buildings exhumed anything but innovation or creativity.&lt;/p&gt;
+
+&lt;p&gt;Of course as the cliche goes, Looks can and are deceiving. Our minds judge everything and blind us if we let them. So what did I learn on that day? Reliability, you can shoot an IBM mainframe with a high-powered weapon and it will continue to run. That is why still today, well into the era of cloud some of the most critical computing workflows (government, banks, aviation, insurance and healthcare) are still done on mainframes. One of the challenges with cloud-native is of course, reliability across many disparate services. Monolithic environments are simply much easier to control and anticipate. Developers are left to solve reliability on their own with 10s or even 100s of microservices potentially involved in a workflow. Of course, this ends up being a lot of code, technical debt and reliability is never quite certain, certainly not to the level of a mainframe.&lt;/p&gt;
+
+&lt;h3 id=&quot;opportunity&quot;&gt;Opportunity&lt;/h3&gt;
+&lt;p&gt;Temporal is solving this problem through a workflow-as-code approach. Handling workflow state, execution, retries and allowing developers to orchestrate microservices into a workflow that is reliable as running water. It is a simple purpose with enormous potential. What could we accomplish if we further increased reliability of cloud-native applications and even started to modernize legacy applications shackled in their moorings? That has me extremely excited!&lt;/p&gt;
+
+&lt;h3 id=&quot;execution&quot;&gt;Execution&lt;/h3&gt;
+&lt;p&gt;Still it is one thing to have great potential but it isn’t worth that much if you can’t execute. It is far better to have great execution of a poor plan, than poor execution of a great plan. At the end of the day, execution comes down to people and the will to overcome adversity or whatever else gets thrown in the way. My interview process at Temporal was not an interview at all. It was a conversation involving sharing ideas and thoughts bi-directionally. Everyone I met was passionate, focused, professional and curious. All seemed united, being part of the same cause but each with their own role to play, led by their passion.&lt;/p&gt;
+
+&lt;h3 id=&quot;opensource&quot;&gt;Opensource&lt;/h3&gt;
+&lt;p&gt;While I needed to understand Temporal’s purpose, believe the vision could be executed, there is still something more. For me, especially coming from Red Hat, the technology needed to be opensource. I saw a great interview with Maxim Fateev (CEO of Temporal) where he explains the reasoning why Temporal needs to be opensource? He says that anything developer orientated today, needs to be opensource or it simply won’t be seriously considered. This was not only reassuring but also gave me great satisfaction in just how far opensource adoption has come. The problems of today are simply bigger than any one company and opensource is the only way to collaborate together across organizations, to solve them.&lt;/p&gt;
+
+&lt;h3 id=&quot;the-right-fit&quot;&gt;The Right Fit&lt;/h3&gt;
+&lt;p&gt;Finally the role also had to be the right fit. I had a desire to get closer to developers after being mostly on the platform side the last 7+ years. I am in fact a closet software hacker, it is one of the things I do for fun. The solution architect role at Temporal required someone of course with pre-sales skills but also software development skills (a less common combination). Temporal is consumed through an SDK by developers and as such being able to provide recommended practice or guidance to help customers also means understanding the code. I have long waited for a pre-sales role where my software development skills and passion were not just an asset but a requirement.&lt;/p&gt;
+
+&lt;h2 id=&quot;my-experience-so-far&quot;&gt;My Experience So Far&lt;/h2&gt;
+&lt;p&gt;It might seem odd to talk about experience when this is literally day one but there is actually a lot to talk about. I have been on Temporal’s community Slack for several weeks. Following some of the discussions and after I accepted an offer folks started to reach out. Even asking for my feedback or ideas about certain things. I attended a pre-screen of a 101 training session that will be presented at Replay, Temporal’s first user conference August 25-26 in Seattle. I even got to provide feedback all before my actual start date. I have had my laptop now for about two weeks which I am proud to say runs Fedora 36 (Gnome 42) and the Friday before my start date I had all my accounts setup. It is day 1 and I am ready to rock!&lt;/p&gt;
+
+&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
+&lt;p&gt;In this article I discussed thoughts around my decision to make a career change and pursue a new opportunity at Temporal. I am extremely excited about taking my first steps on this new journey and cannot wait to discover what is around the corner. I hope that my perspective may be of help, in your career or life journey.&lt;/p&gt;
+
+&lt;p&gt;(c) 2022 Keith Tenzer&lt;/p&gt;</content><author><name>Keith Tenzer</name></author><category term="Temporal" /><category term="Temporal" /><category term="Opensource" /><category term="Workflows" /><category term="Activities" /><summary type="html">Overview Today is my first day at temporal and with that I wanted to share some thoughts around my decision, why Temporal and my experience thus far. As you can imagine, making any career change is always a very careful thought process and as we get older, have more responsibilities, the gravity around those decisions becomes stronger.</summary></entry><entry><title type="html">Blog with Gitops Practices and GitHub</title><link href="http://localhost:4000/linux/blog-with-gitops-practices-and-github/" rel="alternate" type="text/html" title="Blog with Gitops Practices and GitHub" /><published>2022-02-10T00:00:00-08:00</published><updated>2022-02-10T00:00:00-08:00</updated><id>http://localhost:4000/linux/blog-with-gitops-practices-and-github</id><content type="html" xml:base="http://localhost:4000/linux/blog-with-gitops-practices-and-github/">&lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
+&lt;p&gt;Want to build your brand, while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts, doing it the way developers do it, one commit at a time.&lt;/p&gt;
+
+&lt;p&gt;Now most people go to wordpress or some blog platform and pay money for it. I think that is a shame because it is a missed opportunity to live gitops which is at the center of automating everything. Github has long provided the ability to create a basic blogs using gh-pages. Github uses a framework written in ruby called Jekyll which is available outside of Github, it’s opensource. Jekyll provides a templating framework and handles all the html, css stuff, allowing you to just write your blog in markdown (which anyone can do). The Jekyll themes Github provides are seriously limited and no fun. Most people don’t know this but with a little extra effort you can actually use any Jekyll themes and there are 100’s if not 1000’s so you can create your brand just the way you like it.&lt;/p&gt;
 
 &lt;h2 id=&quot;setup-github-repository&quot;&gt;Setup Github Repository&lt;/h2&gt;
 &lt;p&gt;First if you don’t have a &lt;a href=&quot;https://github.com/&quot;&gt;github&lt;/a&gt; account get one. Next once you have an account create a new repository. This should be the name of the blog. In my case my blog is keithtenzer.com so that is also the name of the &lt;a href=&quot;https://github.com/ktenzer/keithtenzer.com&quot;&gt;repository&lt;/a&gt;. Next decide if you are okay with a github domain name or if you want your own custom domain. I strongly recommend you pay the $10 a year and get your name. It is your brand after all and using your name makes it that way and also allows you to blog about anything.&lt;/p&gt;
@@ -10,23 +37,23 @@
 &lt;p&gt;If you aren’t interested in your own domain you can skip this part.
 Decide where you want your domain to be hosted. I strongly recommend &lt;a href=&quot;https://www.cloudflare.com/&quot;&gt;cloudflare&lt;/a&gt;. Purchase your domain by selecting buy domain.
 &lt;img src=&quot;/assets/2022-02-10/buy_domain.png&quot; alt=&quot;Buy Domain&quot; /&gt;
-Once you have a domain you need to point it at Github. Under websites, click DNS and configure DNS as follows. Simply replace &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;keithtenzer.com&lt;/code&gt; with your domain.Also make sure you add a CNAME for www to &amp;lt;pre&amp;gt;username.github.io&amp;lt;/pre&amp;gt;.
+Once you have a domain you need to point it at Github. Under websites, click DNS and configure DNS as follows. Simply replace &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;keithtenzer.com&lt;/code&gt; with your domain. Also make sure you add a CNAME for www to &amp;lt;pre&amp;gt;username.github.io&amp;lt;/pre&amp;gt;.
 &lt;img src=&quot;/assets/2022-02-10/buy_domain.png&quot; alt=&quot;Buy Domain&quot; /&gt;
 Once DNS changes are done it can take 24 hours to propagate so I recommend waiting. You can check by querying DNS using nslookup or dig and seeing when your domain shows the IPs you entered for Github.&lt;/p&gt;
 
 &lt;h2 id=&quot;initialize-blog-in-github&quot;&gt;Initialize Blog in Github&lt;/h2&gt;
-&lt;p&gt;Log in to Github and under repositories create a new one.
+&lt;p&gt;Log in to Github and under repositories and create a new one.
 &lt;img src=&quot;/assets/2022-02-10/blog_repo.png&quot; alt=&quot;Blog Repository&quot; /&gt;
-Clone your repository by copying the code link and running in a CLI terminal.&lt;/p&gt;
+Clone your repository by copying the code link and running it in a CLI terminal.&lt;/p&gt;
 &lt;pre&gt;$ git clone https://github.com/ktenzer/helloblog.git&lt;/pre&gt;
-&lt;p&gt;You man need to install &lt;a href=&quot;https://github.com/git-guides/install-git&quot;&gt;git&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;You may need to install &lt;a href=&quot;https://github.com/git-guides/install-git&quot;&gt;git&lt;/a&gt;.&lt;/p&gt;
 
 &lt;h2 id=&quot;enable-blog&quot;&gt;Enable Blog&lt;/h2&gt;
 &lt;p&gt;Once the repository is initialized we can enable the blog by going to settings. Under pages you simply need to select the branch (main) and fill out your custom domain if you have one.
 &lt;img src=&quot;/assets/2022-02-10/enable_blog.png&quot; alt=&quot;Enable Blog&quot; /&gt;&lt;/p&gt;
 
 &lt;h2 id=&quot;select-a-jekyll-themes&quot;&gt;Select a Jekyll Themes&lt;/h2&gt;
-&lt;p&gt;As I mentioned there are many themes. You can search for curated ones &lt;a href=&quot;https://jekyllthemes.io/&quot;&gt;here&lt;/a&gt;. For my blog I use &lt;a href=&quot;https://mmistakes.github.io/minimal-mistakes/&quot;&gt;minimal-mistakes&lt;/a&gt;. Once you have chosen a theme simply clone it from Github in a separate directory from where you cloned your blog following same steps as above.&lt;/p&gt;
+&lt;p&gt;As I mentioned there are many Jekyll themes. You can search for curated ones &lt;a href=&quot;https://jekyllthemes.io/&quot;&gt;here&lt;/a&gt;. For my blog I use &lt;a href=&quot;https://mmistakes.github.io/minimal-mistakes/&quot;&gt;minimal-mistakes&lt;/a&gt;. Once you have chosen a theme simply clone it from Github in a separate directory from where you cloned your blog following same steps as above.&lt;/p&gt;
 &lt;pre&gt;$ git clone https://github.com/mmistakes/minimal-mistakes.git&lt;/pre&gt;
 &lt;p&gt;Next copy the contents into your blog repository.&lt;/p&gt;
 &lt;pre&gt;cp -r minimal-mistakes/* helloblog/&lt;/pre&gt;
@@ -38,7 +65,7 @@ remote_theme           : &quot;mmistakes/minimal-mistakes&quot;
 &lt;/pre&gt;
 
 &lt;h2 id=&quot;setup-jekyll&quot;&gt;Setup Jekyll&lt;/h2&gt;
-&lt;p&gt;Now that you have a blog, you are dying to publish it right? Not so fast, remember gitops above, now it is time to test it locally after all you wouldn’t want to publish anything you didn’t review first right? In order to test locally you need to install and setup jekyll. This part is much easier if you are running Linux like me. If not maybe you should also consider &lt;a href=&quot;https://keithtenzer.com/linux/The-Fedora-Workstation-Experience/&quot;&gt;switching&lt;/a&gt; to Linux, your Macbook is holding you back from greatness. You could also run Fedora as a virtual machine, well as long as you don’t have one of those shiny M1 Macbook’s (maybe someone will make that work in future).
+&lt;p&gt;Now that you have a blog, you are dying to publish it right? Not so fast, now it is time to test it locally. After all you wouldn’t want to publish anything you didn’t review first, right? In order to test locally you need to install and setup jekyll. This part is much easier if you are running Linux like me. If not maybe you should also consider &lt;a href=&quot;https://keithtenzer.com/linux/The-Fedora-Workstation-Experience/&quot;&gt;switching&lt;/a&gt; to Linux, your Macbook is holding you back from greatness (trust me). You could also run Fedora as a virtual machine, well as long as you don’t have one of those shiny M1 Macbook’s (maybe someone will make that work in future though).
 Either way below are the steps for Fedora Linux.&lt;/p&gt;
 &lt;pre&gt;$ cd helloblog
 $ sudo dnf install ruby
@@ -52,7 +79,10 @@ $ sudo gem pristine ffi --version 1.15.4
 $ sudo gem pristine http_parser.rb --version 0.8.0
 $ sudo gem pristine sassc --version 2.4.0
 $ bundle install
+$ bundle add webrick
 &lt;/pre&gt;
+
+&lt;p&gt;It may want you to pristine different version of gems. If that is the case just change the version to what it wants.&lt;/p&gt;
 
 &lt;h2 id=&quot;test-blog&quot;&gt;Test Blog&lt;/h2&gt;
 &lt;p&gt;Now that Jekyll is setup we can test our new blog.&lt;/p&gt;
@@ -74,7 +104,7 @@ Configuration file: /home/ktenzer/helloblog/_config.yml
 
 &lt;h1 id=&quot;push-blog-to-github&quot;&gt;Push Blog to Github&lt;/h1&gt;
 &lt;p&gt;Now that we have tested our blog and are happy lets commit the code! If you want to brush up on Github I recommend the &lt;a href=&quot;https://docs.github.com/en/get-started&quot;&gt;tutorials&lt;/a&gt;.
-First lets add our files locally from without our blog directory.&lt;/p&gt;
+First lets add our files locally from within our blog directory.&lt;/p&gt;
 &lt;pre&gt;$ git add .&lt;/pre&gt;
 &lt;p&gt;To see the files that will be commited (optional).&lt;/p&gt;
 &lt;pre&gt;$ git status -s&lt;/pre&gt;
@@ -82,13 +112,13 @@ First lets add our files locally from without our blog directory.&lt;/p&gt;
 &lt;pre&gt;$ git commit -a -m &quot;first blog entry&quot;&lt;/pre&gt;
 &lt;p&gt;Push changes into Github.&lt;/p&gt;
 &lt;pre&gt;$ git push origin&lt;/pre&gt;
-&lt;p&gt;In order to push changes you will need a token. You can create a token under account settings-&amp;gt;developer settings-&amp;gt;personal access tokens.
-Once changes are pushed it goes through CI/CD and then is published. It usually takes just few minutes. You can check the status by looking at workflows under actions. Once the action which does CI/CD is complete check out your blog in production &lt;a href=&quot;https://ktenzer.github.io/helloblog/&quot;&gt;hello blog&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;In order to push changes you will need a token. You can create a token under account settings-&amp;gt;developer settings-&amp;gt;personal access tokens in Github.
+Once changes are pushed it goes through CI/CD (Github Actions) and then is published. It usually takes just few minutes. You can check the status by looking at workflows under actions. Once the action which does CI/CD is complete check out your blog in production &lt;a href=&quot;https://ktenzer.github.io/helloblog/&quot;&gt;hello blog&lt;/a&gt;.&lt;/p&gt;
 
 &lt;p&gt;&lt;img src=&quot;/assets/2022-02-10/actions.png&quot; alt=&quot;Github Actions&quot; /&gt;&lt;/p&gt;
 
 &lt;h2 id=&quot;add-post-to-blog&quot;&gt;Add Post to Blog&lt;/h2&gt;
-&lt;p&gt;Now that the blog is up and running let’s create a blog entry. Create the _posts directory and then create a new file with the format YYYY-MM-DD-post-name.md. Add the header information on title and layout to use. Layouts are located in the _layouts directory and provided by the Jekyll theme.&lt;/p&gt;
+&lt;p&gt;Now that the blog is up and running let’s create a blog entry. Create the _posts directory and then create a new file with the format YYYY-MM-DD-post-name.md. Add the header information that defines title, layout, categories and tags. Layouts are located in the _layouts directory and provided by the Jekyll theme.&lt;/p&gt;
 &lt;pre&gt;$ mkdir _posts&lt;/pre&gt;
 &lt;pre&gt;$ vi _posts/2022-02-10-hello-world.md&lt;/pre&gt;
 &lt;pre&gt;--- 
@@ -132,9 +162,9 @@ First lets add our files locally from without our blog directory.&lt;/p&gt;
 &lt;pre&gt;$ git push origin&lt;/pre&gt;
 
 &lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
-&lt;p&gt;Blogging is a great way to build your own brand and be an ambassador for what is important to you. It allows you to share your experiences and knowledge with the rest of the world. In this article we went through the steps to create your own unique blog platform using Jekyll and hosting it in Github for free. One thing I learned that I will always take with me, sharing is caring.&lt;/p&gt;
+&lt;p&gt;Blogging is a great way to build your own brand and be an ambassador for what is important to you. It allows you to share your experiences and knowledge with the rest of the world. In this article we went through the steps to create your own unique blog platform using Jekyll and hosting it in Github (for free). One thing I learned that I will always take with me, sharing is caring.&lt;/p&gt;
 
-&lt;p&gt;(c) 2022 Keith Tenzer&lt;/p&gt;</content><author><name>keith tenzer and tony harris</name></author><category term="Linux" /><category term="Linux" /><category term="Fedora" /><category term="Opensource" /><summary type="html">Overview Want to build your brand while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts doing it the way developers do it one commit at a time.</summary></entry><entry><title type="html">The Fedora Workstation Experience</title><link href="http://localhost:4000/linux/The-Fedora-Workstation-Experience/" rel="alternate" type="text/html" title="The Fedora Workstation Experience" /><published>2022-01-10T00:00:00-08:00</published><updated>2022-01-10T00:00:00-08:00</updated><id>http://localhost:4000/linux/The-Fedora-Workstation-Experience</id><content type="html" xml:base="http://localhost:4000/linux/The-Fedora-Workstation-Experience/">&lt;p&gt;&lt;img src=&quot;/assets/2022-01-10/desktop.png&quot; alt=&quot;Fedora&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;(c) 2022 Keith Tenzer&lt;/p&gt;</content><author><name>Keith Tenzer</name></author><category term="Linux" /><category term="Linux" /><category term="Fedora" /><category term="Opensource" /><summary type="html">Overview Want to build your brand, while living the gitops revolution and not paying anything for it? That is exactly what this article will walk you through. I will show you how to setup your customized blog hosted in Github and create blog posts, doing it the way developers do it, one commit at a time.</summary></entry><entry><title type="html">The Fedora Workstation Experience</title><link href="http://localhost:4000/linux/The-Fedora-Workstation-Experience/" rel="alternate" type="text/html" title="The Fedora Workstation Experience" /><published>2022-01-10T00:00:00-08:00</published><updated>2022-01-10T00:00:00-08:00</updated><id>http://localhost:4000/linux/The-Fedora-Workstation-Experience</id><content type="html" xml:base="http://localhost:4000/linux/The-Fedora-Workstation-Experience/">&lt;p&gt;&lt;img src=&quot;/assets/2022-01-10/desktop.png&quot; alt=&quot;Fedora&quot; /&gt;&lt;/p&gt;
 &lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
 &lt;p&gt;A lot of people always ask me what is the best way to contribute to opensource? Of course contributing code, documentation, spreading the gospel or even talking about opensource are great. However the easiest and seemingly least obvious method is to actually use opensource. The best way to do that is by running Linux on your workstation. There are a lot of great Linux distro’s to choose from and me being a RHatter, well let’s just say I have an impartial view.&lt;/p&gt;
 
@@ -914,187 +944,4 @@ podium-operator-6855dc9478-q65bt   1/1     Running   0          38m&lt;/pre&gt;
 &lt;h2&gt;Summary&lt;/h2&gt;
 &lt;p&gt;In this article we stepped through the process of integrating an already existing operator with the Operator Lifecycle Manager. We saw how to generate an application manifest, build an application catalog bundle, add the bundle to an application index and finally deploy the application catalog, seamlessly integrating with Operator Hub. Using OLM provides not only a way to install applications but manage their lifecycle, releases and updates.&lt;/p&gt;
 &lt;p&gt;Happy Operatoring!&lt;/p&gt;
-&lt;p&gt;(c) 2020 Keith Tenzer&lt;/p&gt;</content><author><name>Keith Tenzer</name></author><category term="OpenShift" /><category term="Containers" /><category term="Kubernetes" /><category term="olm" /><category term="OpenShift" /><category term="Operator" /><category term="Operator Lifecycle Management" /><category term="operator-sdk" /><summary type="html">Overview In this article we will provide a hands-on guide to integrating your already built Operator with the Operator Lifecycle Manager (OLM). Using the Operator SDK and OPM tool we will create the application manifests and images so your application Operator can be managed through OLM. This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end. OpenShift Operator Getting Started Part I OpenShift Operator SDK: Go Getting Started Guide Part II OpenShift Operator SDK: Ansible Getting Started Guide Part III OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV In order to add your Operator to OLM you will need two tools: the operator-sdk and opm. Download the binaries for operator-sdk and opm. Install them under /usr/local/bin. Create Cluster Service Version The Cluster Service Version (CSV) is the manifest that allows your application operator to be bundled and exposed to the OLM API. The CSV is itself a CRD in kubernetes. Before creating a the CSV manifest you need the deployment scafolding. These are the objects and CRDs that your Operator require. These are created automatically when using the operator-sdk to create a application under the deploy directory. $ operator-sdk new cars-operator --repo github.com/cars-operator When generating an CSV you will provide the path to the deploy directory where those objects can be found. $ operator-sdk generate csv --csv-version 1.0.0 --deploy-dir deploy The generate csv command will create an olm_catalog/cars-operator/manifests directory. There you will find the &apos;clusterserviceversion&apos; yaml. You will however want to edit and add a lot. As such I have provided an example csv for an Operator I built. Note: If you want to add an icon, so it shows up nicely in Operator Hub, the image needs to be a base64 bit stream inside the csv. $ cat myimage.png | base64 Create Application Operator Catalog Bundle Now that we have generated and updated our CSV we can create an application bundle. $ sudo operator-sdk bundle create quay.io/ktenzer/podium-operator-catalog:latest \ --channels beta --package podium-operator-catalog --directory \ deploy/olm-catalog/podium-operator/manifests This will package the application manifest into a container image. Push the image to a public or private repository. $ sudo docker push quay.io/ktenzer/podium-operator-catalog:latest Create Application Operator Catalog Index Once we have bundled an application operator we can add it to a catalog index. The catalog index provides one or more application bundles to OLM. This is also what the Operator Hub directly interfaces with. $ sudo opm index add -c docker --bundles \ quay.io/ktenzer/podium-operator-catalog:latest \ --tag quay.io/ktenzer/podium-operator-index:latest Again an image is created that needs to be pushed to our private or public repository. $ sudo docker push quay.io/ktenzer/podium-operator-index:latest Deploy Catalog Source A catalog source is a CRD that defines an OLM catalog and points to a catalog index image, for example the one we just created. Create a catalog source yaml file that points to the catalog index image. $ vi catalog_source.yaml apiVersion: operators.coreos.com/v1alpha1 kind: CatalogSource metadata: name: podium-operator-catalog spec: sourceType: grpc image: quay.io/ktenzer/podium-operator-index:latest displayName: Podium Operator Catalog publisher: Podium Community Deploy the catalog source under the openshift-marketplace namespace or where you have deployed OLM. $ oc create -f catalog_source.yaml -n openshift-marketplace Below we can see a list of catalogs. Again each catalog can contain one or more applications. All are default in OpenShift, except the one in bold which I added. $ oc get catalogsource -n openshift-marketplace NAME DISPLAY TYPE PUBLISHER AGE certified-operators Certified Operators grpc Red Hat 18d community-operators Community Operators grpc Red Hat 18d podium-operator-catalog Podium Operator Catalog grpc Podium Community 31m redhat-operators Red Hat Operators grpc Red Hat 18d Each catalog has it&apos;s own operator / pod. $ oc get pods -n openshift-marketplace NAME READY STATUS RESTARTS AGE certified-operators-76d9d8b886-bnsz7 1/1 Running 0 14h community-operators-74d675f545-g7d2t 1/1 Running 0 18h podium-operator-catalog-67gsk 1/1 Running 0 31m marketplace-operator-75f49679d7-n7v2r 1/1 Running 0 17d redhat-operators-87d549bf4-mxf7w 1/1 Running 0 13h Once a catalog operator exists, the applications it offers will show up in Operator Hub and can be installed. Operators can be cluster-wide or namespace scoped. The Operator Lifecycle Management also provides a subscription, allowing updates to be pulled from various channels. This is similar to the relationship between an RPM and Repository. After you deploy application via Operator Hub it will launch the operator. Cluster-wide operators will run in the openshift-operators namespace while namespaced operators will only run in a user defined namespace. $ oc get pods -n openshift-operators NAME READY STATUS RESTARTS AGE podium-operator-6855dc9478-q65bt 1/1 Running 0 38m Summary In this article we stepped through the process of integrating an already existing operator with the Operator Lifecycle Manager. We saw how to generate an application manifest, build an application catalog bundle, add the bundle to an application index and finally deploy the application catalog, seamlessly integrating with Operator Hub. Using OLM provides not only a way to install applications but manage their lifecycle, releases and updates. Happy Operatoring! (c) 2020 Keith Tenzer</summary></entry><entry><title type="html">OpenShift Operator SDK: Ansible Getting Started Guide Part III</title><link href="http://localhost:4000/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/" rel="alternate" type="text/html" title="OpenShift Operator SDK: Ansible Getting Started Guide Part III" /><published>2020-04-23T00:00:00-07:00</published><updated>2020-04-23T00:00:00-07:00</updated><id>http://localhost:4000/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii</id><content type="html" xml:base="http://localhost:4000/openshift/openshift-operator-sdk-ansible-getting-started-guide-part-iii/">&lt;h2&gt;&lt;img class=&quot;alignnone  wp-image-14443&quot; src=&quot;/assets/2020/04/38202270.png?w=173&amp;amp;h=173&quot; alt=&quot;38202270&quot; width=&quot;173&quot; height=&quot;173&quot; /&gt;&lt;/h2&gt;
-&lt;h2&gt;Overview&lt;/h2&gt;
-&lt;p&gt;In this article we will provide a hands-on guide to building your very first operator in Ansible. Using the Operator SDK we will learn how to create boilerplate code, build and deploy an operator.&lt;/p&gt;
-&lt;p&gt;This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://keithtenzer.com/2020/04/23/openshift-operator-getting-started-part-i/&quot;&gt;OpenShift Operator Getting Started Part I&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://keithtenzer.com/2020/01/27/openshift-operator-sdk-go-getting-started-guide-part-ii/&quot;&gt;OpenShift Operator SDK: Go Getting Started Guide Part II&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://keithtenzer.com/2020/04/23/openshift-operator-sdk-ansible-getting-started-guide-part-iii/&quot;&gt;OpenShift Operator SDK: Ansible Getting Started Guide Part III&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://keithtenzer.com/2020/04/23/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/&quot;&gt;OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;!--more--&gt;&lt;/p&gt;
-&lt;h2&gt;Setup Development Environment&lt;/h2&gt;
-&lt;p&gt;There are some prerequisites needed to develop and build an operator using Ansible. Also this guide and the operator-sdk assume you know Ansible roles. If you aren not yet up to speed please read about Ansible roles before proceeding.&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Install Docker 17.03+&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;Add the docker ce repositories. Note: you can also use podman and buildah instead of Docker for those that want a complete and clean divorce.&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;$ sudo &lt;/span&gt;dnf &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; install dnf-plugins-core&lt;/code&gt;&lt;/p&gt;
-&lt;pre class=&quot;highlight&quot;&gt;$ &lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;dnf config-manager &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;--add-repo&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-    https://download.docker.com/linux/fedora/docker-ce.repo&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Install docker-ce&lt;/p&gt;
-&lt;pre&gt;$ sudo dnf -y install docker-ce docker-ce-cli&lt;/pre&gt;
-&lt;pre&gt;$ sudo systemctl start docker
-$ sudo systemctl enable docker&lt;/pre&gt;
-&lt;p&gt;&lt;strong&gt;Install Ansible and Module Dependencies&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;Install ansible&lt;/p&gt;
-&lt;pre&gt;$ dnf install ansible&lt;/pre&gt;
-&lt;p&gt;The Ansible runner and http runner is used to run a local version of the operator. This is very useful for development and testing.&lt;/p&gt;
-&lt;pre&gt;$ pip3 install --user ansible-runner
-$ pip3 install --user ansible-runner-http&lt;/pre&gt;
-&lt;p&gt;Install required python modules&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;$ pip3 install --user requests&lt;/code&gt; &lt;code&gt;$ pip3 install --user openshift&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;strong&gt;Install Operator Framework SDK&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;You can simply &lt;a href=&quot;https://github.com/operator-framework/operator-sdk/releases&quot;&gt;download&lt;/a&gt;a pre-built release and install it under /usr/local/bin.&lt;/p&gt;
-&lt;h2&gt;Building Your First Operator&lt;/h2&gt;
-&lt;p&gt;The SDK is able to generate not only boilerplate code but also the CRDs, controller and API endpoints. In this example we will create a cars operator. It will simply provide an endpoint allowing us to do CRUD on car objects. Each car object will spawn a pod with a base image.&lt;/p&gt;
-&lt;p&gt;Using operatore-sdk cli create boilerplate code.&lt;/p&gt;
-&lt;pre&gt;$ operator-sdk new cars-operator --api-version=cars.example.com/v1alpha1 --kind=Car --type=ansible&lt;/pre&gt;
-&lt;p&gt;The operator sdk creates boilerplate roles.&lt;/p&gt;
-&lt;pre&gt;$ ls cars-operator
-build  deploy  molecule  requirements.yml  roles  watches.yaml&lt;/pre&gt;
-&lt;p&gt;The build directory containers Dockerfile, deploy is where the yaml files are for creating the k8s operator objects (including CRD/CR), the roles directory contains a role called car and finally watches.yaml is the mapping from a k8s object / CRD to a roll.&lt;/p&gt;
-&lt;p&gt;By default when a car instance is created the operator will execute the role car. You can of course change the behavior, even configure finalizers for dealing with deletion of components not under the control of k8s (see the sdk &lt;a href=&quot;https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md&quot;&gt;guide&lt;/a&gt;)&lt;/p&gt;
-&lt;h2&gt;Run Operator locally&lt;/h2&gt;
-&lt;p&gt;The Ansible operator can be run locally. Simply deploy the CRD, service account and role.&lt;/p&gt;
-&lt;p&gt;Create new project for our operator&lt;/p&gt;
-&lt;pre&gt;$ oc new-project cars-operator&lt;/pre&gt;
-&lt;p&gt;Setup service accounts and role bindings&lt;/p&gt;
-&lt;pre&gt;$ oc create -f deploy/service_account.yaml&lt;/pre&gt;
-&lt;pre&gt;$ oc create -f deploy/role.yaml&lt;/pre&gt;
-&lt;pre&gt;$ oc create -f deploy/role_binding.yaml&lt;/pre&gt;
-&lt;p&gt;Create the CRD for our operator&lt;/p&gt;
-&lt;pre&gt;$ oc create -f deploy/crds/cars.example.com_cars_crd.yaml&lt;/pre&gt;
-&lt;p&gt;Run Operator locally&lt;/p&gt;
-&lt;pre&gt;$ operator-sdk run --local&lt;/pre&gt;
-&lt;p&gt;Create a car&lt;/p&gt;
-&lt;pre&gt;$ vi car.yaml
-apiVersion: cars.example.com/v1alpha1
-kind: Car
-metadata:
-  name: example-car
-spec:
-  size: 3
-  bmw:
-    model: m3
-  audi:
-    model: rs4&lt;/pre&gt;
-&lt;pre&gt;$ oc create -f car.yaml&lt;/pre&gt;
-&lt;p&gt;Anything under &apos;spec&apos; will be passed to Ansible as a variable. If you want to reference the size in the ansible role you simply use &apos;&apos;. You can also access nested variables such as the car model by using &apos;&apos;.&lt;/p&gt;
-&lt;h2&gt;Build Ansible Operator&lt;/h2&gt;
-&lt;p&gt;&lt;strong&gt;Create User on Quay.io&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;We will be using quay to store operator images. Authenticate using Github or Gmail to &lt;a href=&quot;https://quay.io/&quot;&gt;https://quay.io&lt;/a&gt;. Once authenticated go to account settings and set a password.&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Test Quay.io Credentials&lt;/strong&gt;&lt;/p&gt;
-&lt;pre&gt;$ sudo docker login quay.io&lt;/pre&gt;
-&lt;p&gt;&lt;strong&gt;Build Operator&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;Using operator-sdk cli build the operator which will push the image to your local Docker registry. Make sure you are in the cars-operator directory.&lt;/p&gt;
-&lt;pre&gt;$ sudo operator-sdk build quay.io/ktenzer/cars-operator&lt;/pre&gt;
-&lt;p&gt;Note: Substitute ktenzer for your username.&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Push Operator to your Quay.io Account&lt;/strong&gt;&lt;/p&gt;
-&lt;pre&gt;$ sudo docker push quay.io/ktenzer/cars-operator:latest&lt;/pre&gt;
-&lt;p&gt;&lt;strong&gt;Make Quay Repository Public&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;By default your Quay repository will be private. If we want to access it from OpenShift we need to make it public. Login to quay.io with your username/password&lt;/p&gt;
-&lt;p&gt;Select the cars-operator repository&lt;/p&gt;
-&lt;p&gt;&lt;img class=&quot;alignnone  wp-image-14432&quot; src=&quot;/assets/2020/04/screenshot-from-2020-01-25-13-04-42.png?w=1296&amp;amp;h=347&quot; alt=&quot;Screenshot from 2020-01-25 13-04-42&quot; width=&quot;1296&quot; height=&quot;347&quot; /&gt;&lt;/p&gt;
-&lt;p&gt;Under Repository Settings enable visibility to be public&lt;/p&gt;
-&lt;p&gt;&lt;img class=&quot;alignnone  wp-image-14433&quot; src=&quot;/assets/2020/04/screenshot-from-2020-01-25-13-05-07.png?w=1649&amp;amp;h=405&quot; alt=&quot;Screenshot from 2020-01-25 13-05-07&quot; width=&quot;1649&quot; height=&quot;405&quot; /&gt;&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Update Image in operator.yaml&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;We need to point the image to the location in our Quay repository.&lt;/p&gt;
-&lt;pre&gt;vi deploy/operator.yaml
----
-# Replace this with the built image name
-image: &lt;strong&gt;quay.io/ktenzer/cars-operator&lt;/strong&gt;
-command:
----&lt;/pre&gt;
-&lt;h2&gt;Deploy Cars Operator on OpenShift&lt;/h2&gt;
-&lt;p&gt;Now that the operator is built and pushed to our Quay repository we can deploy it on an OpenShift cluster.&lt;/p&gt;
-&lt;p&gt;Authenticate to OpenShift Cluster&lt;/p&gt;
-&lt;pre&gt;$oc login https://api.ocp4.keithtenzer.com:6443&lt;/pre&gt;
-&lt;p&gt;Create new project for our operator&lt;/p&gt;
-&lt;pre&gt;$ oc new-project cars-operator&lt;/pre&gt;
-&lt;p&gt;Setup service accounts and role bindings&lt;/p&gt;
-&lt;pre&gt;$ oc create -f deploy/service_account.yaml&lt;/pre&gt;
-&lt;pre&gt;$ oc create -f deploy/role.yaml&lt;/pre&gt;
-&lt;pre&gt;$ oc create -f deploy/role_binding.yaml&lt;/pre&gt;
-&lt;p&gt;Create the CRD for our operator&lt;/p&gt;
-&lt;pre&gt;$ oc create -f deploy/crds/cars.example.com_cars_crd.yaml&lt;/pre&gt;
-&lt;p&gt;Deploy our operator&lt;/p&gt;
-&lt;pre&gt;$ oc create -f deploy/operator.yaml&lt;/pre&gt;
-&lt;p&gt;Create the CR for our operator&lt;/p&gt;
-&lt;pre&gt;$ oc create -f deploy/crds/cars.example.com_v1alpha1_car_cr.yaml&lt;/pre&gt;
-&lt;h2&gt;Using Cars Operator&lt;/h2&gt;
-&lt;p&gt;The cars operator will automatically deploy an example-car. Whe can query our car object just like any other Kubernetes object. This is the beauty of CR/CRDs and operators. We can easily extend the Kubernetes API without needing to understand it’s complexity.&lt;/p&gt;
-&lt;pre&gt;$ oc get car
-NAME AGE
-example-car 31m&lt;/pre&gt;
-&lt;p&gt;Next we can get information about our example-car.&lt;/p&gt;
-&lt;pre&gt;$ oc get car example-car -o yaml
-apiVersion: cars.example.com/v1alpha1
-kind: Car
-metadata:
-  creationTimestamp: &quot;2020-01-25T12:15:45Z&quot;
-  generation: 1
-  name: example-car
-  namespace: cars-operator
-  resourceVersion: &quot;2635723&quot;
-  selfLink: /apis/cars.example.com/v1alpha1/namespaces/cars-operator/cars/example-car
-  uid: 6a424ef9-3f6c-11ea-a391-fa163e9f184b
-spec:
-  size: 3
-
-&lt;/pre&gt;
-&lt;p&gt;Looking at the running pods in our cars-operator project we see the operator and our example-car.&lt;/p&gt;
-&lt;pre&gt;$ oc get pods -n cars-operator
-NAME                            READY   STATUS    RESTARTS   AGE
-cars-operator-b98bff54d-t2465   1/1     Running   0          5m
-example-car-pod                 1/1     Running   0          5m&lt;/pre&gt;
-&lt;p&gt;&lt;strong&gt;Create a new Car&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;Lets now create a BMW car.&lt;/p&gt;
-&lt;pre&gt;$ vi bmw.yaml
-kind: Car
-metadata:
-  name: bmw
-spec:
-  size: 3
-  bmw:
-    model: m3&lt;/pre&gt;
-&lt;pre&gt;$ oc create -f bmw.yaml&lt;/pre&gt;
-&lt;p&gt;Here we can see we now have a BMW car.&lt;/p&gt;
-&lt;pre&gt;$ oc get car
-NAME          AGE
-bmw           11m
-example-car   31m&lt;/pre&gt;
-&lt;p&gt;Of course we can get information about our BMW car.&lt;/p&gt;
-&lt;pre&gt;$ oc get car bmw -o yaml
-apiVersion: cars.example.com/v1alpha1
-kind: Car
-metadata:
-  creationTimestamp: &quot;2020-01-25T12:35:25Z&quot;
-  generation: 1
-  name: bmw
-  namespace: cars-operator
-  resourceVersion: &quot;2644044&quot;
-  selfLink: /apis/cars.example.com/v1alpha1/namespaces/cars-operator/cars/bmw
-  uid: 294bc47f-3f6f-11ea-b32c-fa163e3e8e24
-spec:
-  size: 1&lt;/pre&gt;
-&lt;p&gt;Finally as with the example-car, the operator will start a new pod when the BMW car is created.&lt;/p&gt;
-&lt;pre&gt;$ oc get pods -n cars-operator
-NAME                            READY   STATUS    RESTARTS   AGE
-bmw-pod                         1/1     Running   0          10m
-cars-operator-b98bff54d-t2465   1/1     Running   0          14m
-example-car-pod                 1/1     Running   0          14m&lt;/pre&gt;
-&lt;h2&gt;Cleanup&lt;/h2&gt;
-&lt;p&gt;Follow these steps to remove the operator cleanly.&lt;/p&gt;
-&lt;pre&gt;$ oc delete -f deploy/crds/cars.example.com_v1alpha1_car_cr.yaml&lt;/pre&gt;
-&lt;pre&gt;$ oc delete -f deploy/operator.yaml&lt;/pre&gt;
-&lt;pre&gt;$ oc delete -f deploy/role.yaml&lt;/pre&gt;
-&lt;pre&gt;$ oc delete -f deploy/role_binding.yaml&lt;/pre&gt;
-&lt;pre&gt;$ oc delete -f deploy/service_account.yaml&lt;/pre&gt;
-&lt;pre&gt;$ oc delete -f deploy/crds/cars.example.com_cars_crd.yaml&lt;/pre&gt;
-&lt;pre&gt;$ oc delete project cars-operator&lt;/pre&gt;
-&lt;h2&gt;Summary&lt;/h2&gt;
-&lt;p&gt;In this article a step-by-step guide was provided to setup a development environment, generate boilerplate code and deploy our custom cars operator using Ansible on OpenShift with the Operator Framework.&lt;/p&gt;
-&lt;p&gt;Happy Operatoring!&lt;/p&gt;
-&lt;p&gt;(c) 2020 Keith Tenzer&lt;/p&gt;</content><author><name>Keith Tenzer</name></author><category term="OpenShift" /><category term="Ansible" /><category term="Containers" /><category term="Kubernetes" /><category term="OpenShift" /><category term="Operator" /><category term="Operator Framework" /><category term="operator-sdk" /><summary type="html">Overview In this article we will provide a hands-on guide to building your very first operator in Ansible. Using the Operator SDK we will learn how to create boilerplate code, build and deploy an operator. This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end. OpenShift Operator Getting Started Part I OpenShift Operator SDK: Go Getting Started Guide Part II OpenShift Operator SDK: Ansible Getting Started Guide Part III OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV Setup Development Environment There are some prerequisites needed to develop and build an operator using Ansible. Also this guide and the operator-sdk assume you know Ansible roles. If you aren not yet up to speed please read about Ansible roles before proceeding. Install Docker 17.03+ Add the docker ce repositories. Note: you can also use podman and buildah instead of Docker for those that want a complete and clean divorce. $ sudo dnf -y install dnf-plugins-core $ sudo dnf config-manager \ --add-repo \ https://download.docker.com/linux/fedora/docker-ce.repo Install docker-ce $ sudo dnf -y install docker-ce docker-ce-cli $ sudo systemctl start docker $ sudo systemctl enable docker Install Ansible and Module Dependencies Install ansible $ dnf install ansible The Ansible runner and http runner is used to run a local version of the operator. This is very useful for development and testing. $ pip3 install --user ansible-runner $ pip3 install --user ansible-runner-http Install required python modules $ pip3 install --user requests $ pip3 install --user openshift Install Operator Framework SDK You can simply downloada pre-built release and install it under /usr/local/bin. Building Your First Operator The SDK is able to generate not only boilerplate code but also the CRDs, controller and API endpoints. In this example we will create a cars operator. It will simply provide an endpoint allowing us to do CRUD on car objects. Each car object will spawn a pod with a base image. Using operatore-sdk cli create boilerplate code. $ operator-sdk new cars-operator --api-version=cars.example.com/v1alpha1 --kind=Car --type=ansible The operator sdk creates boilerplate roles. $ ls cars-operator build deploy molecule requirements.yml roles watches.yaml The build directory containers Dockerfile, deploy is where the yaml files are for creating the k8s operator objects (including CRD/CR), the roles directory contains a role called car and finally watches.yaml is the mapping from a k8s object / CRD to a roll. By default when a car instance is created the operator will execute the role car. You can of course change the behavior, even configure finalizers for dealing with deletion of components not under the control of k8s (see the sdk guide) Run Operator locally The Ansible operator can be run locally. Simply deploy the CRD, service account and role. Create new project for our operator $ oc new-project cars-operator Setup service accounts and role bindings $ oc create -f deploy/service_account.yaml $ oc create -f deploy/role.yaml $ oc create -f deploy/role_binding.yaml Create the CRD for our operator $ oc create -f deploy/crds/cars.example.com_cars_crd.yaml Run Operator locally $ operator-sdk run --local Create a car $ vi car.yaml apiVersion: cars.example.com/v1alpha1 kind: Car metadata: name: example-car spec: size: 3 bmw: model: m3 audi: model: rs4 $ oc create -f car.yaml Anything under &apos;spec&apos; will be passed to Ansible as a variable. If you want to reference the size in the ansible role you simply use &apos;&apos;. You can also access nested variables such as the car model by using &apos;&apos;. Build Ansible Operator Create User on Quay.io We will be using quay to store operator images. Authenticate using Github or Gmail to https://quay.io. Once authenticated go to account settings and set a password. Test Quay.io Credentials $ sudo docker login quay.io Build Operator Using operator-sdk cli build the operator which will push the image to your local Docker registry. Make sure you are in the cars-operator directory. $ sudo operator-sdk build quay.io/ktenzer/cars-operator Note: Substitute ktenzer for your username. Push Operator to your Quay.io Account $ sudo docker push quay.io/ktenzer/cars-operator:latest Make Quay Repository Public By default your Quay repository will be private. If we want to access it from OpenShift we need to make it public. Login to quay.io with your username/password Select the cars-operator repository Under Repository Settings enable visibility to be public Update Image in operator.yaml We need to point the image to the location in our Quay repository. vi deploy/operator.yaml --- # Replace this with the built image name image: quay.io/ktenzer/cars-operator command: --- Deploy Cars Operator on OpenShift Now that the operator is built and pushed to our Quay repository we can deploy it on an OpenShift cluster. Authenticate to OpenShift Cluster $oc login https://api.ocp4.keithtenzer.com:6443 Create new project for our operator $ oc new-project cars-operator Setup service accounts and role bindings $ oc create -f deploy/service_account.yaml $ oc create -f deploy/role.yaml $ oc create -f deploy/role_binding.yaml Create the CRD for our operator $ oc create -f deploy/crds/cars.example.com_cars_crd.yaml Deploy our operator $ oc create -f deploy/operator.yaml Create the CR for our operator $ oc create -f deploy/crds/cars.example.com_v1alpha1_car_cr.yaml Using Cars Operator The cars operator will automatically deploy an example-car. Whe can query our car object just like any other Kubernetes object. This is the beauty of CR/CRDs and operators. We can easily extend the Kubernetes API without needing to understand it’s complexity. $ oc get car NAME AGE example-car 31m Next we can get information about our example-car. $ oc get car example-car -o yaml apiVersion: cars.example.com/v1alpha1 kind: Car metadata: creationTimestamp: &quot;2020-01-25T12:15:45Z&quot; generation: 1 name: example-car namespace: cars-operator resourceVersion: &quot;2635723&quot; selfLink: /apis/cars.example.com/v1alpha1/namespaces/cars-operator/cars/example-car uid: 6a424ef9-3f6c-11ea-a391-fa163e9f184b spec: size: 3</summary></entry></feed>
+&lt;p&gt;(c) 2020 Keith Tenzer&lt;/p&gt;</content><author><name>Keith Tenzer</name></author><category term="OpenShift" /><category term="Containers" /><category term="Kubernetes" /><category term="olm" /><category term="OpenShift" /><category term="Operator" /><category term="Operator Lifecycle Management" /><category term="operator-sdk" /><summary type="html">Overview In this article we will provide a hands-on guide to integrating your already built Operator with the Operator Lifecycle Manager (OLM). Using the Operator SDK and OPM tool we will create the application manifests and images so your application Operator can be managed through OLM. This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end. OpenShift Operator Getting Started Part I OpenShift Operator SDK: Go Getting Started Guide Part II OpenShift Operator SDK: Ansible Getting Started Guide Part III OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV In order to add your Operator to OLM you will need two tools: the operator-sdk and opm. Download the binaries for operator-sdk and opm. Install them under /usr/local/bin. Create Cluster Service Version The Cluster Service Version (CSV) is the manifest that allows your application operator to be bundled and exposed to the OLM API. The CSV is itself a CRD in kubernetes. Before creating a the CSV manifest you need the deployment scafolding. These are the objects and CRDs that your Operator require. These are created automatically when using the operator-sdk to create a application under the deploy directory. $ operator-sdk new cars-operator --repo github.com/cars-operator When generating an CSV you will provide the path to the deploy directory where those objects can be found. $ operator-sdk generate csv --csv-version 1.0.0 --deploy-dir deploy The generate csv command will create an olm_catalog/cars-operator/manifests directory. There you will find the &apos;clusterserviceversion&apos; yaml. You will however want to edit and add a lot. As such I have provided an example csv for an Operator I built. Note: If you want to add an icon, so it shows up nicely in Operator Hub, the image needs to be a base64 bit stream inside the csv. $ cat myimage.png | base64 Create Application Operator Catalog Bundle Now that we have generated and updated our CSV we can create an application bundle. $ sudo operator-sdk bundle create quay.io/ktenzer/podium-operator-catalog:latest \ --channels beta --package podium-operator-catalog --directory \ deploy/olm-catalog/podium-operator/manifests This will package the application manifest into a container image. Push the image to a public or private repository. $ sudo docker push quay.io/ktenzer/podium-operator-catalog:latest Create Application Operator Catalog Index Once we have bundled an application operator we can add it to a catalog index. The catalog index provides one or more application bundles to OLM. This is also what the Operator Hub directly interfaces with. $ sudo opm index add -c docker --bundles \ quay.io/ktenzer/podium-operator-catalog:latest \ --tag quay.io/ktenzer/podium-operator-index:latest Again an image is created that needs to be pushed to our private or public repository. $ sudo docker push quay.io/ktenzer/podium-operator-index:latest Deploy Catalog Source A catalog source is a CRD that defines an OLM catalog and points to a catalog index image, for example the one we just created. Create a catalog source yaml file that points to the catalog index image. $ vi catalog_source.yaml apiVersion: operators.coreos.com/v1alpha1 kind: CatalogSource metadata: name: podium-operator-catalog spec: sourceType: grpc image: quay.io/ktenzer/podium-operator-index:latest displayName: Podium Operator Catalog publisher: Podium Community Deploy the catalog source under the openshift-marketplace namespace or where you have deployed OLM. $ oc create -f catalog_source.yaml -n openshift-marketplace Below we can see a list of catalogs. Again each catalog can contain one or more applications. All are default in OpenShift, except the one in bold which I added. $ oc get catalogsource -n openshift-marketplace NAME DISPLAY TYPE PUBLISHER AGE certified-operators Certified Operators grpc Red Hat 18d community-operators Community Operators grpc Red Hat 18d podium-operator-catalog Podium Operator Catalog grpc Podium Community 31m redhat-operators Red Hat Operators grpc Red Hat 18d Each catalog has it&apos;s own operator / pod. $ oc get pods -n openshift-marketplace NAME READY STATUS RESTARTS AGE certified-operators-76d9d8b886-bnsz7 1/1 Running 0 14h community-operators-74d675f545-g7d2t 1/1 Running 0 18h podium-operator-catalog-67gsk 1/1 Running 0 31m marketplace-operator-75f49679d7-n7v2r 1/1 Running 0 17d redhat-operators-87d549bf4-mxf7w 1/1 Running 0 13h Once a catalog operator exists, the applications it offers will show up in Operator Hub and can be installed. Operators can be cluster-wide or namespace scoped. The Operator Lifecycle Management also provides a subscription, allowing updates to be pulled from various channels. This is similar to the relationship between an RPM and Repository. After you deploy application via Operator Hub it will launch the operator. Cluster-wide operators will run in the openshift-operators namespace while namespaced operators will only run in a user defined namespace. $ oc get pods -n openshift-operators NAME READY STATUS RESTARTS AGE podium-operator-6855dc9478-q65bt 1/1 Running 0 38m Summary In this article we stepped through the process of integrating an already existing operator with the Operator Lifecycle Manager. We saw how to generate an application manifest, build an application catalog bundle, add the bundle to an application index and finally deploy the application catalog, seamlessly integrating with Operator Hub. Using OLM provides not only a way to install applications but manage their lifecycle, releases and updates. Happy Operatoring! (c) 2020 Keith Tenzer</summary></entry></feed>
