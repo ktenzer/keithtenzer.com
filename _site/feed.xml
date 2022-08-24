@@ -1,4 +1,177 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2022-08-16T07:48:46-07:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Keith Tenzer’s Blog</title><subtitle></subtitle><author><name>Keith Tenzer</name></author><entry><title type="html">My First Day at Temporal</title><link href="http://localhost:4000/temporal/my-first-day-at-temporal/" rel="alternate" type="text/html" title="My First Day at Temporal" /><published>2022-08-15T00:00:00-07:00</published><updated>2022-08-15T00:00:00-07:00</updated><id>http://localhost:4000/temporal/my-first-day-at-temporal</id><content type="html" xml:base="http://localhost:4000/temporal/my-first-day-at-temporal/">&lt;p&gt;&lt;img src=&quot;/assets/2022-08-15/logo-temporal-with-copy.svg&quot; alt=&quot;Temporal&quot; /&gt;&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2022-08-24T13:28:53-07:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Keith Tenzer’s Blog</title><subtitle></subtitle><author><name>Keith Tenzer</name></author><entry><title type="html">Temporal Getting Started Guide</title><link href="http://localhost:4000/temporal/temporal_getting_started_guide/" rel="alternate" type="text/html" title="Temporal Getting Started Guide" /><published>2022-08-24T00:00:00-07:00</published><updated>2022-08-24T00:00:00-07:00</updated><id>http://localhost:4000/temporal/temporal_getting_started_guide</id><content type="html" xml:base="http://localhost:4000/temporal/temporal_getting_started_guide/">&lt;p&gt;&lt;img src=&quot;/assets/2022-08-15/logo-temporal-with-copy.svg&quot; alt=&quot;Temporal&quot; /&gt;&lt;/p&gt;
+&lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
+&lt;p&gt;In this article we will walk through setup of a development environment for Temporal. There are of course, several ways you can run the Temporal server locally. You can use Docker compose, helm or an operator on minikube and temporalite. In addition you can also consume Temporal namespaces as-a-service via the Temporal cloud. I would recommend temporalite if you want to run the Temporal server disconnected on your laptop otherwise the Temporal cloud is definitely the best option. I will cover getting started with the Temporal cloud in a future post.&lt;/p&gt;
+
+&lt;h2 id=&quot;temporalite-install&quot;&gt;Temporalite Install&lt;/h2&gt;
+&lt;p&gt;Temporalite is a simple packaging of the Temporal server. It serializes data to local files, instead of a database for simplicity and less resource consumption. It is intended only for testing and not production use. In order to install it you need to have a Go environment to build the binary.&lt;/p&gt;
+
+&lt;h3 id=&quot;configure-go&quot;&gt;Configure Go&lt;/h3&gt;
+&lt;h4 id=&quot;create-directory-structure-for-go-in-your-home-directory&quot;&gt;Create directory structure for Go in your home directory.&lt;/h4&gt;
+&lt;pre&gt;$ mkdir -p ~/go/src/github.com&lt;/pre&gt;
+
+&lt;h4 id=&quot;install-go&quot;&gt;Install Go&lt;/h4&gt;
+&lt;pre&gt;$ sudo dnf install -y go&lt;/pre&gt;
+
+&lt;h4 id=&quot;update-profile-with-go-environment&quot;&gt;Update Profile with Go Environment&lt;/h4&gt;
+&lt;pre&gt;
+$ vi ~/.bash_profile
+export GOBIN=/home/username
+export GOPATH=/home/username/src
+export EDITOR=vim
+&lt;/pre&gt;
+
+&lt;h3 id=&quot;build-temporalite&quot;&gt;Build Temporalite&lt;/h3&gt;
+&lt;h4 id=&quot;create-directory-for-temporal&quot;&gt;Create directory for Temporal&lt;/h4&gt;
+&lt;pre&gt;$ mkdir ~/go/src/github.com/temporalio&lt;/pre&gt;
+
+&lt;h4 id=&quot;change-directory-to-temporalio&quot;&gt;Change directory to temporalio&lt;/h4&gt;
+&lt;pre&gt;$ cd temporalio&lt;/pre&gt;
+
+&lt;h4 id=&quot;clone-temporalite-github-repository&quot;&gt;Clone temporalite GitHub repository&lt;/h4&gt;
+&lt;pre&gt;$ git clone https://github.com/temporalio/temporalite.git&lt;/pre&gt;
+
+&lt;h4 id=&quot;build-temporalite-binary&quot;&gt;Build temporalite binary&lt;/h4&gt;
+&lt;pre&gt;$ go install github.com/temporalio/temporalite/cmd/temporalite@latest&lt;/pre&gt;
+
+&lt;h4 id=&quot;copy-temporalite-binary-to-bin-directory&quot;&gt;Copy temporalite binary to bin Directory&lt;/h4&gt;
+&lt;pre&gt;$ sudo cp /home/ktenzer/go/bin/temporalite /usr/local/bin&lt;/pre&gt;
+
+&lt;h4 id=&quot;create-directory-for-local-temporal-database&quot;&gt;Create Directory for local Temporal Database&lt;/h4&gt;
+&lt;pre&gt;mkdir -p /home/ktenzer/.config/temporalite/db&lt;/pre&gt;
+
+&lt;h4 id=&quot;start-temporalite&quot;&gt;Start temporalite&lt;/h4&gt;
+&lt;pre&gt;$ temporalite start --namespace default&lt;/pre&gt;
+
+&lt;h2 id=&quot;build-cli&quot;&gt;Build CLI&lt;/h2&gt;
+&lt;p&gt;Now that we have the Temporal server running via temporalite we need to build the CLI.&lt;/p&gt;
+
+&lt;h4 id=&quot;change-directory-to-temporalio-1&quot;&gt;Change directory to temporalio&lt;/h4&gt;
+&lt;pre&gt;$ cd ~/go/src/github.com/temporalio&lt;/pre&gt;
+
+&lt;h4 id=&quot;clone-temporal-github-repository&quot;&gt;Clone Temporal GitHub repository&lt;/h4&gt;
+&lt;pre&gt;$ git clone https://github.com/temporalio/temporal.git&lt;/pre&gt;
+
+&lt;h4 id=&quot;run-tctl-makefile&quot;&gt;Run tctl Makefile&lt;/h4&gt;
+&lt;pre&gt;$ make update-tctl&lt;/pre&gt;
+
+&lt;h4 id=&quot;copy-tctl-binary-to-bin-directory&quot;&gt;Copy tctl binary to bin directory&lt;/h4&gt;
+&lt;pre&gt;$ sudo cp ~/go/bin/tctl /usr/local/bin&lt;/pre&gt;
+
+&lt;h2 id=&quot;start-temporal-workflow&quot;&gt;Start Temporal Workflow&lt;/h2&gt;
+&lt;p&gt;In this case we will just run the helloworld sample from the many samples that Temporal provides.&lt;/p&gt;
+
+&lt;h4 id=&quot;change-directory-to-temporalio-2&quot;&gt;Change directory to temporalio&lt;/h4&gt;
+&lt;pre&gt;$ cd ~/go/src/github.com/temporalio&lt;/pre&gt;
+
+&lt;h4 id=&quot;clone-samples-github--repository&quot;&gt;Clone samples GitHub  repository&lt;/h4&gt;
+&lt;pre&gt;$ git clone https://github.com/temporalio/samples-go.git&lt;/pre&gt;
+
+&lt;h4 id=&quot;change-directory-to-samples&quot;&gt;Change directory to samples&lt;/h4&gt;
+&lt;pre&gt;$ cd samples-go&lt;/pre&gt;
+
+&lt;h4 id=&quot;start-workflow&quot;&gt;Start workflow&lt;/h4&gt;
+&lt;pre&gt;
+$ go run helloworld/starter/main.go
+2022/08/24 11:46:11 INFO  No logger configured for temporal client. Created default one.
+2022/08/24 11:46:11 Started workflow WorkflowID hello_world_workflowID RunID b93ef614-e6df-4578-a31b-7ebd3f59df55
+&lt;/pre&gt;
+
+&lt;p&gt;Notice that the workflow starts but is waiting to execute. This is because there is no worker. The starter program will tell the Temporal server to execute a workflow however, since no worker is attached the Temporal server namespace, the workflow will be in running state until a worker becomes available.&lt;/p&gt;
+
+&lt;p&gt;The Temporal UI will also show that we are waiting for a worker.
+&lt;img src=&quot;/assets/2022-08-24/temporal_workflow_started.png&quot; alt=&quot;Temporal Workflow Started&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;start-temporal-worker&quot;&gt;Start Temporal Worker&lt;/h2&gt;
+&lt;p&gt;Now that we have our Temporal server and a workflow running all that is needed is a worker. We will start the corresponding helloworld worker.&lt;/p&gt;
+
+&lt;pre&gt;$ go run helloworld/worker/main.go&lt;/pre&gt;
+
+&lt;p&gt;The worker should immediately run and complete the workflow.&lt;/p&gt;
+&lt;pre&gt;
+2022/08/24 11:55:26 INFO  HelloWorld workflow completed. Namespace default TaskQueue hello-world WorkerID 7576@fedora@ WorkflowType Workflow WorkflowID hello_world_workflowID RunID b93ef614-e6df-4578-a31b-7ebd3f59df55 Attempt 1 result Hello Temporal!
+&lt;/pre&gt;
+
+&lt;p&gt;If you look at your starter it also has now returned and displays the workflow result returned from the workflow.&lt;/p&gt;
+&lt;pre&gt;
+2022/08/24 11:55:26 Workflow result: Hello Temporal!
+&lt;/pre&gt;
+
+&lt;p&gt;In the UI we can now also see the workflow has completed.
+&lt;img src=&quot;/assets/2022-08-24/temporal_workflow_completed.png&quot; alt=&quot;Temporal Workflow Completed&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;view-workflow-in-cli&quot;&gt;View Workflow in CLI&lt;/h2&gt;
+&lt;p&gt;Temporal provides the tctl CLI for interacting with the Temporal server.&lt;/p&gt;
+
+&lt;h4 id=&quot;list-workflows&quot;&gt;List workflows&lt;/h4&gt;
+&lt;pre&gt;
+$ tctl workflow list
+  WORKFLOW TYPE |      WORKFLOW ID       |                RUN ID                | TASK QUEUE  | START TIME | EXECUTION TIME | END TIME  
+  Workflow      | hello_world_workflowID | b93ef614-e6df-4578-a31b-7ebd3f59df55 | hello-world | 18:46:11   | 18:46:11       | 18:55:26  
+&lt;/pre&gt;
+
+&lt;h4 id=&quot;show-workflow-details&quot;&gt;Show workflow details&lt;/h4&gt;
+&lt;pre&gt;
+$ tctl workflow show --workflow_id hello_world_workflowID --run_id b93ef614-e6df-4578-a31b-7ebd3f59df55
+   1  WorkflowExecutionStarted    {WorkflowType:{Name:Workflow},                                 
+                                  ParentInitiatedEventId:0, TaskQueue:{Name:hello-world,         
+                                  Kind:Normal}, Input:[&quot;Temporal&quot;],                              
+                                  WorkflowExecutionTimeout:0s, WorkflowRunTimeout:0s,            
+                                  WorkflowTaskTimeout:10s, Initiator:Unspecified,                
+                                  OriginalExecutionRunId:b93ef614-e6df-4578-a31b-7ebd3f59df55,   
+                                  Identity:5846@fedora@,                                         
+                                  FirstExecutionRunId:b93ef614-e6df-4578-a31b-7ebd3f59df55,      
+                                  Attempt:1, FirstWorkflowTaskBackoff:0s,                        
+                                  ParentInitiatedEventVersion:0}                                 
+   2  WorkflowTaskScheduled       {TaskQueue:{Name:hello-world,                                  
+                                  Kind:Normal},                                                  
+                                  StartToCloseTimeout:10s,                                       
+                                  Attempt:1}                                                     
+   3  WorkflowTaskStarted         {ScheduledEventId:2, Identity:7576@fedora@,                    
+                                  RequestId:3c597463-65e4-4d61-b014-484634f32c37,                
+                                  SuggestContinueAsNew:false, HistorySizeBytes:0}                
+   4  WorkflowTaskCompleted       {ScheduledEventId:2, StartedEventId:3,                         
+                                  Identity:7576@fedora@,                                         
+                                  BinaryChecksum:0990e4a32efe7cd9c6c127b9cb51ecfc}               
+   5  ActivityTaskScheduled       {ActivityId:5,                                                 
+                                  ActivityType:{Name:Activity},                                  
+                                  TaskQueue:{Name:hello-world,                                   
+                                  Kind:Normal},                                                  
+                                  Input:[&quot;Temporal&quot;],                                            
+                                  ScheduleToCloseTimeout:0s,                                     
+                                  ScheduleToStartTimeout:0s,                                     
+                                  StartToCloseTimeout:10s,                                       
+                                  HeartbeatTimeout:0s,                                           
+                                  WorkflowTaskCompletedEventId:4,                                
+                                  RetryPolicy:{InitialInterval:1s,                               
+                                  BackoffCoefficient:2,                                          
+                                  MaximumInterval:1m40s,                                         
+                                  MaximumAttempts:0,                                             
+                                  NonRetryableErrorTypes:[]}}                                    
+   6  ActivityTaskStarted         {ScheduledEventId:5, Identity:7576@fedora@,                    
+                                  RequestId:9a1da09d-2b00-4c46-a945-9e24adc10c04,                
+                                  Attempt:1}                                                     
+   7  ActivityTaskCompleted       {Result:[&quot;Hello                                                
+                                  Temporal!&quot;],                                                   
+                                  ScheduledEventId:5,                                            
+                                  StartedEventId:6,                                              
+                                  Identity:7576@fedora@}                                         
+   8  WorkflowTaskScheduled       {TaskQueue:{Name:fedora:e78b4021-eed7-4cb9-880e-9a7354471838,  
+                                  Kind:Sticky}, StartToCloseTimeout:10s, Attempt:1}              
+   9  WorkflowTaskStarted         {ScheduledEventId:8, Identity:7576@fedora@,                    
+                                  RequestId:8cc430d3-3d73-4261-961e-7dacd1b13005,                
+                                  SuggestContinueAsNew:false, HistorySizeBytes:0}                
+  10  WorkflowTaskCompleted       {ScheduledEventId:8, StartedEventId:9,                         
+                                  Identity:7576@fedora@,                                         
+                                  BinaryChecksum:0990e4a32efe7cd9c6c127b9cb51ecfc}               
+  11  WorkflowExecutionCompleted  {Result:[&quot;Hello                                                
+                                  Temporal!&quot;],                                                   
+                                  WorkflowTaskCompletedEventId:10} 
+&lt;/pre&gt;
+
+&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
+&lt;p&gt;In this article we discussed several options for running the Temporal server, including using the Temporal cloud. We walked through the steps; deploying a quick local development environment using temporalite. Finally we showed how to execute and get workflow details using both the Temporal CLI and UI. Best of luck in your journey to more reliable applications with Temporal! If you have any questions reach out on &lt;a href=&quot;https://temporal.io/slack&quot;&gt;Temporal community slack&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;(c) 2022 Keith Tenzer&lt;/p&gt;</content><author><name>Keith Tenzer</name></author><category term="Temporal" /><category term="Temporal" /><category term="Opensource" /><category term="Workflows" /><category term="Activities" /><summary type="html">Overview In this article we will walk through setup of a development environment for Temporal. There are of course, several ways you can run the Temporal server locally. You can use Docker compose, helm or an operator on minikube and temporalite. In addition you can also consume Temporal namespaces as-a-service via the Temporal cloud. I would recommend temporalite if you want to run the Temporal server disconnected on your laptop otherwise the Temporal cloud is definitely the best option. I will cover getting started with the Temporal cloud in a future post.</summary></entry><entry><title type="html">My First Day at Temporal</title><link href="http://localhost:4000/temporal/my-first-day-at-temporal/" rel="alternate" type="text/html" title="My First Day at Temporal" /><published>2022-08-15T00:00:00-07:00</published><updated>2022-08-15T00:00:00-07:00</updated><id>http://localhost:4000/temporal/my-first-day-at-temporal</id><content type="html" xml:base="http://localhost:4000/temporal/my-first-day-at-temporal/">&lt;p&gt;&lt;img src=&quot;/assets/2022-08-15/logo-temporal-with-copy.svg&quot; alt=&quot;Temporal&quot; /&gt;&lt;/p&gt;
 &lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
 &lt;p&gt;Today is my first day at temporal and with that I wanted to share some thoughts around my decision, why Temporal and my experience thus far. As you can imagine, making any career change is always a very careful thought process and as we get older, have more responsibilities, the gravity around those decisions becomes stronger.&lt;/p&gt;
 
@@ -869,79 +1042,4 @@ redhat-operators          Red Hat Operators         grpc   Red Hat            18
 &lt;p&gt;&amp;nbsp;&lt;/p&gt;
 &lt;p&gt;&amp;nbsp;&lt;/p&gt;
 &lt;p&gt;&amp;nbsp;&lt;/p&gt;
-&lt;p&gt;&amp;nbsp;&lt;/p&gt;</content><author><name>Keith Tenzer</name></author><category term="OpenShift" /><category term="cloud-native" /><category term="Containers" /><category term="Kubernetes" /><category term="olm" /><category term="OpenShift" /><category term="Operator" /><category term="Operator Framework" /><category term="Operator Lifecycle Management" /><category term="operator-sdk" /><summary type="html">Overview In this article we will introduce the concept of Operators, the Operator Framework and Operator Lifecycle Management. This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end. OpenShift Operator Getting Started Part I OpenShift Operator SDK: Go Getting Started Guide Part II OpenShift Operator SDK: Ansible Getting Started Guide Part III OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV First, what exactly is an Operator? An Operator is a method of packaging, deploying and managing a Kubernetes application. source: https://coreos.com/operators/ Or simply, it is the application that can deploy itself, manage itself and update itself. Welcome to the brave new world, where we don’t spend time doing repetitive manually tasks, but rather put our knowledge into software so it can do it for us, better. The Kubernetes Operator pattern was introduced by CoreOS engineers in 2016 as again, a way to implement and inject application specific domain knowledge into the running of containerized applications. The idea was to couple Service Reliability Engineering (SRE) output with the application and provide a standard programmable path to do so. SRE teams as you likely know, operate applications by creating software. Most organizations unfortunately don’t have the luxury of having highly paid software engineers to run their applications, nor the time to build such software. Now, with Operators and the Operator Framework, there is a way for vendors or customers to provide that domain knowledge using a standardized reusable approach. The result is applications that run themselves or come with their own pre-programmed built-in SRE team. This is obviously a huge game-changer and differentiator for operating applications. In my opinion it is the only way to deal with the increased complexity we see today. This is the reason eventually, that every application will likely be deployed in containers on Kubernetes. It is simply no longer, with today’s complexity, possible for application domain knowledge to exist in a few people’s heads, that in turn need to operate application lifecycle manually. Think of an operator as the new Linux “Package Manager” and Kubernetes as the new “Linux”. Introducing the Operator Framework The Operator Framework is a toolkit to make it easy to build, scale and run operators. It includes the SDK, Operator Lifecycle Manager and Metering. Operator SDK – Provides tooling to build and package operators. It abstracts Kubernetes API. Operator Lifecycle Manager – Management control plane for operators. It governs who can access/deploy a given operator, namespaces where operators can run and lifecycle management, such as updates to an operator. Metering – Provides ability to record historical usage which in turn can be used for operator reporting. Understanding How It All Works Using the Operator SDK we create operators. An operator can be written in Go or Ansible. An operator provides one or more custom resource definitions (CRDs) to allow users to interact with the application using the standard kubernetes API. A CRD is simply an extention to the kubernetes API. It also provides a custom resource (CR) for how a user interacts with the CRD. In addition the operator provides methods for how to install, delete and update itself. The operator has the ability to watch CRDs. If a user creates, deletes or updates a CR, the operator will see that and call the necessary functions. Those functions can be implemented in Go or Ansible. Yep all you need to build an operator end-to-end is Ansible knowledge! Once you have an operator that can be deployed, it is time to look into Operator Lifecycle Management. OpenShift comes with OLM already built-in but it can also be added to any standard kubernetes cluster. OLM has the concept of a catalog. This is essentially an operator that provides one or more application bundles. OpenShift has several built-in catalogs. $ oc get catalogsource -n openshift-marketplace NAME DISPLAY TYPE PUBLISHER AGE certified-operators Certified Operators grpc Red Hat 18d community-operators Community Operators grpc Red Hat 18d redhat-operators Red Hat Operators grpc Red Hat 18d Red Hat, ISVs, Partners, anyone can bundle their application operators into a catalog. Operator Hub simply lists the applications exposed by a catalog via OLM. Each application bundle is composed of the operator, it&apos;s own k8s objects and a manifest. The manifest is exposed via the cluster server version (CSV) CRD and consumed in OLM. This allows for flexibility to version operators and their manifests separately. Summary In this article we discussed the Operator Framework for Kubernetes and OpenShift. A powerful framework for building, packaging and deploying kubernetes-native applications. The Operator Framework consists of the Operator SDK, Operator Lifecycle Management and Metering. Through Operators and the Operator Lifecycle Management the full power of kubernetes can be utilized, allowing application operators to have a built-in SRE approach which in turn increases application availability, programability and efficiency. Happy Operatoring! (c) 2020 Keith Tenzer &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;</summary></entry><entry><title type="html">OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV</title><link href="http://localhost:4000/openshift/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/" rel="alternate" type="text/html" title="OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV" /><published>2020-04-23T00:00:00-07:00</published><updated>2020-04-23T00:00:00-07:00</updated><id>http://localhost:4000/openshift/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv</id><content type="html" xml:base="http://localhost:4000/openshift/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/">&lt;h2&gt;&lt;img class=&quot;alignnone  wp-image-14443&quot; src=&quot;/assets/2020/04/38202270.png?w=173&amp;amp;h=173&quot; alt=&quot;38202270&quot; width=&quot;173&quot; height=&quot;173&quot; /&gt;&lt;/h2&gt;
-&lt;h2&gt;Overview&lt;/h2&gt;
-&lt;p&gt;In this article we will provide a hands-on guide to integrating your already built Operator with the Operator Lifecycle Manager (OLM). Using the Operator SDK and OPM tool we will create the application manifests and images so your application Operator can be managed through OLM.&lt;/p&gt;
-&lt;p&gt;This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;https://keithtenzer.com/2020/04/23/openshift-operator-getting-started-part-i/&quot;&gt;OpenShift Operator Getting Started Part I&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://keithtenzer.com/2020/01/27/openshift-operator-sdk-go-getting-started-guide-part-ii/&quot;&gt;OpenShift Operator SDK: Go Getting Started Guide Part II&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://keithtenzer.com/2020/04/23/openshift-operator-sdk-ansible-getting-started-guide-part-iii/&quot;&gt;OpenShift Operator SDK: Ansible Getting Started Guide Part III&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&quot;https://keithtenzer.com/2020/04/23/openshift-operator-lifecycle-management-guide-integrating-operators-in-olm-part-iv/&quot;&gt;OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;!--more--&gt;&lt;/p&gt;
-&lt;p&gt;In order to add your Operator to OLM you will need two tools: the &lt;a href=&quot;https://github.com/operator-framework/operator-sdk/releases&quot;&gt;operator-sdk&lt;/a&gt; and &lt;a href=&quot;https://github.com/operator-framework/operator-registry/releases&quot;&gt;opm&lt;/a&gt;. Download the binaries for operator-sdk and opm. Install them under /usr/local/bin.&lt;/p&gt;
-&lt;h2&gt;Create Cluster Service Version&lt;/h2&gt;
-&lt;p&gt;The Cluster Service Version (CSV) is the manifest that allows your application operator to be bundled and exposed to the OLM API. The CSV is itself a CRD in kubernetes. Before creating a the CSV manifest you need the deployment scafolding. These are the objects and CRDs that your Operator require. These are created automatically when using the operator-sdk to create a application under the deploy directory.&lt;/p&gt;
-&lt;pre&gt;$ operator-sdk new cars-operator --repo github.com/cars-operator&lt;/pre&gt;
-&lt;p&gt;When generating an CSV you will provide the path to the deploy directory where those objects can be found.&lt;/p&gt;
-&lt;pre&gt;$ operator-sdk generate csv --csv-version 1.0.0 --deploy-dir deploy&lt;/pre&gt;
-&lt;p&gt;The generate csv command will create an olm_catalog/cars-operator/manifests directory. There you will find the &apos;clusterserviceversion&apos; yaml. You will however want to edit and add a lot. As such I have provided an &lt;a href=&quot;https://github.com/sa-mw-dach/podium/blob/master/podium-operator/deploy/olm-catalog/podium-operator/manifests/podium-operator.clusterserviceversion.yaml&quot;&gt;example&lt;/a&gt; csv for an Operator I built.&lt;/p&gt;
-&lt;p&gt;Note: If you want to add an icon, so it shows up nicely in Operator Hub, the image needs to be a base64 bit stream inside the csv.&lt;/p&gt;
-&lt;pre&gt;$ cat myimage.png | base64&lt;/pre&gt;
-&lt;h2&gt;Create Application Operator Catalog Bundle&lt;/h2&gt;
-&lt;p&gt;Now that we have generated and updated our CSV we can create an application bundle.&lt;/p&gt;
-&lt;pre&gt;$ sudo operator-sdk bundle create quay.io/ktenzer/podium-operator-catalog:latest \
---channels beta --package podium-operator-catalog --directory \
-deploy/olm-catalog/podium-operator/manifests&lt;/pre&gt;
-&lt;p&gt;This will package the application manifest into a container image. Push the image to a public or private repository.&lt;/p&gt;
-&lt;pre&gt;$ sudo docker push quay.io/ktenzer/podium-operator-catalog:latest&lt;/pre&gt;
-&lt;h2&gt;Create Application Operator Catalog Index&lt;/h2&gt;
-&lt;p&gt;Once we have bundled an application operator we can add it to a catalog index. The catalog index provides one or more application bundles to OLM. This is also what the Operator Hub directly interfaces with.&lt;/p&gt;
-&lt;pre&gt;$ sudo opm index add -c docker --bundles \
-quay.io/ktenzer/podium-operator-catalog:latest \
---tag quay.io/ktenzer/podium-operator-index:latest&lt;/pre&gt;
-&lt;p&gt;Again an image is created that needs to be pushed to our private or public repository.&lt;/p&gt;
-&lt;pre&gt;$ sudo docker push quay.io/ktenzer/podium-operator-index:latest&lt;/pre&gt;
-&lt;h2&gt;Deploy Catalog Source&lt;/h2&gt;
-&lt;p&gt;A catalog source is a CRD that defines an OLM catalog and points to a catalog index image, for example the one we just created.&lt;/p&gt;
-&lt;p&gt;Create a catalog source yaml file that points to the catalog index image.&lt;/p&gt;
-&lt;pre&gt;$ vi catalog_source.yaml
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: podium-operator-catalog
-spec:
-  sourceType: grpc
-  &lt;strong&gt;image: quay.io/ktenzer/podium-operator-index:latest&lt;/strong&gt;
-  displayName: Podium Operator Catalog
-  publisher: Podium Community&lt;/pre&gt;
-&lt;p&gt;Deploy the catalog source under the openshift-marketplace namespace or where you have deployed OLM.&lt;/p&gt;
-&lt;pre&gt;$ oc create -f catalog_source.yaml -n openshift-marketplace&lt;/pre&gt;
-&lt;p&gt;Below we can see a list of catalogs. Again each catalog can contain one or more applications. All are default in OpenShift, except the one in bold which I added.&lt;/p&gt;
-&lt;pre&gt;$ oc get catalogsource -n openshift-marketplace
-NAME                     DISPLAY                 TYPE PUBLISHER        AGE
-certified-operators      Certified Operators     grpc Red Hat          18d
-community-operators      Community Operators     grpc Red Hat          18d
-&lt;strong&gt;podium-operator-catalog  Podium Operator Catalog grpc Podium Community 31m&lt;/strong&gt;
-redhat-operators         Red Hat Operators       grpc Red Hat          18d&lt;/pre&gt;
-&lt;p&gt;Each catalog has it&apos;s own operator / pod.&lt;/p&gt;
-&lt;pre&gt;$ oc get pods -n openshift-marketplace
-NAME                                    READY   STATUS    RESTARTS   AGE
-certified-operators-76d9d8b886-bnsz7    1/1     Running   0          14h
-community-operators-74d675f545-g7d2t    1/1     Running   0          18h
-&lt;strong&gt;podium-operator-catalog-67gsk           1/1     Running   0          31m&lt;/strong&gt;
-marketplace-operator-75f49679d7-n7v2r   1/1     Running   0          17d
-redhat-operators-87d549bf4-mxf7w        1/1     Running   0          13h&lt;/pre&gt;
-&lt;p&gt;Once a catalog operator exists, the applications it offers will show up in Operator Hub and can be installed.&lt;/p&gt;
-&lt;p&gt;&lt;img class=&quot;alignnone size-full wp-image-14528&quot; src=&quot;/assets/2020/04/podium_install.png&quot; alt=&quot;podium_install&quot; width=&quot;1094&quot; height=&quot;828&quot; /&gt;&lt;/p&gt;
-&lt;p&gt;Operators can be cluster-wide or namespace scoped. The Operator Lifecycle Management also provides a subscription, allowing updates to be pulled from various channels. This is similar to the relationship between an RPM and Repository.&lt;/p&gt;
-&lt;p&gt;&lt;img class=&quot;alignnone size-full wp-image-14529&quot; src=&quot;/assets/2020/04/podium_install2.png&quot; alt=&quot;podium_install2&quot; width=&quot;792&quot; height=&quot;743&quot; /&gt;&lt;/p&gt;
-&lt;p&gt;After you deploy application via Operator Hub it will launch the operator. Cluster-wide operators will run in the openshift-operators namespace while namespaced operators will only run in a user defined namespace.&lt;/p&gt;
-&lt;pre&gt;$ oc get pods -n openshift-operators
-NAME                               READY   STATUS    RESTARTS   AGE
-podium-operator-6855dc9478-q65bt   1/1     Running   0          38m&lt;/pre&gt;
-&lt;h2&gt;Summary&lt;/h2&gt;
-&lt;p&gt;In this article we stepped through the process of integrating an already existing operator with the Operator Lifecycle Manager. We saw how to generate an application manifest, build an application catalog bundle, add the bundle to an application index and finally deploy the application catalog, seamlessly integrating with Operator Hub. Using OLM provides not only a way to install applications but manage their lifecycle, releases and updates.&lt;/p&gt;
-&lt;p&gt;Happy Operatoring!&lt;/p&gt;
-&lt;p&gt;(c) 2020 Keith Tenzer&lt;/p&gt;</content><author><name>Keith Tenzer</name></author><category term="OpenShift" /><category term="Containers" /><category term="Kubernetes" /><category term="olm" /><category term="OpenShift" /><category term="Operator" /><category term="Operator Lifecycle Management" /><category term="operator-sdk" /><summary type="html">Overview In this article we will provide a hands-on guide to integrating your already built Operator with the Operator Lifecycle Manager (OLM). Using the Operator SDK and OPM tool we will create the application manifests and images so your application Operator can be managed through OLM. This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end. OpenShift Operator Getting Started Part I OpenShift Operator SDK: Go Getting Started Guide Part II OpenShift Operator SDK: Ansible Getting Started Guide Part III OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV In order to add your Operator to OLM you will need two tools: the operator-sdk and opm. Download the binaries for operator-sdk and opm. Install them under /usr/local/bin. Create Cluster Service Version The Cluster Service Version (CSV) is the manifest that allows your application operator to be bundled and exposed to the OLM API. The CSV is itself a CRD in kubernetes. Before creating a the CSV manifest you need the deployment scafolding. These are the objects and CRDs that your Operator require. These are created automatically when using the operator-sdk to create a application under the deploy directory. $ operator-sdk new cars-operator --repo github.com/cars-operator When generating an CSV you will provide the path to the deploy directory where those objects can be found. $ operator-sdk generate csv --csv-version 1.0.0 --deploy-dir deploy The generate csv command will create an olm_catalog/cars-operator/manifests directory. There you will find the &apos;clusterserviceversion&apos; yaml. You will however want to edit and add a lot. As such I have provided an example csv for an Operator I built. Note: If you want to add an icon, so it shows up nicely in Operator Hub, the image needs to be a base64 bit stream inside the csv. $ cat myimage.png | base64 Create Application Operator Catalog Bundle Now that we have generated and updated our CSV we can create an application bundle. $ sudo operator-sdk bundle create quay.io/ktenzer/podium-operator-catalog:latest \ --channels beta --package podium-operator-catalog --directory \ deploy/olm-catalog/podium-operator/manifests This will package the application manifest into a container image. Push the image to a public or private repository. $ sudo docker push quay.io/ktenzer/podium-operator-catalog:latest Create Application Operator Catalog Index Once we have bundled an application operator we can add it to a catalog index. The catalog index provides one or more application bundles to OLM. This is also what the Operator Hub directly interfaces with. $ sudo opm index add -c docker --bundles \ quay.io/ktenzer/podium-operator-catalog:latest \ --tag quay.io/ktenzer/podium-operator-index:latest Again an image is created that needs to be pushed to our private or public repository. $ sudo docker push quay.io/ktenzer/podium-operator-index:latest Deploy Catalog Source A catalog source is a CRD that defines an OLM catalog and points to a catalog index image, for example the one we just created. Create a catalog source yaml file that points to the catalog index image. $ vi catalog_source.yaml apiVersion: operators.coreos.com/v1alpha1 kind: CatalogSource metadata: name: podium-operator-catalog spec: sourceType: grpc image: quay.io/ktenzer/podium-operator-index:latest displayName: Podium Operator Catalog publisher: Podium Community Deploy the catalog source under the openshift-marketplace namespace or where you have deployed OLM. $ oc create -f catalog_source.yaml -n openshift-marketplace Below we can see a list of catalogs. Again each catalog can contain one or more applications. All are default in OpenShift, except the one in bold which I added. $ oc get catalogsource -n openshift-marketplace NAME DISPLAY TYPE PUBLISHER AGE certified-operators Certified Operators grpc Red Hat 18d community-operators Community Operators grpc Red Hat 18d podium-operator-catalog Podium Operator Catalog grpc Podium Community 31m redhat-operators Red Hat Operators grpc Red Hat 18d Each catalog has it&apos;s own operator / pod. $ oc get pods -n openshift-marketplace NAME READY STATUS RESTARTS AGE certified-operators-76d9d8b886-bnsz7 1/1 Running 0 14h community-operators-74d675f545-g7d2t 1/1 Running 0 18h podium-operator-catalog-67gsk 1/1 Running 0 31m marketplace-operator-75f49679d7-n7v2r 1/1 Running 0 17d redhat-operators-87d549bf4-mxf7w 1/1 Running 0 13h Once a catalog operator exists, the applications it offers will show up in Operator Hub and can be installed. Operators can be cluster-wide or namespace scoped. The Operator Lifecycle Management also provides a subscription, allowing updates to be pulled from various channels. This is similar to the relationship between an RPM and Repository. After you deploy application via Operator Hub it will launch the operator. Cluster-wide operators will run in the openshift-operators namespace while namespaced operators will only run in a user defined namespace. $ oc get pods -n openshift-operators NAME READY STATUS RESTARTS AGE podium-operator-6855dc9478-q65bt 1/1 Running 0 38m Summary In this article we stepped through the process of integrating an already existing operator with the Operator Lifecycle Manager. We saw how to generate an application manifest, build an application catalog bundle, add the bundle to an application index and finally deploy the application catalog, seamlessly integrating with Operator Hub. Using OLM provides not only a way to install applications but manage their lifecycle, releases and updates. Happy Operatoring! (c) 2020 Keith Tenzer</summary></entry></feed>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;</content><author><name>Keith Tenzer</name></author><category term="OpenShift" /><category term="cloud-native" /><category term="Containers" /><category term="Kubernetes" /><category term="olm" /><category term="OpenShift" /><category term="Operator" /><category term="Operator Framework" /><category term="Operator Lifecycle Management" /><category term="operator-sdk" /><summary type="html">Overview In this article we will introduce the concept of Operators, the Operator Framework and Operator Lifecycle Management. This article is part of a series that will walk you through understanding and building operators in Go or Ansible end-to-end. OpenShift Operator Getting Started Part I OpenShift Operator SDK: Go Getting Started Guide Part II OpenShift Operator SDK: Ansible Getting Started Guide Part III OpenShift Operator Lifecycle Management Guide: Integrating Operators in OLM Part IV First, what exactly is an Operator? An Operator is a method of packaging, deploying and managing a Kubernetes application. source: https://coreos.com/operators/ Or simply, it is the application that can deploy itself, manage itself and update itself. Welcome to the brave new world, where we don’t spend time doing repetitive manually tasks, but rather put our knowledge into software so it can do it for us, better. The Kubernetes Operator pattern was introduced by CoreOS engineers in 2016 as again, a way to implement and inject application specific domain knowledge into the running of containerized applications. The idea was to couple Service Reliability Engineering (SRE) output with the application and provide a standard programmable path to do so. SRE teams as you likely know, operate applications by creating software. Most organizations unfortunately don’t have the luxury of having highly paid software engineers to run their applications, nor the time to build such software. Now, with Operators and the Operator Framework, there is a way for vendors or customers to provide that domain knowledge using a standardized reusable approach. The result is applications that run themselves or come with their own pre-programmed built-in SRE team. This is obviously a huge game-changer and differentiator for operating applications. In my opinion it is the only way to deal with the increased complexity we see today. This is the reason eventually, that every application will likely be deployed in containers on Kubernetes. It is simply no longer, with today’s complexity, possible for application domain knowledge to exist in a few people’s heads, that in turn need to operate application lifecycle manually. Think of an operator as the new Linux “Package Manager” and Kubernetes as the new “Linux”. Introducing the Operator Framework The Operator Framework is a toolkit to make it easy to build, scale and run operators. It includes the SDK, Operator Lifecycle Manager and Metering. Operator SDK – Provides tooling to build and package operators. It abstracts Kubernetes API. Operator Lifecycle Manager – Management control plane for operators. It governs who can access/deploy a given operator, namespaces where operators can run and lifecycle management, such as updates to an operator. Metering – Provides ability to record historical usage which in turn can be used for operator reporting. Understanding How It All Works Using the Operator SDK we create operators. An operator can be written in Go or Ansible. An operator provides one or more custom resource definitions (CRDs) to allow users to interact with the application using the standard kubernetes API. A CRD is simply an extention to the kubernetes API. It also provides a custom resource (CR) for how a user interacts with the CRD. In addition the operator provides methods for how to install, delete and update itself. The operator has the ability to watch CRDs. If a user creates, deletes or updates a CR, the operator will see that and call the necessary functions. Those functions can be implemented in Go or Ansible. Yep all you need to build an operator end-to-end is Ansible knowledge! Once you have an operator that can be deployed, it is time to look into Operator Lifecycle Management. OpenShift comes with OLM already built-in but it can also be added to any standard kubernetes cluster. OLM has the concept of a catalog. This is essentially an operator that provides one or more application bundles. OpenShift has several built-in catalogs. $ oc get catalogsource -n openshift-marketplace NAME DISPLAY TYPE PUBLISHER AGE certified-operators Certified Operators grpc Red Hat 18d community-operators Community Operators grpc Red Hat 18d redhat-operators Red Hat Operators grpc Red Hat 18d Red Hat, ISVs, Partners, anyone can bundle their application operators into a catalog. Operator Hub simply lists the applications exposed by a catalog via OLM. Each application bundle is composed of the operator, it&apos;s own k8s objects and a manifest. The manifest is exposed via the cluster server version (CSV) CRD and consumed in OLM. This allows for flexibility to version operators and their manifests separately. Summary In this article we discussed the Operator Framework for Kubernetes and OpenShift. A powerful framework for building, packaging and deploying kubernetes-native applications. The Operator Framework consists of the Operator SDK, Operator Lifecycle Management and Metering. Through Operators and the Operator Lifecycle Management the full power of kubernetes can be utilized, allowing application operators to have a built-in SRE approach which in turn increases application availability, programability and efficiency. Happy Operatoring! (c) 2020 Keith Tenzer &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;</summary></entry></feed>
