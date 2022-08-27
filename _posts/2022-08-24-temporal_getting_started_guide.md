@@ -16,7 +16,7 @@ tags:
 In this article we will walk through setup of a development environment for Temporal. There are of course, several ways you can run the Temporal server locally. You can use Docker compose, helm or an operator on minikube and temporalite. In addition you can also consume Temporal namespaces as-a-service via the Temporal cloud. I would recommend temporalite if you want to run the Temporal server disconnected on your laptop otherwise the Temporal cloud is definitely the best option. I will cover getting started with the Temporal cloud in a future post.
 
 ## Temporalite Install
-Temporalite is a simple packaging of the Temporal server. It serializes data to local files, instead of a database for simplicity and less resource consumption. It is intended only for testing and not production use. In order to install it you need to have a Go environment to build the binary.
+Temporalite is a simple packaging of the Temporal server. It uses SQLite, instead of a full blown backend database for simplicity and less resource consumption. It is intended only for development or testing and not production use. In order to install it you need to have a Go environment to build the binary.
 
 ### Configure Go
 #### Create directory structure for Go in your home directory.
