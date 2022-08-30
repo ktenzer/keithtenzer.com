@@ -384,7 +384,7 @@
 <p>In this article we will walk through setup of a development environment for Temporal. There are of course, several ways you can run the Temporal server locally. You can use Docker compose, helm or an operator on minikube and temporalite. In addition you can also consume Temporal namespaces as-a-service via the Temporal cloud. I would recommend temporalite if you want to run the Temporal server disconnected on your laptop otherwise the Temporal cloud is definitely the best option. I will cover getting started with the Temporal cloud in a future post.</p>
 
 <h2 id="temporalite-install">Temporalite Install</h2>
-<p>Temporalite is a simple packaging of the Temporal server. It serializes data to local files, instead of a database for simplicity and less resource consumption. It is intended only for testing and not production use. In order to install it you need to have a Go environment to build the binary.</p>
+<p>Temporalite is a simple packaging of the Temporal server. It uses SQLite, instead of a full blown backend database for simplicity and less resource consumption. It is intended only for development or testing and not production use. In order to install it you need to have a Go environment to build the binary.</p>
 
 <h3 id="configure-go">Configure Go</h3>
 <h4 id="create-directory-structure-for-go-in-your-home-directory">Create directory structure for Go in your home directory.</h4>
@@ -572,6 +572,8 @@ $ tctl workflow show --workflow_id hello_world_workflowID --run_id b93ef614-e6df
     
       <a href="/tags/#activities" class="page__taxonomy-item" rel="tag">Activities</a><span class="sep">, </span>
     
+      <a href="/tags/#go" class="page__taxonomy-item" rel="tag">Go</a><span class="sep">, </span>
+    
       <a href="/tags/#opensource" class="page__taxonomy-item" rel="tag">Opensource</a><span class="sep">, </span>
     
       <a href="/tags/#temporal" class="page__taxonomy-item" rel="tag">Temporal</a><span class="sep">, </span>
@@ -626,7 +628,8 @@ $ tctl workflow show --workflow_id hello_world_workflowID --run_id b93ef614-e6df
 ">Previous</a>
     
     
-      <a href="#" class="pagination--pager disabled">Next</a>
+      <a href="/temporal/replay-of-replay/" class="pagination--pager" title="Replay of Replay
+">Next</a>
     
   </nav>
 
@@ -640,6 +643,54 @@ $ tctl workflow show --workflow_id hello_world_workflowID --run_id b93ef614-e6df
     <div class="page__related">
       <h4 class="page__related-title">You may also enjoy</h4>
       <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/temporal/replay-of-replay/" rel="permalink">Replay of Replay
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+      
+      <span class="page__meta-date">
+        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
+        
+        <time datetime="2022-08-29T00:00:00-07:00">August 29, 2022</time>
+      </span>
+    
+
+    <span class="page__meta-sep"></span>
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
+        
+          30 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Overview
+Temporal just completed it’s inaugural user conference called Replay in Seattle. As such I wanted to do a quick replay of Replay. First, why Dinosa...</p>
+  </article>
+</div>
+
         
           
 
@@ -780,53 +831,6 @@ Want to build your brand, while living the gitops revolution and not paying anyt
     <p class="archive__item-excerpt" itemprop="description">
 Overview
 A lot of people always ask me what is the best way to contribute to opensource? Of course contributing code, documentation, spreading the gospel or...</p>
-  </article>
-</div>
-
-        
-          
-
-
-
-<div class="grid__item">
-  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
-    
-    <h2 class="archive__item-title no_toc" itemprop="headline">
-      
-        <a href="/openshift/building-ansible-operators-1-2-3/" rel="permalink">Building Ansible Operators 1-2-3
-</a>
-      
-    </h2>
-    
-
-  <p class="page__meta">
-    
-      
-      <span class="page__meta-date">
-        <i class="far fa-fw fa-calendar-alt" aria-hidden="true"></i>
-        
-        <time datetime="2021-12-03T00:00:00-08:00">December 3, 2021</time>
-      </span>
-    
-
-    <span class="page__meta-sep"></span>
-
-    
-      
-      
-
-      <span class="page__meta-readtime">
-        <i class="far fa-fw fa-clock" aria-hidden="true"></i>
-        
-          10 minute read
-        
-      </span>
-    
-  </p>
-
-
-    <p class="archive__item-excerpt" itemprop="description">Overview
-In this article we will go step by step to build a Kubernetes Operator using Ansible and the Operator Framework. Operators provide the ability to no...</p>
   </article>
 </div>
 
