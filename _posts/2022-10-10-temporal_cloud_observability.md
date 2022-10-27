@@ -59,7 +59,9 @@ $ curl --cert /home/ktenzer/temporal/certs/ca.pem --key /home/ktenzer/temporal/c
 Once the observability endpoint has been created, setting up Grafana involves two steps: creating a datasource and importing the dashboard from a json file.
 
 ### Creating Datasource
-In Grafana under Setttings->Datasources add a new datasource. Simply copy the URL that was generated from the Temporal cloud, name the datasource 'grafana', enable TLS CLient Auth and add your certificates. The reason the datasource needs to be named 'grafana' is because that is uid used in the json file which maps it to the dashboard. At the bottom click 'Save and Test'.
+In Grafana under Setttings->Datasources add a new datasource. Simply copy the URL that was generated from the Temporal cloud, name the datasource 'Temporal - AccountId', enable TLS CLient Auth and add your certificates. The reason the datasource needs to be named 'grafana' is because that is uid used in the json file which maps it to the dashboard. At the bottom click 'Save and Test'.
+
+Note: naming the dashboard grafana will configure graphs to be randomWalk which means metrics are just generated randomly not pulled from actual data. This is more for testing the graphs.
 
 ![Datasource](/assets/2022-10-10/datasource.png)
 
@@ -69,6 +71,10 @@ Now that our datasource exists we can import the Grafana dashboard by clicking D
 ![Upload Json File](/assets/2022-10-10/upload.png)
 
 ![Import Dashboard](/assets/2022-10-10/import.png)
+
+## Create Variable for temporal_namespace
+The Json file contains a variable temporal_namespace. We need to define that so the metrics are filtered properly per namespace.
+![Create Variable](/assets/2022-10-10/variable.png)
 
 If everything worked you should now see a dashboard. Of course, you will need to run some workflows to see any data.
 ![Dashboard](/assets/2022-10-10/dashboard.png)
