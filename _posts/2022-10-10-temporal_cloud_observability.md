@@ -72,12 +72,11 @@ Now that our datasource exists we can import the Grafana dashboard by clicking D
 
 ![Import Dashboard](/assets/2022-10-10/import.png)
 
-## Create Variable for temporal_namespace
-The Json file contains a variable temporal_namespace. We need to define that so the metrics are filtered properly per namespace.
-![Create Variable](/assets/2022-10-10/variable.png)
-
 If everything worked you should now see a dashboard. Of course, you will need to run some workflows to see any data.
 ![Dashboard](/assets/2022-10-10/dashboard.png)
+
+If you aren't seeing data check to ensure temporal_namespace variable was created by the import. We need to define that so the metrics are filtered properly per namespace.
+![Create Variable](/assets/2022-10-10/variable.png)
 
 ## Summary
 In this article we learned about how to configure Temporal cloud observability metrics. By generating a PromQL endpoint, creating a Grafana datasource and importing a Grafana dashboard we are easily able to view Temporal cloud metrics. 
