@@ -87,11 +87,14 @@ social:
 
 # Analytics
 analytics:
-  provider               : google-universal # false (default), "google", "google-universal", "google-gtag", "custom"
+#  provider               : google-universal # false (default), "google", "google-universal", "google-gtag", "custom"
+#  google:
+#    tracking_id          : UA-221214246-1
+#    anonymize_ip         : # true, false (default)
+  provider               : "google-gtag"
   google:
-    tracking_id          : UA-221214246-1
+    measurement_id          : "G-D2QGS84PMZ"
     anonymize_ip         : # true, false (default)
-
 
 # Site Author
 author:
