@@ -12,10 +12,10 @@ tags:
 
 ![Temporal](/assets/2022-08-15/logo-temporal-with-copy.svg)
 ## Overview
-In this article we will provide a step-by-step guide for successfully configuring the Temporal Data Converter and Codec Server. Many Temporal cloud users need to send sensitive data into their workflow payloads. While the Temporal cloud provides encryption in transit via mTLS by default, many users also need to encrypt at rest. They need flexibility, choosing their own encryption algorithms, managing encryption keys and even restricting Temporal users from viewing sensitive data. The solution for all this is the Data Converter and Codec Server.
+In this article we will provide a step-by-step guide for successfully configuring the Temporal Data Converter and Codec Server. Many Temporal Cloud users need to send sensitive data into their workflow payloads. While the Temporal Cloud provides encryption in transit via mTLS by default, many users also need to encrypt at rest. They need flexibility, choosing their own encryption algorithms, managing encryption keys and even restricting Temporal users from viewing sensitive data. The solution for all this is the Data Converter and Codec Server.
 
 ## Data Converter
-The Data Converter is a component of the Temporal SDK. It is responsible for encoding/decoding of workflows, signals as well as queries between the client, Temporal cloud and worker. Essentially workflows, signals and queries sent to Temporal cloud are encoded while on the worker side, they are decoded. The Data Converter allows the flexibility to choose your own encryption algorithm and how to deal with encryption keys. You simply need to implement [encode](https://github.com/ktenzer/samples-go/blob/main/codec-server/data_converter.go#L25) and [decode](https://github.com/ktenzer/samples-go/blob/main/codec-server/data_converter.go#L45) functions.
+The Data Converter is a component of the Temporal SDK. It is responsible for encoding/decoding of workflows, signals as well as query payloads between the client, Temporal Cloud and worker. Essentially workflows, signals and queries sent to Temporal Cloud are encoded while on the worker side, they are decoded. The Data Converter allows the flexibility to choose your own encryption algorithm and how to deal with encryption keys. You simply need to implement [encode](https://github.com/ktenzer/samples-go/blob/main/codec-server/data_converter.go#L25) and [decode](https://github.com/ktenzer/samples-go/blob/main/codec-server/data_converter.go#L45) functions.
 
 The Data Converter is set in the client options of your worker or application.
 <pre>
@@ -36,14 +36,14 @@ Now that we have encrypted our data at rest, we may actually want to be able to 
 
 The Codec Server allows for implementing different codecs on a namespace level. Each namespace can have it's own codec. The sample provided below shows how to [map](https://github.com/ktenzer/samples-go/blob/main/codec-server/codec-server/main.go#L104) a namespace to a specific codec.
 
-In addition to supporting codec at namespace level, you can also provide user level access by passing the access token from Temporal cloud to Codec Server and then handling user level authorization based on the access token.
+In addition to supporting codec at namespace level, you can also provide user level access by passing the access token from Temporal Cloud to Codec Server and then handling user level authorization based on the access token.
 
-Once the Codec Server is running you will need to configure the UI or CLI to use it. When a user views a workflow through the UI (browser) or CLI, the encoded workflow is passed to the Codec server and then decoded for display purposes (assuming user has access). 
+Once the Codec Server is running you will need to configure the UI or CLI to use it. When a user views a workflow through the UI (browser) or CLI, the encoded payload is passed to the Codec server and then decoded for display purposes (assuming user has access). 
 
 More information on the Codec Server can be found [here](https://docs.temporal.io/security#codec-server).
 
 ## Deploying Data Converter with the Codec Server
-The provided [example](https://github.com/ktenzer/samples-go/tree/main/codec-server) will work for the Temporal cloud. First clone the repository.
+The provided [example](https://github.com/ktenzer/samples-go/tree/main/codec-server) will work for the Temporal Cloud. First clone the repository.
 <pre>
 $ git clone https://github.com/ktenzer/samples-go.git
 </pre>
@@ -61,7 +61,7 @@ Under the samples-go/codec-server directory start the worker.
 <pre>
 $ go run worker/main.go
 </pre>
-Note: your Temporal cloud namespace is [Namespace].[AccountId]. It is visible in the UI when viewing namespaces.
+Note: your Temporal Cloud namespace is [Namespace].[AccountId]. It is visible in the UI when viewing namespaces.
 
 ### Start Workflow using Data Converter
 Set the following environment parameters.
@@ -81,7 +81,7 @@ $ go run starter/main.go
 </pre>
 
 ### Validate Workflow is Encoded
-Connect to the Temporal cloud [UI](https://cloud.temporal.io/). Under Workflows, select the appropriate namespace.
+Connect to the Temporal Cloud [UI](https://cloud.temporal.io/). Under Workflows, select the appropriate namespace.
 ![Workflows](/assets/2022-11-30/show_workflows.png)
 
 Open the workflow and you should see the input payload encoded.
@@ -97,7 +97,7 @@ CORS enabled for Origin: https://cloud.temporal.io
 </pre>
 
 ### Configure Data Encoder
-The Temporal cloud UI allows each user to set their own Codec Server (data encoder). The encoder can also be set at namespace level. The user set encoder will override the namespace level.
+The Temporal Cloud UI allows each user to set their own Codec Server (data encoder). The encoder can also be set at namespace level. The user set encoder will override the namespace level.
 
 ![Data Encoder](/assets/2022-11-30/data_encoder.png)
 
