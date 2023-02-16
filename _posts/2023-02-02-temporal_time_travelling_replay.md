@@ -54,7 +54,7 @@ func (s *replayTestSuite) TestReplayWorkflowHistoryFromFile() {
 ...
 </pre>
 
-The full unit test can be found [here](https://github.com/ktenzer/temporal-demo-apps/blob/main/versioning/replay_test.go).
+The full unit test can be found [here](https://github.com/ktenzer/temporal-demo-apps/blob/main/versioning/versioning_replay_test.go).
 
 This example is a versioned Temporal workflow. As such, we are testing replay for each version to ensure, potential breaking changes are caught in our unit testing.
 
