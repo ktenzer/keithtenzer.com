@@ -75,7 +75,7 @@ TEMPORAL_MTLS_TLS_CERT=/home/ktenzer/temporal/certs/aws/certificate.txt TEMPORAL
 If you are having issues with the requested certificate being validated, check to ensure that the domain for the certificate resolves properly.
 
 <pre>
-$ dig +short _myapp.tmprl-sa.cloud
+$ dig +short _app.tmprl-sa.cloud
 a9a7f4279e8654923b3099439e862622-135847838.us-east-1.elb.amazonaws.com.
 3.229.33.245
 34.231.166.88
