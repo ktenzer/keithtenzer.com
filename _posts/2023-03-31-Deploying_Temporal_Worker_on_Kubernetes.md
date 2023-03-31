@@ -11,8 +11,11 @@ tags:
 
 ![Temporal](/assets/2022-08-15/logo-temporal-with-copy.svg)
 ## Overview
-In this article we will show how to bootstrap a Temporal worker on Kubernetes. The Temporal worker is a service built using the Temporal SDK that executes workflows and activities. A Temporal worker polls the Temporal cloud or server and communicates over gRPC using mTLS. In addition to mTLS certificates the Temporal worker also needs the Temporal cloud host endpoint and namespace. If the Temporal worker will interact with any other services or databases it also may require additional authorization keys or passwords. 
-In Kubernetes, to ensure things are dynamic, all of these settings can be injected into the Temporal worker pods via environment parameters. For sensitive information like mTLS certificates and any authorization keys or passwords, secrets should be used. Those secrets can exist in Kubernetes or be managed by an external secrets store. One can even store the secrets on a encrypted volume and mount them inside the pod/container. In this article we will show how to set things up using Kubernetes built-in secrets.
+In this article we will show how to bootstrap a Temporal worker on Kubernetes. The Temporal worker is a service built using the Temporal SDK that executes workflows and activities. A Temporal worker polls the Temporal cloud or server and communicates over gRPC using mTLS. In addition to mTLS certificates, a Temporal worker also needs the Temporal cloud host endpoint and namespace. If the Temporal worker will interact with any other services or databases it may require additional authorization keys or passwords. 
+
+![Temporal](/assets/2023-03-31/temporal.png)
+
+In Kubernetes, to ensure things are dynamic, all of these settings can be injected into the Temporal worker pods via environment parameters. For sensitive information like mTLS certificates and any authorization keys or passwords, secrets should be used. Those secrets can exist in Kubernetes or be managed by an external secrets store. One can even store the secrets on a encrypted volume and mount them inside the pod/container.
 
 ## Use Environment Variables in Temporal Worker
 The first step is to ensure the worker configuration is dynamic. This example in Go shows how to do that with environment variables.
@@ -38,7 +41,7 @@ clientOptions.ConnectionOptions = client.ConnectionOptions{
 </pre>    
 
 ## Build a Docker Image
-Next we need to build a docker image for our Temporal worker. This will vary, depending on the Temporal SDK programming language. In this example I am showing a Dockerfile for a Temporal worker written in Go.
+Next we need to build a docker image for our Temporal worker. This will vary, depending on the Temporal SDK programming language. In this example, a Dockerfile for a Temporal worker written in Go is shown.
 
 <pre>
 $ vi Dockerfile
@@ -71,16 +74,16 @@ $ docker push ktenzer/temporal-worker:v1.0
 </pre>
 
 ## Create Secret for mTLS Certificates
-Kubernetes has a few different secret types, one of them is tls. When a secret is created it is stored in base64. One can use kubectl to create the secret, in which case it will automatically convert to base64, or manually convert to base64 and add those strings to a secrets yaml file.
+Kubernetes has a few different secret types, one of them is tls. When a secret is created it is stored in base64. One can use kubectl to create the secret, or manually convert certificates to base64 and then add those secrets to a yaml file.
 
-The tls.crt is your PEM or public portion of the certificate that you also upload to your Temporal cloud namespace. The tls.key is the private key associated with the certificate.
+The tls.crt is your PEM or public portion of the certificate that you also upload to your Temporal cloud namespace. The tls.key is the private key associated with the certificate. The client of course needs both.
 
-Using kubectl
+Using kubectl.
 <pre>
 $ kubectl create secret tls my-tls-secret --key /path-to/ca.key --cert /path/to/ca.pem -n temporal-worker
 </pre>
 
-Using yaml
+Using yaml.
 <pre>
 $ vi tls-secret.yaml
 apiVersion: v1
@@ -97,14 +100,14 @@ $ kubectl create -f tls-secret.yaml
 </pre>
 
 ## Create Secrets for other Services
-It is often the case that a Temporal worker also communicate with other services that require some authorization. For example, if we wanted to interact with ChatGPT we need an API key. That API key should also be stored as a secret. In this case we would use a generic secret. It will also be converted to base64, same as tls secrets.
+It is often the case, that a Temporal worker also communicate with other services, which may require some authorization. For example, if we wanted to interact with ChatGPT, an API key is needed. That API key should also be stored as a secret. In this case we would use a generic secret.
 
-Using kubectl
+Using kubectl.
 <pre>
 $ kubectl create secret generic chatgpt-key --from-literal=KEY=API key -n temporal-worker
 </pre>
 
-Using yaml
+Using yaml.
 <pre>
 $ vi chatgpt-secret.yaml
 apiVersion: v1
@@ -121,16 +124,16 @@ $ kubectl create -f chatgpt-secret.yaml -n temporal-worker
 </pre>
 
 ## Creating Kubernetes Deployment
-A deployment in kubernetes is what manages your application. It controls replicas, environment, probes, image and much more. For a Temporal worker there are a few things to consider. We will at minimum want to set the image or container, deployment strategy, resource limits, liveliness/readiness probes and environment parameters.
+A deployment in kubernetes manages the application in a dynamic, ephemeral way. It controls replicas, environment, probes, image and much more. For a Temporal worker there are a few things to consider. We will at minimum want to set the image or container, deployment strategy, resource limits, liveliness/readiness probes and of course, inject environment parameters.
 
 ### Image
-This is straightforward and is just the container image version we want to run. In this case the image we built and pushed to docker.io.
+This is straightforward and is just the container image version that should be run.
 <pre>
 image: ktenzer/temporal-worker:v1.0
 </pre>
 
 ### Deployment Strategy
-The deployment strategy defines how changes or updates are rolled into the environment. We can do rolling updates, blue/green and even a canary type of deployment. Here we are using a rolling deployment, 25% of the pods will be updated before moving to next 25%.
+The deployment strategy defines how changes or updates are handled. We can do rolling updates, blue/green and even a canary type of deployment. Here a rolling deployment is configured, 25% of the pods will be updated before moving to next 25%.
 
 <pre>
 strategy:
@@ -141,7 +144,7 @@ strategy:
 </pre>
 
 ### Liveliness and Readiness Probes
-Liveliness and readiness probes are really important. This is how kubernetes knows if the worker is working properly. Normally you would have a /status endpoint to test over HTTP/gRPC, but in case of a Temporal worker there is no endpoint, no service is exposed, since the Temporal worker polls. As such we have to be a bit more creative. Thankfully kubernetes allows us to exec into pods where we can run a command. Ideally you would have the worker output something to a file when its up and then have the probe check the file via exec. In this case we are just doing a liveliness/readiness probes using ls inside pod. 
+Liveliness and readiness probes are really important. This is how kubernetes knows if the Temporal worker is properly functioning. Normally you would have a /status endpoint to test over HTTP/gRPC, but in the case of a Temporal worker, there is no endpoint, no service is exposed, since the Temporal worker polls. As such we have to be a bit more creative. Thankfully kubernetes allows us to exec into pods where we can run a command. Ideally, the worker should output something to a file and then have the probe check the file, via exec with a regex. In this case we are just doing liveliness/readiness probes using ls inside pod. 
 
 <pre>
 readinessProbe:
@@ -167,7 +170,7 @@ livenessProbe:
 </pre>
 
 ### Resource Limits
-In kubernetes there are resource requests and limits. Requests is initially what a pod gets and will get when it requires more resources. The limit is the maximum amount of a resource that a pod can have.
+In kubernetes there are resource requests and limits. Requests is initially what a pod gets when it is started and what it will get additionally, when it requires more resources. The limit is the maximum amount of a resource that a pod can have.
 
 <pre>
 resources:
@@ -323,7 +326,7 @@ spec:
 </pre>
 
 ## Summary
-In this article we showed how to bootstrap a Temporal worker in kubernetes. Creating secrets and injecting them into a kubernetes deployment allows for a dynamic and secure way to manage Temporal workers in kubernetes. Finally, we walked through the various steps in operationalizing a Temporal worker on kubernetes: dynamic worker configuration, building a docker image, creating secrets and of course wiring it all together in a kubernetes deployment.
+In this article we showed how to bootstrap a Temporal worker in kubernetes. Creating secrets and injecting them into a kubernetes deployment allows for a dynamic, secure way to manage Temporal workers in kubernetes. Finally, we walked through the various steps in operationalizing a Temporal worker on kubernetes: dynamic worker configuration, building a docker image, creating secrets and of course wiring it all together in a kubernetes deployment.
 
 (c) 2023 Keith Tenzer
 
