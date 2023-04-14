@@ -39,10 +39,10 @@ Below is a list of metrics provided by the Temporal cloud observability endpoint
 The first step is to configure the observability endpoint. In order do so you will need to be GlobalAdmin and have an mTLS cert. Verify you are meeting the [requirements](https://docs.temporal.io/cloud/how-to-manage-certificates-in-temporal-cloud/#certificate-requirements) for mTLS certs.
 
 Additionally for testing you can generate a root CA using our docker image.
-<pre>
+```bash
 $ docker pull temporalio/client-certificate-generation
 $ docker run -v $PWD:/work -it temporalio/client-certificate-generation ca.sh
-</pre>
+```
 
 Next, providing the public pem certificate create an observability endpoint in the Temporal cloud UI by clicking Settings->Integrations.
 ![Observability Endpoint](/assets/2022-10-10/observability.png)
@@ -50,10 +50,10 @@ Next, providing the public pem certificate create an observability endpoint in t
 ## Testing Observability Endpoint
 Before we configure Grafana its a good idea to test and ensure the endpoint is working. If this is a new namespace or one with no workflows the data returned will be empty as is this case here.
 
-<pre>
+```bash
 $ curl --cert /home/ktenzer/temporal/certs/ca.pem --key /home/ktenzer/temporal/certs/ca.key https://sdvdw.tmprl.cloud/prometheus/api/v1/query?query=temporal_cloud_v0_state_transition_count
 {"status":"success","data":{"resultType":"vector","result":[]}}
-</pre>
+```
 
 ## Configuring Grafana
 Once the observability endpoint has been created, setting up Grafana involves two steps: creating a datasource and importing the dashboard from a json file.

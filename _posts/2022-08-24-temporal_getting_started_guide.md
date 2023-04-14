@@ -20,74 +20,106 @@ Temporalite is a simple packaging of the Temporal server. It uses SQLite, instea
 
 ### Configure Go
 #### Create directory structure for Go in your home directory.
-<pre>$ mkdir -p ~/go/src/github.com</pre>
+```bash
+$ mkdir -p ~/go/src/github.com
+```
 
 #### Install Go
-<pre>$ sudo dnf install -y go</pre>
+```
+$ sudo dnf install -y go
+```
 
 #### Update Profile with Go Environment
-<pre>
+```bash
 $ vi ~/.bash_profile
 export GOBIN=/home/username
 export GOPATH=/home/username/src
 export EDITOR=vim
-</pre>
+```
 
 ### Build Temporalite
 #### Create directory for Temporal
-<pre>$ mkdir ~/go/src/github.com/temporalio</pre>
+```bash
+$ mkdir ~/go/src/github.com/temporalio
+```
 
 #### Change directory to temporalio
-<pre>$ cd temporalio</pre>
+```bash
+$ cd temporalio
+```
 
 #### Clone temporalite GitHub repository
-<pre>$ git clone https://github.com/temporalio/temporalite.git</pre>
+```bash
+$ git clone https://github.com/temporalio/temporalite.git
+```
 
 #### Build temporalite binary
-<pre>$ go install github.com/temporalio/temporalite/cmd/temporalite@latest</pre>
+```bash
+$ go install github.com/temporalio/temporalite/cmd/temporalite@latest
+```
 
 #### Copy temporalite binary to bin Directory
-<pre>$ sudo cp /home/ktenzer/go/bin/temporalite /usr/local/bin</pre>
+```bash
+$ sudo cp /home/ktenzer/go/bin/temporalite /usr/local/bin
+```
 
 #### Create Directory for local Temporal Database
-<pre>mkdir -p /home/ktenzer/.config/temporalite/db</pre>
+```bash
+$ mkdir -p /home/ktenzer/.config/temporalite/db
+```
 
 #### Start temporalite
-<pre>$ temporalite start --namespace default</pre>
+```bash 
+$ temporalite start --namespace default
+```
 
 ## Build CLI
 Now that we have the Temporal server running via temporalite we need to build the CLI.
 
 #### Change directory to temporalio
-<pre>$ cd ~/go/src/github.com/temporalio</pre>
+```bash
+$ cd ~/go/src/github.com/temporalio
+```
 
 #### Clone Temporal GitHub repository
-<pre>$ git clone https://github.com/temporalio/temporal.git</pre>
+```bash
+$ git clone https://github.com/temporalio/temporal.git
+```
 
 #### Run tctl Makefile
-<pre>$ make update-tctl</pre>
+```bash
+$ make update-tctl
+```
 
 #### Copy tctl binary to bin directory
-<pre>$ sudo cp ~/go/bin/tctl /usr/local/bin</pre>
+```bash
+$ sudo cp ~/go/bin/tctl /usr/local/bin
+```
 
 ## Start Temporal Workflow
 In this case we will just run the helloworld sample from the many samples that Temporal provides.
 
 #### Change directory to temporalio
-<pre>$ cd ~/go/src/github.com/temporalio</pre>
+```bash
+$ cd ~/go/src/github.com/temporalio
+```
 
 #### Clone samples GitHub  repository
-<pre>$ git clone https://github.com/temporalio/samples-go.git</pre>
+```bash
+$ git clone https://github.com/temporalio/samples-go.git
+```
 
 #### Change directory to samples
-<pre>$ cd samples-go</pre>
+```bash 
+$ cd samples-go
+```
 
 #### Start workflow
-<pre>
+```bash
 $ go run helloworld/starter/main.go
 2022/08/24 11:46:11 INFO  No logger configured for temporal client. Created default one.
 2022/08/24 11:46:11 Started workflow WorkflowID hello_world_workflowID RunID b93ef614-e6df-4578-a31b-7ebd3f59df55
-</pre>
+```
 
 Notice that the workflow starts but is waiting to execute. This is because there is no worker. The starter program will tell the Temporal server to execute a workflow however, since no worker is attached the Temporal server namespace, the workflow will be in running state until a worker becomes available.
 
@@ -97,17 +129,19 @@ The Temporal UI will also show that we are waiting for a worker.
 ## Start Temporal Worker
 Now that we have our Temporal server and a workflow running all that is needed is a worker. We will start the corresponding helloworld worker.
 
-<pre>$ go run helloworld/worker/main.go</pre>
+```bash
+$ go run helloworld/worker/main.go
+```
 
 The worker should immediately run and complete the workflow.
-<pre>
+```bash
 2022/08/24 11:55:26 INFO  HelloWorld workflow completed. Namespace default TaskQueue hello-world WorkerID 7576@fedora@ WorkflowType Workflow WorkflowID hello_world_workflowID RunID b93ef614-e6df-4578-a31b-7ebd3f59df55 Attempt 1 result Hello Temporal!
-</pre>
+```
 
 If you look at your starter it also has now returned and displays the workflow result returned from the workflow.
-<pre>
+```bash
 2022/08/24 11:55:26 Workflow result: Hello Temporal!
-</pre>
+```
 
 In the UI we can now also see the workflow has completed.
 ![Temporal Workflow Completed](/assets/2022-08-24/temporal_workflow_completed.png)
@@ -116,14 +150,14 @@ In the UI we can now also see the workflow has completed.
 Temporal provides the tctl CLI for interacting with the Temporal server.
 
 #### List workflows
-<pre>
+```bash
 $ tctl workflow list
   WORKFLOW TYPE |      WORKFLOW ID       |                RUN ID                | TASK QUEUE  | START TIME | EXECUTION TIME | END TIME  
   Workflow      | hello_world_workflowID | b93ef614-e6df-4578-a31b-7ebd3f59df55 | hello-world | 18:46:11   | 18:46:11       | 18:55:26  
-</pre>
+```
 
 #### Show workflow details
-<pre>
+```bash
 $ tctl workflow show --workflow_id hello_world_workflowID --run_id b93ef614-e6df-4578-a31b-7ebd3f59df55
    1  WorkflowExecutionStarted    {WorkflowType:{Name:Workflow},                                 
                                   ParentInitiatedEventId:0, TaskQueue:{Name:hello-world,         
@@ -179,7 +213,7 @@ $ tctl workflow show --workflow_id hello_world_workflowID --run_id b93ef614-e6df
   11  WorkflowExecutionCompleted  {Result:["Hello                                                
                                   Temporal!"],                                                   
                                   WorkflowTaskCompletedEventId:10} 
-</pre>
+```
 
 ## Summary
 In this article we discussed several options for running the Temporal server, including using the Temporal cloud. We walked through the steps; deploying a quick local development environment using temporalite. Finally we showed how to execute and get workflow details using both the Temporal CLI and UI. Best of luck in your journey to more reliable applications with Temporal! If you have any questions reach out on [Temporal community slack](https://temporal.io/slack).

@@ -26,8 +26,7 @@ Using the Temporal Cloud I create a custom search attribute under the namespace 
 Now that I have created a custom search attribute I can simply set it in my workflow. In this case I want to set it to 'failed' in the event of a backup failure or 'succeeded' in the event of a backup success.
 The Temporal SDK provides an API called 'UpsertSearchAttributes'. In the example below, I am setting 'BackupStatus' custom search attribute to 'failed'.
 
-<pre>
-...
+```go
 attributes := map[string]interface{}{
 	"BackupStatus": "failed",
 }
@@ -36,8 +35,7 @@ err := workflow.UpsertSearchAttributes(ctx, attributes)
 if err != nil {
 	return err
 }
-...
-</pre>	
+```
 
 ## Query Using Custom Search Attributes
 After workflow upserts custom search attributes, we can query workflows using those attributes. In this example we will do an advanced query for 'failed' backup workflows using the Temporal cloud.

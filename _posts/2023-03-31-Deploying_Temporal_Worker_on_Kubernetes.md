@@ -20,8 +20,7 @@ In Kubernetes, to ensure things are dynamic, all of these settings can be inject
 ## Use Environment Variables in Temporal Worker
 The first step is to ensure the worker configuration is dynamic. This example in Go shows how to do that with environment variables.
 
-<pre>
-...
+```go
 clientOptions := client.Options{
 	HostPort:  os.Getenv("TEMPORAL_HOST_URL"),
 	Namespace: os.Getenv("TEMPORAL_NAMESPACE"),
@@ -37,13 +36,13 @@ clientOptions.ConnectionOptions = client.ConnectionOptions{
 		Certificates: []tls.Certificate{cert},
 	},
 }
-...
-</pre>    
+
+``` 
 
 ## Build a Docker Image
 Next we need to build a docker image for our Temporal worker. This will vary, depending on the Temporal SDK programming language. In this example, a Dockerfile for a Temporal worker written in Go is shown.
 
-<pre>
+```dockerfile
 $ vi Dockerfile
 FROM docker.io/library/golang:1.18-alpine
 RUN mkdir -p /app/bin
@@ -61,17 +60,17 @@ RUN mkdir -p /app/bin
 WORKDIR /app/bin
 COPY --from=0 /app/bin/worker /app/bin
 CMD ["/app/bin/worker" ]
-</pre>
+```
 
 Build docker image.
-<pre>
+```bash
 $ docker build -t ktenzer/temporal-worker:v1.0 .
-</pre>
+```
 
 Push docker image to docker.io.
-<pre>
+```bash
 $ docker push ktenzer/temporal-worker:v1.0
-</pre>
+```
 
 ## Create Secret for mTLS Certificates
 Kubernetes has a few different secret types, one of them is tls. When a secret is created it is stored in base64. One can use kubectl to create the secret, or manually convert certificates to base64 and then add those secrets to a yaml file.
@@ -79,12 +78,12 @@ Kubernetes has a few different secret types, one of them is tls. When a secret i
 The tls.crt is your PEM or public portion of the certificate that you also upload to your Temporal cloud namespace. The tls.key is the private key associated with the certificate. The client of course needs both.
 
 Using kubectl.
-<pre>
+```bash
 $ kubectl create secret tls my-tls-secret --key /path-to/ca.key --cert /path/to/ca.pem -n temporal-worker
-</pre>
+```
 
 Using yaml.
-<pre>
+```yaml
 $ vi tls-secret.yaml
 apiVersion: v1
 data:
@@ -93,22 +92,22 @@ data:
 kind: Secret
 metadata:
 type: kubernetes.io/tls
-</pre>
+```
 
-<pre>
+```bash
 $ kubectl create -f tls-secret.yaml
-</pre>
+```
 
 ## Create Secrets for other Services
 It is often the case, that a Temporal worker also communicate with other services, which may require some authorization. For example, if we wanted to interact with ChatGPT, an API key is needed. That API key should also be stored as a secret. In this case we would use a generic secret.
 
 Using kubectl.
-<pre>
+```bash
 $ kubectl create secret generic chatgpt-key --from-literal=KEY=API key -n temporal-worker
-</pre>
+```
 
 Using yaml.
-<pre>
+```yaml
 $ vi chatgpt-secret.yaml
 apiVersion: v1
 data:
@@ -117,36 +116,36 @@ kind: Secret
 metadata:
   name: chatgpt-key
 type: Opaque
-</pre>
+```
 
-<pre>
+```bash
 $ kubectl create -f chatgpt-secret.yaml -n temporal-worker
-</pre>
+```
 
 ## Creating Kubernetes Deployment
 A deployment in kubernetes manages the application in a dynamic, ephemeral way. It controls replicas, environment, probes, image and much more. For a Temporal worker there are a few things to consider. We will at minimum want to set the image or container, deployment strategy, resource limits, liveliness/readiness probes and of course, inject environment parameters.
 
 ### Image
 This is straightforward and is just the container image version that should be run.
-<pre>
+```yaml
 image: ktenzer/temporal-worker:v1.0
-</pre>
+```
 
 ### Deployment Strategy
 The deployment strategy defines how changes or updates are handled. We can do rolling updates, blue/green and even a canary type of deployment. Here a rolling deployment is configured, 25% of the pods will be updated before moving to next 25%.
 
-<pre>
+```yaml
 strategy:
   rollingUpdate:
     maxSurge: 25%
     maxUnavailable: 25%
   type: RollingUpdate
-</pre>
+```
 
 ### Liveliness and Readiness Probes
 Liveliness and readiness probes are really important. This is how kubernetes knows if the Temporal worker is properly functioning. Normally you would have a /status endpoint to test over HTTP/gRPC, but in the case of a Temporal worker, there is no endpoint, no service is exposed, since the Temporal worker polls. As such we have to be a bit more creative. Thankfully kubernetes allows us to exec into pods where we can run a command. Ideally, the worker should output something to a file and then have the probe check the file, via exec with a regex. In this case we are just doing liveliness/readiness probes using ls inside pod. 
 
-<pre>
+```yaml
 readinessProbe:
   exec:
     command:
@@ -167,12 +166,12 @@ livenessProbe:
   periodSeconds: 5
   successThreshold: 1
   timeoutSeconds: 1
-</pre>
+```
 
 ### Resource Limits
 In kubernetes there are resource requests and limits. Requests is initially what a pod gets when it is started and what it will get additionally, when it requires more resources. The limit is the maximum amount of a resource that a pod can have.
 
-<pre>
+```yaml
 resources:
   limits:
     cpu: 500m
@@ -180,56 +179,56 @@ resources:
   requests:
     cpu: 100m
     memory: 100Mi
-</pre>    
+```  
 
 ### Environment
 The environment is where we can inject any secrets and also set other important settings for proper operation of a Temporal worker. For the secrets we need to first mount them into the pod. 
 
 First we define a volume and what secret it will mount.
-<pre>
+```yaml
 volumes:
 - name: certs
   secret:
     defaultMode: 420
     secretName: tls-secret
-</pre>
+```
 
 Next we mount the volume inside the container.
-<pre>
+```yaml
 volumeMounts:
 - mountPath: /etc/certs
     name: certs
-</pre>          
+```         
 
 Finally, we inject the secret into an environment variable.
-<pre>
+```yaml
 - name: TEMPORAL_MTLS_TLS_CERT
   value: /etc/certs/tls.crt
 - name: TEMPORAL_MTLS_TLS_KEY
   value: /etc/certs/tls.key
-</pre>
+```
 
 For the ChatGPT secret, a generic secret is used which can be injected directly.
-<pre>
+```yaml
 - name: CHATGPT_API_KEY
   valueFrom:
     secretKeyRef:
         key: KEY
         name: chatgpt-key
-</pre>
+```
 
 Lastly, we also need to set the Temporal cloud host endpoint and namespace.
-<pre>
+```yaml
 - name: TEMPORAL_HOST_URL
   value: namespace.accountId.tmprl.cloud:7233
 - name: TEMPORAL_NAMESPACE
   value: namespace.accountId
-</pre>
+```
 
 ### Brining it all together
 Below is the entire deployment yaml for this example.
 
-<pre>
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -323,7 +322,7 @@ spec:
         secret:
           defaultMode: 420
           secretName: tls-secret
-</pre>
+```
 
 ## Summary
 In this article we showed how to bootstrap a Temporal worker in kubernetes. Creating secrets and injecting them into a kubernetes deployment allows for a dynamic, secure way to manage Temporal workers in kubernetes. Finally, we walked through the various steps in operationalizing a Temporal worker on kubernetes: dynamic worker configuration, building a docker image, creating secrets and of course wiring it all together in a kubernetes deployment.

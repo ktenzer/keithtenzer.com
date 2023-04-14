@@ -33,16 +33,15 @@ What type of issues will replayer catch?
 ### Output Workflow History
 As mentioned there are various ways to get workflow history for replay. In this example we will save JSON output of workflow history to a file using tctl.
 
-<pre>
+```bash
 $ tctl wf show -w versioning-workflow --of history.json
-</pre>
+```
 
 ### Create Replay Test
 Depending on the replay SDK method chosen, arguments and inputs will of course change. In this case, since we have the workflow history as a JSON file, will use the ReplayWorkflowHistoryFromJSONFile method.
 
 Below is code snippet showing how to run the replayer using workflow history from JSON file.
-<pre>
-...
+```go
 func (s *replayTestSuite) TestReplayWorkflowHistoryFromFile() {
 	replayer := worker.NewWorkflowReplayer()
 
@@ -51,8 +50,7 @@ func (s *replayTestSuite) TestReplayWorkflowHistoryFromFile() {
 	err := replayer.ReplayWorkflowHistoryFromJSONFile(nil, "history.json")
 	require.NoError(s.T(), err)
 }
-...
-</pre>
+```
 
 The full unit test can be found [here](https://github.com/ktenzer/temporal-demo-apps/blob/main/versioning/versioning_replay_test.go).
 
@@ -73,8 +71,7 @@ Steps:
 
 #### Step 1: Add Timer
 Ideally set the timer to a few minutes so you aren't waiting long.
-<pre>
-...
+```go
 	err := workflow.ExecuteActivity(ctx, ActivityB).Get(ctx, &result)
 	if err != nil {
 		logger.Error("Activity failed.", "Error", err)
@@ -89,8 +86,7 @@ Ideally set the timer to a few minutes so you aren't waiting long.
 
 	// set timer for 5 minutes
 	workflow.Sleep(ctx, time.Minute*5)
-...	
-</pre>
+```
 
 #### Step 2: Run Worker and Start Workflow
 Start worker and run workflow with a starter or tctl.
@@ -100,8 +96,7 @@ Either CTRL-C or stop the worker process after the timer has fired.
 
 #### Step 4: Add New Activity to Workflow (Past)
 Add an additional activity before the timer in workflow.
-<pre>
-...
+```go
 	err := workflow.ExecuteActivity(ctx, ActivityB).Get(ctx, &result)
 	if err != nil {
 		logger.Error("Activity failed.", "Error", err)
@@ -123,8 +118,7 @@ Add an additional activity before the timer in workflow.
 
 	// set timer for 5 minutes
 	workflow.Sleep(ctx, time.Minute*5)
-...
-</pre>		
+```	
 
 #### Step 5: Run Worker
 The workflow is already running, the new worker will pickup the workflow and any currently or future executing activities.
@@ -146,8 +140,7 @@ Steps:
 
 #### Step 1: Add Timer
 Ideally set the timer to a few minutes so you aren't waiting long.
-<pre>
-...
+```go
 	err := workflow.ExecuteActivity(ctx, ActivityB).Get(ctx, &result)
 	if err != nil {
 		logger.Error("Activity failed.", "Error", err)
@@ -162,8 +155,7 @@ Ideally set the timer to a few minutes so you aren't waiting long.
 
 	// set timer for 5 minutes
 	workflow.Sleep(ctx, time.Minute*5)
-...	
-</pre>
+```
 
 #### Step 2: Run Worker and Start Workflow
 Start worker and run workflow with a starter or tctl.
@@ -173,8 +165,7 @@ Either CTRL-C or stop the worker process after the timer has fired.
 
 #### Step 4: Add New Activity to Workflow
 Add an additional activity after the timer in workflow.
-<pre>
-...
+```go
 	err := workflow.ExecuteActivity(ctx, ActivityB).Get(ctx, &result)
 	if err != nil {
 		logger.Error("Activity failed.", "Error", err)
@@ -196,8 +187,7 @@ Add an additional activity after the timer in workflow.
 		logger.Error("Activity failed.", "Error", err)
 		return "", err
 	}
-...
-</pre>		
+```	
 
 #### Step 5: Run Worker
 The workflow is already running, the new worker will pickup the workflow and any currently or future executing activities.
@@ -215,9 +205,9 @@ Lets look at a concrete example. In our versioning workflow we will reset from w
 ![Timer Event Id](/assets/2023-02-02/event_id.png)
 
 Next, using tctl we will reset the workflow from the event_id 18.
-<pre>
+```bash
 $ tctl workflow reset -w versioning-workflow --reason "testing" --event_id 18
-</pre>
+```
 
 The workflow will be reset causing a new workflow execution (runId). Looking at event history of new workflow execution, we can see the point where the reset was performed. Again everything before that point is replayed and everything after is executed.
 
@@ -226,9 +216,9 @@ The workflow will be reset causing a new workflow execution (runId). Looking at 
 ## Queries on Completed Workflows
 Temporal provides the ability to query workflows. Workflows can of course be running or completed. In the case of completed, replay is used to provide user-defined query results for a given workflow when the workflow is no longer in cache.
 In our example, we have defined a query handler that provides a query_type called "state". Using tctl we can query our workflow using the query_type. 
-<pre>
+```bash
 $ tctl workflow query -w versioning-workflow --query_type "state"
-</pre>
+```
 
 ## Summary
 In this article we discussed Temporal replay, one of the resilience feature of Temporal workflows. We provided examples of some of the use cases for replay: testing for backward compatibility, progressing workflows, querying user-defined query types and resetting a workflow from a previous point-in-time. Replay is Temporal's time machine. It is also our safety mechanism to ensure like in "Back to the Future", we don't alter the past, breaking the space-time continuum and landing us in an altered, potentially broken future. 

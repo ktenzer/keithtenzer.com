@@ -21,10 +21,10 @@ Once you have been invited you can log into your Temporal cloud account [Tempora
 Temporal cloud requires mTLS between the Temporal worker (your application) and the Temporal cloud namespace. The mTLS certificate is configured at the namespace level. Temporal has made it easy to create your own mTLS certificates using docker but if your organization has it's own certificate management you will want to use that of course. More information and requirements for generating mTLS certificates can be found [here](https://docs.temporal.io/cloud/how-to-manage-certificates-in-temporal-cloud/).
 
 Generate root CA
-<pre>
+```bash
 $ docker pull temporalio/client-certificate-generation:latest
 $ docker run -v $PWD:/work -it temporalio/client-certificate-generation ca.sh
-</pre>
+```
 
 ### Create namespace
 Now that we have a certificate we can create a namespace. In the Temporal Cloud UI simply click 'create namespace'.
@@ -46,52 +46,67 @@ A temporal worker is built using the Temporal SDK. Java, Typescript, Python and 
 
 ### Configure Go (optional)
 #### Create directory structure for Go in your home directory (optional)
-<pre>$ mkdir -p ~/go/src/github.com</pre>
+```bash
+$ mkdir -p ~/go/src/github.com
+```
 
 #### Install Go (optional)
-<pre>$ sudo dnf install -y go</pre>
+```bash
+$ sudo dnf install -y go
+```
 
 #### Update Profile with Go Environment (optional)
-<pre>
+```bash
 $ vi ~/.bash_profile
 export GOBIN=/home/username
 export GOPATH=/home/username/src
 export EDITOR=vim
-</pre>
+```
 
 ### Build CLI (optional)
 Temporal provides the tctl cli tool for controlling workflows. This can be very handy in addition to the UI.
 
 #### Change directory to temporalio (optional)
-<pre>$ mkdir -p ~/go/src/github.com/temporalio</pre>
-<pre>$ cd ~/go/src/github.com/temporalio</pre>
+```bash
+$ mkdir -p ~/go/src/github.com/temporalio
+```
+```bash
+$ cd ~/go/src/github.com/temporalio
+```
 
 #### Clone Temporal GitHub repository (optional)
-<pre>$ git clone https://github.com/temporalio/temporal.git</pre>
+```bash
+$ git clone https://github.com/temporalio/temporal.git
+```
 
 #### Run tctl Makefile (optional)
-<pre>$ make update-tctl</pre>
+```bash
+$ make update-tctl
+```
 
 #### Copy tctl binary to bin directory (optional)
-<pre>$ sudo cp ~/go/bin/tctl /usr/local/bin</pre>
+```bash
+$ sudo cp ~/go/bin/tctl /usr/local/bin
+```
 
 #### Configure tctl environment variables
-<pre>
+```bash
 export TEMPORAL_CLI_ADDRESS="namespace.accountId.tmprl.cloud:7233"
 export TEMPORAL_CLI_NAMESPACE="namespace.accountId"
 export TEMPORAL_CLI_TLS_CERT="/path/to/ca.pem"
 export TEMPORAL_CLI_TLS_KEY="/path/to/ca.key"
-</pre>
+```
 
 ### Create worker application
 For our worker application, we will use the helloworld example from the Temporal samples-go repository. In order to connect to the Temporal cloud from our worker application we will need to load the mTLS certificate we generated. This will need to be done in the worker and wherever a workflows is being started/signaled/queried.
 
 Clone samples-go repository.
-<pre>$ git clone https://github.com/temporalio/samples-go.git</pre>
+```bash
+$ git clone https://github.com/temporalio/samples-go.git
+```
 
 Update the helloworld/worker/main.go.
-<pre>
-...
+```go
 const clientCertPath string = "/path/to/ca.pem"
 const clientKeyPath string = "/path/to/ca.key"
 
@@ -111,28 +126,28 @@ c, err = client.Dial(client.Options{
 		TLS: &tls.Config{Certificates: []tls.Certificate{cert}},
 	},
 })
-...
-</pre>
+```
 
 
 ## Step 3 - Running Workflow
 Now that our SDK of choice is setup and we have built tctl we are ready to run a workflow.
 
 ### Start application worker
-<pre>$ go run helloworld/worker/main.go 
+```bash
+$ go run helloworld/worker/main.go 
 2022/10/01 11:37:08 INFO  No logger configured for temporal client. Created default one.
 2022/10/01 11:37:09 INFO  Started Worker Namespace keith-temporal-dev.a2dd6 TaskQueue hello-world WorkerID 24469@fedora@
-</pre>
+```
 
 ### Start workflow
 A workflow can be started from the CLI or using the SDK. In this example we will use the SDK starter provided by the helloworld sample.
 
-<pre>
+```bash
 $ go run helloworld/starter/main.go 
 2022/10/01 11:37:31 INFO  No logger configured for temporal client. Created default one.
 2022/10/01 11:37:32 Started workflow WorkflowID hello_world_workflowID RunID cd7ee191-e812-4206-8dee-0e1cd420445b
 2022/10/01 11:37:32 Workflow result: Hello Temporal!
-</pre>
+```
 
 ### View workflow results
 Once workflow executes we can view its results in the UI. Simply select workflows.

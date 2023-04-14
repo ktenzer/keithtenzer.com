@@ -53,33 +53,33 @@ Upload the certificate chain to your Temporal Cloud namespace.
 ## Validate Certificate
 Using openssl, validate the client certificate, private key and pem against the chain stored in our Temporal Cloud namespace. You will be prompted to enter the passphrase.
 
-<pre>
+```bash
 $ openssl s_client -connect helloworld.sdvdw.tmprl.cloud:7233 --showcerts -cert ./certificate.txt -key ./private_key.txt -tls1_2
 Enter pass phrase for ./private_key.txt:
-</pre>
+```
 
 ## Run Temporal Cloud Worker
 The last step is to run your Temporal Cloud worker using the private certificate key and pem. First we need to create a new private key without the passphrase.
-<pre>
+```bash
 $ openssl pkcs8 --in private_key.txt --out private_key_nopass.txt --passin pass:passphrase
-</pre>
+```
 
 Run Temporal Cloud worker using the pem and private key without passphrase. In this example, the private key and pem have been parameterized, both are passed in via the environment.
-<pre>
+```bash
 TEMPORAL_MTLS_TLS_CERT=/home/ktenzer/temporal/certs/aws/certificate.txt TEMPORAL_MTLS_TLS_KEY=/home/ktenzer/temporal/certs/aws/private_key_nopass.txt go run helloworld/worker/main.go 
 2023/03/06 13:02:43 INFO  No logger configured for temporal client. Created default one.
 2023/03/06 13:02:43 INFO  Started Worker Namespace helloworld.sdvdw TaskQueue hello-world WorkerID 105421@fedora@
-</pre>
+```
 
 ## Troubleshooting
 If you are having issues with the requested certificate being validated, check to ensure that the domain for the certificate resolves properly.
 
-<pre>
+```bash
 $ dig +short _app.tmprl-sa.cloud
 a9a7f4279e8654923b3099439e862622-135847838.us-east-1.elb.amazonaws.com.
 3.229.33.245
 34.231.166.88
-</pre>
+```
 
 If it does not resolve, a CNAME is likely missing in DNS. If using Route53, a CNAME can be added automatically from AWS Certificate Manager.
 

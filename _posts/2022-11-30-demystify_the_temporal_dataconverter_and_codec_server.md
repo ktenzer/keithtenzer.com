@@ -18,7 +18,7 @@ In this article we will provide a step-by-step guide for successfully configurin
 The Data Converter is a component of the Temporal SDK. It is responsible for encoding/decoding of workflows, signals as well as query payloads between the client, Temporal Cloud and worker. Essentially workflows, signals and queries sent to Temporal Cloud are encoded while on the worker side, they are decoded. The Data Converter allows the flexibility to choose your own encryption algorithm and how to deal with encryption keys. You simply need to implement [encode](https://github.com/ktenzer/samples-go/blob/main/codec-server/data_converter.go#L25) and [decode](https://github.com/ktenzer/samples-go/blob/main/codec-server/data_converter.go#L45) functions.
 
 The Data Converter is set in the client options of your worker or application.
-<pre>
+```go
 c, err := client.Dial(client.Options{
 	HostPort:  os.Getenv("TEMPORAL_HOST_URL"),
 	Namespace: os.Getenv("TEMPORAL_NAMESPACE"),
@@ -27,7 +27,7 @@ c, err := client.Dial(client.Options{
 	},
 	DataConverter: codecserver.DataConverter,
 })
- </pre>     
+```   
 
 Search Attributes are not encoded via the Data Converter, as such you should not store sensitive information there. More details on the Data Converter can be found [here](https://docs.temporal.io/concepts/what-is-a-data-converter).
 
@@ -44,41 +44,41 @@ More information on the Codec Server can be found [here](https://docs.temporal.i
 
 ## Deploying Data Converter with the Codec Server
 The provided [example](https://github.com/ktenzer/samples-go/tree/main/codec-server) will work for the Temporal Cloud. First clone the repository.
-<pre>
+```bash
 $ git clone https://github.com/ktenzer/samples-go.git
-</pre>
+```
 
 ### Start Worker using Data Converter
 Set the following environment parameters. 
-<pre>
+```bash
 $ export TEMPORAL_HOST_URL=[Namespace].[AccountId].tmprl.cloud:7233
 $ export TEMPORAL_NAMESPACE=[Namespace].[AccountId]
 $ export TEMPORAL_TLS_CERT=/home/ktenzer/temporal/certs/ca.pem
 $ export TEMPORAL_TLS_KEY=/home/ktenzer/temporal/certs/ca.key
-</pre>
+```
 
 Under the samples-go/codec-server directory start the worker.
-<pre>
+```go
 $ go run worker/main.go
-</pre>
+```
 Note: your Temporal Cloud namespace is [Namespace].[AccountId]. It is visible in the UI when viewing namespaces.
 
 ### Start Workflow using Data Converter
 Set the following environment parameters.
-<pre>
+```bash
 $ export TEMPORAL_HOST_URL=[Namespace].[AccountId].tmprl.cloud:7233
 $ export TEMPORAL_NAMESPACE=[Namespace].[AccountId]
 $ export TEMPORAL_TLS_CERT=/home/ktenzer/temporal/certs/ca.pem
 $ export TEMPORAL_TLS_KEY=/home/ktenzer/temporal/certs/ca.key
-</pre>
+```
 
 Under the samples-go/codec-server directory start the worker.
-<pre>
+```bash
 $ go run starter/main.go
 2022/11/30 12:37:46 INFO  No logger configured for temporal client. Created default one.
 2022/11/30 12:37:46 Started workflow WorkflowID codecserver_workflowID RunID b6137855-d043-46ba-8385-76617296e6ff
 2022/11/30 12:37:47 Workflow result: Received Plain text input
-</pre>
+```
 
 ### Validate Workflow is Encoded
 Connect to the Temporal Cloud [UI](https://cloud.temporal.io/). Under Workflows, select the appropriate namespace.
@@ -90,11 +90,11 @@ Open the workflow and you should see the input payload encoded.
 As you view workflow you will notice all inputs, outputs and results are encoded.
 
 ### Start Codec Server
-<pre>
+```bash
 $ go run ./codec-server/
 Handling namespace: [Namepace].[AccountId]
 CORS enabled for Origin: https://cloud.temporal.io
-</pre>
+```
 
 ### Configure Data Encoder
 The Temporal Cloud UI allows each user to set their own Codec Server (data encoder). The encoder can also be set at namespace level. The user set encoder will override the namespace level.
@@ -106,9 +106,9 @@ Now that we have configured the data encoder, open the workflow again and this t
 
 ![Decoded](/assets/2022-11-30/decoded_workflow.png)
 Additionally the CLI can also be used to view a workflow using the Codec Server endpoint.
-<pre>
+```bash
 $ tctl --codec_endpoint http://localhost:8081 wf show --workflow_id codecserver_workflowID
-</pre>
+```
 
 ### Troubleshooting
 Once you open a workflow the Data Encoder icon will turn either red to indicate an error or green to indicate success.

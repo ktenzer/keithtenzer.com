@@ -23,17 +23,17 @@ Workflow code based versioning involves branching your workflow code. It allows 
 
 ### Default Version Example
 In our original version we will simply execute an activity called ActivityA.
-<pre>
+```go
 err := workflow.ExecuteActivity(ctx, ActivityA).Get(ctx, &result)
 if err != nil {
 	logger.Error("Activity failed.", "Error", err)
 	return "", err
 }
-</pre>
+```
 
 ### Version 1 Example
 Instead of executing ActivityA we now want to execute ActivityB.
-<pre>
+```go
 v := workflow.GetVersion(ctx, "Version1", workflow.DefaultVersion, 1)
 if v == workflow.DefaultVersion {
 	err := workflow.ExecuteActivity(ctx, ActivityA).Get(ctx, &result)
@@ -48,11 +48,11 @@ if v == workflow.DefaultVersion {
 		return "", err
 	}
 }
-</pre>
+```
 
 ### Version 2 Example
 Instead of executing Activity B we now want to execute ActivityB and ActivityC.
-<pre>
+```go
 v := workflow.GetVersion(ctx, "Version2", workflow.DefaultVersion, 2)
 if v == workflow.DefaultVersion {
 	err := workflow.ExecuteActivity(ctx, ActivityA).Get(ctx, &result)
@@ -79,7 +79,7 @@ if v == workflow.DefaultVersion {
 		return "", err
 	}
 }
-</pre>
+```
 
 ### Searching for workflow versions
 A key to understanding when we can remove or consolidate our workflow version code is to find out if all running workflows for a given version are completed (no longer running). As mentioned above in Go the search attribute TemporalChangeVersion is automatically upsertted. It is planned to provide this in other languages but as of now you would need to manually upsert this attribute yourself but that is also simple enough.
@@ -97,22 +97,22 @@ Finally we can remove unneeded versions from our original code block, keeping ou
 Task queue based versioning involves versioning the task queue names. Both the worker and any workflow starter need to pass a task queue name along with a workflow definition. The worker accomplishes this when instantiating a new worker object.
 
 The name of the task queue is versioning. 
-<pre>
+```go
 w := worker.New(c, "versioning", worker.Options{})
-</pre>
+```
 
 In order to version using task queue you will want to create a new task queue for each version of the workflow.
-<pre>
+```go
 w := worker.New(c, "versioning-v1", worker.Options{})
-</pre>
+```
 
 You will also need to update any workflow starters which pass the task queue name through workflowOptions.
-<pre>
+```go
 workflowOptions := client.StartWorkflowOptions{
 	ID:        "versioning-workflowId",
 	TaskQueue: "versioning-v1",
 }
-</pre>
+```
 
 In order to determine what versions of the workflow are running you can check the workflows workers. This will show the task queue (your version) and any workers that are polling against that task queue.
 
@@ -122,17 +122,17 @@ In order to determine what versions of the workflow are running you can check th
 Workflow name based versioning is very similar to task queue based versioning. Both the worker and starter need to be updated whenever a new version is created as both load the workflow definition. Each time you create a new version you will simply create a new workflow definition file with a v1, v2, etc.
 
 In the worker you would need to change the registration of the workflow and activities.
-<pre>
-	w.RegisterWorkflow(versioning-v1.Workflow)
-	w.RegisterActivity(versioning-v1.ActivityA)
-	w.RegisterActivity(versioning-v1.ActivityB)
-	w.RegisterActivity(versioning-v1.ActivityC)
-</pre>	
+```go
+w.RegisterWorkflow(versioning-v1.Workflow)
+w.RegisterActivity(versioning-v1.ActivityA)
+w.RegisterActivity(versioning-v1.ActivityB)
+w.RegisterActivity(versioning-v1.ActivityC)
+```	
 
 In the starter you will need to update the ExecuteWorkflow call with the new workflow definition.
-<pre>
+```go
 we, err := c.ExecuteWorkflow(context.Background(), workflowOptions, versioning-v1.Workflow, "Temporal")
-</pre>
+```
 
 Of course just doing this alone makes it hard to determine what versions are running, in addition you might also consider reflecting the version in the workflow type or workflowId.
 
