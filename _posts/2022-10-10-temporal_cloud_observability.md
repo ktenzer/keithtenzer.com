@@ -66,7 +66,7 @@ Note: naming the dashboard grafana will configure graphs to be randomWalk which 
 ![Datasource](/assets/2022-10-10/datasource.png)
 
 ## Importing Dashboard
-Now that our datasource exists we can import the Grafana dashboard by clicking Dashboard->Import. The Dashboard Json file is available [here](https://gist.github.com/ktenzer/1ab2f0ea5b8c98b9d340bc3ab87477ce).
+Now that our datasource exists we can import the Grafana dashboard by clicking Dashboard->Import. The Dashboard Json file is available [here](https://github.com/temporalio/dashboards/blob/master/cloud/temporal_cloud.json).
 
 ![Upload Json File](/assets/2022-10-10/upload.png)
 
