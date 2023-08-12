@@ -17,10 +17,10 @@ In this article we will look at how to rotate certificates in Temporal cloud. Th
 
 In Scenario 1, we need to not only rotate the cloud CA certificate but also rotate any client leaf certificates generated using the CA. In Scenario 2, only new client leaf certificates need to be rotated. 
 
-Usually it makes sense to rotate the client leaf certificates more frequently, maybe monthly, weekly, or even daily. The cloud CA certificate can be rotated more infrequently, for example, yearly. Since each scenario is a bit different, you will want to obviously automate both. 
+Usually, it makes sense to rotate the client leaf certificates more frequently, maybe monthly, weekly, or even daily. The cloud CA certificate can be rotated more infrequently, for example, yearly. Since each scenario is a bit different, you will want to obviously automate both. 
 
 ## Scenario 1: Rotate Cloud CA Certificate
-In this scenario, the cloud CA certificate is expiring and needs to be replaced. Temporal will notify customers of such events 10 days prior to certificate expiration via email. You can setup an email filter or just be on lookout for emails from ```noreply@temporal.io``` or with subject ```[Temporal Cloud] Action Required: CA Certificate Expiring Soon```.
+In this scenario, the cloud CA certificate is expiring and needs to be replaced. Temporal will notify customers of such events, 10 days prior to certificate expiration via email. You can setup an email filter, or just be on lookout for emails from ```noreply@temporal.io```, or with subject ```[Temporal Cloud] Action Required: CA Certificate Expiring Soon```.
 
 ### Generate New CA Certificate
 There are of course many options for generating self-signed certificates. Below I will cover certstrap and tcld. Certstrap allows for more flexibility and options, however, tcld is the standard cli from Temporal for managing Temporal cloud namespaces.
