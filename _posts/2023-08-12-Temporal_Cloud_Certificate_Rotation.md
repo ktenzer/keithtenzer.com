@@ -90,11 +90,11 @@ $ kubectl create secret tls temporal-booking-tls --key /path/to/temporal-booking
 
 Restart workers by scaling deployment.
 ```bash
-kubectl scale deployment temporal-booking replicas 0 -n temporal-booking
+$ kubectl scale deployment temporal-booking replicas 0 -n temporal-booking
 ```
 
 ```bash
-kubectl scale deployment temporal-booking replicas 3 -n temporal-booking
+$ kubectl scale deployment temporal-booking replicas 3 -n temporal-booking
 ```
 
 ## Remove Cloud CA Certificate
