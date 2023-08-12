@@ -13,7 +13,7 @@ tags:
 ## Overview
 In this article we will look at how to rotate certificates in Temporal cloud. There are two possible certificate rotation scenarios.
 - Scenario 1: Rotate Cloud CA Certificate
-- Scenario 2: Rotate Client Certificate
+- Scenario 2: Rotate Client Leaf Certificate
 
 In Scenario 1, we need to not only rotate the cloud CA certificate but also rotate any client leaf certificates generated using the CA. In Scenario 2, only new client leaf certificates need to be rotated. 
 
