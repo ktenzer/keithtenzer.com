@@ -69,12 +69,14 @@ Next we will schedule the above workflow to run every 5 minutes. In addition to 
 $ tctl schedule create --interval 5m --workflow_id hello_world_workflowID --taskqueue hello-world  --workflow_type Workflow --sid 123
 ```
 
+![Create Schedule](/assets/2022-10-20/create-schedule.png)
+
 ### Viewing Schedule
 Using the new schedule widget in the UI navigation bar we can see schedules listed by their corresponding schedule id.
-![View of Schedules](/assets/2022-10-20/schedules.png)
+![View of Schedules](/assets/2022-10-20/view-schedule.png)
 
 From here we can drill into a schedule to see it's details. We can also see the result of recent runs and even schedule time for future upcoming runs.
-![View of Schedule](/assets/2022-10-20/schedule_view.png)
+![View of Schedule](/assets/2022-10-20/schedule-details.png)
 
 The schedule can even be paused or resumed. 
 
