@@ -66,7 +66,7 @@ $ tctl wf l
 Next we will schedule the above workflow to run every 5 minutes. In addition to the information gathered by tctl we will also need to provide a schedule id (sid).
 
 ```bash
-$ tctl schedule create --cron "0/5 * * * *" --workflow_id hello_world_workflowID --taskqueue hello-world  --workflow_type Workflow --sid 123
+$ tctl schedule create --interval 5m --workflow_id hello_world_workflowID --taskqueue hello-world  --workflow_type Workflow --sid 123
 ```
 
 ### Viewing Schedule
