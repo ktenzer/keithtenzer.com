@@ -25,10 +25,13 @@ Update is a real game changer as it unlocks new use cases and possibilities for 
 ## How Update Works?
 Temporal Update has four phases.
 
-**Admission** Update request is admitted as long as no [limits](https://docs.temporal.io/kb/temporal-platform-limits-sheet) are breached. 
-**Validation** Optionally update input arguments can be validated and accepted or rejected.
-**Execution** Update is executed and delivered to the worker update handler, WorkflowExecutionUpdateAcceptedEvent added to event history.
-**Completion** Update handler result returned from worker, WorkflowExecutionUpdateCompletedEvent added to event history.
+**Admission:** Update request is admitted as long as no [limits](https://docs.temporal.io/kb/temporal-platform-limits-sheet) are breached. 
+
+**Validation:** Optionally Update input arguments can be validated and accepted or rejected.
+
+**Execution:** Update is executed and delivered to the worker Update handler, WorkflowExecutionUpdateAcceptedEvent added to event history.
+
+**Completion:** Update handler result returned from worker, WorkflowExecutionUpdateCompletedEvent added to event history.
 
 Update is currently a synchronous call, however it is planned to have an asynchronous version of the API in the future. In addition, the only way to call Update between workflows is to use an activity. It is planned to provide an API to call updates between workflows, similar to how Signal works today.
 
@@ -45,13 +48,13 @@ $ temporal server start-dev --dynamic-config-value frontend.enableUpdateWorkflow
 If you are using Temporal cloud, contact the sales team.
 
 ## Replacing Signal/Query with Update
-As mentioned, Update really simplifies interactions between workflows or applications and workflows. Prior to update, we would have to Signal a workflow to mutate it's state and then Query that workflow using polling or possibly Signal back after the mutation has completed. Polling with a Query isn't efficient and Signaling does not provide a response or any kind of validation. Now with update all of these problems are solved, so lets take look.
+As mentioned, Update really simplifies interactions between workflows or applications and workflows. Prior to Update, we would have to Signal a workflow to mutate it's state and then Query that workflow using polling or possibly Signal back after the mutation has completed. Polling with a Query isn't efficient and Signaling does not provide a response or any kind of validation. Now with Update all of these problems are solved, so lets take look.
 
-The below illustration shows workflow interactions for a trivia game application built on Temporal. Players are added to the game workflow, through the player workflow. In order to add a player the following steps are required:
-- Moderate to ensure player name is not flagged through profanity filters
-- Query to check player is unique and not already added to game
-- Signal to add the player to the game
-- Query to check to ensure player is added
+The below illustration shows workflow interactions for a trivia game application built on Temporal. Players are added to the game workflow through the player workflow. In order to add a player the following steps are required:
+- Moderate to ensure player name is not flagged through profanity filters.
+- Query to check player is unique and not already added to game.
+- Signal to add the player to the game.
+- Query to check to ensure player is added.
 
 ![Trivia w/Signal and Query](/assets/2023-11-20/trivia-game-signal_query.png)
 
@@ -61,7 +64,7 @@ Now let's look at this same diagram using the new Update primitive.
 
 ![Trivia w/Update](/assets/2023-11-20/trivia-game-update.png)
 
-Using Update, we are able to validate a player being unique as part of the same call instead of separately. In addition we reduced Temporal primitive calls from three to just one. FInally, we were able to remove inefficient polling.
+Using Update, we are able to validate a player being unique as part of the same call instead of separately. In addition we reduced Temporal primitive calls from three to just one. Finally, we were able to remove inefficient polling.
 
 ### Query/Signal/Query Code (old)
 The old code before Update.
@@ -190,7 +193,7 @@ func AddPlayerWorkflow(ctx workflow.Context, workflowInput resources.AddPlayerWo
 	return nil
 }
 ```
-The entire pull request for switching to update can be viewed [here](https://github.com/ktenzer/temporal-trivia/commit/9c4ab8bd0d83ee590c94898051689bb13a4be458).
+The entire pull request for switching to Update can be viewed [here](https://github.com/ktenzer/temporal-trivia/commit/9c4ab8bd0d83ee590c94898051689bb13a4be458).
 
 ## Summary
 In this article we discussed the new Temporal primitive Update. We talked about how Update works and also provided a real-world example of switching to Update from Signal/Query. I am excited to see what new Temporal patterns and use cases the Update primitive unlocks. 
