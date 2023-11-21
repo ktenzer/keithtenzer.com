@@ -64,139 +64,87 @@ Now let's look at this same diagram using the new Update primitive.
 
 ![Trivia w/Update](/assets/2023-11-20/trivia-game-update.png)
 
-Using Update, we are able to validate a player being unique as part of the same call instead of separately. In addition we reduced Temporal primitive calls from three to just one. Finally, we were able to remove inefficient polling.
+## Implementing Update
+To implement Update we need to create an Update handler for receiving the update and optionally validating Update arguments. We also need to send the Update using the client. The game workflow will implement the Update handler and the player workflow will send the Update.
 
-### Query/Signal/Query Code (old)
-The old code before Update.
+### Implementing Update Handle
+For the game workflow, we need to validate new players being added to the game to ensure they are unique and don't already exist. If validation succeeds we will add the player to the players map which is maintaining state of players in the game.
+
+Note: we are implementing validation using an anonymous Go func. The reason is so that the validation function has access to the players map which is set outside of the handler.
 
 ```go
-// Add player workflow definition
-func AddPlayerWorkflow(ctx workflow.Context, workflowInput resources.AddPlayerWorkflowInput) error {
-	logger := workflow.GetLogger(ctx)
-	logger.Info("Trivia Game Started")
+// Setup update handler to perform player validation and add player to game state machine
+func updatePlayer(ctx workflow.Context, players map[string]resources.Player) error {
 
-	// Activity options
-	ctx = workflow.WithActivityOptions(ctx, setDefaultActivityOptions())
-	laCtx := workflow.WithLocalActivityOptions(ctx, setDefaultLocalActivityOptions())
+	err := workflow.SetUpdateHandlerWithOptions(
+		ctx,
+		"AddPlayer",
+		func(ctx workflow.Context, player string) error {
+			score := resources.Player{
+				Score: 0,
+			}
 
-	activityInput := resources.QueryPlayerActivityInput{
-		WorkflowId:      workflowInput.GameWorkflowId,
-		Player:          workflowInput.Player,
-		NumberOfPlayers: workflowInput.NumberOfPlayers,
-		QueryType:       "normal",
-	}
+			players[player] = score
+			return nil
+		},
+		workflow.UpdateHandlerOptions{Validator: func(player string) error {
+			log := workflow.GetLogger(ctx)
 
-	// run activity to check for valid name
-	moderationInput := resources.ModerationInput{
-		Url:  os.Getenv("MODERATION_URL"),
-		Name: workflowInput.Player,
-	}
+			if _, ok := players[player]; ok {
+				log.Debug("Rejecting player, already exists", "Player", player)
+				return errors.New("Player " + player + " already exists")
+			}
 
-	// run moderation activity to check provided name
-	var moderationResult bool
-	modErr := workflow.ExecuteActivity(ctx, activities.ModerationActivity, moderationInput).Get(ctx, &moderationResult)
-	if modErr != nil {
-		logger.Error("Moderation Activity failed.", "Error", modErr)
-		return modErr
-	}
+			log.Debug("Adding player update accepted", "Player", player)
 
-	if moderationResult {
-		return errors.New("Player name is invalid")
-	}
+			return nil
+		},
+		},
+	)
 
-	// Check if player is unique or already exists
-	var isPlayer bool
-	err := workflow.ExecuteLocalActivity(laCtx, activities.QueryPlayerActivity, activityInput).Get(laCtx, &isPlayer)
-	if err != nil {
-		logger.Error("Query Player Activity failed.", "Error", err)
-		return err
-	}
-
-	if isPlayer {
-		return errors.New("Player " + workflowInput.Player + " already exists or game full!")
-	}	
-
-	// Add player via signal
-	addPlayerSignal := PlayerSignal{
-		Action: "Player",
-		Player: workflowInput.Player,
-	}
-
-	err = workflow.SignalExternalWorkflow(ctx, workflowInput.GameWorkflowId, "", "add-player-signal", addPlayerSignal).Get(ctx, nil)
 	if err != nil {
 		return err
-	}
-
-	// Ensure player is added to game
-	activityInput = resources.QueryPlayerActivityInput{
-		WorkflowId: workflowInput.GameWorkflowId,
-		Player:     workflowInput.Player,
-		QueryType:  "poll",
-	}
-
-	err = workflow.ExecuteLocalActivity(laCtx, activities.QueryPlayerActivity, activityInput).Get(laCtx, &isPlayer)
-	if err != nil {
-		logger.Error("Query Player Activity failed before adding to game.", "Error", err)
-		return err
-	}
-
-	if !isPlayer {
-		return errors.New("Player " + workflowInput.Player + " could not be added to the game")
 	}
 
 	return nil
 }
 ```
 
-### Update Code (new)
-The new code after Update.
+### Implementing Update Call from Client
+Once our Update handler exists we can send the game workflow an update. This will happen from the player workflow.
+
+Note: Update cannot yet be sent directly from workflow to workflow in workflow code so we are doing so using an Activity.
 
 ```go
-// Add player workflow definition
-func AddPlayerWorkflow(ctx workflow.Context, workflowInput resources.AddPlayerWorkflowInput) error {
-	logger := workflow.GetLogger(ctx)
-	logger.Info("Trivia Game Started")
+func AddPlayerActivity(ctx context.Context, activityInput resources.AddPlayerActivityInput) error {
+	logger := activity.GetLogger(ctx)
+	logger.Info("GetRandomCategoryActivity")
 
-	// Activity options
-	ctx = workflow.WithActivityOptions(ctx, setDefaultActivityOptions())
-	laCtx := workflow.WithLocalActivityOptions(ctx, setDefaultLocalActivityOptions())
-
-	activityAddPlayerInput := resources.AddPlayerActivityInput{
-		WorkflowId: workflowInput.GameWorkflowId,
-		Player:     workflowInput.Player,
-	}
-
-	// run activity to check player name against moderation api
-	moderationInput := resources.ModerationInput{
-		Url:  os.Getenv("MODERATION_URL"),
-		Name: workflowInput.Player,
-	}
-
-	var moderationResult bool
-	modErr := workflow.ExecuteActivity(ctx, activities.ModerationActivity, moderationInput).Get(ctx, &moderationResult)
-	if modErr != nil {
-		logger.Error("Moderation Activity failed.", "Error", modErr)
-		return modErr
-	}
-
-	if moderationResult {
-		return errors.New("Player name is invalid")
-	}	
-
-	// Call update through activity to add a player
-	err := workflow.ExecuteLocalActivity(laCtx, activities.AddPlayerActivity, activityAddPlayerInput).Get(laCtx, nil)
-
+	c, err := client.Dial(resources.GetClientOptions("workflow"))
 	if err != nil {
-		return errors.New(err.Error())
+		return err
+	}
+	defer c.Close()
+
+	updateHandle, err := c.UpdateWorkflow(context.Background(), activityInput.WorkflowId, "", "AddPlayer", activityInput.Player)
+	if err != nil {
+		return err
+	}
+	var updateResult bool
+	err = updateHandle.Get(context.Background(), &updateResult)
+	if err != nil {
+		return err
 	}
 
 	return nil
+
 }
 ```
+
 The entire pull request for switching to Update can be viewed [here](https://github.com/ktenzer/temporal-trivia/commit/9c4ab8bd0d83ee590c94898051689bb13a4be458).
 
 ## Summary
-In this article we discussed the new Temporal primitive Update. We talked about how Update works and also provided a real-world example of switching to Update from Signal/Query. I am excited to see what new Temporal patterns and use cases the Update primitive unlocks. 
+In this article we discussed the new Temporal primitive Update. We talked about how Update works and also provided a real-world example of switching to Update from Signal/Query. Using Update, we were able to validate a player being unique as part of the same call instead of separately. In addition we reduced Temporal primitive calls from three to just one. Finally, we were able to remove inefficient polling. I am excited to see what new Temporal patterns and use cases the Update primitive unlocks. 
 
 (c) 2023 Keith Tenzer
 
