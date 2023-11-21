@@ -75,7 +75,6 @@ Note: we are implementing validation using an anonymous Go func. The reason is s
 ```go
 // Setup update handler to perform player validation and add player to game state machine
 func updatePlayer(ctx workflow.Context, players map[string]resources.Player) error {
-
 	err := workflow.SetUpdateHandlerWithOptions(
 		ctx,
 		"AddPlayer",
