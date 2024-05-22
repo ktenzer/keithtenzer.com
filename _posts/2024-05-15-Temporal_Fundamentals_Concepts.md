@@ -17,7 +17,7 @@ tags:
 This is a five part series focused on Temporal fundamentals. It represents, in my words, what I have learned along the way and what I would've like to know on day one.
 
 - [Temporal Fundamentals Part I: Basics](https://keithtenzer.com/temporal/Temporal_Fundamentals_Basics)
-- [Temporal Fundamentals Part II: Concepts](https://keithtenzer.com/temporal/Temporal_Fundamentals_Basics)
+- [Temporal Fundamentals Part II: Concepts](https://keithtenzer.com/temporal/Temporal_Fundamentals_Concepts/)
 - Temporal Fundamentals Part III: Timeouts
 - Temporal Fundamentals Part IV: Workflows
 - Temporal Fundamentals Part V: Workers
