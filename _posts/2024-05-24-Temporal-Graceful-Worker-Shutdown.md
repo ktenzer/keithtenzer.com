@@ -100,7 +100,7 @@ public WorkerOptionsCustomizer customWorkerOptions() {
 
 The sticky task queue drain timeout should be shorter than the RPC long poll timeout. The recommendation is 5 seconds. 
 
-In this example, we have chosen to give graceful shutdown (awaitTermination) 20 seconds to complete. As such, the RPC long poll timeout (setRpcLongPollTimeout) should be 15 seconds which should be shorter than the awaitTermination period. Finally, we have given 10 seconds to complete any workflow tasks (setStickyTaskQueueDrainTimeout). The setStickyTaskQueueDrainTimeout should be shorter than setRpcLongPollTimeout.
+In this example, we have chosen to give graceful shutdown (awaitTermination) 20 seconds to complete. We have given 15 seconds to complete any workflow tasks (setStickyTaskQueueDrainTimeout). The setStickyTaskQueueDrainTimeout should be shorter than awaitTermination. Finally, the RPC long poll timeout (setRpcLongPollTimeout) is configured as 10 seconds which should be shorter than the setStickyTaskQueueDrainTimeout.
 
 ## Demonstrating Graceful Shutdown
 Together with my colleague Peter Sullivan we created a [Graceful Worker Shutdown Example](https://github.com/pvsone/temporal-java-shutdown) that show cases Temporal graceful worker shutdown. In our example, we have set max retries for activities to 1. This means if a single activity times out due to shutdown or anything else the corresponding workflow would fail.
