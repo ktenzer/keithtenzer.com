@@ -9,6 +9,7 @@ tags:
 - Queues
 - Determinism
 - Timeouts
+- Basics
 ---
 
 ![Temporal](/assets/2022-08-15/logo-temporal-with-copy.svg)
@@ -17,7 +18,7 @@ This is a five part series focused on Temporal fundamentals. It represents, in m
 
 - [Temporal Fundamentals Part I: Basics](https://keithtenzer.com/temporal/Temporal_Fundamentals_Basics)
 - [Temporal Fundamentals Part II: Concepts](https://keithtenzer.com/temporal/Temporal_Fundamentals_Concepts/)
-- Temporal Fundamentals Part III: Timeouts
+- [Temporal Fundamentals Part III: Timeouts](https://keithtenzer.com/temporal/Temporal_Fundamentals_Timeouts/)
 - Temporal Fundamentals Part IV: Workflows
 - Temporal Fundamentals Part V: Workers
 
