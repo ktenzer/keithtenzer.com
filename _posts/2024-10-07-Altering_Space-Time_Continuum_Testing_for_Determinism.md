@@ -114,7 +114,7 @@ public class TemporalWorkerSelfReplay {
 Taking things a step further, instead of relying on every developer to test their Workflow code for Non-Determinism, wouldn't it be better to ensure this critical test happens as part of CI/CD?
 
 #### Step 1: Run a Workflow
-First, let's run a Temporal Workflow using a k8s job. The below sample, will launch a Worker and start a Temporal HelloWorkflow Workflow using [v1](https://github.com/temporal-sa/temporal-replayer/blob/v1/src/main/java/io/temporal/samples/replay/Hello.java) code.
+First, let's run a one-time Temporal Workflow using a k8s job, as we need an event history to perform a replay test. The below sample, will launch a Worker and start a Temporal HelloWorkflow Workflow using [v1](https://github.com/temporal-sa/temporal-replayer/blob/v1/src/main/java/io/temporal/samples/replay/Hello.java) code.
 
   ```bash
   $ kubectl create -f yaml/job.yaml -n namespace
@@ -165,13 +165,13 @@ spec:
   ```
 
 #### Step 2: Run Worker Deployment with Replay Test (v1)
-Using the above WorkflowReplayer sample, a docker image is generated and the replay test is performed, prior to any deployment rollout. The replay test **succeeds** as the [v1 code path](https://github.com/temporal-sa/temporal-replayer/blob/v1/src/main/java/io/temporal/samples/replay/Hello.java#L113) is the same as the pre-recorded event history from step 1.
+Using the WorkflowReplayer sample, a docker image is launched and within it a replay test is performed, prior to actual Worker deployment rollout. This is done using an init container. The replay test **succeeds** as the [v1 code path](https://github.com/temporal-sa/temporal-replayer/blob/v1/src/main/java/io/temporal/samples/replay/Hello.java#L113) is the same as the pre-recorded event history from step 1.
 
 ```bash
 $ kubectl -f yaml/deployment-v1.yaml -n namespace
 ```
 
-The below sample, shows how to use an init container within a deployment for executing replay test against v1 code. 
+Below is the k8s deployment config for executing replay test against v1 code. 
 
 ```yaml
 apiVersion: apps/v1
@@ -265,13 +265,13 @@ spec:
 ```
 
 #### Step 3: Run Worker Deployment with Replay Test (v2)
-Using the above WorkflowReplayer sample, a docker image is generated and the replay test is performed, prior to any deployment rollout. The replay test **fails** as the [v2 code path](https://github.com/temporal-sa/temporal-replayer/blob/v2/src/main/java/io/temporal/samples/replay/Hello.java#L113) is not the same as the pre-recorded event history from step 1.
+Using the WorkflowReplayer sample, a docker image is launched and within it a replay test is performed, prior to actual Worker deployment rollout. This is done using an init container. The replay test **fails** as the [v2 code path](https://github.com/temporal-sa/temporal-replayer/blob/v2/src/main/java/io/temporal/samples/replay/Hello.java#L113) is not the same as the pre-recorded event history from step 1.
 
 ```bash
 $ kubectl create -f yaml/deployment-v2.yaml -n namespace
 ```
 
-The below sample, shows how to use an init container within a deployment for executing replay test against v2 code.
+Below is the k8s deployment config for executing replay test against v2 code. 
 
 ```yaml
 apiVersion: apps/v1
