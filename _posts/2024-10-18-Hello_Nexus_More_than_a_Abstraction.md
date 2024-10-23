@@ -43,7 +43,7 @@ Nexus is used to call a Workflow, Workflow primitive (Signal/Update/Query) or ev
 First, create a service for the Nexus endpoint. Nexus allows developers to define API contracts. The below snippet, shows how to create Nexus service and define service inputs or outputs.
 
 ```go
-const ServiceName = "my-service"
+const ServiceName = "myNexusEndpoint"
 const OperationName = "my-op"
 
 type Input struct {
@@ -89,7 +89,7 @@ Now that we have defined a Nexus service, handler and registered it with a worke
 
 ```go
 var op workflow.NexusOperationExecution
-service := workflow.NewNexusClient(os.Getenv("NEXUS_ENDPOINT"), app.ServiceName)
+service := workflow.NewNexusClient("myNexusEndpoint", app.ServiceName)
 
 nf := service.ExecuteOperation(ctx, app.OperationName, Input, workflow.NexusOperationOptions{})
 f = nf
