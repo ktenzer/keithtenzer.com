@@ -76,26 +76,26 @@ As with Temporal Workflows and activities, Nexus services must be registered wit
 Note: you will also need to register any Workflows or Activities that the Nexus operation should trigger.
 
 ```go
-	service := nexus.NewService(app.ServiceName)
-	err = service.Register(handler.NexusWorkflowOperation)
-	if err != nil {
-		log.Fatalln("Unable to register operations", err)
-	}
-	w.RegisterNexusService(service)
+service := nexus.NewService(app.ServiceName)
+err = service.Register(handler.NexusWorkflowOperation)
+if err != nil {
+	log.Fatalln("Unable to register operations", err)
+}
+w.RegisterNexusService(service)
 ```
 
 ### Calling a Nexus from Workflow
 Now that we have defined a Nexus service, handler and registered it with a worker, we can call it from a Workflow. The below snippet, shows how to execute a Nexus Operation and provide back an Operation Id.
 
 ```go
-		var op workflow.NexusOperationExecution
-		service := workflow.NewNexusClient(os.Getenv("NEXUS_SHIPPING_ENDPOINT"), app.ServiceName)
+var op workflow.NexusOperationExecution
+service := workflow.NewNexusClient(os.Getenv("NEXUS_SHIPPING_ENDPOINT"), app.ServiceName)
 
-		nf := service.ExecuteOperation(ctx, app.OperationName, Input, workflow.NexusOperationOptions{})
-		f = nf
+nf := service.ExecuteOperation(ctx, app.OperationName, Input, workflow.NexusOperationOptions{})
+f = nf
 
-		nf.GetNexusOperationExecution().Get(ctx, &op)
-		logger.Info(" Started Nexus Operation: " + op.OperationID)
+nf.GetNexusOperationExecution().Get(ctx, &op)
+logger.Info(" Started Nexus Operation: " + op.OperationID)
 ```
 
 A more detailed example can be seen in [Temporal Order Management Demo](https://github.com/temporal-sa/temporal-order-management-demo/tree/main/go/nexus).
