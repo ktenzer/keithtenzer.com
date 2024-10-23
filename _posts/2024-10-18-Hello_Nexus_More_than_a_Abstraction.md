@@ -65,7 +65,7 @@ var NexusWorkflowOperation = temporalnexus.NewWorkflowRunOperation(
 	app.OperationName,
 	workflows.MyWorkflow,
 	func(ctx context.Context, input app.Input, soo nexus.StartOperationOptions) (client.StartWorkflowOptions, error) {
-		return client.StartWorkflowOptions{ID: fmt.Sprintf("shipment-%v", input.Item.Id)}, nil
+		return client.StartWorkflowOptions{ID: fmt.Sprintf("workflow-%v", input.Item.Id)}, nil
 	},
 )
 ```
@@ -89,7 +89,7 @@ Now that we have defined a Nexus service, handler and registered it with a worke
 
 ```go
 var op workflow.NexusOperationExecution
-service := workflow.NewNexusClient(os.Getenv("NEXUS_SHIPPING_ENDPOINT"), app.ServiceName)
+service := workflow.NewNexusClient(os.Getenv("NEXUS_ENDPOINT"), app.ServiceName)
 
 nf := service.ExecuteOperation(ctx, app.OperationName, Input, workflow.NexusOperationOptions{})
 f = nf
