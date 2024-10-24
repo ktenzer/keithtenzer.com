@@ -158,7 +158,7 @@ try {
 }
 ```
 
-A more complete example of using batch operations can be found in our [pause-resume-compensate](/sample/SampleIntController.java) sample.
+A more complete example of using batch operations can be found in our [pause-resume-compensate](https://github.com/temporalio/temporal-pause-resume-compensate/blob/main/src/main/java/io/temporal/sample/SampleIntController.java) sample.
 
 ## Summary
 In this article we discussed the different types of batch operations Temporal Cloud offers. Batch operations are very powerful and let you take action on many, many workflows at the same time while also providing an important throttling mechanism. They are powered by the visibility API, enabling a query language to narrow down exactly what workflows should be targeted. Examples of how to run batch terminate, signal, and reset were provided in Java. Finally, it was also demonstrated how batch operations could be managed and even themselves, terminated.
