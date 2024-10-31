@@ -29,7 +29,7 @@ This article will focus on understanding Temporal Workflow design recommendation
 ![Temporal Workflow](/assets/2024-10-31/workflow.png)
 
 ## Limits
-Temporal achieves its breathtaking scale, by its ability, to execute billions upon billions of Workflows. However, each Workflow has its [limits](https://docs.temporal.io/cloud/limits#programming-model-level) and it is important to understand them, when doing Workflow design.
+Temporal achieves its breathtaking scale, by its ability to execute billions upon billions of Workflows. However, each Workflow has its [limits](https://docs.temporal.io/cloud/limits#programming-model-level) and it is important to understand them, when doing Workflow design.
 
 ## Determinism
 Workflows must be deterministic, Workflows can and will be replayed. Every Workflow replay must follow the same code path, for events that already ocurred in its execution history. 
