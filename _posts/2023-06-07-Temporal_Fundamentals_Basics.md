@@ -19,8 +19,9 @@ This is a five part series focused on Temporal fundamentals. It represents, in m
 - [Temporal Fundamentals Part I: Basics](https://keithtenzer.com/temporal/Temporal_Fundamentals_Basics)
 - [Temporal Fundamentals Part II: Concepts](https://keithtenzer.com/temporal/Temporal_Fundamentals_Concepts/)
 - [Temporal Fundamentals Part III: Timeouts](https://keithtenzer.com/temporal/Temporal_Fundamentals_Timeouts/)
-- Temporal Fundamentals Part IV: Workflows
-- Temporal Fundamentals Part V: Workers
+- [Temporal Fundamentals Part IV: Workflows](https://keithtenzer.com/temporal/Temporal_Fundamentals_Workflows/)
+- Temporal Fundamentals Part V: Temporal Workflow Patterns
+- Temporal Fundamentals Part VI: Workers
 
 ## The Problem
 In today's world we use APIs and those APIs are inherently unreliable. To perform higher level business processes or operations, we often need several APIs, which in turn are spread across many distributed and disparate systems. Any failure leads to an inconsistent state requiring recovery. While of course we can deal with this challenge,  building reliability into systems is more than a full time job for developers and we won't do it better than Temporal. 
