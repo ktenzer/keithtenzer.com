@@ -21,7 +21,7 @@ This is a six part series focused on Temporal fundamentals. It represents, in my
 - [Temporal Fundamentals Part II: Concepts](https://keithtenzer.com/temporal/Temporal_Fundamentals_Concepts/)
 - [Temporal Fundamentals Part III: Timeouts](https://keithtenzer.com/temporal/Temporal_Fundamentals_Timeouts/)
 - [Temporal Fundamentals Part IV: Workflows](https://keithtenzer.com/temporal/Temporal_Fundamentals_Workflows/)
-- Temporal Fundamentals Part V: Workflow Patterns
+- [Temporal Fundamentals Part V: Workflow Patterns](https://keithtenzer.com/temporal/Temporal_Fundamentals_Workflow_Patterns/)
 - Temporal Fundamentals Part VI: Workers
 
 This article will focus on understanding timeouts and their impact on Temporal workflow execution. 
