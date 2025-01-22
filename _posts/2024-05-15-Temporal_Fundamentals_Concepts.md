@@ -22,7 +22,7 @@ This is a six part series focused on Temporal fundamentals. It represents, in my
 - [Temporal Fundamentals Part III: Timeouts](https://keithtenzer.com/temporal/Temporal_Fundamentals_Timeouts/)
 - [Temporal Fundamentals Part IV: Workflows](https://keithtenzer.com/temporal/Temporal_Fundamentals_Workflows/)
 - [Temporal Fundamentals Part V: Workflow Patterns](https://keithtenzer.com/temporal/Temporal_Fundamentals_Workflow_Patterns/)
-- Temporal Fundamentals Part VI: Workers
+- [Temporal Fundamentals Part VI: Workers](https://keithtenzer.com/temporal/Temporal_Fundamentals_Workers/)
 
 ## Workflows as Code
 In Temporal, workflows are code. There are no DSLs, DAGs, YAML, JSON or any other form of application domain specific language. You write your workflows in the programming language of your choice: Java, Typescript, Cotlin, Go, .NET, Python or PHP. This contrasts to many other workflow orchestration engines such as conductor, airflow, Argo, Camunda, Dagster and the list goes on.

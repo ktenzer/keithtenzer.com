@@ -22,7 +22,7 @@ This is a six part series focused on Temporal fundamentals. It represents, in my
 - [Temporal Fundamentals Part III: Timeouts](https://keithtenzer.com/temporal/Temporal_Fundamentals_Timeouts/)
 - [Temporal Fundamentals Part IV: Workflows](https://keithtenzer.com/temporal/Temporal_Fundamentals_Workflows/)
 - [Temporal Fundamentals Part V: Workflow Patterns](https://keithtenzer.com/temporal/Temporal_Fundamentals_Workflow_Patterns/)
-- Temporal Fundamentals Part VI: Workers
+- [Temporal Fundamentals Part VI: Workers](https://keithtenzer.com/temporal/Temporal_Fundamentals_Workers/)
 
 This article will focus on understanding Temporal Workflow design recommendations. It will explore general design practice and also get into specific recommendations for Temporal primitives.
 
