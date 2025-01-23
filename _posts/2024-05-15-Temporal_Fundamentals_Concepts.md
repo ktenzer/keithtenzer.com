@@ -25,7 +25,7 @@ This is a six part series focused on Temporal fundamentals. It represents, in my
 - [Temporal Fundamentals Part VI: Workers](https://keithtenzer.com/temporal/Temporal_Fundamentals_Workers/)
 
 ## Workflows as Code
-In Temporal, workflows are code. There are no DSLs, DAGs, YAML, JSON or any other form of application domain specific language. You write your workflows in the programming language of your choice: Java, Typescript, Cotlin, Go, .NET, Python or PHP. This contrasts to many other workflow orchestration engines such as conductor, airflow, Argo, Camunda, Dagster and the list goes on.
+In Temporal, workflows are code. There are no forced DSLs, DAGs, YAML, JSON or any other form of application domain specific language, although you are free to use and require them. You write your workflows in the programming language of your choice: Java, Typescript, Cotlin, Go, .NET, Python or PHP. This contrasts to many other workflow orchestration engines such as conductor, airflow, Argo, Camunda, Dagster and the list goes on.
 But Temporal is so much more than just a workflow orchestrator. It is a programming model that provides durable execution.  
 
 The below code is the hello world sample from our [Java samples repository](https://github.com/temporalio/samples-java). As you can see workflows and activities are just classes. Those classes are then registered to the worker and that worker will execute in your environment, long-polling the Temporal service for workflow or activity tasks. Once the Temporal service dispatches a task it is pulled by a worker and executed. Pretty simple right?
