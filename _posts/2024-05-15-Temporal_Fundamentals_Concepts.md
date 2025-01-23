@@ -109,12 +109,12 @@ While each service is decoupled and blast radius, on the surface appears to be c
 
 ![Order Process w/Failures](/assets/2024-05-15/order_process_failures.png)
 
-Using Temporal, we can ensure code execution is durable. The need for queues is reduced dramatically as Temporal is now orchestrating our services. Retries, schedules and timer logic no longer needs to be maintained separately within each service but rather is built-in to Temporal. Finally the business logic is maintained within workflow instead of spread across the various services. Put it all together and you get much better reliability, simplicity and as a result increased developer velocity.
+Using Temporal, we can ensure code execution is durable. The need for queues is reduced dramatically as Temporal is now orchestrating our services. Retries, schedules and timer logic no longer need to be maintained separately, within each service, but rather, is built-in to Temporal. Finally the business logic is maintained within the workflow, instead of spread across the various services. Put it all together, you get much better reliability, simplicity and as a result increased developer velocity.
 
 ![Order Process w/Temporal](/assets/2024-05-15/temporal_order_process.png)
 
 ## Determinism
-Determinism in Temporal workflows refers to the principle that a workflow, given the same inputs and the same sequence of events (including external events and messages), will always produce the same output and reach the same state. This predictable behavior is crucial to Temporal's fault tolerance and recovery capabilities.
+Determinism in Temporal workflows refers to the principle that a workflow, given the same inputs and the same sequence of events (including external events and messages), will always produce the same output. This predictable behavior is crucial to Temporal's fault tolerance and recovery capabilities.
 When a Temporal workflow executes, all state transitions and decisions are recorded in an Event History. If a workflow fails or is restarted, Temporal uses this Event History to "replay" the workflow from the beginning. Due to the deterministic nature of workflows, replaying the event history up to the point of failure will restore the exact workflow state at that moment, allowing the workflow to proceed as if no failure had occurred.
 
 Workflows must be deterministic and handling non-deterministic operations is critical. In Temporal, non-deterministic operations can be handled in a side-effect (if the operation can't fail) or an activity (if the operation could fail). It is important to note that determinism only comes into play when a workflow is replayed. A replay can occur due to a failure, such as worker crashing or even the workflow being evicted from a worker's cache.
