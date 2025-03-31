@@ -152,15 +152,15 @@ spec:
       serviceAccountName: cicd
       containers:
         - name: worker-workflow
-          image: steveandroulakis/temporal-money-transfer-java-worker:latest
+          image: ktenzer/temporal-money-transfer-java-worker:latest
           imagePullPolicy: Always
           env:
             - name: ENCRYPT_PAYLOADS
               value: "true"
             - name: TEMPORAL_ADDRESS
-              value: steveandroulakis-test-1.sdvdw.tmprl.cloud:7233
+              value: ktenzer-test-1.sdvdw.tmprl.cloud:7233
             - name: TEMPORAL_NAMESPACE
-              value: steveandroulakis-test-1.sdvdw
+              value: ktenzer-test-1.sdvdw
             - name: TEMPORAL_MONEYTRANSFER_TASKQUEUE
               value: MoneyTransferSampleJava-WaaS
             - name: TEMPORAL_CERT_PATH
