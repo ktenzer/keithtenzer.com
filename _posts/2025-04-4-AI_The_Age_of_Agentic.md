@@ -53,13 +53,6 @@ The tool Workflow represents a tool that can accomplish a specific task with a d
 ## Summary
 Agentic AI is an incredibly exciting and rapidly growing space. We are probably only 12-18 months away from personal AI assistants which will help us carry out not only daily tasks, but improve our own capability, in private life and the workplace. Temporal is a great technology choice for building Agentic AI. It provides not only the orchestration capabilities for long-running, but also critical durability needed to ensure Agentic AI is reliable, and can be counted on just like its human counterparts.  
 
-
-Inference is just asking question of model and getting prediction, there isnt really state involved
-
-RAG - GenAI is good generalist but doesnt know custom knowledge or newer data. BYOD you can create embeddings to store into vector database. LLM will search vector database through embeddings not generation. If you put grocery store into vectory db and search oranges, the query becomes embeddings and you try to match which is symenatic search vs literal text search. Can provide similarity threshold. RAG is getting less and less interesting as models get larger context windows. Can just feed all data to prompt, for static data, for data that changes might be better suited to pass into prompt.
-
-AI Orchestrations
-
 (c) 2025 Keith Tenzer
 
 
