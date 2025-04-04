@@ -13,7 +13,7 @@ tags:
 
 ![Temporal](/assets/2022-08-15/logo-temporal-with-copy.svg)
 ## Overview
-When most people think about AI, they imagine robots doing work for of humans. A robot is just hardware, but its brain is software, more specifically a large collection of Agentic AIs - acting autonomously, on behalf of a human, carrying out various tasks with limited intervention.
+When I think about AI, I can't resist and imagine robots doing work for of humans. A robot is just hardware, but its brain is software, more specifically a large collection of Agentic AIs - acting autonomously, on behalf of a human, carrying out various tasks with limited intervention.
 
 Agentic is a broad category within GenAI that can be broken into sub-catagories: interaction vs non-interaction. Interaction involves conversation with a human, while non-interaction can happen without a human even being aware. The key to both and what makes it Agentic is the use of GenAI coupled with acting on behalf of a human. 
 
