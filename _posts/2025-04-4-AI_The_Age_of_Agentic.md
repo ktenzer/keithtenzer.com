@@ -51,7 +51,7 @@ The conversation Workflow will not only keep state (through any kind of failures
 The tool Workflow represents a tool that can accomplish a specific task with a defined spec. Tools of course can be flaky or have low throttling, but Temporal will automatically handle retries. Temporal Workflows are code and can be written in Python using the Temporal SDK. The programming model provides an elegant abstraction for "durable execution" of tasks and enables developers to leverage any python AI frameworks or libraries, such as LangChain.
 
 ## Summary
-Agentic AI is an incredibly exciting and rapidly growing space. We are probably only 12-18 months away from personal AI assistants which will help us carry out not only daily tasks, but improve our own capability, in private life and the workplace. Temporal is a great technology choice for building Agentic AI. It provides not only the orchestration capabilities for long-running, but also critical durability needed to ensure Agentic AI is reliable, and can be counted on just like its human counterparts.  
+Agentic AI is an incredibly exciting and rapidly growing space. We are probably only 12-24 months away from personal AI assistants which will help us carry out not only daily tasks, but improve our own capability, in private life and the workplace. Temporal is a great technology choice for building Agentic AI. It provides not only the orchestration capabilities for long-running, but also critical durability needed to ensure Agentic AI is reliable, and can be counted on just like its human counterparts.  
 
 (c) 2025 Keith Tenzer
 
