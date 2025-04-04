@@ -24,7 +24,7 @@ Agentic AI requires new approaches and architecture. Message or event-driven arc
 Conversations are very verbose and happen in real-time. To handle a conversation of unlimited size over unknown duration, a layer between the human and LLM which can effectively stream tokens is required. In addition, the conversation must be persisted, so that it isn't lost or forgotten. 
 
 ### Non-Conservation-Driven Approach
-An LLM is a generalist and will always require specialist tools to complete tasks. These tools could be other LLMs/SLMs, Inference, Retrieval-Augemented-Generation, even sub-agents (any external API). A tool will often be used in the background, without direction of a human. In addition, such tools will be coupled with business processes to achieve meaningful outcomes.
+An LLM is a generalist and will always require specialist tools to complete tasks. These tools could be other LLMs/SLMs, Inference, Retrieval-Augemented-Generation, even sub-agents. A tool will often be used in the background, without direction of a human. In addition, such tools will be coupled with business processes to achieve meaningful outcomes.
 
 Lets consider a high-level architecture.
 ![Agentic architecture](/assets/2025-04-02/AI_Agentic_Architecture.png)
