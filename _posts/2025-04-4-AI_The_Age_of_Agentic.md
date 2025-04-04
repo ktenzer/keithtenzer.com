@@ -30,7 +30,7 @@ Lets consider a high-level architecture.
 ![Agentic architecture](/assets/2025-04-02/AI_Agentic_Architecture.png)
 
 ## Agentic with Temporal
-Choosing the right technology to build Agentic upon is crucial. Orchestration is important, but only orchestration that can support long-running (infinite) conversations, while providing state management and durability. Temporal becomes a natural fit for orchestrating Human-to-AI conversation.
+Choosing the right technology to build Agentic upon is crucial. Orchestration is important, but only orchestration that can support long-running (infinite), while providing state management and durability. Temporal becomes a natural fit for orchestrating Human-to-AI delegation.
 
 Temporal Advantages for Agentic
 - Support Long-running  
