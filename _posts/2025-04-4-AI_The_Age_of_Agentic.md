@@ -42,6 +42,7 @@ Temporal Advantages for Agentic
 - Programming Model
 
 As already discussed there are two aspects to Agentic: Conversation and Tool. Using Temporal, both can be modelled as Workflows.
+
 ![Agentic with Temporal](/assets/2025-04-02/AI_Agentic_with_Temporal.png)
 
 ### Conversation
