@@ -75,7 +75,7 @@ These examples allow you to explore each framework’s capabilities and trade-of
 ## Recommendations
 Based on my experience working with these Agentic frameworks, here are some practical recommendations:
 
-- **OpenAI Agent SDK**: Best if you're using a single frontier LLM and are comfortable with vendor lock-in.
+- **OpenAI Agent SDK**: Best if you're using OpenAI as single frontier LLM and are comfortable with vendor lock-in.
 - **Temporal**: Ideal for any agent, especially if they require durability, fault-tolerance, scalability, and production-grade features. Also supports polyglot development.
 - **CrewAI**: A good option for simpler agents where durability isn't critical and operational overhead must be minimal.
 - **LangGraph**: Suitable for lightweight, code-first agents with tight LLM integration and limited durability needs.
