@@ -60,10 +60,11 @@ Below is a comparison of leading Agentic AI frameworks, highlighting their stren
 |               | Built-in analytics and monitoring                           | Limited control over execution               |
 |               | Enterprise features (RBAC, audit logs, SLAs)                | Lacks built-in durability and retries        |
 |               |                                                             | No support for updates or feedback loops     |
-| **OpenAI**    | Native integration with OpenAI LLMs                         | Tied to OpenAI ecosystem and pricing         |
-|               | Simplified, code-first agent development                    | No built-in durability or retry mechanism    |
-|               | Automated tool planning and execution                       | Limited observability and monitoring         |
-|               | Low operational overhead                                    | Less flexible with non-OpenAI models         |
+| **OpenAI**    | Native integration with OpenAI LLMs                         | No built-in durability or retry mechanism    |
+|               | Can leverage non-OAI models via LiteLLM                     | Limited observability and monitoring         |
+|               | Simplified, code-first agent development                    | Vendor lock-in concerns even w/LiteLLM       |
+|               | Automated tool planning and execution                       |                                              |
+|               | Low operational overhead                                    |                                              |
 
 ## Agentic Airline Assistant
 I built an [Airline AI Agent](https://github.com/ktenzer/airline-ai-agent) using Temporal, LangGraph, and CrewAI to evaluate each framework’s strengths and weaknesses.
@@ -75,7 +76,7 @@ These examples allow you to explore each framework’s capabilities and trade-of
 ## Recommendations
 Based on my experience working with these Agentic frameworks, here are some practical recommendations:
 
-- **OpenAI Agent SDK**: Best if you're using OpenAI as single frontier LLM and are comfortable with vendor lock-in.
+- **OpenAI Agents SDK**: Best if you're using OpenAI as main frontier LLM and are comfortable with some vendor lock-in (Lig).
 - **Temporal**: Ideal for any agent, especially if they require durability, fault-tolerance, scalability, and production-grade features. Also supports polyglot development.
 - **CrewAI**: A good option for simpler agents where durability isn't critical and operational overhead must be minimal.
 - **LangGraph**: Suitable for lightweight, code-first agents with tight LLM integration and limited durability needs.
