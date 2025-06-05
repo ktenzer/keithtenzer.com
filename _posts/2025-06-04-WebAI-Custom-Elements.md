@@ -1,6 +1,6 @@
 --- 
 layout: single
-title:  "webAI: Custom Elements"
+title:  "webAI: Building Custom Elements"
 categories:
 - AI
 tags:
