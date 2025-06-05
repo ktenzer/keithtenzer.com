@@ -1,6 +1,6 @@
 --- 
 layout: single
-title:  "AI on the Edge"
+title:  "WebAI: AI on the Edge"
 categories:
 - AI
 tags:
