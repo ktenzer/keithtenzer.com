@@ -113,8 +113,7 @@ Some settings support **hints** that modify their rendered appearance:
 | --------------- | ------------- | --------------------------------------------------------------------------------------------------- |
 | `TextSetting`   | `"dropdown"`  | Renders a select box populated with `valid_values`              |
 | `TextSetting`   | `"folder_path"` | Renders a folder picker                                                                            |
-| `TextSetting`   | `"multiline"` | Switches to a multi-line text area                                                                 |
-| `NumberSetting` | `"slider"`    | Displays a slider using `min_value`, `max_value`, and `step`                  
+       
 
 ```python
 dropdown_setting = TextSetting(
