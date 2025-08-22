@@ -1,6 +1,6 @@
 --- 
 layout: single
-title:  "webAI: Building Custom Elements"
+title:  "webAI: Intro to Building Custom Elements"
 categories:
 - AI
 tags:
@@ -12,6 +12,8 @@ tags:
 ---
 
 <img src="/assets/2025-05-23/WebAI.png" alt="My Image" width="100" height="75"/>
+
+*Note*: This article covers the older ElementSDK 0.9.x. The newer webAI ElementSDK is 0.10.x and recommended which is documented [here](https://keithtenzer.com/ai/WebAI-Custom-Elements-Advanced/)
 
 ## Overview
 webAI is an on-device AI platform that enables organizations to build and deploy AI models in a distributed fashion using commodity hardware. Its key benefits are **privacy**, **time-to-market**, **cost-efficiency**, and **accuracy**. I previously wrote a [blog](https://keithtenzer.com/ai/AI_on_the_Edge/) that explores the platform in more depth.
