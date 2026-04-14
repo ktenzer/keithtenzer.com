@@ -66,7 +66,7 @@ Cisco ThousandEyes frames early-2026 risk in terms of interdependence between pr
 
 **Source:** [Looking Ahead: 2026's Biggest Outage Risks](https://www.thousandeyes.com/blog/internet-report-2026-biggest-outage-risks) (ThousandEyes Blog)
 
-The through line is not cynicism about shipping. It is that speed without durability, observability, and clear blast-radius limits converts local mistakes into organizational reliability debt.
+The point is not to create cynicism about shipping. It is that speed without durability, observability, and clear blast-radius limits converts local mistakes into organizational wide outages that damages an organizations reputation and core-value proposition.
 
 ## A Final Thought
 This post is a personal note about being a human, returning to Temporal, and doubling down on reliability. A question to ponder: if you could choose between features shipped or incidents avoided, how would you choose? The honest answer explains whether your culture rewards motion or reliability. I am expecting most would say motion, and I agree, as long as you have Temporal!
