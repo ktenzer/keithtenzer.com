@@ -41,32 +41,15 @@ Temporal is built for exactly the gap the AI era created: you can move quickly w
 
 Together, those capabilities are the guardrail for the AI-driven economy. AI agents can iterate on steps governed by durable workflows, timeouts, retries, and explicit failure handling, preventing mistakes from turning into outages.
 
-## Recent Lapses in Reliability
-For years we chased velocity. With AI in the loop, we finally got the throughput everyone said they wanted: more code, more content, more automation, less time in the loop. The trade many teams made, often without saying it out loud, was to borrow against reliability. Corners get cut, reviews thin out, and production becomes the test plan.
-
-The incidents below are not all "AI failures" in a narrow sense. They are what happens when complex systems and fast release cadences meet weak guardrails: a small mistake or a bad query fans out globally.
-
-### Claude Code npm release and source map exposure (March 2026)
-On March 31, 2026, version 2.1.88 of the public `@anthropic-ai/claude-code` npm package reportedly included a large JavaScript source map (on the order of tens of megabytes) that exposed extensive internal TypeScript detail from the product. Coverage described rapid discovery and mirroring across the ecosystem within hours. Anthropic told VentureBeat the issue was a release packaging problem caused by human error, not a security breach in the sense of customer data or credential exposure, and that it was implementing preventive measures.
-
-**Source:** [Claude Code's source code appears to have leaked: here's what we know](https://venturebeat.com/ai/claude-codes-source-code-appears-to-have-leaked-heres-what-we-know/) (VentureBeat, March 31, 2026)
-
-### Cloudflare BYOIP BGP withdrawal (February 20, 2026)
-Starting February 20, 2026 at 17:48 UTC, a subset of customers using Cloudflare's Bring Your Own IP (BYOIP) saw their routes withdrawn over BGP. Cloudflare's post-incident write-up attributes the cause to a change in how the network manages BYOIP addresses: a scheduled cleanup sub-task called the Addressing API with a faulty query (`pending_delete` passed with no value), which the server treated in a way that led to mass withdrawal of customer prefixes. Roughly 1,100 BYOIP prefixes were withdrawn before the task was stopped. Cloudflare states the full customer-visible recovery window lasted 6 hours and 7 minutes, with much of that time spent restoring prefix configuration. The company explicitly ruled out cyberattack and detailed remediation plans including circuit breakers, safer automation, and related hardening.
-
-**Source:** [Cloudflare outage on February 20, 2026](https://blog.cloudflare.com/cloudflare-outage-february-20-2026/) (Cloudflare Blog, February 21, 2026)
-
-### GitHub platform incidents (February 2026)
-GitHub published a February 2026 availability report describing six separate incidents with degraded performance across core services. Examples from that month include: Dependabot degraded for over an hour due to failover hitting a read-only database; a roughly six-hour window where GitHub Actions hosted runners and Codespaces were unavailable, rooted in mistaken security policies applied to backend storage that blocked VM metadata access, with spillover to Copilot agent, CodeQL, Pages, and more; and two related multi-service degradations on February 9 (combined about two hours and forty minutes) traced to a user-settings cache change that triggered massive cache rewrites and cascaded into Git HTTPS proxy connection exhaustion. The report is explicit that growth, coupling, and configuration risk amplified blast radius.
-
-**Source:** [GitHub availability report: February 2026](https://github.blog/news-insights/company-news/github-availability-report-february-2026/) (GitHub Blog, March 11, 2026). For root-cause themes and remediation direction, see also [Addressing GitHub's recent availability issues](https://github.blog/news-insights/company-news/addressing-githubs-recent-availability-issues-2/).
+## Lapses in Reliability
+For years we chased velocity. With AI in the loop, we finally got the throughput everyone said they wanted: more code, more content, more automation, less time in the loop. The trade many teams made, often without saying it out loud, was to borrow against reliability. Corners get cut, reviews thin out, and production becomes the test plan. There are many recent examples of this, we have all lived the headlines.
 
 ### Internet-wide outage risk in 2026 (industry view)
 Cisco ThousandEyes frames early-2026 risk in terms of interdependence between providers and the way automation and operational tooling can create cascading failures that are hard to predict from any single component. That matches what telemetry vendors and postmortems keep showing: not only "something broke," but "something changed quickly and the graph amplified it."
 
 **Source:** [Looking Ahead: 2026's Biggest Outage Risks](https://www.thousandeyes.com/blog/internet-report-2026-biggest-outage-risks) (ThousandEyes Blog)
 
-The point is not to create cynicism about shipping. It is that speed without durability, observability, and clear blast-radius limits converts local mistakes into organizational wide outages that damages an organizations reputation and core-value proposition.
+The point is not to create cynicism about shipping. It is that speed without durability, observability, and clear blast-radius limits converts local mistakes into organizational wide outages that damages an organizations reputation and core-value prop
 
 ## A Final Thought
 This post is a personal note about being a human, returning to Temporal, and doubling down on reliability. A question to ponder: if you could choose between features shipped or incidents avoided, how would you choose? The honest answer explains whether your culture rewards motion or reliability. I am expecting most would say motion, and I agree, as long as you have Temporal!
